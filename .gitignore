@@ -1,0 +1,16 @@
+*.pyc
+*.pyo
+*.o
+*.so
+*.os
+*.pyd
+*.elc
+*~
+.*.swp
+.*.swo
+.*.swn
+.~
+.DS_Store
+.ropeproject
+ID
+__pycache__/
