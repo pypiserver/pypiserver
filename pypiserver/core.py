@@ -89,14 +89,13 @@ def server_static(filename):
 
 
 def choose_server():
-    server = "auto"
     for x in ["paste", "cherrypy", "twisted"]:
         try:
             __import__(x)
             return x
         except:
             pass
-
+    return "auto"
 
 def usage():
     print """pypiserver [-p PORT] [-r PACKAGES_DIR]
