@@ -1,5 +1,6 @@
 include .gitignore
 include MANIFEST.in
+include README.rst
 include pypi-server
 include pypiserver/__init__.py
 include pypiserver/__main__.py
