@@ -2,6 +2,7 @@
 
 from distutils.core import setup
 
+
 def get_version():
     d = {}
     try:
