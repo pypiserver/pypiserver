@@ -1,6 +1,8 @@
 include .gitignore
 include MANIFEST.in
+include pypi-server
 include pypiserver/__init__.py
 include pypiserver/__main__.py
 include pypiserver/bottle.py
 include pypiserver/core.py
+include setup.py
