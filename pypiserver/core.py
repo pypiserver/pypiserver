@@ -1,12 +1,11 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
-import os, sys
+import os, sys, getopt, mimetypes
 from pypiserver import bottle
 sys.modules["bottle"] = bottle
 
-from bottle import route, run, static_file, redirect, request, debug
-import mimetypes
+from bottle import route, run, static_file, redirect, request, debug, server_names
 mimetypes.add_type("application/octet-stream", ".egg")
 
 packages = None
@@ -95,11 +94,34 @@ def choose_server():
 
 def main():
     global packages
+
     root = os.path.expanduser("~/packages/")
+    host = "0.0.0.0"
+    port = 8080
+    server = None
+
+    opts, args = getopt.getopt(sys.argv[1:], "p:r:", ["port=", "root=", "server="])
+    for k, v in opts:
+        if k in ("-p", "--port"):
+            port = int(v)
+        elif k in ("-r", "--root"):
+            root = os.path.abspath(v)
+        elif k == "--server":
+            if v not in server_names:
+                sys.exit("unknown server %r. choose one of %s" % (v, ", ".join(server_names.keys())))
+            server = v
+
+    try:
+        os.listdir(root)
+    except Exception, err:
+        sys.exit("error occured while trying to list %r: %s" % (root, err))
+
     packages = pkgset(root)
-    server = choose_server()
+    server = server or choose_server()
     debug(True)
-    run(host='0.0.0.0', port=8080, server=server)
+    print "serving %r on %s:%s" % (root, host, port)
+    print
+    run(host=host, port=port, server=server)
 
 
 if __name__ == "__main__":
