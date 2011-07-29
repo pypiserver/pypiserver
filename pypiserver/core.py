@@ -2,7 +2,7 @@
 """minimal PyPI like server for use with pip/easy_install"""
 
 import os, sys, getopt, mimetypes
-from pypiserver import bottle
+from pypiserver import bottle, __version__
 sys.modules["bottle"] = bottle
 
 from bottle import route, run, static_file, redirect, request, debug, server_names
@@ -92,6 +92,14 @@ def choose_server():
             pass
 
 
+def usage():
+    print """pypiserver [-p PORT] [-r PACKAGES_DIR]
+    start PyPI compatible package server on port PORT serving packages from PACKAGES_DIR
+    default is to listen on port 8080 serving packages from directory ~/packages/
+"""
+
+
+
 def main():
     global packages
 
@@ -100,7 +108,11 @@ def main():
     port = 8080
     server = None
 
-    opts, args = getopt.getopt(sys.argv[1:], "p:r:", ["port=", "root=", "server="])
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "p:r:h", ["port=", "root=", "server=", "version", "help"])
+    except getopt.GetoptError, err:
+        sys.exit("usage error: %s" % (err,))
+
     for k, v in opts:
         if k in ("-p", "--port"):
             port = int(v)
@@ -110,6 +122,12 @@ def main():
             if v not in server_names:
                 sys.exit("unknown server %r. choose one of %s" % (v, ", ".join(server_names.keys())))
             server = v
+        elif k == "--version":
+            print "pypiserver %s" % __version__
+            sys.exit(0)
+        elif k in ("-h", "--help"):
+            usage()
+            sys.exit(0)
 
     try:
         os.listdir(root)
