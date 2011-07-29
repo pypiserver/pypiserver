@@ -22,9 +22,10 @@ class pkgset(object):
         self.root = root
 
     def find_packages(self, prefix=""):
+        prefix = prefix.lower()
         files = []
         for x in os.listdir(self.root):
-            if not x.startswith(prefix):
+            if not x.lower().startswith(prefix):
                 continue
             fn = os.path.join(self.root, x)
             if os.path.isfile(fn):
