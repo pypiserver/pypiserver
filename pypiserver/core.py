@@ -112,15 +112,6 @@ def server_static(filename):
     return static_file(filename, root=packages.root)
 
 
-def choose_server():
-    for x in ["paste", "cherrypy", "twisted"]:
-        try:
-            __import__(x)
-            return x
-        except:
-            pass
-    return "auto"
-
 def usage():
     print """pypiserver [-p PORT] [-r PACKAGES_DIR]
     start PyPI compatible package server on port PORT serving packages from PACKAGES_DIR
@@ -164,7 +155,7 @@ def main():
         sys.exit("error occured while trying to list %r: %s" % (root, err))
 
     packages = pkgset(root)
-    server = server or choose_server()
+    server = server or "auto"
     debug(True)
     print "serving %r on %s:%s" % (root, host, port)
     print
