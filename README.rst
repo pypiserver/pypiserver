@@ -23,8 +23,44 @@ Run the following commands to get your PyPI server up and running::
   pip install pypiserver
   mkdir ~/packages
   # copy some source packages or eggs to this directory
-  pypi-server -p 8080 -r ~/packages
+  pypi-server -p 8080 ~/packages
   pip install -i http://localhost:8080/simple/ ...
+
+
+Detailed Usage
+=================================
+pypi-server -h will print a detailed usage message::
+
+  pypi-server [OPTIONS] [PACKAGES_DIRECTORY]
+    start PyPI compatible package server serving packages from
+    PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
+    command line, it uses the default ~/packages.
+
+  pypi-server understands the following options:
+
+    -p PORT, --port PORT
+      listen on port PORT (default: 8080)
+
+    -i INTERFACE, --interface INTERFACE
+      listen on interface INTERFACE (default: 0.0.0.0, any interface)
+
+    -r PACKAGES_DIRECTORY, --root PACKAGES_DIRECTORY
+      [deprecated] serve packages from PACKAGES_DIRECTORY
+
+    --server METHOD
+      use METHOD to run the server. Valid values include paste,
+      cherrypy, twisted, gunicorn, gevent, wsgiref, auto. The
+      default is to use "auto" which chooses one of paste, cherrypy,
+      twisted or wsgiref.
+
+  pypi-server -h
+  pypi-server --help
+    show this help message
+
+  pypi-server --version
+    show pypi-server's version
+
+  Visit http://pypi.python.org/pypi/pypiserver for more information.
 
 
 Optional dependencies
@@ -105,16 +141,21 @@ There are lots of other projects, which allow you to run your own
 PyPI server. If pypiserver doesn't work for you, try one of the
 following alternatives:
 
-- chishop (http://pypi.python.org/pypi/chishop)
+chishop (http://pypi.python.org/pypi/chishop)
   a django based server, which also allows uploads
-- simplepypi (http://pypi.python.org/pypi/simplepypi)
+
+simplepypi (http://pypi.python.org/pypi/simplepypi)
   a twisted based solution, which allows uploads
-- ClueReleaseManager (http://pypi.python.org/pypi/ClueReleaseManager)
+
+ClueReleaseManager (http://pypi.python.org/pypi/ClueReleaseManager)
   Werkzeug based solution, allows uploads
-- haufe.eggserver (http://pypi.python.org/pypi/haufe.eggserver)
-- scrambled (http://pypi.python.org/pypi/scrambled)
+
+haufe.eggserver (http://pypi.python.org/pypi/haufe.eggserver)
+
+scrambled (http://pypi.python.org/pypi/scrambled)
   doesn't require external dependencies, no uploads.
-- EggBasket (http://pypi.python.org/pypi/EggBasket)
+
+EggBasket (http://pypi.python.org/pypi/EggBasket)
 
 
 .. _bottle: http://bottlepy.org
