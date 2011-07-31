@@ -119,12 +119,21 @@ def usage():
   command line, it uses the default ~/packages.
 
 pypiserver understands the following options:
+
   -p PORT, --port PORT
-      listen on port PORT (default: 8080)
+    listen on port PORT (default: 8080)
+
   -i INTERFACE, --interface INTERFACE
-      listen on interface INTERFACE (default: 0.0.0.0, any interface)
+    listen on interface INTERFACE (default: 0.0.0.0, any interface)
+
   -r PACKAGES_DIRECTORY, --root PACKAGES_DIRECTORY
-      [deprecated] serve packages from PACKAGES_DIRECTORY
+    [deprecated] serve packages from PACKAGES_DIRECTORY
+
+  --server METHOD
+    use METHOD to run the server. Valid values include paste,
+    cherrypy, twisted, gunicorn, gevent, wsgiref, auto. The
+    default is to use "auto" which chooses one of paste, cherrypy,
+    twisted or wsgiref.
 
 pypiserver -h
 pypiserver --help
