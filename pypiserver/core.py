@@ -113,12 +113,12 @@ def server_static(filename):
 
 
 def usage():
-    print """pypiserver [OPTIONS] [PACKAGES_DIRECTORY]
+    print """pypi-server [OPTIONS] [PACKAGES_DIRECTORY]
   start PyPI compatible package server serving packages from
   PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
   command line, it uses the default ~/packages.
 
-pypiserver understands the following options:
+pypi-server understands the following options:
 
   -p PORT, --port PORT
     listen on port PORT (default: 8080)
@@ -135,12 +135,12 @@ pypiserver understands the following options:
     default is to use "auto" which chooses one of paste, cherrypy,
     twisted or wsgiref.
 
-pypiserver -h
-pypiserver --help
+pypi-server -h
+pypi-server --help
   show this help message
 
 pypi-server --version
-  show pypiserver's version
+  show pypi-server's version
 
 Visit http://pypi.python.org/pypi/pypiserver for more information.
 """
