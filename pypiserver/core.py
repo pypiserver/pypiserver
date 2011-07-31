@@ -113,31 +113,49 @@ def server_static(filename):
 
 
 def usage():
-    print """pypiserver [-p PORT] [-r PACKAGES_DIR]
-    start PyPI compatible package server on port PORT serving packages from PACKAGES_DIR
-    default is to listen on port 8080 serving packages from directory ~/packages/
-"""
+    print """pypiserver [OPTIONS] [PACKAGES_DIRECTORY]
+  start PyPI compatible package server serving packages from
+  PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
+  command line, it uses the default ~/packages.
 
+pypiserver understands the following options:
+  -p PORT, --port PORT
+      listen on port PORT (default: 8080)
+  -i INTERFACE, --interface INTERFACE
+      listen on interface INTERFACE (default: 0.0.0.0, any interface)
+  -r PACKAGES_DIRECTORY, --root PACKAGES_DIRECTORY
+      [deprecated] serve packages from PACKAGES_DIRECTORY
+
+pypiserver -h
+pypiserver --help
+  show this help message
+
+pypi-server --version
+  show pypiserver's version
+
+Visit http://pypi.python.org/pypi/pypiserver for more information.
+"""
 
 
 def main():
     global packages
 
-    root = os.path.expanduser("~/packages/")
     host = "0.0.0.0"
     port = 8080
     server = None
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "p:r:h", ["port=", "root=", "server=", "version", "help"])
+        opts, roots = getopt.getopt(sys.argv[1:], "i:p:r:h", ["interface=", "port=", "root=", "server=", "version", "help"])
     except getopt.GetoptError, err:
         sys.exit("usage error: %s" % (err,))
 
     for k, v in opts:
         if k in ("-p", "--port"):
             port = int(v)
+        elif k in ("-i", "--interface"):
+            host = v
         elif k in ("-r", "--root"):
-            root = os.path.abspath(v)
+            roots.append(v)
         elif k == "--server":
             if v not in server_names:
                 sys.exit("unknown server %r. choose one of %s" % (v, ", ".join(server_names.keys())))
@@ -149,10 +167,17 @@ def main():
             usage()
             sys.exit(0)
 
+    if len(roots) == 0:
+        roots.append(os.path.expanduser("~/packages"))
+    elif len(roots) > 1:
+        sys.exit("Error: more than one root directory specified: %r" % (roots,))
+
+    root = os.path.abspath(roots[0])
+
     try:
         os.listdir(root)
     except Exception, err:
-        sys.exit("error occured while trying to list %r: %s" % (root, err))
+        sys.exit("Error: while trying to list %r: %s" % (root, err))
 
     packages = pkgset(root)
     server = server or "auto"
