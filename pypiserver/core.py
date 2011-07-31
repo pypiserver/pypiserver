@@ -182,7 +182,7 @@ def main():
     packages = pkgset(root)
     server = server or "auto"
     debug(True)
-    print "serving %r on %s:%s" % (root, host, port)
+    print "This is pypiserver %s serving %r on %s:%s" % (__version__, root, host, port)
     print
     run(host=host, port=port, server=server)
 
