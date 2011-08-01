@@ -116,6 +116,12 @@ def server_static(filename):
     return static_file(filename, root=packages.root)
 
 
+@route('/:prefix')
+@route('/:prefix/')
+def bad_url(prefix):
+    return redirect("/simple/%s/" % prefix)
+
+
 def usage():
     print """pypi-server [OPTIONS] [PACKAGES_DIRECTORY]
   start PyPI compatible package server serving packages from
