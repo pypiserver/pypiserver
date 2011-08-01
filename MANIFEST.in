@@ -1,7 +1,9 @@
 include .gitignore
 include MANIFEST.in
 include README.rst
+include gen-standalone.py
 include pypi-server
+include pypi-server-in.py
 include pypiserver/__init__.py
 include pypiserver/__main__.py
 include pypiserver/bottle.py
