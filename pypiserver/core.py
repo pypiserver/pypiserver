@@ -83,6 +83,10 @@ def simpleindex():
 
 
 @route("/simple/:prefix")
+def simple_redirect(prefix):
+    return redirect("/simple/%s/" % prefix)
+
+
 @route("/simple/:prefix/")
 def simple(prefix=""):
     files = packages.find_packages(prefix)
