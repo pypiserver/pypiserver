@@ -151,15 +151,14 @@ ClueReleaseManager (http://pypi.python.org/pypi/ClueReleaseManager)
   Werkzeug based solution, allows uploads
 
 haufe.eggserver (http://pypi.python.org/pypi/haufe.eggserver)
+  GROK/Zope based, allows uploads
 
 scrambled (http://pypi.python.org/pypi/scrambled)
   doesn't require external dependencies, no uploads.
 
 EggBasket (http://pypi.python.org/pypi/EggBasket)
-
+  TurboGears based, allows uploads
 
 .. _bottle: http://bottlepy.org
 .. _PyPI: http://pypi.python.org
 .. _pyg: http://pypi.python.org/pypi/pyg
-.. _chishop: http://pypi.python.org/pypi/chishop
-.. _simplepypi:
