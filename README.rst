@@ -26,6 +26,28 @@ Run the following commands to get your PyPI server up and running::
   pypi-server -p 8080 ~/packages
   pip install -i http://localhost:8080/simple/ ...
 
+Alternative Installation as standalone script
+=============================================
+The git repository contains a 'pypi-server-standalone.py' script,
+which is a single python file ready to be executed without any other
+dependencies.
+
+Run the following commands to download the script with wget::
+
+  wget https://raw.github.com/schmir/pypiserver/standalone/pypi-server-standalone.py
+  chmod +x pypi-server-standalone.py
+
+or with curl::
+
+  curl -O https://raw.github.com/schmir/pypiserver/standalone/pypi-server-standalone.py
+  chmod +x pypi-server-standalone.py
+
+The server can then be started with::
+
+  ./pypi-server-standalone.py
+
+Feel free to rename the script and move it into your $PATH.
+
 
 Detailed Usage
 =================================
@@ -70,6 +92,24 @@ Optional dependencies
   following paste, cherrypy, twisted, wsgiref (part of python) if
   available.
 
+Source
+===========
+Source releases can be downloaded from
+http://pypi.python.org/pypi/pypiserver
+
+https://github.com/schmir/pypiserver carries a git repository of the
+in-development version.
+
+Use::
+
+  git clone https://github.com/schmir/pypiserver.git
+
+to create a copy of the repository, then::
+
+  git pull
+
+inside the copy to receive the latest version.
+
 
 Bugs
 =============
@@ -84,6 +124,11 @@ The following limitations are known:
   will not work.
 - pypiserver doesn't implement the json based '/pypi' interface. pyg_
   uses that and will not work.
+
+Please use github's bugtracker
+https://github.com/schmir/pypiserver/issues if you find any other
+bugs.
+
 
 License
 =============
