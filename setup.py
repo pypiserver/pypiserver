@@ -26,4 +26,16 @@ setup(name="pypiserver",
       scripts=["pypi-server"],
       url="https://github.com/schmir/pypiserver",
       maintainer="Ralf Schmitt",
-      maintainer_email="ralf@systemexit.de")
+      maintainer_email="ralf@systemexit.de",
+      classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Environment :: Web Environment",
+        "Intended Audience :: Developers",
+        "Intended Audience :: System Administrators",
+        "License :: OSI Approved :: BSD License",
+        "License :: OSI Approved :: zlib/libpng License",
+        "Programming Language :: Python :: 2.5",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Topic :: Software Development :: Build Tools",
+        "Topic :: System :: Software Distribution"])
