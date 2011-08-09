@@ -96,7 +96,7 @@ pypi.python.org index if it doesn't have a requested package, it's a
 good idea to configure them to always use your local pypi index.
 
 pip
-~~~~~
+-----
 For pip this can be done by setting the environment variable
 PIP_INDEX_URL in your .bashrc/.profile/.zshrc::
 
@@ -108,7 +108,7 @@ or by adding the following lines to ~/.pip/pip.conf::
   index-url = http://localhost:8080/simple/
 
 easy_install
-~~~~~~~~~~~~~
+------------
 For easy_install it can be configured with the following setting in
 ~/.pydistutils.cfg::
 
@@ -235,6 +235,37 @@ scrambled (http://pypi.python.org/pypi/scrambled)
 
 EggBasket (http://pypi.python.org/pypi/EggBasket)
   TurboGears based, allows uploads
+
+
+Changelog
+=========
+
+0.2.0 (2011-08-09)
+------------------
+- better matching of package names (i.e. don't install package if only
+  a prefix matches)
+- redirect to the real pypi.python.org server if a package is not found.
+- add some documentation about configuring easy_install/pip
+
+0.1.3 (2011-08-01)
+------------------
+- provide single file script pypi-server-standalone.py
+- better documentation
+
+0.1.2 (2011-08-01)
+------------------
+- prefix comparison is now case insensitive
+- added usage message
+- show minimal imformation for root url
+
+0.1.1 (2011-07-29)
+------------------
+- don't require external dependencies
+
+0.1.0 (2011-07-29)
+------------------
+- initial release
+
 
 .. _bottle: http://bottlepy.org
 .. _PyPI: http://pypi.python.org
