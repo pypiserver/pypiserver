@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
-import os, sys, getopt, mimetypes
+import os, sys, getopt, re, mimetypes
 try:
     # get rid of "UserWarning: Module bottle was already imported from..."
     import pkg_resources
@@ -17,28 +17,42 @@ mimetypes.add_type("application/octet-stream", ".egg")
 packages = None
 
 
+def guess_pkgname(path):
+    pkgname = re.split(r"-\d+\.", os.path.basename(path))[0]
+    return pkgname
+
+
 class pkgset(object):
     def __init__(self, root):
         self.root = root
 
+    def listdir(self):
+        res = []
+        for x in os.listdir(self.root):
+            if not x.startswith("."):
+                res.append(os.path.join(self.root, x))
+        return res
+
     def find_packages(self, prefix=""):
         prefix = prefix.lower()
         files = []
-        for x in os.listdir(self.root):
-            if not x.lower().startswith(prefix):
+        for x in self.listdir():
+            pkgname = guess_pkgname(x)
+            if prefix and pkgname.lower() != prefix:
                 continue
-            fn = os.path.join(self.root, x)
-            if os.path.isfile(fn):
-                files.append(x)
+            if os.path.isfile(x):
+                files.append(x[len(self.root) + 1:])
         return files
 
     def find_prefixes(self):
-        files = self.find_packages()
         prefixes = set()
-        for x in files:
-            parts = x.split("-")[:-1]
-            for i in range(len(parts)):
-                prefixes.add("-".join(parts[:i + 1]))
+        for x in self.listdir():
+            if not os.path.isfile(x):
+                continue
+
+            pkgname = guess_pkgname(x)
+            if pkgname:
+                prefixes.add(pkgname)
         return prefixes
 
 
