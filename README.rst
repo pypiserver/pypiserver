@@ -88,6 +88,34 @@ pypi-server -h will print a detailed usage message::
 
   Visit http://pypi.python.org/pypi/pypiserver for more information.
 
+Configuring pip/easy_install
+============================
+Always specifying the the pypi url on the command line is a bit
+cumbersome. Since pypi-server redirects pip/easy_install to the
+pypi.python.org index if it doesn't have a requested package, it's a
+good idea to configure them to always use your local pypi index.
+
+pip
+~~~~~
+For pip this can be done by setting the environment variable
+PIP_INDEX_URL in your .bashrc/.profile/.zshrc::
+
+  export PIP_INDEX_URL=http://localhost:8080/simple/
+
+or by adding the following lines to ~/.pip/pip.conf::
+
+  [global]
+  index-url = http://localhost:8080/simple/
+
+easy_install
+~~~~~~~~~~~~~
+For easy_install it can be configured with the following setting in
+~/.pydistutils.cfg::
+
+  [easy_install]
+  index_url = http://localhost:8080/simple/
+
+
 
 Optional dependencies
 =====================
