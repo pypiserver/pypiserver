@@ -66,14 +66,18 @@ pypi-server -h will print a detailed usage message::
     -i INTERFACE, --interface INTERFACE
       listen on interface INTERFACE (default: 0.0.0.0, any interface)
 
-    -r PACKAGES_DIRECTORY, --root PACKAGES_DIRECTORY
-      [deprecated] serve packages from PACKAGES_DIRECTORY
+    --disable-fallback
+      disable redirect to real PyPI index for packages not found in the
+      local index
 
     --server METHOD
       use METHOD to run the server. Valid values include paste,
       cherrypy, twisted, gunicorn, gevent, wsgiref, auto. The
       default is to use "auto" which chooses one of paste, cherrypy,
       twisted or wsgiref.
+
+    -r PACKAGES_DIRECTORY, --root PACKAGES_DIRECTORY
+      [deprecated] serve packages from PACKAGES_DIRECTORY
 
   pypi-server -h
   pypi-server --help

@@ -16,6 +16,13 @@ mimetypes.add_type("application/octet-stream", ".egg")
 
 packages = None
 
+class configuration(object):
+    def __init__(self):
+        self.fallback_url = "http://pypi.python.org/simple"
+        self.redirect_to_fallback = True
+
+config = configuration()
+
 
 def guess_pkgname(path):
     pkgname = re.split(r"-\d+\.", os.path.basename(path))[0]
@@ -104,6 +111,8 @@ def simple_redirect(prefix):
 @route("/simple/:prefix/")
 def simple(prefix=""):
     files = packages.find_packages(prefix)
+    if not files and config.redirect_to_fallback:
+        return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
     files.sort()
     res = ["<html><head><title>Links for %s</title></head><body>\n" % prefix]
     res.append("<h1>Links for %s</h1>\n" % prefix)
@@ -150,14 +159,18 @@ pypi-server understands the following options:
   -i INTERFACE, --interface INTERFACE
     listen on interface INTERFACE (default: 0.0.0.0, any interface)
 
-  -r PACKAGES_DIRECTORY, --root PACKAGES_DIRECTORY
-    [deprecated] serve packages from PACKAGES_DIRECTORY
+  --disable-fallback
+    disable redirect to real PyPI index for packages not found in the
+    local index
 
   --server METHOD
     use METHOD to run the server. Valid values include paste,
     cherrypy, twisted, gunicorn, gevent, wsgiref, auto. The
     default is to use "auto" which chooses one of paste, cherrypy,
     twisted or wsgiref.
+
+  -r PACKAGES_DIRECTORY, --root PACKAGES_DIRECTORY
+    [deprecated] serve packages from PACKAGES_DIRECTORY
 
 pypi-server -h
 pypi-server --help
@@ -178,7 +191,7 @@ def main():
     server = None
 
     try:
-        opts, roots = getopt.getopt(sys.argv[1:], "i:p:r:h", ["interface=", "port=", "root=", "server=", "version", "help"])
+        opts, roots = getopt.getopt(sys.argv[1:], "i:p:r:h", ["interface=", "port=", "root=", "server=", "disable-fallback", "version", "help"])
     except getopt.GetoptError, err:
         sys.exit("usage error: %s" % (err,))
 
@@ -189,6 +202,8 @@ def main():
             host = v
         elif k in ("-r", "--root"):
             roots.append(v)
+        elif k == "--disable-fallback":
+            config.redirect_to_fallback = False
         elif k == "--server":
             if v not in server_names:
                 sys.exit("unknown server %r. choose one of %s" % (v, ", ".join(server_names.keys())))
