@@ -19,3 +19,4 @@ __pycache__/
 /MANIFEST
 /README.html
 /pypi-server-standalone.py
+/.tox/
