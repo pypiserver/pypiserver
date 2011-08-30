@@ -183,7 +183,10 @@ Visit http://pypi.python.org/pypi/pypiserver for more information.
 """
 
 
-def main():
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+
     global packages
 
     host = "0.0.0.0"
@@ -191,7 +194,7 @@ def main():
     server = None
 
     try:
-        opts, roots = getopt.getopt(sys.argv[1:], "i:p:r:h", ["interface=", "port=", "root=", "server=", "disable-fallback", "version", "help"])
+        opts, roots = getopt.getopt(argv[1:], "i:p:r:h", ["interface=", "port=", "root=", "server=", "disable-fallback", "version", "help"])
     except getopt.GetoptError, err:
         sys.exit("usage error: %s" % (err,))
 
@@ -236,4 +239,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
