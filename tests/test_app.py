@@ -9,6 +9,13 @@ from pypiserver import core
 import bottle
 bottle.debug(True)
 
+fallback_app = bottle.Bottle()
+
+
+@fallback_app.route("path#.*#")
+def pypi_notfound(path):
+    return bottle.HTTPError(404)
+
 
 def pytest_funcarg__root(request):
 
@@ -20,6 +27,7 @@ def pytest_funcarg__root(request):
 
     twill.add_wsgi_intercept("localhost", 8080, bottle.default_app)
     twill.add_wsgi_intercept("systemexit.de", 80, bottle.default_app)
+    twill.add_wsgi_intercept("pypi.python.org", 80, lambda: fallback_app)
 
     go("http://localhost:8080/")
     return tmpdir
@@ -57,3 +65,14 @@ def test_favicon(root):
     assert final_url == "http://localhost:8080/favicon.ico"
     code(404)
 
+
+def test_fallback(root):
+    assert core.config.redirect_to_fallback
+    final_url = go("/simple/pypiserver/")
+    assert final_url == "http://pypi.python.org/simple/pypiserver/"
+
+
+def test_no_fallback(root):
+    core.config.redirect_to_fallback = False
+    final_url = go("/simple/pypiserver/")
+    assert final_url == "http://localhost:8080/simple/pypiserver/"
