@@ -98,3 +98,37 @@ def test_simple_list_no_dotfiles2(root):
     root.join(".foo-1.0.zip").write("secret")
     go("/simple/.foo/")
     assert list(showlinks()) == []
+
+
+def test_simple_index(root):
+    root.join("foobar-1.0.zip").write("")
+    root.join("foobar-1.1.zip").write("")
+    root.join("foobarbaz-1.1.zip").write("")
+    root.join("foobar.baz-1.1.zip").write("")
+
+    go("/simple/foobar")
+    show()
+    links = list(showlinks())
+    assert len(links) == 2
+
+
+def test_simple_index_list(root):
+    root.join("foobar-1.0.zip").write("")
+    root.join("foobar-1.1.zip").write("")
+    root.join("foobarbaz-1.1.zip").write("")
+    root.join("foobar.baz-1.1.zip").write("")
+
+    go("/simple/")
+    show()
+    links = list(showlinks())
+    assert len(links) == 3
+
+
+def test_simple_index_case(root):
+    root.join("FooBar-1.0.zip").write("")
+    root.join("FooBar-1.1.zip").write("")
+
+    go("/simple/foobar")
+    show()
+    links = list(showlinks())
+    assert len(links) == 2
