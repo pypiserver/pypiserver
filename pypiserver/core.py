@@ -142,6 +142,9 @@ def list_packages():
 
 @route('/packages/:filename')
 def server_static(filename):
+    if filename.startswith("."):
+        return HTTPError(404)
+
     return static_file(filename, root=packages.root)
 
 
