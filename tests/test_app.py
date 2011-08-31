@@ -27,6 +27,13 @@ def pytest_funcarg__root(request):
     twill.add_wsgi_intercept("systemexit.de", 80, bottle.default_app)
     twill.add_wsgi_intercept("pypi.python.org", 80, lambda: fallback_app)
 
+    def cleanup():
+        twill.remove_wsgi_intercept("localhost", 8080)
+        twill.remove_wsgi_intercept("systemexit.de", 80)
+        twill.remove_wsgi_intercept("pypi.python.org", 80)
+
+    request.addfinalizer(cleanup)
+
     go("http://localhost:8080/")
     return tmpdir
 
