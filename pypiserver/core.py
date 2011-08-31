@@ -11,10 +11,11 @@ except ImportError:
 from pypiserver import bottle, __version__
 sys.modules["bottle"] = bottle
 
-from bottle import route, run, static_file, redirect, request, debug, server_names
+from bottle import route, run, static_file, redirect, request, debug, server_names, HTTPError
 mimetypes.add_type("application/octet-stream", ".egg")
 
 packages = None
+
 
 class configuration(object):
     def __init__(self):
@@ -61,6 +62,11 @@ class pkgset(object):
             if pkgname:
                 prefixes.add(pkgname)
         return prefixes
+
+
+@route("/favicon.ico")
+def favicon():
+    return HTTPError(404)
 
 
 @route('/')
