@@ -1,9 +1,7 @@
 #! /usr/bin/env py.test
 
-import os
-
 import twill
-from twill.commands import go, code, follow, show, find, reload, showlinks
+from twill.commands import go, code, show, find, reload, showlinks, notfind
 
 from pypiserver import core
 import bottle
@@ -76,3 +74,27 @@ def test_no_fallback(root):
     core.config.redirect_to_fallback = False
     final_url = go("/simple/pypiserver/")
     assert final_url == "http://localhost:8080/simple/pypiserver/"
+
+
+def test_serve_no_dotfiles(root):
+    root.join(".foo-1.0.zip").write("secret")
+    go("/packages/.foo-1.0.zip")
+    code(404)
+
+
+def test_packages_list_no_dotfiles(root):
+    root.join(".foo-1.0.zip").write("secret")
+    go("/packages/")
+    notfind("foo")
+
+
+def test_simple_list_no_dotfiles(root):
+    root.join(".foo-1.0.zip").write("secret")
+    go("/simple/")
+    notfind("foo")
+
+
+def test_simple_list_no_dotfiles2(root):
+    root.join(".foo-1.0.zip").write("secret")
+    go("/simple/.foo/")
+    assert list(showlinks()) == []
