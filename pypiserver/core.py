@@ -117,8 +117,10 @@ def simple_redirect(prefix):
 @route("/simple/:prefix/")
 def simple(prefix=""):
     files = packages.find_packages(prefix)
-    if not files and config.redirect_to_fallback:
-        return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
+    if not files:
+        if config.redirect_to_fallback:
+            return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
+        return HTTPError(404)
     files.sort()
     res = ["<html><head><title>Links for %s</title></head><body>\n" % prefix]
     res.append("<h1>Links for %s</h1>\n" % prefix)
