@@ -48,3 +48,12 @@ def test_packages_empty(root):
     show()
     code(200)
     assert list(showlinks()) == []
+
+
+def test_favicon(root):
+    final_url = go("/favicon.ico")
+    show()
+    print "FINAL_URL:", final_url
+    assert final_url == "http://localhost:8080/favicon.ico"
+    code(404)
+
