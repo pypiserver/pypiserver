@@ -81,6 +81,7 @@ def test_no_fallback(root):
     core.config.redirect_to_fallback = False
     final_url = go("/simple/pypiserver/")
     assert final_url == "http://localhost:8080/simple/pypiserver/"
+    code(404)
 
 
 def test_serve_no_dotfiles(root):
