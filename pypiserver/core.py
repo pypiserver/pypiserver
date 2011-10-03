@@ -30,15 +30,22 @@ def guess_pkgname(path):
     return pkgname
 
 
+def is_allowed_path(path_part):
+    p = path_part.replace("\\", "/")
+    return not (p.startswith(".") or "/." in p)
+
+
 class pkgset(object):
     def __init__(self, root):
         self.root = root
 
     def listdir(self):
         res = []
-        for x in os.listdir(self.root):
-            if not x.startswith("."):
-                res.append(os.path.join(self.root, x))
+        for dirpath, dirnames, filenames in os.walk(self.root):
+            dirnames[:] = [x for x in dirnames if is_allowed_path(x)]
+            for x in filenames:
+                if is_allowed_path(x):
+                    res.append(os.path.join(self.root, dirpath, x))
         return res
 
     def find_packages(self, prefix=""):
@@ -125,7 +132,7 @@ def simple(prefix=""):
     res = ["<html><head><title>Links for %s</title></head><body>\n" % prefix]
     res.append("<h1>Links for %s</h1>\n" % prefix)
     for x in files:
-        res.append('<a href="/packages/%s">%s</a><br>\n' % (x, x))
+        res.append('<a href="/packages/%s">%s</a><br>\n' % (x, os.path.basename(x)))
     res.append("</body></html>\n")
     return "".join(res)
 
@@ -142,9 +149,9 @@ def list_packages():
     return "".join(res)
 
 
-@route('/packages/:filename')
+@route('/packages/:filename#.*#')
 def server_static(filename):
-    if filename.startswith("."):
+    if not is_allowed_path(filename):
         return HTTPError(404)
 
     return static_file(filename, root=packages.root)
