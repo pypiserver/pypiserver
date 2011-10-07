@@ -108,6 +108,33 @@ def test_simple_list_no_dotfiles2(root):
     assert list(showlinks()) == []
 
 
+def test_serve_no_dotdir(root):
+    root.mkdir(".subdir").join("foo-1.0.zip").write("secret")
+    go("/packages/.subdir/foo-1.0.zip")
+    code(404)
+
+
+def test_packages_list_no_dotdir(root):
+    root.mkdir(".subdir").join("foo-1.0.zip").write("secret")
+    go("/packages/")
+    show()
+    notfind("foo")
+
+
+def test_simple_list_no_dotdir(root):
+    root.mkdir(".subdir").join("foo-1.0.zip").write("secret")
+    go("/simple/")
+    show()
+    notfind("foo")
+
+
+def test_simple_list_no_dotdir2(root):
+    root.mkdir(".subdir").join("foo-1.0.zip").write("secret")
+    go("/simple/foo/")
+    show()
+    assert list(showlinks()) == []
+
+
 def test_simple_index(root):
     root.join("foobar-1.0.zip").write("")
     root.join("foobar-1.1.zip").write("")
