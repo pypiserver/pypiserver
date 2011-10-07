@@ -240,6 +240,14 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 Changelog
 =========
 
+0.3.0 (2011-10-07)
+------------------
+- pypiserver now scans the given root directory and it's
+  subdirectories recursively for packages. Files and directories
+  starting with a dot are now being ignored.
+- /favicon.ico now returns a "404 Not Found" error
+- pypiserver now contains some unit tests to be run with tox
+
 0.2.0 (2011-08-09)
 ------------------
 - better matching of package names (i.e. don't install package if only
