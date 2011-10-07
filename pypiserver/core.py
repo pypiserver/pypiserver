@@ -167,7 +167,9 @@ def usage():
     print """pypi-server [OPTIONS] [PACKAGES_DIRECTORY]
   start PyPI compatible package server serving packages from
   PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
-  command line, it uses the default ~/packages.
+  command line, it uses the default ~/packages.  pypiserver scans this
+  directory recursively for packages. It skips packages and
+  directories starting with a dot.
 
 pypi-server understands the following options:
 
