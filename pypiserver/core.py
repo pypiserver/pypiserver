@@ -45,7 +45,7 @@ def is_allowed_path(path_part):
 
 class pkgset(object):
     def __init__(self, root):
-        self.root = root
+        self.root = os.path.abspath(root)
 
     def listdir(self):
         res = []
