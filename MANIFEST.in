@@ -9,6 +9,7 @@ include pypiserver/__init__.py
 include pypiserver/__main__.py
 include pypiserver/bottle.py
 include pypiserver/core.py
+include pypiserver/manage.py
 include setup.cfg
 include setup.py
 include tests/test_app.py
