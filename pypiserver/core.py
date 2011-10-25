@@ -30,6 +30,14 @@ def guess_pkgname(path):
     return pkgname
 
 
+def guess_pkgname_and_version(path):
+    path = os.path.basename(path)
+    pkgname = re.split(r"-\d+\.", path, 1)[0]
+    version = path[len(pkgname)+1:]
+    version = re.sub(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2)$", "", version)
+    return pkgname, version
+
+
 def is_allowed_path(path_part):
     p = path_part.replace("\\", "/")
     return not (p.startswith(".") or "/." in p)
