@@ -33,7 +33,7 @@ def guess_pkgname(path):
 def guess_pkgname_and_version(path):
     path = os.path.basename(path)
     pkgname = re.split(r"-\d+\.", path, 1)[0]
-    version = path[len(pkgname)+1:]
+    version = path[len(pkgname) + 1:]
     version = re.sub(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2)$", "", version)
     return pkgname, version
 
@@ -207,6 +207,23 @@ pypi-server --help
 pypi-server --version
   show pypi-server's version
 
+pypi-server -U [OPTIONS] [PACKAGES_DIRECTORY]
+  update packages in PACKAGES_DIRECTORY. This command searches
+  pypi.python.org for updates and shows a pip command line which
+  updates the package.
+
+The following additional options can be specified with -U:
+
+  -x
+    execute the pip commands instead of only showing them
+
+  -d DOWNLOAD_DIRECTORY
+    download package updates to this directory. The default is to use
+    the directory which contains the latest version of the package to
+    be updated.
+
+
+
 Visit http://pypi.python.org/pypi/pypiserver for more information.
 """
 
@@ -217,12 +234,15 @@ def main(argv=None):
 
     global packages
 
+    command = "serve"
     host = "0.0.0.0"
     port = 8080
     server = None
+    update_dry_run = True
+    update_directory = None
 
     try:
-        opts, roots = getopt.getopt(argv[1:], "i:p:r:h", ["interface=", "port=", "root=", "server=", "disable-fallback", "version", "help"])
+        opts, roots = getopt.getopt(argv[1:], "i:p:r:d:Uxh", ["interface=", "port=", "root=", "server=", "disable-fallback", "version", "help"])
     except getopt.GetoptError, err:
         sys.exit("usage error: %s" % (err,))
 
@@ -242,6 +262,12 @@ def main(argv=None):
         elif k == "--version":
             print "pypiserver %s" % __version__
             sys.exit(0)
+        elif k == "-U":
+            command = "update"
+        elif k == "-x":
+            update_dry_run = False
+        elif k == "-d":
+            update_directory = v
         elif k in ("-h", "--help"):
             usage()
             sys.exit(0)
@@ -259,6 +285,12 @@ def main(argv=None):
         sys.exit("Error: while trying to list %r: %s" % (root, err))
 
     packages = pkgset(root)
+
+    if command == "update":
+        from pypiserver import manage
+        manage.update(packages, update_directory, update_dry_run)
+        return
+
     server = server or "auto"
     debug(True)
     print "This is pypiserver %s serving %r on %s:%s" % (__version__, root, host, port)

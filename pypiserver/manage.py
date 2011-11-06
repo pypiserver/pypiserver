@@ -57,7 +57,7 @@ def find_updates(pkgset):
 def update(pkgset, destdir=None, dry_run=False):
     need_update = find_updates(pkgset)
     for x in need_update:
-        print "# updating", x.pkgname, x.version, x.latest_version
+        print "# update", x.pkgname, "from", x.version, "to", x.latest_version
 
         cmd = ["pip", "-q", "install", "-i", "http://pypi.python.org/simple",
                "-d", destdir or os.path.dirname(os.path.join(pkgset.root, x.path)),
