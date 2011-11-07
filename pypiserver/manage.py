@@ -11,6 +11,8 @@ class pkgfile(object):
 
 
 def find_updates(pkgset):
+    no_releases = set()
+
     def write(s):
         sys.stdout.write(s)
         sys.stdout.flush()
@@ -36,21 +38,26 @@ def find_updates(pkgset):
         releases = pypi.package_releases(pkgname)
 
         releases = [(pkg_resources.parse_version(x), x) for x in releases]
-        do_update = False
+        status = "."
         if releases:
             m = max(releases)
             if m[0] > file.version_info:
                 file.latest_version = m[1]
-                do_update = True
+                status = "u"
                 # print "%s needs update from %s to %s" % (pkgname, file.version, m[1])
                 need_update.append(file)
-        if do_update:
-            write("U")
         else:
-            write(".")
+            no_releases.add(pkgname)
+            status = "e"
+
+        write(status)
 
     write("\n\n")
 
+    no_releases = list(no_releases)
+    no_releases.sort()
+    print "no releases found on pypi for", ", ".join(no_releases)
+    print
     return need_update
 
 
