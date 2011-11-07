@@ -222,7 +222,8 @@ The following additional options can be specified with -U:
     the directory which contains the latest version of the package to
     be updated.
 
-
+  -u
+    allow updating to unstable version (alpha, beta, rc, dev versions)
 
 Visit http://pypi.python.org/pypi/pypiserver for more information.
 """
@@ -240,9 +241,10 @@ def main(argv=None):
     server = None
     update_dry_run = True
     update_directory = None
+    update_stable_only = True
 
     try:
-        opts, roots = getopt.getopt(argv[1:], "i:p:r:d:Uxh", ["interface=", "port=", "root=", "server=", "disable-fallback", "version", "help"])
+        opts, roots = getopt.getopt(argv[1:], "i:p:r:d:Uuxh", ["interface=", "port=", "root=", "server=", "disable-fallback", "version", "help"])
     except getopt.GetoptError, err:
         sys.exit("usage error: %s" % (err,))
 
@@ -266,6 +268,8 @@ def main(argv=None):
             command = "update"
         elif k == "-x":
             update_dry_run = False
+        elif k == "-u":
+            update_stable_only = False
         elif k == "-d":
             update_directory = v
         elif k in ("-h", "--help"):
@@ -288,7 +292,7 @@ def main(argv=None):
 
     if command == "update":
         from pypiserver import manage
-        manage.update(packages, update_directory, update_dry_run)
+        manage.update(packages, update_directory, update_dry_run, stable_only=update_stable_only)
         return
 
     server = server or "auto"

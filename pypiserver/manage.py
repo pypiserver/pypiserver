@@ -10,7 +10,24 @@ class pkgfile(object):
         self.version_info = pkg_resources.parse_version(self.version)
 
 
-def find_updates(pkgset):
+def is_stable_version(pversion):
+    for x in pversion:
+        if x.startswith("*final"):
+            return True
+        if x.startswith("*"):
+            return False
+    return False
+
+
+def filter_stable_releases(releases):
+    res = []
+    for pversion, version in releases:
+        if is_stable_version(pversion):
+            res.append((pversion, version))
+    return res
+
+
+def find_updates(pkgset, stable_only=True):
     no_releases = set()
 
     def write(s):
@@ -38,6 +55,9 @@ def find_updates(pkgset):
         releases = pypi.package_releases(pkgname)
 
         releases = [(pkg_resources.parse_version(x), x) for x in releases]
+        if stable_only:
+            releases = filter_stable_releases(releases)
+
         status = "."
         if releases:
             m = max(releases)
@@ -61,8 +81,8 @@ def find_updates(pkgset):
     return need_update
 
 
-def update(pkgset, destdir=None, dry_run=False):
-    need_update = find_updates(pkgset)
+def update(pkgset, destdir=None, dry_run=False, stable_only=True):
+    need_update = find_updates(pkgset, stable_only=stable_only)
     for x in need_update:
         print "# update", x.pkgname, "from", x.version, "to", x.latest_version
 
