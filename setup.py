@@ -1,13 +1,27 @@
 #! /usr/bin/env python
 
-import os
-from distutils.core import setup
+import sys, os
+extrakw = {}
+
+try:
+    from setuptools import setup
+    extrakw["use_2to3"] = True
+except ImportError:
+    if sys.version_info >= (3, 0):
+        raise
+    from distutils.core import setup
+
+
+if sys.version_info >= (3, 0):
+    exec("def do_exec(co, loc): exec(co, loc)\n")
+else:
+    exec("def do_exec(co, loc): exec co in loc\n")
 
 
 def get_version():
     d = {}
     try:
-        execfile("pypiserver/__init__.py", d, d)
+        do_exec(open("pypiserver/__init__.py").read(), d)
     except (ImportError, RuntimeError):
         pass
     return d["__version__"]
@@ -38,4 +52,5 @@ setup(name="pypiserver",
         "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Topic :: Software Development :: Build Tools",
-        "Topic :: System :: Software Distribution"])
+        "Topic :: System :: Software Distribution"],
+      **extrakw)

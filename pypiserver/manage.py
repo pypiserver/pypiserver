@@ -47,7 +47,7 @@ def find_updates(pkgset, stable_only=True):
 
     need_update = []
 
-    print "checking %s packages for newer version" % len(pkgname2latest),
+    sys.stdout.write("checking %s packages for newer version\n" % len(pkgname2latest),)
     for count, (pkgname, file) in enumerate(pkgname2latest.items()):
         if count % 40 == 0:
             write("\n")
@@ -76,21 +76,20 @@ def find_updates(pkgset, stable_only=True):
 
     no_releases = list(no_releases)
     no_releases.sort()
-    print "no releases found on pypi for", ", ".join(no_releases)
-    print
+    sys.stdout.write("no releases found on pypi for " + ", ".join(no_releases) + "\n\n")
     return need_update
 
 
 def update(pkgset, destdir=None, dry_run=False, stable_only=True):
     need_update = find_updates(pkgset, stable_only=stable_only)
     for x in need_update:
-        print "# update", x.pkgname, "from", x.version, "to", x.latest_version
+        sys.stdout.write("# update " + x.pkgname + " from " + x.version + "to" + x.latest_version + "\n")
 
         cmd = ["pip", "-q", "install", "-i", "http://pypi.python.org/simple",
                "-d", destdir or os.path.dirname(os.path.join(pkgset.root, x.path)),
                "%s==%s" % (x.pkgname, x.latest_version)]
-        print " ".join(cmd)
-        print
+
+        sys.stdout.write(" ".join(cmd) + "\n\n")
         if not dry_run:
             os.spawnlp(os.P_WAIT, cmd[0], *cmd)
 

@@ -172,7 +172,7 @@ def bad_url(prefix):
 
 
 def usage():
-    print """pypi-server [OPTIONS] [PACKAGES_DIRECTORY]
+    sys.stdout.write("""pypi-server [OPTIONS] [PACKAGES_DIRECTORY]
   start PyPI compatible package server serving packages from
   PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
   command line, it uses the default ~/packages.  pypiserver scans this
@@ -226,7 +226,7 @@ The following additional options can be specified with -U:
     allow updating to unstable version (alpha, beta, rc, dev versions)
 
 Visit http://pypi.python.org/pypi/pypiserver for more information.
-"""
+""")
 
 
 def main(argv=None):
@@ -262,7 +262,7 @@ def main(argv=None):
                 sys.exit("unknown server %r. choose one of %s" % (v, ", ".join(server_names.keys())))
             server = v
         elif k == "--version":
-            print "pypiserver %s" % __version__
+            sys.stdout.write("pypiserver %s\n" % __version__)
             sys.exit(0)
         elif k == "-U":
             command = "update"
@@ -297,8 +297,7 @@ def main(argv=None):
 
     server = server or "auto"
     debug(True)
-    print "This is pypiserver %s serving %r on %s:%s" % (__version__, root, host, port)
-    print
+    sys.stdout.write("This is pypiserver %s serving %r on %s:%s\n\n" % (__version__, root, host, port))
     run(host=host, port=port, server=server)
 
 
