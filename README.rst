@@ -4,7 +4,13 @@
 pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
 
+
 :Authors: Ralf Schmitt <ralf@systemexit.de>
+:Version: 0.4.0
+:Date:    2011-11-19
+:Download: http://pypi.python.org/pypi/pypiserver
+:Code: https://github.com/schmir/pypiserver
+
 
 .. contents:: Table of Contents
   :backlinks: top
@@ -15,8 +21,8 @@ serve a set of packages and eggs to easy_install or pip.
 
 Installation and Usage/Quickstart
 =================================
-pypiserver will work with python 2.5, 2.6 and 2.7. It will *not* work
-with python versions >= 3 or < 2.5.
+pypiserver will work with python 2.5, 2.6 and 2.7. Python 3 support
+has been added with version 0.4.0.
 
 Run the following commands to get your PyPI server up and running::
 
@@ -31,6 +37,8 @@ Alternative Installation as standalone script
 The git repository contains a 'pypi-server-standalone.py' script,
 which is a single python file ready to be executed without any other
 dependencies.
+
+This does *not* work when you're using Python 3.0 or up!
 
 Run the following commands to download the script with wget::
 
@@ -88,7 +96,27 @@ pypi-server -h will print a detailed usage message::
   pypi-server --version
     show pypi-server's version
 
+  pypi-server -U [OPTIONS] [PACKAGES_DIRECTORY]
+    update packages in PACKAGES_DIRECTORY. This command searches
+    pypi.python.org for updates and shows a pip command line which
+    updates the package.
+
+  The following additional options can be specified with -U:
+
+    -x
+      execute the pip commands instead of only showing them
+
+    -d DOWNLOAD_DIRECTORY
+      download package updates to this directory. The default is to use
+      the directory which contains the latest version of the package to
+      be updated.
+
+    -u
+      allow updating to unstable version (alpha, beta, rc, dev versions)
+
   Visit http://pypi.python.org/pypi/pypiserver for more information.
+
+
 
 Configuring pip/easy_install
 ============================
@@ -117,6 +145,49 @@ For easy_install it can be configured with the following setting in
   [easy_install]
   index_url = http://localhost:8080/simple/
 
+Managing the package directory
+==============================
+pypi-server's -U option makes it possible to search for updates of
+available packages. It scans the package directory for available
+packages and searches on pypi.python.org for updates. Without further
+options 'pypi-server -U' will just print a list of commands which must
+be run in order to get the latest version of each package. Output
+looks like::
+
+  checking 82 packages for newer version
+
+  .e......u.........e....e.....u...u....e.
+  e......u...ee.ee.e......u.........ee....
+  ..
+
+  no releases found on pypi for PyXML, Pymacs, _sqlite3, bbutils, isoap, mercurial, pil, pycdb, ropemode, schmir, setuptools, unbuffered
+
+  # update Twisted from 11.0.0 to 11.1.0
+  pip -q install -i http://pypi.python.org/simple -d /home/ralf/packages Twisted==11.1.0
+
+  # update pytest from 2.1.3 to 2.2.0
+  pip -q install -i http://pypi.python.org/simple -d /home/ralf/packages pytest==2.2.0
+
+  # update zope.interface from 3.6.3 to 3.8.0
+  pip -q install -i http://pypi.python.org/simple -d /home/ralf/packages zope.interface==3.8.0
+
+  # update pytest-xdist from 1.6 to 1.7
+  pip -q install -i http://pypi.python.org/simple -d /home/ralf/packages pytest-xdist==1.7
+
+  # update pyOpenSSL from 0.10 to 0.13
+  pip -q install -i http://pypi.python.org/simple -d /home/ralf/packages pyOpenSSL==0.13
+
+It first prints for each package a single character after checking the
+available versions on pypi. A dot means the package is up-to-date, 'u'
+means the package can be updated and 'e' means the list of releases on
+pypi is empty. After that it show a pip command line which can be used
+to update a one package. Either copy and paste that or run
+"pypi-server -Ux" in order to really execute those
+commands.
+
+Specifying an additional '-u' option will also allow alpha, beta and
+release candidates to be downloaded. Without this option these
+releases won't be considered.
 
 
 Optional dependencies
@@ -241,6 +312,12 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 
 Changelog
 =========
+
+0.4.0 (2011-11-19)
+------------------
+- add functionality to manage package updates
+- updated documentation
+- python 3 support has been added
 
 0.3.0 (2011-10-07)
 ------------------
