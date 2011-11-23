@@ -1,13 +1,44 @@
 
-import sys, os, xmlrpclib, pkg_resources
+import sys, os, re, xmlrpclib
 from pypiserver import core
+
+
+# --- the following two functions were copied from distribute's pkg_resources module
+component_re = re.compile(r'(\d+ | [a-z]+ | \.| -)', re.VERBOSE)
+replace = {'pre': 'c', 'preview': 'c', '-': 'final-', 'rc': 'c', 'dev': '@'}.get
+
+
+def _parse_version_parts(s):
+    for part in component_re.split(s):
+        part = replace(part, part)
+        if part in ['', '.']:
+            continue
+        if part[:1] in '0123456789':
+            yield part.zfill(8)    # pad for numeric comparison
+        else:
+            yield '*' + part
+
+    yield '*final'  # ensure that alpha/beta/candidate are before final
+
+
+def parse_version(s):
+    parts = []
+    for part in _parse_version_parts(s.lower()):
+        if part.startswith('*'):
+            # remove trailing zeros from each series of numeric parts
+            while parts and parts[-1] == '00000000':
+                parts.pop()
+        parts.append(part)
+    return tuple(parts)
+
+# -- end of distribute's code
 
 
 class pkgfile(object):
     def __init__(self, path):
         self.path = path
         self.pkgname, self.version = core.guess_pkgname_and_version(path)
-        self.version_info = pkg_resources.parse_version(self.version)
+        self.version_info = parse_version(self.version)
 
 
 def is_stable_version(pversion):
@@ -54,7 +85,7 @@ def find_updates(pkgset, stable_only=True):
 
         releases = pypi.package_releases(pkgname)
 
-        releases = [(pkg_resources.parse_version(x), x) for x in releases]
+        releases = [(parse_version(x), x) for x in releases]
         if stable_only:
             releases = filter_stable_releases(releases)
 
@@ -76,7 +107,7 @@ def find_updates(pkgset, stable_only=True):
 
     no_releases = list(no_releases)
     no_releases.sort()
-    sys.stdout.write("no releases found on pypi for %s\n\n"  % (", ".join(no_releases),))
+    sys.stdout.write("no releases found on pypi for %s\n\n" % (", ".join(no_releases),))
     return need_update
 
 

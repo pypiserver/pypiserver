@@ -2,11 +2,6 @@
 """minimal PyPI like server for use with pip/easy_install"""
 
 import os, sys, getopt, re, mimetypes
-try:
-    # get rid of "UserWarning: Module bottle was already imported from..."
-    import pkg_resources
-except ImportError:
-    pass
 
 from pypiserver import bottle, __version__
 sys.modules["bottle"] = bottle
