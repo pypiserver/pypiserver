@@ -6,8 +6,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 0.4.0
-:Date:    2011-11-19
+:Version: 0.4.1
+:Date:    2011-11-23
 :Download: http://pypi.python.org/pypi/pypiserver
 :Code: https://github.com/schmir/pypiserver
 
@@ -182,8 +182,8 @@ available versions on pypi. A dot means the package is up-to-date, 'u'
 means the package can be updated and 'e' means the list of releases on
 pypi is empty. After that it show a pip command line which can be used
 to update a one package. Either copy and paste that or run
-"pypi-server -Ux" in order to really execute those
-commands.
+"pypi-server -Ux" in order to really execute those commands. You need
+to have pip installed for that to work however.
 
 Specifying an additional '-u' option will also allow alpha, beta and
 release candidates to be downloaded. Without this option these
@@ -312,6 +312,12 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 
 Changelog
 =========
+0.4.1 (2011-11-23)
+------------------
+- upgrade bottle to 0.9.7, fixes possible installation issues with
+  python 3
+- remove dependency on pkg_resources module when running
+  'pypi-server -U'
 
 0.4.0 (2011-11-19)
 ------------------
