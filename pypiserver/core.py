@@ -240,7 +240,8 @@ def main(argv=None):
 
     try:
         opts, roots = getopt.getopt(argv[1:], "i:p:r:d:Uuxh", ["interface=", "port=", "root=", "server=", "disable-fallback", "version", "help"])
-    except getopt.GetoptError, err:
+    except getopt.GetoptError:
+        err = sys.exc_info()[1]
         sys.exit("usage error: %s" % (err,))
 
     for k, v in opts:
@@ -280,7 +281,8 @@ def main(argv=None):
 
     try:
         os.listdir(root)
-    except Exception, err:
+    except Exception:
+        err = sys.exc_info()[1]
         sys.exit("Error: while trying to list %r: %s" % (root, err))
 
     packages = pkgset(root)
