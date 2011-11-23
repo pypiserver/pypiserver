@@ -20,3 +20,4 @@ __pycache__/
 /README.html
 /pypi-server-standalone.py
 /.tox/
+/pypiserver.egg-info/
