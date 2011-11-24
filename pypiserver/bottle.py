@@ -23,7 +23,6 @@ import cgi
 import email.utils
 import functools
 import hmac
-import httplib
 import imp
 import itertools
 import mimetypes
@@ -32,29 +31,41 @@ import re
 import subprocess
 import sys
 import tempfile
-import thread
+if sys.version_info >= (3,0):
+    import _thread as thread
+else:
+    import thread
 import threading
 import time
 import warnings
 
-from Cookie import SimpleCookie
+if sys.version_info >= (3,0):
+    from http.cookies import SimpleCookie
+else:
+    from Cookie import SimpleCookie
 from tempfile import TemporaryFile
 from traceback import format_exc
-from urlparse import urlunsplit, urljoin, SplitResult as UrlSplitResult
 
-# Workaround for a bug in some versions of lib2to3 (fixed on CPython 2.7 and 3.2)
-import urllib
-urlencode = urllib.urlencode
-urlquote = urllib.quote
-urlunquote = urllib.unquote
+if sys.version_info >= (3,0):
+    from urllib.parse import urlunsplit, urljoin, SplitResult as UrlSplitResult
+else:
+    from urlparse import urlunsplit, urljoin, SplitResult as UrlSplitResult
+
+if sys.version_info >= (3,0):
+    from urllib.parse import urlencode, quote as urlquote, unquote as urlunquote
+else:
+    from urllib import urlencode, quote as urlquote, unquote as urlunquote
 
 try: from collections import MutableMapping as DictMixin
 except ImportError: # pragma: no cover
     from UserDict import DictMixin
 
-try: from urlparse import parse_qs
-except ImportError: # pragma: no cover
-    from cgi import parse_qs
+if sys.version_info >= (3,0):
+    from urllib.parse import parse_qs
+else:
+    try: from urlparse import parse_qs
+    except ImportError: # pragma: no cover
+        from cgi import parse_qs
 
 try: import cPickle as pickle
 except ImportError: # pragma: no cover
@@ -68,8 +79,18 @@ except ImportError: # pragma: no cover
         except ImportError: # pragma: no cover
             json_dumps = None
 
+try:
+    next
+except NameError:
+    def next(it):
+        return it.next()
+
+
 NCTextIOWrapper = None
 if sys.version_info >= (3,0,0): # pragma: no cover
+    imap = map
+    basestring = str
+    unicode = str
     # See Request.POST
     from io import BytesIO
     def touni(x, enc='utf8', err='strict'):
@@ -82,6 +103,7 @@ if sys.version_info >= (3,0,0): # pragma: no cover
                 the wrapped buffer. This subclass keeps it open. '''
             def close(self): pass
 else:
+    imap = itertools.imap
     from StringIO import StringIO as BytesIO
     bytes = str
     def touni(x, enc='utf8', err='strict'):
@@ -287,7 +309,7 @@ class Router(object):
             parts = [p.replace('\\:',':') for p in token[::3]]
             names = token[1::3]
             if len(parts) > len(names): names.append(None)
-            pairs = zip(parts, names)
+            pairs = list(zip(parts, names))
             self.named[_name] = (rule, pairs)
         try:
             anon = list(anon)
@@ -297,7 +319,8 @@ class Router(object):
         except IndexError:
             msg = "Not enough arguments to fill out anonymous wildcards."
             raise RouteBuildError(msg)
-        except KeyError, e:
+        except KeyError:
+            e = sys.exc_info()[1]
             raise RouteBuildError(*e.args)
 
         if args: url += ['?', urlencode(args)]
@@ -367,10 +390,12 @@ class Router(object):
                 combined = '%s|(%s)' % (self.dynamic[-1][0].pattern, fpat)
                 self.dynamic[-1] = (re.compile(combined), self.dynamic[-1][1])
                 self.dynamic[-1][1].append((gpat, target))
-            except (AssertionError, IndexError), e: # AssertionError: Too many groups
+            except (AssertionError, IndexError): # AssertionError: Too many groups
+                e = sys.exc_info()[1]
                 self.dynamic.append((re.compile('(^%s$)'%fpat),
                                     [(gpat, target)]))
-            except re.error, e:
+            except re.error:
+                e = sys.exc_info()[1]
                 raise RouteSyntaxError("Could not add Route: %s (%s)" % (rule, e))
 
     def _compile_pattern(self, rule):
@@ -433,7 +458,7 @@ class Bottle(object):
         '''
         if not isinstance(app, Bottle):
             raise TypeError('Only Bottle instances are supported for now.')
-        prefix = '/'.join(filter(None, prefix.split('/')))
+        prefix = '/'.join([x for x in prefix.split('/') if x])
         if not prefix:
             raise TypeError('Empty prefix. Perhaps you want a merge()?')
         for other in self.mounts:
@@ -654,14 +679,16 @@ class Bottle(object):
         try:
             callback, args = self._match(environ)
             return callback(**args)
-        except HTTPResponse, r:
+        except HTTPResponse:
+            r = sys.exc_info()[1]
             return r
         except RouteReset: # Route reset requested by the callback or a plugin.
             del self.ccache[handle]
             return self._handle(environ) # Try again.
         except (KeyboardInterrupt, SystemExit, MemoryError):
             raise
-        except Exception, e:
+        except Exception:
+            e = sys.exc_info()[1]
             if not self.catchall: raise
             return HTTPError(500, "Internal Server Error", e, format_exc(10))
 
@@ -708,14 +735,16 @@ class Bottle(object):
         # Handle Iterables. We peek into them to detect their inner type.
         try:
             out = iter(out)
-            first = out.next()
+            first = next(out)
             while not first:
-                first = out.next()
+                first = next(out)
         except StopIteration:
             return self._cast('', request, response)
-        except HTTPResponse, e:
+        except HTTPResponse:
+            e = sys.exc_info()[1]
             first = e
-        except Exception, e:
+        except Exception:
+            e = sys.exc_info()[1]
             first = HTTPError(500, 'Unhandled exception', e, format_exc(10))
             if isinstance(e, (KeyboardInterrupt, SystemExit, MemoryError))\
             or not self.catchall:
@@ -726,8 +755,8 @@ class Bottle(object):
         if isinstance(first, bytes):
             return itertools.chain([first], out)
         if isinstance(first, unicode):
-            return itertools.imap(lambda x: x.encode(response.charset),
-                                  itertools.chain([first], out))
+            return imap(lambda x: x.encode(response.charset),
+                        itertools.chain([first], out))
         return self._cast(HTTPError(500, 'Unsupported response type: %s'\
                                          % type(first)), request, response)
 
@@ -748,7 +777,8 @@ class Bottle(object):
             return out
         except (KeyboardInterrupt, SystemExit, MemoryError):
             raise
-        except Exception, e:
+        except Exception:
+            e = sys.exc_info()[1]
             if not self.catchall: raise
             err = '<h1>Critical error while processing request: %s</h1>' \
                   % environ.get('PATH_INFO', '/')
@@ -818,7 +848,7 @@ class Request(threading.local, DictMixin):
     def __delitem__(self, key): self[key] = ""; del(self.environ[key])
     def __iter__(self): return iter(self.environ)
     def __len__(self): return len(self.environ)
-    def keys(self): return self.environ.keys()
+    def keys(self): return list(self.environ.keys())
     def __setitem__(self, key, value):
         """ Shortcut for Request.environ.__setitem__ """
         self.environ[key] = value
@@ -888,7 +918,7 @@ class Request(threading.local, DictMixin):
         """ The QUERY_STRING parsed into an instance of :class:`MultiDict`. """
         data = parse_qs(self.query_string, keep_blank_values=True)
         get = self.environ['bottle.get'] = MultiDict()
-        for key, values in data.iteritems():
+        for key, values in data.items():
             for value in values:
                 get[key] = value
         return get
@@ -989,7 +1019,7 @@ class Request(threading.local, DictMixin):
         """
         raw_dict = SimpleCookie(self.headers.get('Cookie',''))
         cookies = {}
-        for cookie in raw_dict.itervalues():
+        for cookie in raw_dict.values():
             cookies[cookie.key] = cookie.value
         return cookies
 
@@ -1104,7 +1134,7 @@ class Response(threading.local):
             raise TypeError('Secret missing for non-string Cookie.')
 
         self.COOKIES[key] = value
-        for k, v in kargs.iteritems():
+        for k, v in kargs.items():
             self.COOKIES[key][k.replace('_', '-')] = v
 
     def delete_cookie(self, key, **kwargs):
@@ -1285,14 +1315,14 @@ class MultiDict(DictMixin):
     # collections.MutableMapping would be better for Python >= 2.6
     def __init__(self, *a, **k):
         self.dict = dict()
-        for k, v in dict(*a, **k).iteritems():
+        for k, v in dict(*a, **k).items():
             self[k] = v
 
     def __len__(self): return len(self.dict)
     def __iter__(self): return iter(self.dict)
     def __contains__(self, key): return key in self.dict
     def __delitem__(self, key): del self.dict[key]
-    def keys(self): return self.dict.keys()
+    def keys(self): return list(self.dict.keys())
     def __getitem__(self, key): return self.get(key, KeyError, -1)
     def __setitem__(self, key, value): self.append(key, value)
 
@@ -1306,7 +1336,7 @@ class MultiDict(DictMixin):
         return self.dict[key][index]
 
     def iterallitems(self):
-        for key, values in self.dict.iteritems():
+        for key, values in self.dict.items():
             for value in values:
                 yield key, value
 
@@ -1615,7 +1645,7 @@ def validate(**vkargs):
     """
     def decorator(func):
         def wrapper(**kargs):
-            for key, value in vkargs.iteritems():
+            for key, value in vkargs.items():
                 if key not in kargs:
                     abort(403, 'Missing parameter: %s' % key)
                 try:
@@ -1751,8 +1781,8 @@ class FapwsServer(ServerAdapter):
         evwsgi.start(self.host, port)
         # fapws3 never releases the GIL. Complain upstream. I tried. No luck.
         if 'BOTTLE_CHILD' in os.environ and not self.quiet:
-            print "WARNING: Auto-reloading does not work with Fapws3."
-            print "         (Fapws3 breaks python thread support)"
+            sys.stdout.write("WARNING: Auto-reloading does not work with Fapws3.\n")
+            sys.stdout.write("         (Fapws3 breaks python thread support)\n")
         evwsgi.set_base_module(base)
         def app(environ, start_response):
             environ['wsgi.multiprocess'] = False
@@ -1976,10 +2006,9 @@ def run(app=None, server='wsgiref', host='127.0.0.1', port=8080,
         raise RuntimeError("Server must be a subclass of ServerAdapter")
     server.quiet = server.quiet or quiet
     if not server.quiet and not os.environ.get('BOTTLE_CHILD'):
-        print "Bottle server starting up (using %s)..." % repr(server)
-        print "Listening on http://%s:%d/" % (server.host, server.port)
-        print "Use Ctrl-C to quit."
-        print
+        sys.stdout.write("Bottle server starting up (using %s)...\n" % repr(server))
+        sys.stdout.write("Listening on http://%s:%d/\n" % (server.host, server.port))
+        sys.stdout.write("Use Ctrl-C to quit.\n\n")
     try:
         if reloader:
             interval = min(interval, 1)
@@ -1992,7 +2021,7 @@ def run(app=None, server='wsgiref', host='127.0.0.1', port=8080,
     except KeyboardInterrupt:
         pass
     if not server.quiet and not os.environ.get('BOTTLE_CHILD'):
-        print "Shutting down..."
+        sys.stdout.write("Shutting down...\n")
 
 
 class FileCheckerThread(threading.Thread):
@@ -2014,7 +2043,7 @@ class FileCheckerThread(threading.Thread):
             if path[-4:] in ('.pyo', '.pyc'): path = path[:-1]
             if path and exists(path): files[path] = mtime(path)
         while not self.status:
-            for path, lmtime in files.iteritems():
+            for path, lmtime in files.items():
                 if not exists(path) or mtime(path) > lmtime:
                     self.status = 3
             if not exists(self.lockfile):
@@ -2068,7 +2097,7 @@ def _reloader_observer(server, app, interval):
                 if os.path.exists(lockfile): os.unlink(lockfile)
                 sys.exit(p.poll())
             elif not server.quiet:
-                print "Reloading server..."
+                sys.stdout.write("Reloading server...\n")
     except KeyboardInterrupt:
         pass
     if os.path.exists(lockfile): os.unlink(lockfile)
@@ -2108,7 +2137,7 @@ class BaseTemplate(object):
         self.name = name
         self.source = source.read() if hasattr(source, 'read') else source
         self.filename = source.filename if hasattr(source, 'filename') else None
-        self.lookup = map(os.path.abspath, lookup)
+        self.lookup = [os.path.abspath(x) for x in lookup]
         self.encoding = encoding
         self.settings = self.settings.copy() # Copy from class variable
         self.settings.update(settings) # Apply
@@ -2237,7 +2266,10 @@ class SimpleTALTemplate(BaseTemplate):
 
     def render(self, *args, **kwargs):
         from simpletal import simpleTALES
-        from StringIO import StringIO
+        if sys.version_info >= (3, 0):
+            from io import StringIO
+        else:
+            from StringIO import StringIO
         for dictarg in args: kwargs.update(dictarg)
         # TODO: maybe reuse a context instead of always creating one
         context = simpleTALES.Context()
@@ -2475,7 +2507,10 @@ DEBUG = False
 MEMFILE_MAX = 1024*100
 
 #: A dict to map HTTP status codes (e.g. 404) to phrases (e.g. 'Not Found')
-HTTP_CODES = httplib.responses
+if sys.version_info >= (3,0):
+    from http.client import responses as HTTP_CODES
+else:
+    from httplib import responses as HTTP_CODES
 HTTP_CODES[418] = "I'm a teapot" # RFC 2324
 
 #: The default template used for error pages. Override with @error()
