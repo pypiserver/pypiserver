@@ -13,7 +13,7 @@ def main():
             pass
 
     remove("make_manifest.py")
-
+    remove("commit-standalone")
     files.sort()
 
     f = open("MANIFEST.in", "w")
