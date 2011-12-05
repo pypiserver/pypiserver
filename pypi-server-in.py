@@ -4,13 +4,11 @@
 sources = """
 @SOURCES@"""
 
-import sys, base64, zlib, cPickle
-
-sources = cPickle.loads(zlib.decompress(base64.decodestring(sources)))
+import sys, base64, zlib
 
 
 class DictImporter(object):
-    sources = sources
+    sources = None
 
     def find_module(self, fullname, path=None):
         if fullname in self.sources:
@@ -34,7 +32,7 @@ class DictImporter(object):
         if is_pkg:
             module.__path__ = [fullname]
 
-        exec co in module.__dict__
+        do_exec(co, module.__dict__)
         return sys.modules[fullname]
 
     def get_source(self, name):
@@ -44,7 +42,19 @@ class DictImporter(object):
         return res
 
 
+if sys.version_info >= (3, 0):
+    import pickle
+    exec("def do_exec(co, loc): exec(co, loc)\n")
+    sources = sources.encode("ascii")  # ensure bytes
+    d = zlib.decompress(base64.decodebytes(sources))
+    sources = pickle.loads(zlib.decompress(base64.decodebytes(sources)), encoding="utf-8")
+else:
+    import cPickle as pickle
+    exec("def do_exec(co, loc): exec co in loc\n")
+    sources = pickle.loads(zlib.decompress(base64.decodestring(sources)))
+
 importer = DictImporter()
+importer.sources = sources
 sys.meta_path.append(importer)
 
 if __name__ == "__main__":

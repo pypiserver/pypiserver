@@ -1,14 +1,10 @@
 #! /usr/bin/env python
 
 import sys, os
-extrakw = {}
 
 try:
     from setuptools import setup
-    extrakw["use_2to3"] = True
 except ImportError:
-    if sys.version_info >= (3, 0):
-        raise
     from distutils.core import setup
 
 
@@ -57,5 +53,4 @@ setup(name="pypiserver",
         "Programming Language :: Python :: 3.1",
         "Programming Language :: Python :: 3.2",
         "Topic :: Software Development :: Build Tools",
-        "Topic :: System :: Software Distribution"],
-      **extrakw)
+        "Topic :: System :: Software Distribution"])

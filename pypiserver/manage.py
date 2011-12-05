@@ -1,7 +1,11 @@
 
-import sys, os, re, xmlrpclib
+import sys, os, re
 from pypiserver import core
 
+if sys.version_info >= (3,0):
+    from xmlrpc.client import Server
+else:
+    from xmlrpclib import Server
 
 # --- the following two functions were copied from distribute's pkg_resources module
 component_re = re.compile(r'(\d+ | [a-z]+ | \.| -)', re.VERBOSE)
@@ -65,7 +69,7 @@ def find_updates(pkgset, stable_only=True):
         sys.stdout.write(s)
         sys.stdout.flush()
 
-    pypi = xmlrpclib.Server("http://pypi.python.org/pypi/")
+    pypi = Server("http://pypi.python.org/pypi/")
     pkgname2latest = {}
 
     pkgfiles = [pkgfile(x) for x in pkgset.find_packages()]
