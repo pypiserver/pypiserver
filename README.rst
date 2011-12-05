@@ -6,8 +6,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 0.4.1
-:Date:    2011-11-23
+:Version: 0.5.0
+:Date:    2011-12-05
 :Download: http://pypi.python.org/pypi/pypiserver
 :Code: https://github.com/schmir/pypiserver
 
@@ -37,8 +37,6 @@ Alternative Installation as standalone script
 The git repository contains a 'pypi-server-standalone.py' script,
 which is a single python file ready to be executed without any other
 dependencies.
-
-This does *not* work when you're using Python 3.0 or up!
 
 Run the following commands to download the script with wget::
 
@@ -312,6 +310,14 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 
 Changelog
 =========
+0.5.0 (2011-12-05)
+------------------
+- make setup.py install without calling 2to3 by changing source code
+  to be compatible with both python 2 and python 3. We now ship a
+  slightly patched version of bottle. The upcoming bottle 0.11
+  also contains these changes.
+- make the single-file pypi-server-standalone.py work with python 3
+
 0.4.1 (2011-11-23)
 ------------------
 - upgrade bottle to 0.9.7, fixes possible installation issues with
