@@ -2,7 +2,7 @@
 import sys, os, re
 from pypiserver import core
 
-if sys.version_info >= (3,0):
+if sys.version_info >= (3, 0):
     from xmlrpc.client import Server
 else:
     from xmlrpclib import Server

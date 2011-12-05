@@ -23,14 +23,9 @@ def get_version():
     return d["__version__"]
 
 
-def read_long_description():
-    fn = os.path.join(os.path.dirname(os.path.abspath(__file__)), "README.rst")
-    return open(fn).read()
-
-
 setup(name="pypiserver",
       description="minimal pypi server",
-      long_description = read_long_description(),
+      long_description=open("README.tst").read(),
       version=get_version(),
       packages=["pypiserver"],
       scripts=["pypi-server"],

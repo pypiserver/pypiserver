@@ -4,6 +4,7 @@
 
 import os, zlib, cPickle, base64, glob
 
+
 def get_version():
     d = {}
     try:
@@ -11,6 +12,7 @@ def get_version():
     except (ImportError, RuntimeError):
         pass
     return d["__version__"]
+
 
 def main():
     name2src = {}
@@ -32,5 +34,6 @@ def main():
     os.chmod(dst, 0755)
     print "created", dst
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()
