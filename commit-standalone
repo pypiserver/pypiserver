@@ -1,0 +1,10 @@
+#! /bin/sh
+
+gitversion=$(git describe --tags)
+rm -rf .standalone
+git-new-workdir . .standalone standalone 2>/dev/null|| exit 10
+./gen-standalone.py
+cp -p pypi-server-standalone.py .standalone
+cd .standalone
+git add .
+git ci -m "add pypi-server-standalone $gitversion"
