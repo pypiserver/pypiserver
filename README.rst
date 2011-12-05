@@ -191,7 +191,7 @@ releases won't be considered.
 Optional dependencies
 =====================
 - pypiserver ships with it's own copy of bottle. It's possible to use
-  bottle with different wsgi servers. pypiserver chooses any of the
+  bottle with different WSGI servers. pypiserver chooses any of the
   following paste, cherrypy, twisted, wsgiref (part of python) if
   available.
 
@@ -355,7 +355,7 @@ Changelog
 ------------------
 - prefix comparison is now case insensitive
 - added usage message
-- show minimal imformation for root url
+- show minimal information for root url
 
 0.1.1 (2011-07-29)
 ------------------
