@@ -110,8 +110,9 @@ def find_updates(pkgset, stable_only=True):
     write("\n\n")
 
     no_releases = list(no_releases)
-    no_releases.sort()
-    sys.stdout.write("no releases found on pypi for %s\n\n" % (", ".join(no_releases),))
+    if no_releases:
+        no_releases.sort()
+        sys.stdout.write("no releases found on pypi for %s\n\n" % (", ".join(no_releases),))
     return need_update
 
 
