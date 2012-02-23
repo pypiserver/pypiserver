@@ -6,8 +6,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 0.5.0
-:Date:    2011-12-05
+:Version: 0.5.1
+:Date:    2012-02-23
 :Download: http://pypi.python.org/pypi/pypiserver
 :Code: https://github.com/schmir/pypiserver
 
@@ -152,28 +152,19 @@ options 'pypi-server -U' will just print a list of commands which must
 be run in order to get the latest version of each package. Output
 looks like::
 
-  checking 82 packages for newer version
+  checking 106 packages for newer version
 
-  .e......u.........e....e.....u...u....e.
-  e......u...ee.ee.e......u.........ee....
-  ..
+  .........u.e...........e..u.............
+  .....e..............................e...
+  ..........................
 
-  no releases found on pypi for PyXML, Pymacs, _sqlite3, bbutils, isoap, mercurial, pil, pycdb, ropemode, schmir, setuptools, unbuffered
+  no releases found on pypi for PyXML, Pymacs, mercurial, setuptools
 
-  # update Twisted from 11.0.0 to 11.1.0
-  pip -q install -i http://pypi.python.org/simple -d /home/ralf/packages Twisted==11.1.0
+  # update raven from 1.4.3 to 1.4.4
+  pip -q install --no-deps -i http://pypi.python.org/simple -d /home/ralf/packages/mirror raven==1.4.4
 
-  # update pytest from 2.1.3 to 2.2.0
-  pip -q install -i http://pypi.python.org/simple -d /home/ralf/packages pytest==2.2.0
-
-  # update zope.interface from 3.6.3 to 3.8.0
-  pip -q install -i http://pypi.python.org/simple -d /home/ralf/packages zope.interface==3.8.0
-
-  # update pytest-xdist from 1.6 to 1.7
-  pip -q install -i http://pypi.python.org/simple -d /home/ralf/packages pytest-xdist==1.7
-
-  # update pyOpenSSL from 0.10 to 0.13
-  pip -q install -i http://pypi.python.org/simple -d /home/ralf/packages pyOpenSSL==0.13
+  # update greenlet from 0.3.3 to 0.3.4
+  pip -q install --no-deps -i http://pypi.python.org/simple -d /home/ralf/packages/mirror greenlet==0.3.4
 
 It first prints for each package a single character after checking the
 available versions on pypi. A dot means the package is up-to-date, 'u'
@@ -310,6 +301,10 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 
 Changelog
 =========
+0.5.1 (2012-02-23)
+------------------
+- make 'pypi-server -U' compatible with pip 1.1
+
 0.5.0 (2011-12-05)
 ------------------
 - make setup.py install without calling 2to3 by changing source code

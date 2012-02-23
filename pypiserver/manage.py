@@ -121,7 +121,7 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
     for x in need_update:
         sys.stdout.write("# update %s from %s to %s\n" % (x.pkgname, x.version, x.latest_version))
 
-        cmd = ["pip", "-q", "install", "-i", "http://pypi.python.org/simple",
+        cmd = ["pip", "-q", "install", "--no-deps", "-i", "http://pypi.python.org/simple",
                "-d", destdir or os.path.dirname(os.path.join(pkgset.root, x.path)),
                "%s==%s" % (x.pkgname, x.latest_version)]
 
