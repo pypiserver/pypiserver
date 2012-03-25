@@ -13,5 +13,6 @@ include pypiserver/manage.py
 include setup.cfg
 include setup.py
 include tests/test_app.py
+include tests/test_core.py
 include tests/test_main.py
 include tox.ini
