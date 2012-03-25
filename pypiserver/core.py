@@ -24,7 +24,7 @@ def guess_pkgname(path):
     pkgname = re.split(r"-\d+", os.path.basename(path))[0]
     return pkgname
 
-_archive_suffix_rx = re.compile(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2)$", re.IGNORECASE)
+_archive_suffix_rx = re.compile(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*)$", re.IGNORECASE)
 
 
 def guess_pkgname_and_version(path):
