@@ -14,6 +14,7 @@ files = [
     ("greenlet-0.3.4.win-amd64-py3.2.exe", "greenlet", "0.3.4"),
     ("greenlet-0.3.4-py3.2-win32.egg", "greenlet", "0.3.4"),
     ("greenlet-0.3.4-py2.7-linux-x86_64.egg", "greenlet", "0.3.4"),
+    ("pep8-0.6.0.zip", "pep8", "0.6.0"),
     ("pytz-2012b.zip", "pytz", "2012b")]
 
 
