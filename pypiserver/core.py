@@ -24,12 +24,14 @@ def guess_pkgname(path):
     pkgname = re.split(r"-\d+", os.path.basename(path))[0]
     return pkgname
 
+_archive_suffix_rx = re.compile(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2)$", re.IGNORECASE)
+
 
 def guess_pkgname_and_version(path):
     path = os.path.basename(path)
     pkgname = re.split(r"-\d+", path, 1)[0]
     version = path[len(pkgname) + 1:]
-    version = re.sub(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2)$", "", version)
+    version = _archive_suffix_rx.sub("", version)
     return pkgname, version
 
 
