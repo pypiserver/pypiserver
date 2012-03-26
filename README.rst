@@ -186,6 +186,45 @@ Optional dependencies
   following paste, cherrypy, twisted, wsgiref (part of python) if
   available.
 
+Using a different WSGI server
+=============================
+If none of the above servers matches your needs, pypiserver also
+exposes an API to get the internal WSGI app, which you can then run
+under any WSGI server you like. pypiserver.app has the following
+interface::
+
+  def app(root=None,
+	  redirect_to_fallback=True,
+	  fallback_url="http://pypi.python.org/simple")
+
+and returns the WSGI application. root is the package directory,
+redirect_to_fallback specifies wether to redirect to fallback_url when
+a package is missing.
+
+gunicorn
+----------------
+
+The following command uses gunicorn to start pypiserver::
+
+  gunicorn -w4 'pypiserver:app("/home/ralf/packages")'
+
+apache/mod_wsgi
+----------------
+In case you're using apache 2 with mod_wsgi, the following config file
+(contributed by Thomas Waldmann) can be used::
+
+  # An example pypiserver.wsgi for use with apache2 and mod_wsgi, edit as necessary.
+  #
+  # apache virtualhost configuration for mod_wsgi daemon mode:
+  #    Alias           /robots.txt /srv/yoursite/htdocs/robots.txt
+  #    WSGIScriptAlias /           /srv/yoursite/cfg/pypiserver.wsgi
+  #    WSGIDaemonProcess pypisrv user=pypisrv group=pypisrv processes=1 threads=5 maximum-requests=500 umask=0007 display-name=wsgi-pypisrv inactivity-timeout=300
+  #    WSGIProcessGroup pypisrv
+
+  PACKAGES = "/srv/yoursite/packages"
+  import pypiserver
+  application = pypiserver.app(PACKAGES, redirect_to_fallback=True)
+
 Source
 ===========
 Source releases can be downloaded from
