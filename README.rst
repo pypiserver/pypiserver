@@ -6,8 +6,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 0.5.1
-:Date:    2012-02-23
+:Version: 0.5.2
+:Date:    2012-03-27
 :Download: http://pypi.python.org/pypi/pypiserver
 :Code: https://github.com/schmir/pypiserver
 
@@ -340,6 +340,13 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 
 Changelog
 =========
+0.5.2 (2012-03-27)
+------------------
+- provide a way to get the WSGI app
+- improved package name and version guessing
+- use case insensitive matching when removing archive suffixes
+- fix pytz issue #6
+
 0.5.1 (2012-02-23)
 ------------------
 - make 'pypi-server -U' compatible with pip 1.1
