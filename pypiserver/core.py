@@ -102,7 +102,7 @@ pip install -i %(URL)ssimple PACKAGE [PACKAGE2...]
 easy_install -i %(URL)ssimple PACKAGE
 </pre></blockquote></p>
 
-<p>The complete list of all packages can be found <a href="packages/">here</a> or via the <a href="simple/">simple</a> index.</p>
+<p>The complete list of all packages can be found <a href="/packages/">here</a> or via the <a href="/simple/">/simple</a> index.</p>
 
 <p>This instance is running version %(VERSION)s of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
 </body></html>
@@ -116,7 +116,7 @@ def simpleindex():
     prefixes.sort()
     res = ["<html><head><title>Simple Index</title></head><body>\n"]
     for x in prefixes:
-        res.append('<a href="%s/">%s</a><br>\n' % (x, x))
+        res.append('<a href="/simple/%s/">%s</a><br>\n' % (x, x))
     res.append("</body></html>")
     return "".join(res)
 
@@ -137,7 +137,7 @@ def simple(prefix=""):
     res = ["<html><head><title>Links for %s</title></head><body>\n" % prefix]
     res.append("<h1>Links for %s</h1>\n" % prefix)
     for x in files:
-        res.append('<a href="../../packages/%s">%s</a><br>\n' % (x, os.path.basename(x)))
+        res.append('<a href="/packages/%s">%s</a><br>\n' % (x, os.path.basename(x)))
     res.append("</body></html>\n")
     return "".join(res)
 
@@ -165,7 +165,7 @@ def server_static(filename):
 @route('/:prefix')
 @route('/:prefix/')
 def bad_url(prefix):
-    return redirect("../simple/%s/" % prefix)
+    return redirect("/simple/%s/" % prefix)
 
 
 def usage():
