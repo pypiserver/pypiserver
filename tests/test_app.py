@@ -2,6 +2,12 @@
 
 import twill
 from twill.commands import go, code, show, find, reload, showlinks, notfind
+import py, pytest
+
+try:
+    from paste.deploy import loadapp
+except ImportError:
+    loadapp = None
 
 from pypiserver import core
 import bottle
@@ -23,6 +29,27 @@ def pytest_funcarg__root(request):
     monkeypatch.setattr(core, "packages", core.pkgset(tmpdir.strpath))
     monkeypatch.setattr(core, "config", core.configuration())
 
+    if loadapp:
+        pini = tmpdir.join(".paste.ini")
+        pini.write("""
+[composite:main]
+use = egg:Paste#urlmap
+/priv/ = private
+
+[app:private]
+paste.app_factory = pypiserver:paste_app_factory
+root = %s
+
+[server:main]
+use = egg:gunicorn#main
+host = 0.0.0.0
+port = 8001
+workers = 5
+accesslog = -
+""" % tmpdir)
+
+        twill.add_wsgi_intercept("nonroot", 80, lambda: loadapp("config:%s" % pini))
+
     twill.add_wsgi_intercept("localhost", 8080, bottle.default_app)
     twill.add_wsgi_intercept("systemexit.de", 80, bottle.default_app)
     twill.add_wsgi_intercept("pypi.python.org", 80, lambda: fallback_app)
@@ -31,6 +58,8 @@ def pytest_funcarg__root(request):
         twill.remove_wsgi_intercept("localhost", 8080)
         twill.remove_wsgi_intercept("systemexit.de", 80)
         twill.remove_wsgi_intercept("pypi.python.org", 80)
+        if loadapp:
+            twill.remove_wsgi_intercept("nonroot", 80)
 
     request.addfinalizer(cleanup)
 
@@ -53,7 +82,7 @@ def test_root_count(root):
 
 def test_root_hostname(root):
     go("http://systemexit.de/")
-    find("easy_install -i http://systemexit.de/simple PACKAGE")
+    find("easy_install -i http://systemexit.de/simple/ PACKAGE")
 
 
 def test_packages_empty(root):
@@ -167,3 +196,36 @@ def test_simple_index_case(root):
     show()
     links = list(showlinks())
     assert len(links) == 2
+
+need_paste = pytest.mark.skipif("loadapp is None")
+
+
+@need_paste
+def test_nonroot_root(root):
+    go("http://nonroot/priv/")
+    find("easy_install -i http://nonroot/priv/simple/ PACKAGE")
+
+
+@need_paste
+def test_nonroot_simple_index(root):
+    root.join("foobar-1.0.zip").write("")
+
+    for url in ["http://nonroot/priv/simple/foobar",
+                "http://nonroot/priv/simple/foobar/"]:
+        go(url)
+        show()
+        links = list(showlinks())
+        assert len(links) == 1
+        assert links[0].url == "/priv/packages/foobar-1.0.zip"
+
+
+@need_paste
+def test_nonroot_simple_packages(root):
+    root.join("foobar-1.0.zip").write("123")
+    for url in ["http://nonroot/priv/packages",
+                "http://nonroot/priv/packages/"]:
+        go(url)
+        show()
+        links = list(showlinks())
+        assert len(links) == 1
+        assert links[0].url == "/priv/packages/foobar-1.0.zip"
