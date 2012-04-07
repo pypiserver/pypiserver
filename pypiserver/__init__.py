@@ -28,7 +28,10 @@ def app(root=None,
 
 
 def paste_app_factory(global_config, **local_conf):
+    import os
     root = local_conf.get("root")
+    if root and root.startswith("~"):
+        root = os.path.expanduser(root)
     redirect_to_fallback = local_conf.get("redirect_to_fallback", "").lower() in ("yes", "on", "1")
     fallback_url = local_conf.get("fallback_url")
     return app(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url)
