@@ -7,6 +7,7 @@ include pypi-server
 include pypi-server-in.py
 include pypiserver/__init__.py
 include pypiserver/__main__.py
+include pypiserver/_app.py
 include pypiserver/bottle.py
 include pypiserver/core.py
 include pypiserver/manage.py
