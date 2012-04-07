@@ -2,16 +2,15 @@
 
 import twill
 from twill.commands import go, code, show, find, reload, showlinks, notfind
-import py, pytest
+import pytest
 
 try:
     from paste.deploy import loadapp
 except ImportError:
     loadapp = None
 
-from pypiserver import core, _app
+from pypiserver import core  # do no remove. needed for bottle
 import bottle
-bottle.debug(True)
 
 fallback_app = bottle.Bottle()
 
@@ -22,12 +21,17 @@ def pypi_notfound(path):
 
 
 def pytest_funcarg__root(request):
+    return request.getfuncargvalue("env")["root"]
 
+
+def pytest_funcarg___app(request):
+    return request.getfuncargvalue("env")["_app"]
+
+
+def pytest_funcarg__env(request):
     tmpdir = request.getfuncargvalue("tmpdir")
-    monkeypatch = request.getfuncargvalue("monkeypatch")
-    from pypiserver import _app
-    monkeypatch.setattr(_app, "packages", core.pkgset(tmpdir.strpath))
-    monkeypatch.setattr(_app, "config", _app.configuration())
+    from pypiserver import app
+    a = app(root=tmpdir.strpath)
 
     if loadapp:
         pini = tmpdir.join(".paste.ini")
@@ -50,8 +54,8 @@ accesslog = -
 
         twill.add_wsgi_intercept("nonroot", 80, lambda: loadapp("config:%s" % pini))
 
-    twill.add_wsgi_intercept("localhost", 8080, lambda: _app.app)
-    twill.add_wsgi_intercept("systemexit.de", 80, lambda: _app.app)
+    twill.add_wsgi_intercept("localhost", 8080, lambda: a)
+    twill.add_wsgi_intercept("systemexit.de", 80, lambda: a)
     twill.add_wsgi_intercept("pypi.python.org", 80, lambda: fallback_app)
 
     def cleanup():
@@ -64,7 +68,7 @@ accesslog = -
     request.addfinalizer(cleanup)
 
     go("http://localhost:8080/")
-    return tmpdir
+    return dict(root=tmpdir, app=a, _app=a.module)
 
 
 def test_root_count(root):
@@ -100,13 +104,13 @@ def test_favicon(root):
     code(404)
 
 
-def test_fallback(root):
+def test_fallback(root, _app):
     assert _app.config.redirect_to_fallback
     final_url = go("/simple/pypiserver/")
     assert final_url == "http://pypi.python.org/simple/pypiserver/"
 
 
-def test_no_fallback(root):
+def test_no_fallback(root, _app):
     _app.config.redirect_to_fallback = False
     final_url = go("/simple/pypiserver/")
     assert final_url == "http://localhost:8080/simple/pypiserver/"
