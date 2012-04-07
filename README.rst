@@ -225,6 +225,48 @@ In case you're using apache 2 with mod_wsgi, the following config file
   import pypiserver
   application = pypiserver.app(PACKAGES, redirect_to_fallback=True)
 
+paste/pastedeploy
+----------------------
+paste allows to run multiple WSGI applications under different URL
+paths. Therfor it's possible to serve different set of packages on
+different paths.
+
+The following example `paste.ini` could be used to serve stable and
+unstable packages on different paths::
+
+  [composite:main]
+  use = egg:Paste#urlmap
+  /unstable/ = unstable
+  / = stable
+
+  [app:stable]
+  use = egg:pypiserver#main
+  root = ~/packages/stable
+
+  [app:unstable]
+  use = egg:pypiserver#main
+  root = ~/packages/
+
+  [server:main]
+  use = egg:gunicorn#main
+  host = 0.0.0.0
+  port = 9000
+  workers = 5
+  accesslog = -
+
+.. NOTE::
+
+  You need to install some more dependencies for this to work,
+  e.g. run::
+
+    pip install paste pastedeploy gunicorn pypiserver
+
+  The server can then be started with::
+
+    gunicorn_paster paste.ini
+
+
+
 Source
 ===========
 Source releases can be downloaded from
