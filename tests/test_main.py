@@ -23,6 +23,7 @@ def pytest_funcarg__main(request):
 
     def run(**kwargs):
         print "RUN:", kwargs
+        kwargs.pop("app")
         main.run_kwargs = kwargs
 
     def listdir(pkgdir):

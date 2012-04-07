@@ -5,9 +5,10 @@ if sys.version_info >= (3, 0):
 else:
     from urlparse import urljoin
 
-from bottle import route, static_file, redirect, request, HTTPError
+from bottle import static_file, redirect, request, HTTPError, Bottle
 from pypiserver import __version__
 from pypiserver.core import is_allowed_path
+
 packages = None
 
 class configuration(object):
@@ -33,13 +34,15 @@ def configure(root=None,
     config.redirect_to_fallback = redirect_to_fallback
     config.fallback_url = fallback_url
 
+app = Bottle()
 
-@route("/favicon.ico")
+
+@app.route("/favicon.ico")
 def favicon():
     return HTTPError(404)
 
 
-@route('/')
+@app.route('/')
 def root():
     try:
         numpkgs = len(packages.find_packages())
@@ -67,12 +70,12 @@ easy_install -i %(URL)ssimple/ PACKAGE
 """ % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs)
 
 
-@route("/simple")
+@app.route("/simple")
 def simpleindex_redirect():
     return redirect(request.fullpath + "/")
 
 
-@route("/simple/")
+@app.route("/simple/")
 def simpleindex():
     prefixes = list(packages.find_prefixes())
     prefixes.sort()
@@ -83,8 +86,8 @@ def simpleindex():
     return "".join(res)
 
 
-@route("/simple/:prefix")
-@route("/simple/:prefix/")
+@app.route("/simple/:prefix")
+@app.route("/simple/:prefix/")
 def simple(prefix=""):
     fp = request.fullpath
     if not fp.endswith("/"):
@@ -106,8 +109,8 @@ def simple(prefix=""):
     return "".join(res)
 
 
-@route('/packages')
-@route('/packages/')
+@app.route('/packages')
+@app.route('/packages/')
 def list_packages():
     fp = request.fullpath
     if not fp.endswith("/"):
@@ -122,7 +125,7 @@ def list_packages():
     return "".join(res)
 
 
-@route('/packages/:filename#.*#')
+@app.route('/packages/:filename#.*#')
 def server_static(filename):
     if not is_allowed_path(filename):
         return HTTPError(404)
@@ -130,8 +133,8 @@ def server_static(filename):
     return static_file(filename, root=packages.root)
 
 
-@route('/:prefix')
-@route('/:prefix/')
+@app.route('/:prefix')
+@app.route('/:prefix/')
 def bad_url(prefix):
     p = request.fullpath
     if not p.endswith("/"):
@@ -139,5 +142,3 @@ def bad_url(prefix):
     p += "../simple/%s/" % prefix
 
     return redirect(p)
-
-    # return redirect("../simple/%s/" % prefix)

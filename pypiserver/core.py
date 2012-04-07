@@ -3,9 +3,9 @@
 
 import os, sys, getopt, re, mimetypes
 
-from pypiserver import bottle, __version__
+from pypiserver import bottle, __version__, app
 sys.modules["bottle"] = bottle
-from bottle import run, debug, server_names
+from bottle import run, server_names
 
 mimetypes.add_type("application/octet-stream", ".egg")
 
@@ -196,12 +196,10 @@ def main(argv=None):
         manage.update(packages, update_directory, update_dry_run, stable_only=update_stable_only)
         return
 
-    from pypiserver import _app
-    _app.configure(root=root, redirect_to_fallback=redirect_to_fallback)
+    a = app(root=root, redirect_to_fallback=redirect_to_fallback)
     server = server or "auto"
-    debug(True)
     sys.stdout.write("This is pypiserver %s serving %r on %s:%s\n\n" % (__version__, root, host, port))
-    run(host=host, port=port, server=server)
+    run(app=a, host=host, port=port, server=server)
 
 
 if __name__ == "__main__":

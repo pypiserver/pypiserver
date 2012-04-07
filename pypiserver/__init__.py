@@ -17,8 +17,10 @@ def app(root=None,
 
     os.listdir(root)
     _app.configure(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url)
+    _app.app.module = _app
+
     bottle.debug(True)
-    return bottle.default_app()
+    return _app.app
 
 
 def paste_app_factory(global_config, **local_conf):

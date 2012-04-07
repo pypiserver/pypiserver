@@ -50,8 +50,8 @@ accesslog = -
 
         twill.add_wsgi_intercept("nonroot", 80, lambda: loadapp("config:%s" % pini))
 
-    twill.add_wsgi_intercept("localhost", 8080, bottle.default_app)
-    twill.add_wsgi_intercept("systemexit.de", 80, bottle.default_app)
+    twill.add_wsgi_intercept("localhost", 8080, lambda: _app.app)
+    twill.add_wsgi_intercept("systemexit.de", 80, lambda: _app.app)
     twill.add_wsgi_intercept("pypi.python.org", 80, lambda: fallback_app)
 
     def cleanup():
