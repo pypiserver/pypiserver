@@ -5,8 +5,12 @@ version = __version__ = "0.5.2"
 def app(root=None,
         redirect_to_fallback=True,
         fallback_url=None):
-    import os
-    from pypiserver import core, _app
+    import sys, os
+    from pypiserver import core
+    sys.modules.pop("pypiserver._app", None)
+    __import__("pypiserver._app")
+    _app = sys.modules["pypiserver._app"]
+
     import bottle
 
     if root is None:
