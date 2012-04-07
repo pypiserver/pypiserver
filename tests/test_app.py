@@ -9,7 +9,7 @@ try:
 except ImportError:
     loadapp = None
 
-from pypiserver import core
+from pypiserver import core, _app
 import bottle
 bottle.debug(True)
 
@@ -25,9 +25,9 @@ def pytest_funcarg__root(request):
 
     tmpdir = request.getfuncargvalue("tmpdir")
     monkeypatch = request.getfuncargvalue("monkeypatch")
-
-    monkeypatch.setattr(core, "packages", core.pkgset(tmpdir.strpath))
-    monkeypatch.setattr(core, "config", core.configuration())
+    from pypiserver import _app
+    monkeypatch.setattr(_app, "packages", core.pkgset(tmpdir.strpath))
+    monkeypatch.setattr(_app, "config", _app.configuration())
 
     if loadapp:
         pini = tmpdir.join(".paste.ini")
@@ -101,13 +101,13 @@ def test_favicon(root):
 
 
 def test_fallback(root):
-    assert core.config.redirect_to_fallback
+    assert _app.config.redirect_to_fallback
     final_url = go("/simple/pypiserver/")
     assert final_url == "http://pypi.python.org/simple/pypiserver/"
 
 
 def test_no_fallback(root):
-    core.config.redirect_to_fallback = False
+    _app.config.redirect_to_fallback = False
     final_url = go("/simple/pypiserver/")
     assert final_url == "http://localhost:8080/simple/pypiserver/"
     code(404)
@@ -116,6 +116,7 @@ def test_no_fallback(root):
 def test_serve_no_dotfiles(root):
     root.join(".foo-1.0.zip").write("secret")
     go("/packages/.foo-1.0.zip")
+    show()
     code(404)
 
 

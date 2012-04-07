@@ -6,7 +6,7 @@ def app(root=None,
         redirect_to_fallback=True,
         fallback_url=None):
     import os
-    from pypiserver import core
+    from pypiserver import core, _app
     import bottle
 
     if root is None:
@@ -16,9 +16,7 @@ def app(root=None,
         fallback_url="http://pypi.python.org/simple"
 
     os.listdir(root)
-    core.packages = core.pkgset(root)
-    core.config.redirect_to_fallback = redirect_to_fallback
-    core.config.fallback_url = fallback_url
+    _app.configure(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url)
     bottle.debug(True)
     return bottle.default_app()
 

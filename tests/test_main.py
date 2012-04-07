@@ -2,7 +2,7 @@
 
 import os
 import pytest
-from pypiserver import core
+from pypiserver import core, _app
 
 
 class main_wrapper(object):
@@ -32,8 +32,8 @@ def pytest_funcarg__main(request):
     monkeypatch = request.getfuncargvalue("monkeypatch")
     monkeypatch.setattr(core, "run", run)
     monkeypatch.setattr(os, "listdir", listdir)
-    monkeypatch.setattr(core, "packages", None)
-    monkeypatch.setattr(core, "config", core.configuration())
+    monkeypatch.setattr(_app, "packages", None)
+    monkeypatch.setattr(_app, "config", _app.configuration())
 
     return main
 
@@ -61,13 +61,13 @@ def test_server(main):
 
 def test_root(main):
     main(["--root", "."])
-    assert core.packages.root == os.path.abspath(".")
+    assert _app.packages.root == os.path.abspath(".")
     assert main.pkgdir == os.path.abspath(".")
 
 
 def test_root_r(main):
     main(["-r", "."])
-    assert core.packages.root == os.path.abspath(".")
+    assert _app.packages.root == os.path.abspath(".")
     assert main.pkgdir == os.path.abspath(".")
 
 

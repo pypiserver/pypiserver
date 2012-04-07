@@ -2,26 +2,12 @@
 """minimal PyPI like server for use with pip/easy_install"""
 
 import os, sys, getopt, re, mimetypes
-if sys.version_info >= (3, 0):
-    from urllib.parse import urljoin
-else:
-    from urlparse import urljoin
 
 from pypiserver import bottle, __version__
 sys.modules["bottle"] = bottle
+from bottle import run, debug, server_names
 
-from bottle import route, run, static_file, redirect, request, debug, server_names, HTTPError
 mimetypes.add_type("application/octet-stream", ".egg")
-
-packages = None
-
-
-class configuration(object):
-    def __init__(self):
-        self.fallback_url = "http://pypi.python.org/simple"
-        self.redirect_to_fallback = True
-
-config = configuration()
 
 
 def guess_pkgname(path):
@@ -80,113 +66,6 @@ class pkgset(object):
         return prefixes
 
 
-@route("/favicon.ico")
-def favicon():
-    return HTTPError(404)
-
-
-@route('/')
-def root():
-    try:
-        numpkgs = len(packages.find_packages())
-    except:
-        numpkgs = 0
-
-    return """<html><head><title>Welcome to pypiserver!</title></head><body>
-<h1>Welcome to pypiserver!</h1>
-<p>This is a PyPI compatible package index serving %(NUMPKGS)s packages.</p>
-
-<p> To use this server with pip, run the the following command:
-<blockquote><pre>
-pip install -i %(URL)ssimple/ PACKAGE [PACKAGE2...]
-</pre></blockquote></p>
-
-<p> To use this server with easy_install, run the the following command:
-<blockquote><pre>
-easy_install -i %(URL)ssimple/ PACKAGE
-</pre></blockquote></p>
-
-<p>The complete list of all packages can be found <a href="packages/">here</a> or via the <a href="simple/">simple</a> index.</p>
-
-<p>This instance is running version %(VERSION)s of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
-</body></html>
-""" % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs)
-
-
-@route("/simple")
-def simpleindex_redirect():
-    return redirect(request.fullpath + "/")
-
-
-@route("/simple/")
-def simpleindex():
-    prefixes = list(packages.find_prefixes())
-    prefixes.sort()
-    res = ["<html><head><title>Simple Index</title></head><body>\n"]
-    for x in prefixes:
-        res.append('<a href="%s/">%s</a><br>\n' % (x, x))
-    res.append("</body></html>")
-    return "".join(res)
-
-
-@route("/simple/:prefix")
-@route("/simple/:prefix/")
-def simple(prefix=""):
-    fp = request.fullpath
-    if not fp.endswith("/"):
-        fp += "/"
-
-    files = packages.find_packages(prefix)
-    if not files:
-        if config.redirect_to_fallback:
-            return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
-        return HTTPError(404)
-    files.sort()
-    res = ["<html><head><title>Links for %s</title></head><body>\n" % prefix]
-    res.append("<h1>Links for %s</h1>\n" % prefix)
-    for x in files:
-        abspath = urljoin(fp, "../../packages/%s" % x)
-
-        res.append('<a href="%s">%s</a><br>\n' % (abspath, os.path.basename(x)))
-    res.append("</body></html>\n")
-    return "".join(res)
-
-
-@route('/packages')
-@route('/packages/')
-def list_packages():
-    fp = request.fullpath
-    if not fp.endswith("/"):
-        fp += "/"
-
-    files = packages.find_packages()
-    files.sort()
-    res = ["<html><head><title>Index of packages</title></head><body>\n"]
-    for x in files:
-        res.append('<a href="%s">%s</a><br>\n' % (urljoin(fp, x), x))
-    res.append("</body></html>\n")
-    return "".join(res)
-
-
-@route('/packages/:filename#.*#')
-def server_static(filename):
-    if not is_allowed_path(filename):
-        return HTTPError(404)
-
-    return static_file(filename, root=packages.root)
-
-
-@route('/:prefix')
-@route('/:prefix/')
-def bad_url(prefix):
-    p = request.fullpath
-    if not p.endswith("/"):
-        p += "/"
-    p += "../simple/%s/" % prefix
-
-    return redirect(p)
-
-    # return redirect("../simple/%s/" % prefix)
 
 
 def usage():
@@ -257,6 +136,8 @@ def main(argv=None):
     host = "0.0.0.0"
     port = 8080
     server = None
+    redirect_to_fallback = True
+
     update_dry_run = True
     update_directory = None
     update_stable_only = True
@@ -275,7 +156,7 @@ def main(argv=None):
         elif k in ("-r", "--root"):
             roots.append(v)
         elif k == "--disable-fallback":
-            config.redirect_to_fallback = False
+            redirect_to_fallback = False
         elif k == "--server":
             if v not in server_names:
                 sys.exit("unknown server %r. choose one of %s" % (v, ", ".join(server_names.keys())))
@@ -308,13 +189,15 @@ def main(argv=None):
         err = sys.exc_info()[1]
         sys.exit("Error: while trying to list %r: %s" % (root, err))
 
-    packages = pkgset(root)
 
     if command == "update":
+        packages = pkgset(root)
         from pypiserver import manage
         manage.update(packages, update_directory, update_dry_run, stable_only=update_stable_only)
         return
 
+    from pypiserver import _app
+    _app.configure(root=root, redirect_to_fallback=redirect_to_fallback)
     server = server or "auto"
     debug(True)
     sys.stdout.write("This is pypiserver %s serving %r on %s:%s\n\n" % (__version__, root, host, port))
