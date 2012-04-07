@@ -4,9 +4,10 @@ import sys, os
 
 try:
     from setuptools import setup
+    extra = dict(entry_points={'paste.app_factory': ['main=pypiserver:paste_app_factory']})
 except ImportError:
     from distutils.core import setup
-
+    extra = dict()
 
 if sys.version_info >= (3, 0):
     exec("def do_exec(co, loc): exec(co, loc)\n")
@@ -48,4 +49,5 @@ setup(name="pypiserver",
         "Programming Language :: Python :: 3.1",
         "Programming Language :: Python :: 3.2",
         "Topic :: Software Development :: Build Tools",
-        "Topic :: System :: Software Distribution"])
+        "Topic :: System :: Software Distribution"],
+      **extra)
