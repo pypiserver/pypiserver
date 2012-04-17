@@ -65,7 +65,13 @@ class pkgset(object):
                 prefixes.add(pkgname)
         return prefixes
 
-
+    def store(self, filename, data):
+        assert "/" not in filename
+        dest_fn = os.path.join(self.root, filename)
+        dest_fh = open(dest_fn, "wb")
+        
+        dest_fh.write(data)
+        dest_fh.close()
 
 
 def usage():
@@ -83,6 +89,9 @@ pypi-server understands the following options:
 
   -i INTERFACE, --interface INTERFACE
     listen on interface INTERFACE (default: 0.0.0.0, any interface)
+
+  -P PASSWORD_FILE --passwords PASSWORD_FILE
+    A file of username:md5(password) lines
 
   --disable-fallback
     disable redirect to real PyPI index for packages not found in the
@@ -137,13 +146,14 @@ def main(argv=None):
     port = 8080
     server = None
     redirect_to_fallback = True
+    password_file = None
 
     update_dry_run = True
     update_directory = None
     update_stable_only = True
 
     try:
-        opts, roots = getopt.getopt(argv[1:], "i:p:r:d:Uuxh", ["interface=", "port=", "root=", "server=", "disable-fallback", "version", "help"])
+        opts, roots = getopt.getopt(argv[1:], "i:p:r:d:P:Uuxh", ["interface=", "passwords=", "port=", "root=", "server=", "disable-fallback", "version", "help"])
     except getopt.GetoptError:
         err = sys.exc_info()[1]
         sys.exit("usage error: %s" % (err,))
@@ -172,9 +182,12 @@ def main(argv=None):
             update_stable_only = False
         elif k == "-d":
             update_directory = v
+        elif k in ("-P", "--passwords"):
+            password_file = v
         elif k in ("-h", "--help"):
             usage()
             sys.exit(0)
+
 
     if len(roots) == 0:
         roots.append(os.path.expanduser("~/packages"))
@@ -196,7 +209,7 @@ def main(argv=None):
         manage.update(packages, update_directory, update_dry_run, stable_only=update_stable_only)
         return
 
-    a = app(root=root, redirect_to_fallback=redirect_to_fallback)
+    a = app(root=root, redirect_to_fallback=redirect_to_fallback, password_file=password_file)
     server = server or "auto"
     sys.stdout.write("This is pypiserver %s serving %r on %s:%s\n\n" % (__version__, root, host, port))
     run(app=a, host=host, port=port, server=server)

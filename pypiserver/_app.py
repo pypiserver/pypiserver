@@ -8,6 +8,7 @@ else:
 from bottle import static_file, redirect, request, HTTPError, Bottle
 from pypiserver import __version__
 from pypiserver.core import is_allowed_path
+import md5
 
 packages = None
 
@@ -18,9 +19,27 @@ class configuration(object):
 
 config = configuration()
 
+
+def read_passwd_file(passwd_file):
+    users = {}
+    for line in open(passwd_file):
+        user, md5_hash = line.strip().split(":")
+        users[user] = md5_hash
+    return users
+
+
+def validate_user(username, password):
+    if username in config.users:
+        md5_hash = md5.new(password).hexdigest()
+        return config.users[username] == md5_hash
+    else:
+        return False
+    
+
 def configure(root=None,
               redirect_to_fallback=True,
-              fallback_url=None):
+              fallback_url=None,
+              password_file=None):
     from pypiserver.core import pkgset
     global packages
 
@@ -33,7 +52,12 @@ def configure(root=None,
     packages = pkgset(root)
     config.redirect_to_fallback = redirect_to_fallback
     config.fallback_url = fallback_url
-
+    if password_file:
+        config.users = read_passwd_file(password_file)
+    else:
+        # PyPi server is read only without users
+        config.users = {}
+        
 app = Bottle()
 
 
@@ -69,6 +93,30 @@ easy_install -i %(URL)ssimple/ PACKAGE
 </body></html>
 """ % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs)
 
+@app.post('/')
+def update():
+    if request.auth and validate_user(*request.auth):
+        try:
+            content = request.files['content']
+        except KeyError:
+            raise HTTPError(400, output="content file field not found")
+
+        try:
+            action = request.forms[':action']
+        except KeyError:
+            raise HTTPError(400, output=":action field not found")
+
+        if action != "file_upload":
+            raise HTTPError(400, output="actions other than file_upload, not supported")
+
+        if "/" in content.filename:
+            raise HTTPError(400, output="bad filename")
+        
+        packages.store(content.filename, content.value)
+
+        return ""
+    else:
+        raise HTTPError(401)
 
 @app.route("/simple")
 def simpleindex_redirect():

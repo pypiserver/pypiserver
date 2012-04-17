@@ -4,7 +4,8 @@ version = __version__ = "0.5.2"
 
 def app(root=None,
         redirect_to_fallback=True,
-        fallback_url=None):
+        fallback_url=None,
+        password_file=None):
     import sys, os
     from pypiserver import core
     sys.modules.pop("pypiserver._app", None)
@@ -20,7 +21,8 @@ def app(root=None,
         fallback_url="http://pypi.python.org/simple"
 
     os.listdir(root)
-    _app.configure(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url)
+    _app.configure(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url,
+                   password_file=password_file)
     _app.app.module = _app
 
     bottle.debug(True)
