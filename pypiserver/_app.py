@@ -99,15 +99,20 @@ def update():
         try:
             content = request.files['content']
         except KeyError:
-            raise HTTPError(400, message="content file field not found")
+            raise HTTPError(400, output="content file field not found")
+
+        try:
+            action = request.forms[':action']
+        except KeyError:
+            raise HTTPError(400, output=":action field not found")
+
+        if action != "file_upload":
+            raise HTTPError(400, output="actions other than file_upload, not supported")
 
         if "/" in content.filename:
-            raise HTTPError(400, message="bad filename")
+            raise HTTPError(400, output="bad filename")
         
-        filename = content.filename
-        data = content.value
-        
-        packages.store(filename, data)
+        packages.store(content.filename, content.value)
 
         return ""
     else:
