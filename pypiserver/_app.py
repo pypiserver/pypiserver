@@ -8,33 +8,24 @@ else:
 from bottle import static_file, redirect, request, HTTPError, Bottle
 from pypiserver import __version__
 from pypiserver.core import is_allowed_path
-import md5
 
 packages = None
+
 
 class configuration(object):
     def __init__(self):
         self.fallback_url = "http://pypi.python.org/simple"
         self.redirect_to_fallback = True
+        self.htpasswdfile = None
 
 config = configuration()
 
 
-def read_passwd_file(passwd_file):
-    users = {}
-    for line in open(passwd_file):
-        user, md5_hash = line.strip().split(":")
-        users[user] = md5_hash
-    return users
-
-
 def validate_user(username, password):
-    if username in config.users:
-        md5_hash = md5.new(password).hexdigest()
-        return config.users[username] == md5_hash
-    else:
-        return False
-    
+    if config.htpasswdfile is not None:
+        config.htpasswdfile.load_if_changed()
+        return config.htpasswdfile.check_password(username, password)
+
 
 def configure(root=None,
               redirect_to_fallback=True,
@@ -47,17 +38,15 @@ def configure(root=None,
         root = os.path.expanduser("~/packages")
 
     if fallback_url is None:
-        fallback_url="http://pypi.python.org/simple"
+        fallback_url = "http://pypi.python.org/simple"
 
     packages = pkgset(root)
     config.redirect_to_fallback = redirect_to_fallback
     config.fallback_url = fallback_url
     if password_file:
-        config.users = read_passwd_file(password_file)
-    else:
-        # PyPi server is read only without users
-        config.users = {}
-        
+        from passlib.apache import HtpasswdFile
+        config.htpasswdfile = HtpasswdFile(password_file)
+
 app = Bottle()
 
 
@@ -93,30 +82,39 @@ easy_install -i %(URL)ssimple/ PACKAGE
 </body></html>
 """ % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs)
 
+
 @app.post('/')
 def update():
-    if request.auth and validate_user(*request.auth):
-        try:
-            content = request.files['content']
-        except KeyError:
-            raise HTTPError(400, output="content file field not found")
+    if not request.auth:
+        raise HTTPError(401, header={"WWW-Authenticate": 'Basic realm="pypi"'})
 
-        try:
-            action = request.forms[':action']
-        except KeyError:
-            raise HTTPError(400, output=":action field not found")
+    if not validate_user(*request.auth):
+        raise HTTPError(403)
 
-        if action != "file_upload":
-            raise HTTPError(400, output="actions other than file_upload, not supported")
+    try:
+        action = request.forms[':action']
+    except KeyError:
+        raise HTTPError(400, output=":action field not found")
 
-        if "/" in content.filename:
-            raise HTTPError(400, output="bad filename")
-        
-        packages.store(content.filename, content.value)
-
+    if action == "submit":
         return ""
-    else:
-        raise HTTPError(401)
+
+    if action != "file_upload":
+        raise HTTPError(400, output="actions other than file_upload/submit, not supported")
+
+    try:
+        content = request.files['content']
+    except KeyError:
+        raise HTTPError(400, output="content file field not found")
+
+    if "/" in content.filename:
+        raise HTTPError(400, output="bad filename")
+
+    packages.store(content.filename, content.value)
+
+    return ""
+
+
 
 @app.route("/simple")
 def simpleindex_redirect():
