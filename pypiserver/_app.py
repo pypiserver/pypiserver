@@ -148,7 +148,7 @@ def simple(prefix=""):
     res = ["<html><head><title>Links for %s</title></head><body>\n" % prefix]
     res.append("<h1>Links for %s</h1>\n" % prefix)
     for x in files:
-        abspath = urljoin(fp, "../../packages/%s" % x)
+        abspath = urljoin(fp, "../../packages/%s" % x.replace("\\", "/"))
 
         res.append('<a href="%s">%s</a><br>\n' % (abspath, os.path.basename(x)))
     res.append("</body></html>\n")
@@ -166,6 +166,7 @@ def list_packages():
     files.sort()
     res = ["<html><head><title>Index of packages</title></head><body>\n"]
     for x in files:
+        x = x.replace("\\", "/")
         res.append('<a href="%s">%s</a><br>\n' % (urljoin(fp, x), x))
     res.append("</body></html>\n")
     return "".join(res)
