@@ -6,8 +6,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 0.5.2
-:Date:    2012-03-27
+:Version: 0.6.0
+:Date:    2012-06-05
 :Download: http://pypi.python.org/pypi/pypiserver
 :Code: https://github.com/schmir/pypiserver
 
@@ -73,6 +73,10 @@ pypi-server -h will print a detailed usage message::
 
     -i INTERFACE, --interface INTERFACE
       listen on interface INTERFACE (default: 0.0.0.0, any interface)
+
+    -P PASSWORD_FILE, --passwords PASSWORD_FILE
+      use apache htpasswd file PASSWORD_FILE in order to enable password
+      protected uploads.
 
     --disable-fallback
       disable redirect to real PyPI index for packages not found in the
@@ -185,6 +189,12 @@ Optional dependencies
   bottle with different WSGI servers. pypiserver chooses any of the
   following paste, cherrypy, twisted, wsgiref (part of python) if
   available.
+- pypiserver relies on the passlib module for parsing apache htpasswd
+  files. You need to install it, when using the -P, --passwords
+  option. The following command will do that::
+
+    pip install passlib
+
 
 Using a different WSGI server
 =============================
@@ -293,8 +303,6 @@ implements just enough to make easy_install and pip install work.
 
 The following limitations are known:
 
-- pypiserver doesn't support uploading files. One might also consider
-  that a feature. scp provides a nice workaround.
 - pypiserver doesn't implement the XMLRPC interface: pip search
   will not work.
 - pypiserver doesn't implement the json based '/pypi' interface. pyg_
@@ -382,6 +390,14 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 
 Changelog
 =========
+0.6.0 (2012-06-05)
+------------------
+- make pypiserver work with pip on windows
+- add support for password protected uploads
+- make pypiserver work with non-root paths
+- make pypiserver 'paste compatible'
+- allow to serve multiple package directories using paste
+
 0.5.2 (2012-03-27)
 ------------------
 - provide a way to get the WSGI app

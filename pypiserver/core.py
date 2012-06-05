@@ -90,8 +90,9 @@ pypi-server understands the following options:
   -i INTERFACE, --interface INTERFACE
     listen on interface INTERFACE (default: 0.0.0.0, any interface)
 
-  -P PASSWORD_FILE --passwords PASSWORD_FILE
-    A file of username:md5(password) lines
+  -P PASSWORD_FILE, --passwords PASSWORD_FILE
+    use apache htpasswd file PASSWORD_FILE in order to enable password
+    protected uploads.
 
   --disable-fallback
     disable redirect to real PyPI index for packages not found in the
