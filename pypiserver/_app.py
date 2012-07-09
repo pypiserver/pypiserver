@@ -85,7 +85,7 @@ easy_install -i %(URL)ssimple/ PACKAGE
 
 @app.post('/')
 def update():
-    if not request.auth:
+    if not request.auth or request.auth[1] is None:
         raise HTTPError(401, header={"WWW-Authenticate": 'Basic realm="pypi"'})
 
     if not validate_user(*request.auth):
