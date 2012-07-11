@@ -154,6 +154,7 @@ def main(argv=None):
     server = None
     redirect_to_fallback = True
     password_file = None
+    mirror_package_name = None
 
     update_dry_run = True
     update_directory = None
@@ -161,12 +162,13 @@ def main(argv=None):
 
     try:
         opts, roots = getopt.getopt(argv[1:],
-                                    "i:p:r:d:P:Uuxh",
+                                    "i:p:r:d:P:M:Uuxh",
                                     ["interface=",
                                      "passwords=",
                                      "port=",
                                      "root=",
                                      "server=",
+                                     "mirror_package_name="
                                      "disable-fallback",
                                      "version",
                                      "help"])
@@ -193,6 +195,9 @@ def main(argv=None):
             sys.exit(0)
         elif k == "-U":
             command = "update"
+        elif k == '-M':
+            command = 'mirror'
+            mirror_package_name = v
         elif k == "-x":
             update_dry_run = False
         elif k == "-u":
@@ -205,13 +210,25 @@ def main(argv=None):
             usage()
             sys.exit(0)
 
-    if len(roots) == 0:
-        roots.append(os.path.expanduser("~/packages"))
-    elif len(roots) > 1:
-        sys.exit("Error: more than one root directory specified: %r"
-                 % (roots,))
+    try:
+        roots.remove('-M')
+        roots.remove(mirror_package_name)
+    except:
+        pass
 
-    root = os.path.abspath(roots[0])
+    if len(roots) == 0:
+
+        if not update_directory:
+            root = os.path.expanduser("~/packages")
+        else:
+            root = update_directory
+
+    elif len(roots) >= 1:
+
+        root = os.path.abspath(roots[0])
+
+        if update_directory in roots:
+            root = update_directory
 
     try:
         os.listdir(root)
@@ -227,6 +244,14 @@ def main(argv=None):
                       update_directory,
                       update_dry_run,
                       stable_only=update_stable_only)
+        return
+
+    if command == 'mirror':
+        from pypiserver import manage
+
+        manage.mirror(mirror_package_name, destdir=update_directory,
+                      dry_run=update_dry_run)
+
         return
 
     a = app(root=root, redirect_to_fallback=redirect_to_fallback,
