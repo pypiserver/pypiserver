@@ -1,5 +1,8 @@
 
-import sys, os, re
+import sys
+import os
+import re
+import subprocess
 from pypiserver import core
 
 if sys.version_info >= (3, 0):
@@ -128,6 +131,28 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
         sys.stdout.write("%s\n\n" % (" ".join(cmd),))
         if not dry_run:
             os.spawnlp(os.P_WAIT, cmd[0], *cmd)
+
+
+def mirror(package_name, destdir=None, dry_run=False, stable_only=True):
+
+    pypi = Server("http://pypi.python.org/pypi/")
+
+    versions = pypi.package_releases(package_name)
+
+    command_base = ('pip -q install --no-deps -i http://pypi.python.org/simple'
+                    ' -I -d %s %s==' % (destdir, package_name))
+
+    commands = [('%s%s' % (command_base, version), version)
+                for version in versions]
+
+    for command, version in commands:
+        print "Mirroring %s==%s" % (package_name, version)
+
+        if not dry_run:
+            running_command = subprocess.Popen(command, shell=True)
+            running_command.communicate()[0]
+
+        print "... completed mirror of %s at %s" % (package_name, version)
 
 
 def main():
