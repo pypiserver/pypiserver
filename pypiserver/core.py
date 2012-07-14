@@ -210,14 +210,7 @@ def main(argv=None):
             usage()
             sys.exit(0)
 
-    try:
-        roots.remove('-M')
-        roots.remove(mirror_package_name)
-    except:
-        pass
-
     if len(roots) == 0:
-
         if not update_directory:
             root = os.path.expanduser("~/packages")
         else:
