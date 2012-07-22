@@ -1,7 +1,11 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
-import os, sys, getopt, re, mimetypes
+import os
+import sys
+import getopt
+import re
+import mimetypes
 
 from pypiserver import bottle, __version__, app
 sys.modules["bottle"] = bottle
@@ -14,7 +18,9 @@ def guess_pkgname(path):
     pkgname = re.split(r"-\d+", os.path.basename(path))[0]
     return pkgname
 
-_archive_suffix_rx = re.compile(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*)$", re.IGNORECASE)
+_archive_suffix_rx = re.compile(
+    (r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]"
+     r"\.\d\..*|\.win32-py[23]\.\d\..*)$"), re.IGNORECASE)
 
 
 def guess_pkgname_and_version(path):
@@ -69,7 +75,7 @@ class pkgset(object):
         assert "/" not in filename
         dest_fn = os.path.join(self.root, filename)
         dest_fh = open(dest_fn, "wb")
-        
+
         dest_fh.write(data)
         dest_fh.close()
 
@@ -148,13 +154,24 @@ def main(argv=None):
     server = None
     redirect_to_fallback = True
     password_file = None
+    mirror_package_name = None
 
     update_dry_run = True
     update_directory = None
     update_stable_only = True
 
     try:
-        opts, roots = getopt.getopt(argv[1:], "i:p:r:d:P:Uuxh", ["interface=", "passwords=", "port=", "root=", "server=", "disable-fallback", "version", "help"])
+        opts, roots = getopt.getopt(argv[1:],
+                                    "i:p:r:d:P:M:Uuxh",
+                                    ["interface=",
+                                     "passwords=",
+                                     "port=",
+                                     "root=",
+                                     "server=",
+                                     "mirror_package_name="
+                                     "disable-fallback",
+                                     "version",
+                                     "help"])
     except getopt.GetoptError:
         err = sys.exc_info()[1]
         sys.exit("usage error: %s" % (err,))
@@ -170,13 +187,17 @@ def main(argv=None):
             redirect_to_fallback = False
         elif k == "--server":
             if v not in server_names:
-                sys.exit("unknown server %r. choose one of %s" % (v, ", ".join(server_names.keys())))
+                sys.exit("unknown server %r. choose one of %s"
+                         % (v, ", ".join(server_names.keys())))
             server = v
         elif k == "--version":
             sys.stdout.write("pypiserver %s\n" % __version__)
             sys.exit(0)
         elif k == "-U":
             command = "update"
+        elif k == '-M':
+            command = 'mirror'
+            mirror_package_name = v
         elif k == "-x":
             update_dry_run = False
         elif k == "-u":
@@ -189,13 +210,18 @@ def main(argv=None):
             usage()
             sys.exit(0)
 
-
     if len(roots) == 0:
-        roots.append(os.path.expanduser("~/packages"))
-    elif len(roots) > 1:
-        sys.exit("Error: more than one root directory specified: %r" % (roots,))
+        if not update_directory:
+            root = os.path.expanduser("~/packages")
+        else:
+            root = update_directory
 
-    root = os.path.abspath(roots[0])
+    elif len(roots) >= 1:
+
+        root = os.path.abspath(roots[0])
+
+        if update_directory in roots:
+            root = update_directory
 
     try:
         os.listdir(root)
@@ -203,16 +229,29 @@ def main(argv=None):
         err = sys.exc_info()[1]
         sys.exit("Error: while trying to list %r: %s" % (root, err))
 
-
     if command == "update":
         packages = pkgset(root)
         from pypiserver import manage
-        manage.update(packages, update_directory, update_dry_run, stable_only=update_stable_only)
+
+        manage.update(packages,
+                      update_directory,
+                      update_dry_run,
+                      stable_only=update_stable_only)
         return
 
-    a = app(root=root, redirect_to_fallback=redirect_to_fallback, password_file=password_file)
+    if command == 'mirror':
+        from pypiserver import manage
+
+        manage.mirror(mirror_package_name, destdir=update_directory,
+                      dry_run=update_dry_run)
+
+        return
+
+    a = app(root=root, redirect_to_fallback=redirect_to_fallback,
+            password_file=password_file)
     server = server or "auto"
-    sys.stdout.write("This is pypiserver %s serving %r on %s:%s\n\n" % (__version__, root, host, port))
+    sys.stdout.write("This is pypiserver %s serving %r on %s:%s\n\n"
+                     % (__version__, root, host, port))
     run(app=a, host=host, port=port, server=server)
 
 
