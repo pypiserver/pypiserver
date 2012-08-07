@@ -5,12 +5,13 @@ if sys.version_info >= (3, 0):
 else:
     from urlparse import urljoin
 
-from bottle import static_file, redirect, request, HTTPError, Bottle
+from bottle import static_file, redirect, request, template
+from bottle import HTTPError, Bottle, TEMPLATE_PATH
 from pypiserver import __version__
 from pypiserver.core import is_allowed_path
 
 packages = None
-
+TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'templates'))
 
 class configuration(object):
     def __init__(self):
@@ -19,6 +20,10 @@ class configuration(object):
         self.htpasswdfile = None
 
 config = configuration()
+
+class PackageObject(object):
+    name = ''
+    url = ''
 
 
 def validate_user(username, password):
@@ -57,30 +62,18 @@ def favicon():
 
 @app.route('/')
 def root():
+    contents = {}
+
     try:
         numpkgs = len(packages.find_packages())
     except:
         numpkgs = 0
 
-    return """<html><head><title>Welcome to pypiserver!</title></head><body>
-<h1>Welcome to pypiserver!</h1>
-<p>This is a PyPI compatible package index serving %(NUMPKGS)s packages.</p>
+    contents['URL'] = request.url
+    contents['VERSION'] = __version__
+    contents['NUMPKGS'] = numpkgs
 
-<p> To use this server with pip, run the the following command:
-<blockquote><pre>
-pip install -i %(URL)ssimple/ PACKAGE [PACKAGE2...]
-</pre></blockquote></p>
-
-<p> To use this server with easy_install, run the the following command:
-<blockquote><pre>
-easy_install -i %(URL)ssimple/ PACKAGE
-</pre></blockquote></p>
-
-<p>The complete list of all packages can be found <a href="packages/">here</a> or via the <a href="simple/">simple</a> index.</p>
-
-<p>This instance is running version %(VERSION)s of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
-</body></html>
-""" % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs)
+    return template('index', **contents)
 
 
 @app.post('/')
@@ -123,18 +116,24 @@ def simpleindex_redirect():
 
 @app.route("/simple/")
 def simpleindex():
-    prefixes = list(packages.find_prefixes())
-    prefixes.sort()
-    res = ["<html><head><title>Simple Index</title></head><body>\n"]
-    for x in prefixes:
-        res.append('<a href="%s/">%s</a><br>\n' % (x, x))
-    res.append("</body></html>")
-    return "".join(res)
+    content = {}
+    content['packages'] = []
+
+    package_prefixes = packages.find_prefixes()
+    for package in package_prefixes:
+        p = PackageObject()
+        p.name = package
+        p.link = package
+        content['packages'].append(p)
+    return template('packages', **content)
 
 
 @app.route("/simple/:prefix")
 @app.route("/simple/:prefix/")
 def simple(prefix=""):
+    content = {}
+    content['packages'] = []
+
     fp = request.fullpath
     if not fp.endswith("/"):
         fp += "/"
@@ -145,31 +144,34 @@ def simple(prefix=""):
             return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
         return HTTPError(404)
     files.sort()
-    res = ["<html><head><title>Links for %s</title></head><body>\n" % prefix]
-    res.append("<h1>Links for %s</h1>\n" % prefix)
     for x in files:
-        abspath = urljoin(fp, "../../packages/%s" % x.replace("\\", "/"))
-
-        res.append('<a href="%s">%s</a><br>\n' % (abspath, os.path.basename(x)))
-    res.append("</body></html>\n")
-    return "".join(res)
+        p = PackageObject()
+        p.name = os.path.basename(x)
+        p.link = urljoin(fp, "../../packages/%s" % x.replace("\\", "/"))
+        content['packages'].append(p)
+    return template('packages', **content)
 
 
 @app.route('/packages')
 @app.route('/packages/')
 def list_packages():
+    content = {}
+    content['packages'] = []
+
     fp = request.fullpath
     if not fp.endswith("/"):
         fp += "/"
 
     files = packages.find_packages()
     files.sort()
-    res = ["<html><head><title>Index of packages</title></head><body>\n"]
     for x in files:
         x = x.replace("\\", "/")
-        res.append('<a href="%s">%s</a><br>\n' % (urljoin(fp, x), x))
-    res.append("</body></html>\n")
-    return "".join(res)
+
+        p = PackageObject()
+        p.name = os.path.basename(x)
+        p.link = urljoin(fp, x)
+        content['packages'].append(p)
+    return template('packages', **content)
 
 
 @app.route('/packages/:filename#.*#')
