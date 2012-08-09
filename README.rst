@@ -226,14 +226,16 @@ In case you're using apache 2 with mod_wsgi, the following config file
   # An example pypiserver.wsgi for use with apache2 and mod_wsgi, edit as necessary.
   #
   # apache virtualhost configuration for mod_wsgi daemon mode:
-  #    Alias           /robots.txt /srv/yoursite/htdocs/robots.txt
-  #    WSGIScriptAlias /           /srv/yoursite/cfg/pypiserver.wsgi
-  #    WSGIDaemonProcess pypisrv user=pypisrv group=pypisrv processes=1 threads=5 maximum-requests=500 umask=0007 display-name=wsgi-pypisrv inactivity-timeout=300
-  #    WSGIProcessGroup pypisrv
+  #    Alias /robots.txt /srv/yoursite/htdocs/robots.txt
+  #    WSGIPassAuthorization On
+  #    WSGIScriptAlias /     /srv/yoursite/cfg/pypiserver.wsgi
+  #    WSGIDaemonProcess     pypisrv user=pypisrv group=pypisrv processes=1 threads=5 maximum-requests=500 umask=0007 display-name=wsgi-pypisrv inactivity-timeout=300
+  #    WSGIProcessGroup      pypisrv
 
   PACKAGES = "/srv/yoursite/packages"
+  HTPASSWD = "/srv/yoursite/htpasswd"
   import pypiserver
-  application = pypiserver.app(PACKAGES, redirect_to_fallback=True)
+  application = pypiserver.app(PACKAGES, redirect_to_fallback=True, password_file=HTPASSWD)
 
 paste/pastedeploy
 ----------------------
