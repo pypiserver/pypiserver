@@ -74,3 +74,14 @@ def test_root_r(main):
 def test_root_multiple(main):
     pytest.raises(SystemExit, main, [".", "."])
     pytest.raises(SystemExit, main, ["-r", ".", "."])
+
+
+def test_fallback_url(main):
+    main(["--fallback-url", "http://pypi.mirror/simple"])
+    assert main.app.module.config.fallback_url == "http://pypi.mirror/simple"
+
+
+def test_fallback_url_default(main):
+    main([])
+    assert main.app.module.config.fallback_url == \
+        "http://pypi.python.org/simple"
