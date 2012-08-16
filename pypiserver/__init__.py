@@ -36,4 +36,5 @@ def paste_app_factory(global_config, **local_conf):
         root = os.path.expanduser(root)
     redirect_to_fallback = local_conf.get("redirect_to_fallback", "").lower() in ("yes", "on", "1")
     fallback_url = local_conf.get("fallback_url")
-    return app(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url)
+    password_file = local_conf.get("password_file")
+    return app(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url, password_file=password_file)
