@@ -94,13 +94,12 @@ def find_updates(pkgset, stable_only=True):
 
     if http_proxy_url:
         http_proxy_spec = urllib.splithost(urllib.splittype(http_proxy_url)[1])[0]
-
-        p = ProxiedTransport()
-        p.set_proxy(http_proxy_spec)
-
-        pypi = Server("http://pypi.python.org/pypi/", transport=p)
+        transport = ProxiedTransport()
+        transport.set_proxy(http_proxy_spec)
     else:
-        pypi = Server("http://pypi.python.org/pypi/")
+        transport = None
+
+    pypi = Server("http://pypi.python.org/pypi/", transport=transport)
 
     pkgname2latest = {}
 
