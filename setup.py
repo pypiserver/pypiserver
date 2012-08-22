@@ -4,7 +4,10 @@ import sys, os
 
 try:
     from setuptools import setup
-    extra = dict(entry_points={'paste.app_factory': ['main=pypiserver:paste_app_factory']})
+    extra = dict(entry_points={
+            'paste.app_factory': ['main=pypiserver:paste_app_factory'],
+            'console_scripts': ['pypi-server=pypiserver.core:main']
+            })
 except ImportError:
     from distutils.core import setup
     extra = dict()
