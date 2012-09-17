@@ -110,7 +110,9 @@ def update():
     if "/" in content.filename:
         raise HTTPError(400, output="bad filename")
 
-    packages.store(content.filename, content.value)
+    if not packages.store(content.filename, content.value):
+        raise HTTPError(409, output="file already exists")
+
 
     return ""
 
