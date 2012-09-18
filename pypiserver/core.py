@@ -68,10 +68,14 @@ class pkgset(object):
     def store(self, filename, data):
         assert "/" not in filename
         dest_fn = os.path.join(self.root, filename)
-        dest_fh = open(dest_fn, "wb")
+        if not os.path.exists(dest_fn):
+            dest_fh = open(dest_fn, "wb")
 
-        dest_fh.write(data)
-        dest_fh.close()
+            dest_fh.write(data)
+            dest_fh.close()
+            return True
+
+        return False
 
 
 def usage():
