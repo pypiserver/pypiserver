@@ -54,6 +54,11 @@ The server can then be started with::
 
 Feel free to rename the script and move it into your $PATH.
 
+Running on heroku/dotcloud
+=================================
+https://github.com/dexterous/pypiserver-on-the-cloud contains
+instructions on how to run pypiserver on one of the supported cloud
+service providers.
 
 Detailed Usage
 =================================
