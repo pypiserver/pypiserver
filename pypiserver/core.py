@@ -9,6 +9,8 @@ from bottle import run, server_names
 
 mimetypes.add_type("application/octet-stream", ".egg")
 
+DEFAULT_SERVER = None
+
 
 def guess_pkgname(path):
     pkgname = re.split(r"-\d+", os.path.basename(path))[0]
@@ -153,7 +155,7 @@ def main(argv=None):
     command = "serve"
     host = "0.0.0.0"
     port = 8080
-    server = None
+    server = DEFAULT_SERVER
     redirect_to_fallback = True
     fallback_url = "http://pypi.python.org/simple"
     password_file = None

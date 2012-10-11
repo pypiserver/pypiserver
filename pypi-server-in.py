@@ -58,5 +58,6 @@ importer.sources = sources
 sys.meta_path.append(importer)
 
 if __name__ == "__main__":
-    from pypiserver.core import main
-    main()
+    from pypiserver import core
+    core.DEFAULT_SERVER = "waitress"
+    core.main()
