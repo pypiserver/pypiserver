@@ -11,6 +11,10 @@ include pypiserver/_app.py
 include pypiserver/bottle.py
 include pypiserver/core.py
 include pypiserver/manage.py
+include scripts/opensuse/pypiserver
+include scripts/opensuse/pypiserver.init
+include scripts/ubuntu/pypiserver
+include scripts/ubuntu/pypiserver.init
 include setup.cfg
 include setup.py
 include tests/test_app.py
