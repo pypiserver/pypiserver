@@ -6,8 +6,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 0.6.1
-:Date:    2012-08-07
+:Version: 1.0.0
+:Date:    2012-10-15
 :Download: http://pypi.python.org/pypi/pypiserver#downloads
 :Code: https://github.com/schmir/pypiserver
 
@@ -401,6 +401,19 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 
 Changelog
 =========
+1.0.0 (2012-10-15)
+------------------
+- add passlib and waitress to pypi-server-standalone
+- upgrade bottle to 0.11.2
+- Update scripts/opensuse/pypiserver.init
+- Refuse to re upload existing file
+- Add 'console_scripts' section to 'entry_points', so
+  'pypi-server.exe' will be created on Windows.
+- paste_app_factory now use the the password_file option to create the
+  app. Without this the package upload was not working.
+- Add --fallback-url argument to pypi-server script to make it
+  configurable.
+
 0.6.1 (2012-08-07)
 ------------------
 - make 'python setup.py register' work

@@ -1,5 +1,5 @@
-__version_info__ = (0, 6, 2, 'dev')
-version = __version__ = "0.6.2dev"
+__version_info__ = (1, 0, 0)
+version = __version__ = "1.0.0"
 
 
 def app(root=None,
@@ -18,7 +18,7 @@ def app(root=None,
         root = os.path.expanduser("~/packages")
 
     if fallback_url is None:
-        fallback_url="http://pypi.python.org/simple"
+        fallback_url = "http://pypi.python.org/simple"
 
     os.listdir(root)
     _app.configure(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url,
