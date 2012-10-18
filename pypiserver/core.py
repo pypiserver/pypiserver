@@ -240,7 +240,8 @@ def main(argv=None):
         fallback_url=fallback_url
     )
     server = server or "auto"
-    sys.stdout.write("This is pypiserver %s serving %r on %s:%s\n\n" % (__version__, root, host, port))
+    sys.stdout.write("This is pypiserver %s serving %r on http://%s:%s\n\n" % (__version__, root, host, port))
+    sys.stdout.flush()
     run(app=a, host=host, port=port, server=server)
 
 
