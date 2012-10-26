@@ -16,7 +16,7 @@ License: MIT (see LICENSE for details)
 from __future__ import with_statement
 
 __author__ = 'Marcel Hellkamp'
-__version__ = '0.11.2'
+__version__ = '0.11.3'
 __license__ = 'MIT'
 
 # The gevent server adapter needs to patch some modules before they are imported
@@ -407,8 +407,7 @@ class Router(object):
         allowed = [verb for verb in targets if verb != 'ANY']
         if 'GET' in allowed and 'HEAD' not in allowed:
             allowed.append('HEAD')
-        raise HTTPError(405, "Method not allowed.",
-                        header=[('Allow',",".join(allowed))])
+        raise HTTPError(405, "Method not allowed.", Allow=",".join(allowed))
 
 
 class Route(object):
@@ -2045,7 +2044,10 @@ def redirect(url, code=None):
     if code is None:
         code = 303 if request.get('SERVER_PROTOCOL') == "HTTP/1.1" else 302
     location = urljoin(request.url, url)
-    raise HTTPResponse("", status=code, header=dict(Location=location))
+    res = HTTPResponse("", status=code, Location=location)
+    if response._cookies:
+        res._cookies = response._cookies
+    raise res
 
 
 def _file_iter_range(fp, offset, bytes, maxread=1024*1024):
@@ -2799,11 +2801,19 @@ class BaseTemplate(object):
     def search(cls, name, lookup=[]):
         """ Search name in all directories specified in lookup.
         First without, then with common extensions. Return first hit. """
-        if os.path.isfile(name): return name
+        if not lookup:
+            depr('The template lookup path list should not be empty.')
+            lookup = ['.']
+
+        if os.path.isabs(name) and os.path.isfile(name):
+            depr('Absolute template path names are deprecated.')
+            return os.path.abspath(name)
+
         for spath in lookup:
-            fname = os.path.join(spath, name)
-            if os.path.isfile(fname):
-                return fname
+            spath = os.path.abspath(spath) + os.sep
+            fname = os.path.abspath(os.path.join(spath, name))
+            if not fname.startswith(spath): continue
+            if os.path.isfile(fname): return fname
             for ext in cls.extensions:
                 if os.path.isfile('%s.%s' % (fname, ext)):
                     return '%s.%s' % (fname, ext)
