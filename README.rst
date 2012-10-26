@@ -7,7 +7,7 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
 :Version: 1.0.0
-:Date:    2012-10-15
+:Date:    2012-10-26
 :Download: http://pypi.python.org/pypi/pypiserver#downloads
 :Code: https://github.com/schmir/pypiserver
 
@@ -401,10 +401,10 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 
 Changelog
 =========
-1.0.0 (2012-10-15)
+1.0.0 (2012-10-26)
 ------------------
 - add passlib and waitress to pypi-server-standalone
-- upgrade bottle to 0.11.2
+- upgrade bottle to 0.11.3
 - Update scripts/opensuse/pypiserver.init
 - Refuse to re upload existing file
 - Add 'console_scripts' section to 'entry_points', so
