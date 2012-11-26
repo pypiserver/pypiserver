@@ -20,16 +20,18 @@ def pypi_notfound(path):
     return bottle.HTTPError(404)
 
 
-def pytest_funcarg__root(request):
-    return request.getfuncargvalue("env")["root"]
+@pytest.fixture()
+def root(request, env):
+    return env["root"]
 
 
-def pytest_funcarg___app(request):
-    return request.getfuncargvalue("env")["_app"]
+@pytest.fixture()
+def _app(request, env):
+    return env["_app"]
 
 
-def pytest_funcarg__env(request):
-    tmpdir = request.getfuncargvalue("tmpdir")
+@pytest.fixture()
+def env(request, tmpdir):
     from pypiserver import app
     a = app(root=tmpdir.strpath)
 

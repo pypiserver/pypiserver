@@ -17,7 +17,8 @@ class main_wrapper(object):
         return self.run_kwargs
 
 
-def pytest_funcarg__main(request):
+@pytest.fixture()
+def main(request, monkeypatch):
 
     main = main_wrapper()
 
@@ -31,7 +32,6 @@ def pytest_funcarg__main(request):
         main.pkgdir = pkgdir
         return []
 
-    monkeypatch = request.getfuncargvalue("monkeypatch")
     monkeypatch.setattr(core, "run", run)
     monkeypatch.setattr(os, "listdir", listdir)
 
