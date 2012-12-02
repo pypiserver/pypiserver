@@ -57,6 +57,8 @@ def favicon():
 
 @app.route('/')
 def root():
+    fp = request.fullpath
+
     try:
         numpkgs = len(packages.find_packages())
     except:
@@ -76,11 +78,13 @@ pip install -i %(URL)ssimple/ PACKAGE [PACKAGE2...]
 easy_install -i %(URL)ssimple/ PACKAGE
 </pre></blockquote></p>
 
-<p>The complete list of all packages can be found <a href="packages/">here</a> or via the <a href="simple/">simple</a> index.</p>
+<p>The complete list of all packages can be found <a href="%(PACKAGES)s">here</a> or via the <a href="%(SIMPLE)s">simple</a> index.</p>
 
 <p>This instance is running version %(VERSION)s of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
 </body></html>
-""" % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs)
+""" % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs,
+           PACKAGES=urljoin(fp, "packages/"),
+           SIMPLE=urljoin(fp, "simple/"))
 
 
 @app.post('/')
@@ -113,9 +117,7 @@ def update():
     if not packages.store(content.filename, content.value):
         raise HTTPError(409, output="file already exists")
 
-
     return ""
-
 
 
 @app.route("/simple")
