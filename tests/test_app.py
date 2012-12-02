@@ -168,3 +168,10 @@ def test_nonroot_simple_packages(root, testpriv):
         links = resp.html("a")
         assert len(links) == 1
         assert links[0]["href"] == "/priv/packages/foobar-1.0.zip"
+
+
+def test_root_no_relative_paths(testpriv):
+    """https://github.com/schmir/pypiserver/issues/25"""
+    resp = testpriv.get("/priv/")
+    hrefs = [x["href"] for x in resp.html("a")]
+    assert hrefs == ['/priv/packages/', '/priv/simple/', 'http://pypi.python.org/pypi/pypiserver']
