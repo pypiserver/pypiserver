@@ -1,7 +1,6 @@
 include .gitignore
 include MANIFEST.in
 include README.rst
-include conftest.py
 include gen-standalone.py
 include pypi-server
 include pypi-server-in.py
