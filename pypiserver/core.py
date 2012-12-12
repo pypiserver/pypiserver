@@ -27,6 +27,17 @@ def guess_pkgname_and_version(path):
     return pkgname, version
 
 
+def sort_files_by_version(files):
+    from pypiserver.manage import parse_version
+
+    res = []
+    for x in files:
+        pkgname, version = guess_pkgname_and_version(x)
+        res.append((os.path.dirname(x), pkgname, parse_version(version), x))
+    res.sort()
+    return [x[-1] for x in res]
+
+
 def is_allowed_path(path_part):
     p = path_part.replace("\\", "/")
     return not (p.startswith(".") or "/." in p)
@@ -225,7 +236,6 @@ def main(argv=None):
     except Exception:
         err = sys.exc_info()[1]
         sys.exit("Error: while trying to list %r: %s" % (root, err))
-
 
     if command == "update":
         packages = pkgset(root)

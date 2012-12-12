@@ -7,7 +7,7 @@ else:
 
 from bottle import static_file, redirect, request, HTTPError, Bottle
 from pypiserver import __version__
-from pypiserver.core import is_allowed_path
+from pypiserver.core import is_allowed_path, sort_files_by_version
 
 packages = None
 
@@ -148,7 +148,7 @@ def simple(prefix=""):
         if config.redirect_to_fallback:
             return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
         return HTTPError(404)
-    files.sort()
+    files = sort_files_by_version(files)
     res = ["<html><head><title>Links for %s</title></head><body>\n" % prefix]
     res.append("<h1>Links for %s</h1>\n" % prefix)
     for x in files:
@@ -167,7 +167,7 @@ def list_packages():
         fp += "/"
 
     files = packages.find_packages()
-    files.sort()
+    files = sort_files_by_version(files)
     res = ["<html><head><title>Index of packages</title></head><body>\n"]
     for x in files:
         x = x.replace("\\", "/")
