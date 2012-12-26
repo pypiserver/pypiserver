@@ -156,6 +156,44 @@ For easy_install it can be configured with the following setting in
   [easy_install]
   index_url = http://localhost:8080/simple/
 
+
+Uploads via setup.py upload
+===========================
+Uploading packages via `python setup.py upload` is also
+possible. First make sure you have the passlib module installed::
+
+  pip install passlib
+
+Then create a apache htpassword file with::
+
+  htpasswd -sc .htaccess myusername
+
+You'll be prompted for a password. You'll need to restart the server
+with the -P option::
+
+  pypi-server -p 8080 -P /path/to/.htaccess /path/to/private_pypi_folder/
+
+Edit or create a ~/.pypirc file with the following content::
+
+  [distutils]
+  index-servers =
+  pypi
+  internal
+
+  [pypi]
+  username:pypiusername
+  password:pypipasswd
+
+  [internal]
+  repository: http://127.0.0.1:8080
+  username: myusername
+  password: mypasswd
+
+Uploading then works by running::
+
+  python setup.py sdist upload -r internal
+
+
 Managing the package directory
 ==============================
 pypi-server's -U option makes it possible to search for updates of
