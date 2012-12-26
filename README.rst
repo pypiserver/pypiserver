@@ -21,8 +21,9 @@ serve a set of packages and eggs to easy_install or pip.
 
 Installation and Usage/Quickstart
 =================================
-pypiserver will work with python 2.5, 2.6 and 2.7. Python 3 support
-has been added with version 0.4.0.
+pypiserver will work with python 2.5, 2.6, 2.7, 3.2 and 3.3. python
+3.0 and 3.1 may also work, but pypiserver is not being tested with
+these versions.
 
 Run the following commands to get your PyPI server up and running::
 
@@ -419,22 +420,25 @@ PyPI server. If pypiserver doesn't work for you, try one of the
 following alternatives:
 
 chishop (http://pypi.python.org/pypi/chishop)
-  a django based server, which also allows uploads
+  a django based server
+
+localshop (http://pypi.python.org/pypi/localshop/)
+  a django based server
 
 simplepypi (http://pypi.python.org/pypi/simplepypi)
-  a twisted based solution, which allows uploads
+  a twisted based solution
 
 ClueReleaseManager (http://pypi.python.org/pypi/ClueReleaseManager)
-  Werkzeug based solution, allows uploads
+  Werkzeug based solution
 
 haufe.eggserver (http://pypi.python.org/pypi/haufe.eggserver)
-  GROK/Zope based, allows uploads
+  GROK/Zope based
 
 scrambled (http://pypi.python.org/pypi/scrambled)
   doesn't require external dependencies, no uploads.
 
 EggBasket (http://pypi.python.org/pypi/EggBasket)
-  TurboGears based, allows uploads
+  TurboGears based
 
 
 Changelog
