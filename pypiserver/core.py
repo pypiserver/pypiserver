@@ -11,6 +11,35 @@ mimetypes.add_type("application/octet-stream", ".egg")
 
 DEFAULT_SERVER = None
 
+# --- the following two functions were copied from distribute's pkg_resources module
+component_re = re.compile(r'(\d+ | [a-z]+ | \.| -)', re.VERBOSE)
+replace = {'pre': 'c', 'preview': 'c', '-': 'final-', 'rc': 'c', 'dev': '@'}.get
+
+
+def _parse_version_parts(s):
+    for part in component_re.split(s):
+        part = replace(part, part)
+        if part in ['', '.']:
+            continue
+        if part[:1] in '0123456789':
+            yield part.zfill(8)    # pad for numeric comparison
+        else:
+            yield '*' + part
+
+    yield '*final'  # ensure that alpha/beta/candidate are before final
+
+
+def parse_version(s):
+    parts = []
+    for part in _parse_version_parts(s.lower()):
+        if part.startswith('*'):
+            # remove trailing zeros from each series of numeric parts
+            while parts and parts[-1] == '00000000':
+                parts.pop()
+        parts.append(part)
+    return tuple(parts)
+
+# -- end of distribute's code
 
 _archive_suffix_rx = re.compile(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*)$", re.IGNORECASE)
 
@@ -40,8 +69,6 @@ class pkgfile(object):
 
 def listdir(root):
     root = os.path.abspath(root)
-    from pypiserver.manage import parse_version
-
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [x for x in dirnames if is_allowed_path(x)]
         for x in filenames:

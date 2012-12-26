@@ -7,35 +7,6 @@ if sys.version_info >= (3, 0):
 else:
     from xmlrpclib import Server
 
-# --- the following two functions were copied from distribute's pkg_resources module
-component_re = re.compile(r'(\d+ | [a-z]+ | \.| -)', re.VERBOSE)
-replace = {'pre': 'c', 'preview': 'c', '-': 'final-', 'rc': 'c', 'dev': '@'}.get
-
-
-def _parse_version_parts(s):
-    for part in component_re.split(s):
-        part = replace(part, part)
-        if part in ['', '.']:
-            continue
-        if part[:1] in '0123456789':
-            yield part.zfill(8)    # pad for numeric comparison
-        else:
-            yield '*' + part
-
-    yield '*final'  # ensure that alpha/beta/candidate are before final
-
-
-def parse_version(s):
-    parts = []
-    for part in _parse_version_parts(s.lower()):
-        if part.startswith('*'):
-            # remove trailing zeros from each series of numeric parts
-            while parts and parts[-1] == '00000000':
-                parts.pop()
-        parts.append(part)
-    return tuple(parts)
-
-# -- end of distribute's code
 
 def is_stable_version(pversion):
     for x in pversion:
@@ -79,7 +50,7 @@ def find_updates(pkgset, stable_only=True):
 
         releases = pypi.package_releases(pkgname)
 
-        releases = [(parse_version(x), x) for x in releases]
+        releases = [(core.parse_version(x), x) for x in releases]
         if stable_only:
             releases = filter_stable_releases(releases)
 
