@@ -37,14 +37,6 @@ def parse_version(s):
 
 # -- end of distribute's code
 
-
-class pkgfile(object):
-    def __init__(self, path):
-        self.path = path
-        self.pkgname, self.version = core.guess_pkgname_and_version(path)
-        self.version_info = parse_version(self.version)
-
-
 def is_stable_version(pversion):
     for x in pversion:
         if x.startswith("*final"):
@@ -72,12 +64,10 @@ def find_updates(pkgset, stable_only=True):
     pypi = Server("http://pypi.python.org/pypi/")
     pkgname2latest = {}
 
-    pkgfiles = [pkgfile(x) for x in pkgset.find_packages()]
-
-    for x in pkgfiles:
+    for x in pkgset:
         if x.pkgname not in pkgname2latest:
             pkgname2latest[x.pkgname] = x
-        elif x.version_info > pkgname2latest[x.pkgname].version_info:
+        elif x.parsed_version > pkgname2latest[x.pkgname].parsed_version:
             pkgname2latest[x.pkgname] = x
 
     need_update = []
@@ -96,7 +86,7 @@ def find_updates(pkgset, stable_only=True):
         status = "."
         if releases:
             m = max(releases)
-            if m[0] > file.version_info:
+            if m[0] > file.parsed_version:
                 file.latest_version = m[1]
                 status = "u"
                 # print "%s needs update from %s to %s" % (pkgname, file.version, m[1])
@@ -122,7 +112,7 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
         sys.stdout.write("# update %s from %s to %s\n" % (x.pkgname, x.version, x.latest_version))
 
         cmd = ["pip", "-q", "install", "--no-deps", "-i", "http://pypi.python.org/simple",
-               "-d", destdir or os.path.dirname(os.path.join(pkgset.root, x.path)),
+               "-d", destdir or os.path.dirname(x.fn),
                "%s==%s" % (x.pkgname, x.latest_version)]
 
         sys.stdout.write("%s\n\n" % (" ".join(cmd),))

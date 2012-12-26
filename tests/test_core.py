@@ -19,10 +19,5 @@ files = [
 
 
 @pytest.mark.parametrize(("filename", "pkgname", "version"), files)
-def test_guess_pkgname(filename, pkgname, version):
-    assert core.guess_pkgname(filename) == pkgname
-
-
-@pytest.mark.parametrize(("filename", "pkgname", "version"), files)
 def test_guess_pkgname_and_version(filename, pkgname, version):
     assert core.guess_pkgname_and_version(filename) == (pkgname, version)
