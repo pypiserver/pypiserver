@@ -4,9 +4,42 @@ from pypiserver import core
 
 if sys.version_info >= (3, 0):
     from xmlrpc.client import Server
+
+    def make_pypi_client(url):
+        return Server(url)
 else:
     from xmlrpclib import Server, Transport
     import httplib, urllib
+
+    class ProxiedTransport(Transport):
+
+        def set_proxy(self, proxy):
+            self.proxy = proxy
+
+        def make_connection(self, host):
+            self.realhost = host
+            if sys.hexversion < 0x02070000:
+                _http_connection = httplib.HTTP
+            else:
+                _http_connection = httplib.HTTPConnection
+            return _http_connection(self.proxy)
+
+        def send_request(self, connection, handler, request_body):
+            connection.putrequest("POST", 'http://%s%s' % (self.realhost, handler))
+
+        def send_host(self, connection, host):
+            connection.putheader('Host', self.realhost)
+
+    def make_pypi_client(url):
+        http_proxy_url = urllib.getproxies().get("http", "")
+
+        if http_proxy_url:
+            http_proxy_spec = urllib.splithost(urllib.splittype(http_proxy_url)[1])[0]
+            transport = ProxiedTransport()
+            transport.set_proxy(http_proxy_spec)
+        else:
+            transport = None
+        return Server(url, transport=transport)
 
 
 def is_stable_version(pversion):
@@ -38,33 +71,12 @@ def filter_latest_pkgs(pkgs):
 
 def build_releases(pkg, versions):
     for x in versions:
-        parsed_version=core.parse_version(x)
+        parsed_version = core.parse_version(x)
         if parsed_version > pkg.parsed_version:
             yield core.pkgfile(version=x,
                                parsed_version=parsed_version,
                                pkgname=pkg.pkgname,
                                replaces=pkg)
-
-
-if sys.version_info < (3, 0):
-    class ProxiedTransport(Transport):
-
-        def set_proxy(self, proxy):
-            self.proxy = proxy
-
-        def make_connection(self, host):
-            self.realhost = host
-            if sys.hexversion < 0x02070000:
-                _http_connection = httplib.HTTP
-            else:
-                _http_connection = httplib.HTTPConnection
-            return _http_connection(self.proxy)
-
-        def send_request(self, connection, handler, request_body):
-            connection.putrequest("POST", 'http://%s%s' % (self.realhost, handler))
-
-        def send_host(self, connection, host):
-            connection.putheader('Host', self.realhost)
 
 
 def find_updates(pkgset, stable_only=True):
@@ -80,18 +92,7 @@ def find_updates(pkgset, stable_only=True):
     sys.stdout.write("checking %s packages for newer version\n" % len(latest_pkgs),)
     need_update = set()
 
-    if sys.version_info < (3, 0):
-        http_proxy_url = urllib.getproxies().get("http", "")
-    else:
-        http_proxy_url = None
-
-    if http_proxy_url:
-        http_proxy_spec = urllib.splithost(urllib.splittype(http_proxy_url)[1])[0]
-        transport = ProxiedTransport()
-        transport.set_proxy(http_proxy_spec)
-    else:
-        transport = None
-    pypi = Server("http://pypi.python.org/pypi/", transport=transport)
+    pypi = make_pypi_client("http://pypi.python.org/pypi/")
 
     for count, pkg in enumerate(latest_pkgs):
         if count % 40 == 0:
