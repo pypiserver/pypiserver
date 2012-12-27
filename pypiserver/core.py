@@ -1,8 +1,9 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
-import os, sys, getopt, re, mimetypes
+import os, sys, getopt, re, mimetypes, warnings
 
+warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
 from pypiserver import bottle, __version__, app
 sys.modules["bottle"] = bottle
 from bottle import run, server_names
