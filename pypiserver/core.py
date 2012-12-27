@@ -9,10 +9,37 @@ from bottle import run, server_names
 
 mimetypes.add_type("application/octet-stream", ".egg")
 
+DEFAULT_SERVER = None
 
-def guess_pkgname(path):
-    pkgname = re.split(r"-\d+", os.path.basename(path))[0]
-    return pkgname
+# --- the following two functions were copied from distribute's pkg_resources module
+component_re = re.compile(r'(\d+ | [a-z]+ | \.| -)', re.VERBOSE)
+replace = {'pre': 'c', 'preview': 'c', '-': 'final-', 'rc': 'c', 'dev': '@'}.get
+
+
+def _parse_version_parts(s):
+    for part in component_re.split(s):
+        part = replace(part, part)
+        if part in ['', '.']:
+            continue
+        if part[:1] in '0123456789':
+            yield part.zfill(8)    # pad for numeric comparison
+        else:
+            yield '*' + part
+
+    yield '*final'  # ensure that alpha/beta/candidate are before final
+
+
+def parse_version(s):
+    parts = []
+    for part in _parse_version_parts(s.lower()):
+        if part.startswith('*'):
+            # remove trailing zeros from each series of numeric parts
+            while parts and parts[-1] == '00000000':
+                parts.pop()
+        parts.append(part)
+    return tuple(parts)
+
+# -- end of distribute's code
 
 _archive_suffix_rx = re.compile(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*)$", re.IGNORECASE)
 
@@ -30,48 +57,49 @@ def is_allowed_path(path_part):
     return not (p.startswith(".") or "/." in p)
 
 
-class pkgset(object):
-    def __init__(self, root):
-        self.root = os.path.abspath(root)
+class pkgfile(object):
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
 
-    def listdir(self):
-        res = []
-        for dirpath, dirnames, filenames in os.walk(self.root):
-            dirnames[:] = [x for x in dirnames if is_allowed_path(x)]
-            for x in filenames:
-                if is_allowed_path(x):
-                    res.append(os.path.join(self.root, dirpath, x))
-        return res
+    def __repr__(self):
+        return "%s(%s)" % (
+            self.__class__.__name__,
+            ", ".join(["%s=%r" % (k, v) for k, v in sorted(self.__dict__.items())]))
 
-    def find_packages(self, prefix=""):
-        prefix = prefix.lower()
-        files = []
-        for x in self.listdir():
-            pkgname = guess_pkgname(x)
-            if prefix and pkgname.lower() != prefix:
+
+def listdir(root):
+    root = os.path.abspath(root)
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [x for x in dirnames if is_allowed_path(x)]
+        for x in filenames:
+            fn = os.path.join(root, dirpath, x)
+            if not is_allowed_path(x) or not os.path.isfile(fn):
                 continue
-            if os.path.isfile(x):
-                files.append(x[len(self.root) + 1:])
-        return files
+            pkgname, version = guess_pkgname_and_version(x)
+            yield pkgfile(fn=fn, root=root, relfn=fn[len(root) + 1:],
+                          pkgname=pkgname,
+                          version=version,
+                          parsed_version=parse_version(version))
 
-    def find_prefixes(self):
-        prefixes = set()
-        for x in self.listdir():
-            if not os.path.isfile(x):
-                continue
 
-            pkgname = guess_pkgname(x)
-            if pkgname:
-                prefixes.add(pkgname)
-        return prefixes
+def find_packages(pkgs, prefix=""):
+    prefix = prefix.lower()
+    for x in pkgs:
+        if prefix and x.pkgname.lower() != prefix:
+            continue
+        yield x
 
-    def store(self, filename, data):
-        assert "/" not in filename
-        dest_fn = os.path.join(self.root, filename)
+
+def store(root, filename, data):
+    assert "/" not in filename
+    dest_fn = os.path.join(root, filename)
+    if not os.path.exists(dest_fn):
         dest_fh = open(dest_fn, "wb")
-
         dest_fh.write(data)
         dest_fh.close()
+        return True
+
+    return False
 
 
 def usage():
@@ -149,7 +177,7 @@ def main(argv=None):
     command = "serve"
     host = "0.0.0.0"
     port = 8080
-    server = None
+    server = DEFAULT_SERVER
     redirect_to_fallback = True
     fallback_url = "http://pypi.python.org/simple"
     password_file = None
@@ -220,9 +248,8 @@ def main(argv=None):
         err = sys.exc_info()[1]
         sys.exit("Error: while trying to list %r: %s" % (root, err))
 
-
     if command == "update":
-        packages = pkgset(root)
+        packages = frozenset(listdir(root))
         from pypiserver import manage
         manage.update(packages, update_directory, update_dry_run, stable_only=update_stable_only)
         return
@@ -234,7 +261,8 @@ def main(argv=None):
         fallback_url=fallback_url
     )
     server = server or "auto"
-    sys.stdout.write("This is pypiserver %s serving %r on %s:%s\n\n" % (__version__, root, host, port))
+    sys.stdout.write("This is pypiserver %s serving %r on http://%s:%s\n\n" % (__version__, root, host, port))
+    sys.stdout.flush()
     run(app=a, host=host, port=port, server=server)
 
 

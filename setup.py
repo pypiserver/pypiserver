@@ -10,7 +10,7 @@ try:
             })
 except ImportError:
     from distutils.core import setup
-    extra = dict()
+    extra = dict(scripts=["pypi-server"])
 
 if sys.version_info >= (3, 0):
     exec("def do_exec(co, loc): exec(co, loc)\n")
@@ -32,7 +32,6 @@ setup(name="pypiserver",
       long_description=open("README.rst").read(),
       version=get_version(),
       packages=["pypiserver"],
-      scripts=["pypi-server"],
       url="https://github.com/schmir/pypiserver",
       maintainer="Ralf Schmitt",
       maintainer_email="ralf@systemexit.de",

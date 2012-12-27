@@ -7,7 +7,7 @@ else:
 
 from bottle import static_file, redirect, request, HTTPError, Bottle
 from pypiserver import __version__
-from pypiserver.core import is_allowed_path
+from pypiserver.core import listdir, find_packages, store
 
 packages = None
 
@@ -31,7 +31,6 @@ def configure(root=None,
               redirect_to_fallback=True,
               fallback_url=None,
               password_file=None):
-    from pypiserver.core import pkgset
     global packages
 
     if root is None:
@@ -40,7 +39,9 @@ def configure(root=None,
     if fallback_url is None:
         fallback_url = "http://pypi.python.org/simple"
 
-    packages = pkgset(root)
+    packages = lambda: listdir(root)
+    packages.root = root
+
     config.redirect_to_fallback = redirect_to_fallback
     config.fallback_url = fallback_url
     if password_file:
@@ -57,8 +58,10 @@ def favicon():
 
 @app.route('/')
 def root():
+    fp = request.fullpath
+
     try:
-        numpkgs = len(packages.find_packages())
+        numpkgs = len(list(packages()))
     except:
         numpkgs = 0
 
@@ -76,11 +79,13 @@ pip install -i %(URL)ssimple/ PACKAGE [PACKAGE2...]
 easy_install -i %(URL)ssimple/ PACKAGE
 </pre></blockquote></p>
 
-<p>The complete list of all packages can be found <a href="packages/">here</a> or via the <a href="simple/">simple</a> index.</p>
+<p>The complete list of all packages can be found <a href="%(PACKAGES)s">here</a> or via the <a href="%(SIMPLE)s">simple</a> index.</p>
 
 <p>This instance is running version %(VERSION)s of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
 </body></html>
-""" % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs)
+""" % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs,
+           PACKAGES=urljoin(fp, "packages/"),
+           SIMPLE=urljoin(fp, "simple/"))
 
 
 @app.post('/')
@@ -110,10 +115,10 @@ def update():
     if "/" in content.filename:
         raise HTTPError(400, output="bad filename")
 
-    packages.store(content.filename, content.value)
+    if not store(packages.root, content.filename, content.value):
+        raise HTTPError(409, output="file already exists")
 
     return ""
-
 
 
 @app.route("/simple")
@@ -123,8 +128,7 @@ def simpleindex_redirect():
 
 @app.route("/simple/")
 def simpleindex():
-    prefixes = list(packages.find_prefixes())
-    prefixes.sort()
+    prefixes = sorted(set([x.pkgname for x in packages() if x.pkgname]))
     res = ["<html><head><title>Simple Index</title></head><body>\n"]
     for x in prefixes:
         res.append('<a href="%s/">%s</a><br>\n' % (x, x))
@@ -139,12 +143,12 @@ def simple(prefix=""):
     if not fp.endswith("/"):
         fp += "/"
 
-    files = packages.find_packages(prefix)
+    files = [x.relfn for x in sorted(find_packages(packages(), prefix=prefix), key=lambda x: x.parsed_version)]
+
     if not files:
         if config.redirect_to_fallback:
             return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
         return HTTPError(404)
-    files.sort()
     res = ["<html><head><title>Links for %s</title></head><body>\n" % prefix]
     res.append("<h1>Links for %s</h1>\n" % prefix)
     for x in files:
@@ -162,8 +166,8 @@ def list_packages():
     if not fp.endswith("/"):
         fp += "/"
 
-    files = packages.find_packages()
-    files.sort()
+    files = [x.relfn for x in sorted(find_packages(packages()), key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version))]
+
     res = ["<html><head><title>Index of packages</title></head><body>\n"]
     for x in files:
         x = x.replace("\\", "/")
@@ -174,10 +178,13 @@ def list_packages():
 
 @app.route('/packages/:filename#.*#')
 def server_static(filename):
-    if not is_allowed_path(filename):
-        return HTTPError(404)
+    entries = find_packages(packages())
+    for x in entries:
+        f = x.relfn.replace("\\", "/")
+        if f == filename:
+            return static_file(filename, root=x.root)
 
-    return static_file(filename, root=packages.root)
+    return HTTPError(404)
 
 
 @app.route('/:prefix')

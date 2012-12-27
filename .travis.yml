@@ -4,8 +4,15 @@ python:
   - 2.5
   - 2.6
   - 2.7
+  - 3.2
   - pypy
 
-before_install: pip install --use-mirrors pytest twill paste pastedeploy
+before_install: pip install --use-mirrors tox
+
 install: python setup.py install
-script: py.test
+script: ./.travis-runtox.py
+
+branches:
+  except:
+    - standalone
+

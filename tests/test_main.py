@@ -1,7 +1,6 @@
 #! /usr/bin/env py.test
 
-import os
-import pytest
+import sys, os, pytest
 from pypiserver import core
 
 
@@ -12,17 +11,18 @@ class main_wrapper(object):
         self.pkgdir = None
 
     def __call__(self, argv):
-        print "Running", argv
+        sys.stdout.write("Running %s\n" % (argv,))
         core.main(["pypi-server"] + argv)
         return self.run_kwargs
 
 
-def pytest_funcarg__main(request):
+@pytest.fixture()
+def main(request, monkeypatch):
 
     main = main_wrapper()
 
     def run(**kwargs):
-        print "RUN:", kwargs
+        sys.stdout.write("RUN: %s\n" % kwargs)
         app = kwargs.pop("app")
         main.app = app
         main.run_kwargs = kwargs
@@ -31,7 +31,6 @@ def pytest_funcarg__main(request):
         main.pkgdir = pkgdir
         return []
 
-    monkeypatch = request.getfuncargvalue("monkeypatch")
     monkeypatch.setattr(core, "run", run)
     monkeypatch.setattr(os, "listdir", listdir)
 

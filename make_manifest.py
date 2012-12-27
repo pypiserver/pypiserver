@@ -4,22 +4,12 @@ import os
 
 
 def main():
-    files = [x.strip() for x in os.popen("git ls-files")]
-
-    def remove(n):
-        try:
-            files.remove(n)
-        except ValueError:
-            pass
-
-    remove("make_manifest.py")
-    remove("commit-standalone")
-    files.sort()
-
-    f = open("MANIFEST.in", "w")
-    for x in files:
-        f.write("include %s\n" % x)
-    f.close()
+    files = sorted(set([x.strip() for x in os.popen("git ls-files")]) -
+                   set(("make_manifest.py", "commit-standalone",
+                        "vendor", ".gitmodules", ".travis.yml", ".travis-runtox.py")))
+    with open("MANIFEST.in", "w") as f:
+        for x in files:
+            f.write("include %s\n" % x)
 
 if __name__ == '__main__':
     main()

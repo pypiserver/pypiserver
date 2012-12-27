@@ -2,7 +2,13 @@
 
 """generate a single file pypi-server script"""
 
-import os, zlib, cPickle, base64, glob
+import os, zlib, cPickle, base64, itertools
+
+
+def find_files(path):
+    for dirpath, dirnames, filenames in os.walk(path):
+        for f in filenames:
+            yield os.path.join(dirpath, f)
 
 
 def get_version():
@@ -16,8 +22,15 @@ def get_version():
 
 def main():
     name2src = {}
-    for f in glob.glob("pypiserver/*.py"):
+
+    for f in itertools.chain(find_files("pypiserver"),
+                             find_files("vendor")):
+        if not f.endswith(".py"):
+            continue
+
         k = f.replace('/', '.')[:-3]
+        if k.startswith("vendor."):
+            k = k[len("vendor."):]
         name2src[k] = open(f).read()
 
     data = cPickle.dumps(name2src, 2)
