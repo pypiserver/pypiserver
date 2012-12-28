@@ -61,10 +61,12 @@ def filter_latest_pkgs(pkgs):
     pkgname2latest = {}
 
     for x in pkgs:
-        if x.pkgname not in pkgname2latest:
-            pkgname2latest[x.pkgname] = x
-        elif x.parsed_version > pkgname2latest[x.pkgname].parsed_version:
-            pkgname2latest[x.pkgname] = x
+        pkgname = x.pkgname.lower()
+
+        if pkgname not in pkgname2latest:
+            pkgname2latest[pkgname] = x
+        elif x.parsed_version > pkgname2latest[pkgname].parsed_version:
+            pkgname2latest[pkgname] = x
 
     return pkgname2latest.values()
 

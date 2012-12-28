@@ -56,3 +56,12 @@ def test_filter_latest_pkgs():
     pkgs = [pkgfile_from_path(x) for x in paths]
 
     assert frozenset(filter_latest_pkgs(pkgs)) == frozenset(pkgs[1:])
+
+
+def test_filter_latest_pkgs_case_insensitive():
+    paths = ["/home/ralf/greenlet-0.2.zip",
+             "/home/ralf/foo/baz-1.0.zip"
+             "/home/ralf/bar/Greenlet-0.3.zip"]
+    pkgs = [pkgfile_from_path(x) for x in paths]
+
+    assert frozenset(filter_latest_pkgs(pkgs)) == frozenset(pkgs[1:])
