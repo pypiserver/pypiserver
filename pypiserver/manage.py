@@ -1,6 +1,7 @@
 
 import sys, os, re
 from pypiserver import core
+from subprocess import call
 
 if sys.version_info >= (3, 0):
     from xmlrpc.client import Server
@@ -127,4 +128,4 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
 
         sys.stdout.write("%s\n\n" % (" ".join(cmd),))
         if not dry_run:
-            os.spawnlp(os.P_WAIT, cmd[0], *cmd)
+            call(cmd)
