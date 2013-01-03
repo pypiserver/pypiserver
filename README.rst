@@ -6,8 +6,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 1.0.0
-:Date:    2012-10-26
+:Version: 1.0.1
+:Date:    2013-01-03
 :Download: http://pypi.python.org/pypi/pypiserver#downloads
 :Code: https://github.com/schmir/pypiserver
 
@@ -368,7 +368,7 @@ License
 pypiserver contains a copy of bottle_ which is available under the
 MIT license::
 
-  Copyright (c) 2010, Marcel Hellkamp.
+  Copyright (c) 2012, Marcel Hellkamp.
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -391,7 +391,7 @@ MIT license::
 
 The remaining part is distributed under the zlib/libpng license::
 
-  Copyright (c) 2011 Ralf Schmitt
+  Copyright (c) 2011-2013 Ralf Schmitt
 
   This software is provided 'as-is', without any express or implied
   warranty. In no event will the authors be held liable for any damages
@@ -443,6 +443,16 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 
 Changelog
 =========
+1.0.1 (2013-01-03)
+------------------
+- make 'pypi-server -Ux' work on windows
+  ('module' object has no attribute 'spawnlp',
+  https://github.com/schmir/pypiserver/issues/26)
+- use absolute paths in hrefs for root view
+  (https://github.com/schmir/pypiserver/issues/25)
+- add description of uploads to the documentation
+- make the test suite work on python 3
+
 1.0.0 (2012-10-26)
 ------------------
 - add passlib and waitress to pypi-server-standalone
