@@ -452,6 +452,7 @@ Changelog
   (https://github.com/schmir/pypiserver/issues/25)
 - add description of uploads to the documentation
 - make the test suite work on python 3
+- make pypi-server-standalone work with python 2.5
 
 1.0.0 (2012-10-26)
 ------------------
