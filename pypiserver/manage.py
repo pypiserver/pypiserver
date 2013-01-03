@@ -128,17 +128,3 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
         sys.stdout.write("%s\n\n" % (" ".join(cmd),))
         if not dry_run:
             os.spawnlp(os.P_WAIT, cmd[0], *cmd)
-
-
-def main():
-    root = sys.argv[1]
-    if len(sys.argv) > 2:
-        destdir = sys.argv[2]
-    else:
-        destdir = None
-
-    update(core.pkgset(root), destdir, True)
-
-
-if __name__ == "__main__":
-    main()
