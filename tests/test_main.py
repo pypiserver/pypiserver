@@ -39,7 +39,7 @@ def main(request, monkeypatch):
 
 def test_default_pkgdir(main):
     main([])
-    assert main.pkgdir == os.path.expanduser("~/packages")
+    assert main.pkgdir == os.path.normpath(os.path.expanduser("~/packages"))
 
 
 def test_noargs(main):
