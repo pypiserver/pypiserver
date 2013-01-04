@@ -22,3 +22,10 @@ __pycache__/
 /.tox/
 /pypiserver.egg-info/
 /.standalone/
+/.coverage
+/htmlcov/
+/.installed.cfg
+/bin/
+/develop-eggs/
+/eggs/
+/parts/
