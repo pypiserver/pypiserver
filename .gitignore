@@ -24,3 +24,8 @@ __pycache__/
 /.standalone/
 /.coverage
 /htmlcov/
+/.installed.cfg
+/bin/
+/develop-eggs/
+/eggs/
+/parts/
