@@ -256,7 +256,7 @@ interface::
 	  fallback_url="http://pypi.python.org/simple")
 
 and returns the WSGI application. root is the package directory,
-redirect_to_fallback specifies wether to redirect to fallback_url when
+redirect_to_fallback specifies whether to redirect to fallback_url when
 a package is missing.
 
 gunicorn
@@ -288,7 +288,7 @@ In case you're using apache 2 with mod_wsgi, the following config file
 paste/pastedeploy
 ----------------------
 paste allows to run multiple WSGI applications under different URL
-paths. Therfor it's possible to serve different set of packages on
+paths. Therefore it's possible to serve different set of packages on
 different paths.
 
 The following example `paste.ini` could be used to serve stable and
