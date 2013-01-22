@@ -20,7 +20,6 @@ def app(root=None,
     if fallback_url is None:
         fallback_url = "http://pypi.python.org/simple"
 
-    os.listdir(root)
     _app.configure(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url,
                    password_file=password_file)
     _app.app.module = _app

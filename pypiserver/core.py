@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
-import os, sys, getopt, re, mimetypes, warnings
+import os, sys, getopt, re, mimetypes, warnings, itertools
 
 warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
 from pypiserver import bottle, __version__, app
@@ -238,31 +238,24 @@ def main(argv=None):
 
     if len(roots) == 0:
         roots.append(os.path.expanduser("~/packages"))
-    elif len(roots) > 1:
-        sys.exit("Error: more than one root directory specified: %r" % (roots,))
 
-    root = os.path.abspath(roots[0])
+    roots = [os.path.abspath(x) for x in roots]
 
-    try:
-        os.listdir(root)
-    except Exception:
-        err = sys.exc_info()[1]
-        sys.exit("Error: while trying to list %r: %s" % (root, err))
 
     if command == "update":
-        packages = frozenset(listdir(root))
+        packages = frozenset(itertools.chain(*[listdir(r) for r in roots]))
         from pypiserver import manage
         manage.update(packages, update_directory, update_dry_run, stable_only=update_stable_only)
         return
 
     a = app(
-        root=root,
+        root=roots,
         redirect_to_fallback=redirect_to_fallback,
         password_file=password_file,
         fallback_url=fallback_url
     )
     server = server or "auto"
-    sys.stdout.write("This is pypiserver %s serving %r on http://%s:%s\n\n" % (__version__, root, host, port))
+    sys.stdout.write("This is pypiserver %s serving %r on http://%s:%s\n\n" % (__version__, ", ".join(roots), host, port))
     sys.stdout.flush()
     run(app=a, host=host, port=port, server=server)
 

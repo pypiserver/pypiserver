@@ -70,9 +70,9 @@ def test_root_r(main):
     assert main.pkgdir == os.path.abspath(".")
 
 
-def test_root_multiple(main):
-    pytest.raises(SystemExit, main, [".", "."])
-    pytest.raises(SystemExit, main, ["-r", ".", "."])
+# def test_root_multiple(main):
+#     pytest.raises(SystemExit, main, [".", "."])
+#     pytest.raises(SystemExit, main, ["-r", ".", "."])
 
 
 def test_fallback_url(main):

@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, itertools
 
 if sys.version_info >= (3, 0):
     from urllib.parse import urljoin
@@ -39,8 +39,21 @@ def configure(root=None,
     if fallback_url is None:
         fallback_url = "http://pypi.python.org/simple"
 
-    packages = lambda: listdir(root)
-    packages.root = root
+    if not isinstance(root, (list, tuple)):
+        roots = [root]
+    else:
+        roots = root
+
+    roots = [os.path.abspath(r) for r in roots]
+    for r in roots:
+        try:
+            os.listdir(r)
+        except Exception:
+            err = sys.exc_info()[1]
+            sys.exit("Error: while trying to list %r: %s" % (r, err))
+
+    packages = lambda: itertools.chain(*[listdir(r) for r in roots])
+    packages.root = roots[0]
 
     config.redirect_to_fallback = redirect_to_fallback
     config.fallback_url = fallback_url
