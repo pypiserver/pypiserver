@@ -53,6 +53,10 @@ def guess_pkgname_and_version(path):
     return pkgname, version
 
 
+def normalize_pkgname(name):
+    return name.lower().replace("-", "_")
+
+
 def is_allowed_path(path_part):
     p = path_part.replace("\\", "/")
     return not (p.startswith(".") or "/." in p)
@@ -84,9 +88,9 @@ def listdir(root):
 
 
 def find_packages(pkgs, prefix=""):
-    prefix = prefix.lower()
+    prefix = normalize_pkgname(prefix)
     for x in pkgs:
-        if prefix and x.pkgname.lower() != prefix:
+        if prefix and normalize_pkgname(x.pkgname) != prefix:
             continue
         yield x
 

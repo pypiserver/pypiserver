@@ -62,7 +62,7 @@ def filter_latest_pkgs(pkgs):
     pkgname2latest = {}
 
     for x in pkgs:
-        pkgname = x.pkgname.lower()
+        pkgname = core.normalize_pkgname(x.pkgname)
 
         if pkgname not in pkgname2latest:
             pkgname2latest[pkgname] = x
