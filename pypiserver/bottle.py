@@ -16,7 +16,7 @@ License: MIT (see LICENSE for details)
 from __future__ import with_statement
 
 __author__ = 'Marcel Hellkamp'
-__version__ = '0.11.3'
+__version__ = '0.11.5'
 __license__ = 'MIT'
 
 # The gevent server adapter needs to patch some modules before they are imported
@@ -561,14 +561,14 @@ class Bottle(object):
         def mountpoint_wrapper():
             try:
                 request.path_shift(path_depth)
-                rs = BaseResponse([], 200)
-                def start_response(status, header):
+                rs = HTTPResponse([])
+                def start_response(status, headerlist):
                     rs.status = status
-                    for name, value in header: rs.add_header(name, value)
+                    for name, value in headerlist: rs.add_header(name, value)
                     return rs.body.append
                 body = app(request.environ, start_response)
-                body = itertools.chain(rs.body, body)
-                return HTTPResponse(body, rs.status_code, rs.headers)
+                if body: rs.body = itertools.chain(rs.body, body)
+                return rs
             finally:
                 request.path_shift(-path_depth)
 
@@ -3099,7 +3099,7 @@ def template(*args, **kwargs):
     adapter = kwargs.pop('template_adapter', SimpleTemplate)
     lookup = kwargs.pop('template_lookup', TEMPLATE_PATH)
     tplid = (id(lookup), tpl)
-    if tpl not in TEMPLATES or DEBUG:
+    if tplid not in TEMPLATES or DEBUG:
         settings = kwargs.pop('template_settings', {})
         if isinstance(tpl, adapter):
             TEMPLATES[tplid] = tpl
