@@ -6,8 +6,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 1.0.1
-:Date:    2013-01-03
+:Version: 1.1.0
+:Date:    2013-01-28
 :Download: http://pypi.python.org/pypi/pypiserver#downloads
 :Code: https://github.com/schmir/pypiserver
 
@@ -65,7 +65,7 @@ Detailed Usage
 =================================
 pypi-server -h will print a detailed usage message::
 
-  pypi-server [OPTIONS] [PACKAGES_DIRECTORY]
+  pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
     start PyPI compatible package server serving packages from
     PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
     command line, it uses the default ~/packages.  pypiserver scans this
@@ -266,6 +266,11 @@ The following command uses gunicorn to start pypiserver::
 
   gunicorn -w4 'pypiserver:app("/home/ralf/packages")'
 
+or when using multiple roots::
+
+  gunicorn -w4 'pypiserver:app(["/home/ralf/packages", "/home/ralf/experimental"])'
+
+
 apache/mod_wsgi
 ----------------
 In case you're using apache 2 with mod_wsgi, the following config file
@@ -301,11 +306,12 @@ unstable packages on different paths::
 
   [app:stable]
   use = egg:pypiserver#main
-  root = ~/packages/stable
+  root = ~/stable-packages
 
   [app:unstable]
   use = egg:pypiserver#main
-  root = ~/packages/
+  root = ~/stable-packages
+	 ~/unstable-packages
 
   [server:main]
   use = egg:gunicorn#main
@@ -443,6 +449,13 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 
 Changelog
 =========
+1.1.0 (2013-01-28)
+------------------
+- implement multi-root support (one can now specify multiple package
+  roots)
+- normalize pkgnames, handle underscore like minus
+- sort files by their version, not alphabetically
+
 1.0.1 (2013-01-03)
 ------------------
 - make 'pypi-server -Ux' work on windows

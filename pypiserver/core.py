@@ -108,7 +108,7 @@ def store(root, filename, data):
 
 
 def usage():
-    sys.stdout.write("""pypi-server [OPTIONS] [PACKAGES_DIRECTORY]
+    sys.stdout.write("""pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
   start PyPI compatible package server serving packages from
   PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
   command line, it uses the default ~/packages.  pypiserver scans this
