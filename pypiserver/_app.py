@@ -151,7 +151,7 @@ def update():
         return ""
 
     if action != "file_upload":
-        raise HTTPError(400, output="actions other than file_upload/submit, not supported")
+        raise HTTPError(400, output="action not supported: %s" % action)
 
     try:
         content = request.files['content']
