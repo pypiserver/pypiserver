@@ -1,4 +1,9 @@
-import sys, os, itertools
+import sys, os, itertools, zipfile
+
+try:
+    from io import BytesIO
+except ImportError:
+    from StringIO import StringIO as BytesIO
 
 if sys.version_info >= (3, 0):
     from urllib.parse import urljoin
@@ -114,7 +119,35 @@ def update():
     except KeyError:
         raise HTTPError(400, output=":action field not found")
 
-    if action == "submit":
+    if action in ("verify", "submit"):
+        return ""
+
+    if action == "doc_upload":
+        try:
+            content = request.files['content']
+        except KeyError:
+            raise HTTPError(400, output="content file field not found")
+        zip_data = content.file.read()
+        try:
+            zf = zipfile.ZipFile(BytesIO(zip_data))
+            info = zf.getinfo('index.html')
+        except Exception:
+            raise HTTPError(400, output="not a zip file")
+        return ""
+
+    if action == "remove_pkg":
+        name = request.forms.get("name")
+        version = request.forms.get("version")
+        if not name or not version:
+            raise HTTPError(400, "Name or version not specified")
+        found = None
+        for pkg in find_packages(packages()):
+            if pkg.pkgname == name and pkg.version == version:
+                found = pkg
+                break
+        if found is None:
+            raise HTTPError(404, "%s (%s) not found" % (name, version))
+        os.unlink(found.fn)
         return ""
 
     if action != "file_upload":
