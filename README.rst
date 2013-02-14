@@ -7,7 +7,7 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
 :Version: 1.1.0
-:Date:    2013-01-28
+:Date:    2013-02-14
 :Download: http://pypi.python.org/pypi/pypiserver#downloads
 :Code: https://github.com/schmir/pypiserver
 
@@ -450,7 +450,7 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 
 Changelog
 =========
-1.1.0 (2013-01-28)
+1.1.0 (2013-02-14)
 ------------------
 - implement multi-root support (one can now specify multiple package
   roots)
