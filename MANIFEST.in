@@ -1,6 +1,8 @@
 include .gitignore
 include MANIFEST.in
 include README.rst
+include bootstrap.py
+include buildout.cfg
 include gen-standalone.py
 include pypi-server
 include pypi-server-in.py
