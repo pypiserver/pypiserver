@@ -113,7 +113,8 @@ def usage():
   PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
   command line, it uses the default ~/packages.  pypiserver scans this
   directory recursively for packages. It skips packages and
-  directories starting with a dot.
+  directories starting with a dot. Multiple package directories can be
+  specified.
 
 pypi-server understands the following options:
 
@@ -151,7 +152,7 @@ pypi-server --help
 pypi-server --version
   show pypi-server's version
 
-pypi-server -U [OPTIONS] [PACKAGES_DIRECTORY]
+pypi-server -U [OPTIONS] [PACKAGES_DIRECTORY...]
   update packages in PACKAGES_DIRECTORY. This command searches
   pypi.python.org for updates and shows a pip command line which
   updates the package.
