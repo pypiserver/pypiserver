@@ -456,6 +456,9 @@ Changelog
   roots)
 - normalize pkgnames, handle underscore like minus
 - sort files by their version, not alphabetically
+- upgrade embedded bottle to 0.11.6
+- upgrade waitress to 0.8.2 in the standalone script
+- merge vsajip's support for verify, doc_upload and remove_pkg
 
 1.0.1 (2013-01-03)
 ------------------
