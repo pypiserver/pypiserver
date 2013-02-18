@@ -26,7 +26,11 @@ class DictImporter(object):
             is_pkg = True
 
         co = compile(s, fullname, 'exec')
-        module = sys.modules.setdefault(fullname, type(sys)(fullname))
+        try:
+            module = sys.modules.setdefault(fullname, type(sys)(fullname))
+        except TypeError:  # jython?
+            import types
+            module = sys.modules.setdefault(fullname, types.ModuleType(fullname))
         module.__file__ = __file__
         module.__loader__ = self
         if is_pkg:
