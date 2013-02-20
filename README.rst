@@ -179,8 +179,8 @@ Edit or create a ~/.pypirc file with the following content::
 
   [distutils]
   index-servers =
-  pypi
-  internal
+    pypi
+    internal
 
   [pypi]
   username:pypiusername
