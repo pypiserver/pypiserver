@@ -174,7 +174,7 @@ def simpleindex_redirect():
 
 @app.route("/simple/")
 def simpleindex():
-    prefixes = sorted(set([x.pkgname for x in packages() if x.pkgname]))
+    prefixes = sorted(set([x.pkgname.replace("_", "-") for x in packages() if x.pkgname]))
     res = ["<html><head><title>Simple Index</title></head><body>\n"]
     for x in prefixes:
         res.append('<a href="%s/">%s</a><br>\n' % (x, x))
