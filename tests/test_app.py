@@ -175,3 +175,29 @@ def test_root_no_relative_paths(testpriv):
     resp = testpriv.get("/priv/")
     hrefs = [x["href"] for x in resp.html("a")]
     assert hrefs == ['/priv/packages/', '/priv/simple/', 'http://pypi.python.org/pypi/pypiserver']
+
+
+def test_simple_index_list_no_duplicates(root, testapp):
+    root.join("foo-bar-1.0.tar.gz").write("")
+    root.join("foo_bar-1.0-py2.7.egg").write("")
+
+    resp = testapp.get("/simple/")
+    assert len(resp.html("a")) == 1
+
+
+def test_simple_index_list_name_with_underscore(root, testapp):
+    root.join("foo_bar-1.0.tar.gz").write("")
+    root.join("foo_bar-1.0-py2.7.egg").write("")
+
+    resp = testapp.get("/simple/")
+    assert len(resp.html("a")) == 1
+    hrefs = [x["href"] for x in resp.html("a")]
+    assert hrefs == ["foo_bar/"]
+
+
+def test_simple_index_egg_and_tarball(root, testapp):
+    root.join("foo-bar-1.0.tar.gz").write("")
+    root.join("foo_bar-1.0-py2.7.egg").write("")
+
+    resp = testapp.get("/simple/foo-bar")
+    assert len(resp.html("a")) == 2
