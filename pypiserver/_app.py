@@ -182,7 +182,7 @@ def simpleindex():
                 (x.pkgname, x.relfn))
 
     prefixes = []
-    for package_group in package_groups.itervalues():
+    for package_group in package_groups.values():
         for pkgname, relfn in package_group:
             if relfn.endswith('.egg'):
                 backup_name = pkgname
