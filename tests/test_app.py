@@ -201,3 +201,13 @@ def test_simple_index_egg_and_tarball(root, testapp):
 
     resp = testapp.get("/simple/foo-bar")
     assert len(resp.html("a")) == 2
+
+
+def test_simple_index_list_name_with_underscore_no_egg(root, testapp):
+    root.join("foo_bar-1.0.tar.gz").write("")
+    root.join("foo-bar-1.1.tar.gz").write("")
+
+    resp = testapp.get("/simple/")
+    assert len(resp.html("a")) == 2
+    hrefs = set([x["href"] for x in resp.html("a")])
+    assert hrefs == set(["foo_bar/", "foo-bar/"])
