@@ -10,9 +10,10 @@ if sys.version_info >= (3, 0):
 else:
     from urlparse import urljoin
 
+from collections import defaultdict
 from bottle import static_file, redirect, request, HTTPError, Bottle
 from pypiserver import __version__
-from pypiserver.core import listdir, find_packages, store
+from pypiserver.core import listdir, find_packages, store, normalize_pkgname
 
 packages = None
 
@@ -174,7 +175,24 @@ def simpleindex_redirect():
 
 @app.route("/simple/")
 def simpleindex():
-    prefixes = sorted(set([x.pkgname for x in packages() if x.pkgname]))
+    package_groups = defaultdict(list)
+    for x in packages():
+        if x.pkgname:
+            package_groups[normalize_pkgname(x.pkgname)].append(
+                (x.pkgname, x.relfn))
+
+    prefixes = []
+    for package_group in package_groups.itervalues():
+        for pkgname, relfn in package_group:
+            if relfn.endswith('.egg'):
+                backup_name = pkgname
+            else:
+                prefixes.append(pkgname)
+                break
+        else:
+            prefixes.append(backup_name)
+    prefixes = sorted(prefixes)
+
     res = ["<html><head><title>Simple Index</title></head><body>\n"]
     for x in prefixes:
         res.append('<a href="%s/">%s</a><br>\n' % (x, x))
