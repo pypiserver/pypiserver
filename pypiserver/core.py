@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
-import os, sys, getopt, re, mimetypes, warnings, itertools
+import os, sys, getopt, re, mimetypes, warnings, itertools, collections
 
 warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
 from pypiserver import bottle, __version__, app
@@ -93,6 +93,26 @@ def find_packages(pkgs, prefix=""):
         if prefix and normalize_pkgname(x.pkgname) != prefix:
             continue
         yield x
+
+
+def get_prefixes(pkgs):
+    package_groups = collections.defaultdict(list)
+    for x in pkgs:
+        if x.pkgname:
+            package_groups[normalize_pkgname(x.pkgname)].append(
+                (x.pkgname, x.relfn))
+
+    prefixes = []
+    for package_group in package_groups.values():
+        for pkgname, relfn in package_group:
+            if relfn.endswith('.egg'):
+                backup_name = pkgname
+            else:
+                prefixes.append(pkgname)
+                break
+        else:
+            prefixes.append(backup_name)
+    return prefixes
 
 
 def store(root, filename, data):
