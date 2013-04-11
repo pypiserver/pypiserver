@@ -102,6 +102,9 @@ pypi-server -h will print a detailed usage message::
     -r PACKAGES_DIRECTORY, --root PACKAGES_DIRECTORY
       [deprecated] serve packages from PACKAGES_DIRECTORY
 
+    -o, --overwrite
+      allow overwriting existing package files
+      
   pypi-server -h
   pypi-server --help
     show this help message
@@ -450,6 +453,11 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 
 Changelog
 =========
+unreleased
+----------
+- add 'overwrite' option to allow overwriting existing package
+  files (default: false)
+
 1.1.0 (2013-02-14)
 ------------------
 - implement multi-root support (one can now specify multiple package

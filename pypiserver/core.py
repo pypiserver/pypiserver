@@ -115,16 +115,19 @@ def get_prefixes(pkgs):
     return pkgnames
 
 
+def exists(root, filename):
+    assert "/" not in filename
+    dest_fn = os.path.join(root, filename)
+    return os.path.exists(dest_fn)
+
+
 def store(root, filename, data):
     assert "/" not in filename
     dest_fn = os.path.join(root, filename)
-    if not os.path.exists(dest_fn):
-        dest_fh = open(dest_fn, "wb")
-        dest_fh.write(data)
-        dest_fh.close()
-        return True
-
-    return False
+    dest_fh = open(dest_fn, "wb")
+    dest_fh.write(data)
+    dest_fh.close()
+    return True
 
 
 def usage():
@@ -164,6 +167,9 @@ pypi-server understands the following options:
 
   -r PACKAGES_DIRECTORY, --root PACKAGES_DIRECTORY
     [deprecated] serve packages from PACKAGES_DIRECTORY
+
+  -o, --overwrite
+    allow overwriting existing package files
 
 pypi-server -h
 pypi-server --help
@@ -207,13 +213,14 @@ def main(argv=None):
     redirect_to_fallback = True
     fallback_url = "http://pypi.python.org/simple"
     password_file = None
+    overwrite = False
 
     update_dry_run = True
     update_directory = None
     update_stable_only = True
 
     try:
-        opts, roots = getopt.getopt(argv[1:], "i:p:r:d:P:Uuxh", [
+        opts, roots = getopt.getopt(argv[1:], "i:p:r:d:P:Uuxoh", [
             "interface=",
             "passwords=",
             "port=",
@@ -221,6 +228,7 @@ def main(argv=None):
             "server=",
             "fallback-url=",
             "disable-fallback",
+            "overwrite",
             "version",
             "help"
         ])
@@ -257,6 +265,8 @@ def main(argv=None):
             update_directory = v
         elif k in ("-P", "--passwords"):
             password_file = v
+        elif k in ("-o", "--overwrite"):
+            overwrite = True
         elif k in ("-h", "--help"):
             usage()
             sys.exit(0)
@@ -277,7 +287,8 @@ def main(argv=None):
         root=roots,
         redirect_to_fallback=redirect_to_fallback,
         password_file=password_file,
-        fallback_url=fallback_url
+        fallback_url=fallback_url,
+        overwrite=overwrite,
     )
     server = server or "auto"
     sys.stdout.write("This is pypiserver %s serving %r on http://%s:%s\n\n" % (__version__, ", ".join(roots), host, port))
