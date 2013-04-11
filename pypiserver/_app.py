@@ -12,7 +12,7 @@ else:
 
 from bottle import static_file, redirect, request, HTTPError, Bottle
 from pypiserver import __version__
-from pypiserver.core import listdir, find_packages, store, get_prefixes
+from pypiserver.core import listdir, find_packages, store, get_prefixes, exists
 
 packages = None
 
@@ -35,7 +35,8 @@ def validate_user(username, password):
 def configure(root=None,
               redirect_to_fallback=True,
               fallback_url=None,
-              password_file=None):
+              password_file=None,
+              overwrite=False):
     global packages
 
     if root is None:
@@ -65,6 +66,7 @@ def configure(root=None,
     if password_file:
         from passlib.apache import HtpasswdFile
         config.htpasswdfile = HtpasswdFile(password_file)
+    config.overwrite = overwrite
 
 app = Bottle()
 
@@ -161,9 +163,10 @@ def update():
     if "/" in content.filename:
         raise HTTPError(400, output="bad filename")
 
-    if not store(packages.root, content.filename, content.value):
+    if not config.overwrite and exists(packages.root, content.filename):
         raise HTTPError(409, output="file already exists")
 
+    store(packages.root, content.filename, content.value)
     return ""
 
 
