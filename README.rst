@@ -450,6 +450,8 @@ scrambled (http://pypi.python.org/pypi/scrambled)
 EggBasket (http://pypi.python.org/pypi/EggBasket)
   TurboGears based
 
+devpi-server (https://pypi.python.org/pypi/devpi-server)
+  easy-to-use caching proxy server
 
 Changelog
 =========
