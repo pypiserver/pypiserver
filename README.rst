@@ -6,9 +6,9 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 1.1.0
-:Date:    2013-02-14
-:Download: http://pypi.python.org/pypi/pypiserver#downloads
+:Version: 1.1.1
+:Date:    2013-05-29
+:Download: https://pypi.python.org/pypi/pypiserver#downloads
 :Code: https://github.com/schmir/pypiserver
 
 
@@ -458,10 +458,15 @@ proxypypi (https://pypi.python.org/pypi/proxypypi)
 
 Changelog
 =========
-unreleased
-----------
+1.1.1 (2013-05-29)
+------------------
 - add 'overwrite' option to allow overwriting existing package
   files (default: false)
+- show names with hyphens instead of underscores on the "/simple"
+  listing
+- make the standalone version work with jython 2.5.3
+- upgrade waitress to 0.8.5 in the standalone version
+- workaround broken xmlrpc api on pypi.python.org by using HTTPS
 
 1.1.0 (2013-02-14)
 ------------------
