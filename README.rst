@@ -453,6 +453,9 @@ EggBasket (http://pypi.python.org/pypi/EggBasket)
 devpi-server (https://pypi.python.org/pypi/devpi-server)
   easy-to-use caching proxy server
 
+proxypypi (https://pypi.python.org/pypi/proxypypi)
+  a PyPI caching proxy
+
 Changelog
 =========
 unreleased
