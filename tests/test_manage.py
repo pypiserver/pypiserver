@@ -23,6 +23,8 @@ def pkgfile_from_path(fn):
      ("0.0.0", True),
      ("1.1beta1", False),
      ("1.2.10-123", True),
+     ("5.5.0-DEV", False),
+     ("1.2-rc1", False),
      ("1.0b1", False)])
 def test_is_stable_version(version, is_stable):
     parsed_version = parse_version(version)

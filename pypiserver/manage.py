@@ -44,6 +44,9 @@ else:
 
 
 def is_stable_version(pversion):
+    for x in ("*c", "*@", "*b"):
+        if x in pversion:
+            return False
     for x in pversion:
         if x.startswith("*final"):
             return True
