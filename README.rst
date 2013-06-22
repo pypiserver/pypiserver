@@ -458,6 +458,11 @@ proxypypi (https://pypi.python.org/pypi/proxypypi)
 
 Changelog
 =========
+1.1.2 (2013-06-22)
+------------------
+- fix "pypi-server -U" stable/unstable detection, i.e. do not
+  accidentally update to unstable packages
+
 1.1.1 (2013-05-29)
 ------------------
 - add 'overwrite' option to allow overwriting existing package
