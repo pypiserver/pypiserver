@@ -15,7 +15,23 @@ files = [
     ("greenlet-0.3.4-py3.2-win32.egg", "greenlet", "0.3.4"),
     ("greenlet-0.3.4-py2.7-linux-x86_64.egg", "greenlet", "0.3.4"),
     ("pep8-0.6.0.zip", "pep8", "0.6.0"),
-    ("pytz-2012b.zip", "pytz", "2012b")]
+    ("pytz-2012b.zip", "pytz", "2012b"),
+    ("ABC12-34_V1X-1.2.3.zip", "ABC12-34_V1X", "1.2.3"),
+    ("A100-200-XYZ-1.2.3.zip", "A100-200-XYZ", "1.2.3"),
+    ("flup-1.0.3.dev-20110405.tar.gz", "flup", "1.0.3.dev-20110405"),
+    ("package-1.0.0-alpha.1.zip", "package", "1.0.0-alpha.1"),
+    ("package-1.3.7+build.11.e0f985a.zip", "package", "1.3.7+build.11.e0f985a"),
+    ("package-v1.8.1.301.ga0df26f.zip", "package", "v1.8.1.301.ga0df26f"),
+    ("package-2013.02.17.dev123.zip", "package", "2013.02.17.dev123"),
+    ("package-20000101.zip", "package", "20000101"),
+    ("flup-123-1.0.3.dev-20110405.tar.gz", "flup-123", "1.0.3.dev-20110405"),
+    ("package-123-1.0.0-alpha.1.zip", "package-123", "1.0.0-alpha.1"),
+    ("package-123-1.3.7+build.11.e0f985a.zip", "package-123", "1.3.7+build.11.e0f985a"),
+    ("package-123-v1.8.1.301.ga0df26f.zip", "package-123", "v1.8.1.301.ga0df26f"),
+    ("package-123-2013.02.17.dev123.zip", "package-123", "2013.02.17.dev123"),
+    ("package-123-20000101.zip", "package-123", "20000101"),
+    ("package.zip", "package", ""),
+]
 
 
 @pytest.mark.parametrize(("filename", "pkgname", "version"), files)
