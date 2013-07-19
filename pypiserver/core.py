@@ -47,7 +47,7 @@ _archive_suffix_rx = re.compile(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-
 
 def guess_pkgname_and_version(path):
     path = os.path.basename(path)
-    pkgname = re.split(r"-\d+", path, 1)[0]
+    pkgname = '-'.join(re.split(r'-(?=\d+)', path)[:-1])
     version = path[len(pkgname) + 1:]
     version = _archive_suffix_rx.sub("", version)
     return pkgname, version

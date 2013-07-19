@@ -15,7 +15,9 @@ files = [
     ("greenlet-0.3.4-py3.2-win32.egg", "greenlet", "0.3.4"),
     ("greenlet-0.3.4-py2.7-linux-x86_64.egg", "greenlet", "0.3.4"),
     ("pep8-0.6.0.zip", "pep8", "0.6.0"),
-    ("pytz-2012b.zip", "pytz", "2012b")]
+    ("pytz-2012b.zip", "pytz", "2012b"),
+    ("ABC12-34_V1X-1.2.3.zip", "ABC12-34_V1X", "1.2.3"),
+    ("A100-200-XYZ-1.2.3.zip", "A100-200-XYZ", "1.2.3")]
 
 
 @pytest.mark.parametrize(("filename", "pkgname", "version"), files)
