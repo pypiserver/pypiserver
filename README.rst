@@ -6,8 +6,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 1.1.1
-:Date:    2013-05-29
+:Version: 1.1.3
+:Date:    2013-07-22
 :Download: https://pypi.python.org/pypi/pypiserver#downloads
 :Code: https://github.com/schmir/pypiserver
 
@@ -458,6 +458,10 @@ proxypypi (https://pypi.python.org/pypi/proxypypi)
 
 Changelog
 =========
+1.1.3 (2013-07-22)
+------------------
+- make guessing of package name and version more robust
+
 1.1.2 (2013-06-22)
 ------------------
 - fix "pypi-server -U" stable/unstable detection, i.e. do not
