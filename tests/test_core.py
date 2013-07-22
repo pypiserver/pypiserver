@@ -30,6 +30,7 @@ files = [
     ("package-123-v1.8.1.301.ga0df26f.zip", "package-123", "v1.8.1.301.ga0df26f"),
     ("package-123-2013.02.17.dev123.zip", "package-123", "2013.02.17.dev123"),
     ("package-123-20000101.zip", "package-123", "20000101"),
+    ("pyelasticsearch-0.5-brainbot-1-20130712.zip", "pyelasticsearch", "0.5-brainbot-1-20130712"),
     ("package.zip", "package", ""),
 ]
 
