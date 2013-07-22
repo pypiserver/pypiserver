@@ -1,0 +1,2 @@
+include .gitignore
+include pypi-server-standalone.py
