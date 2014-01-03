@@ -211,3 +211,17 @@ def test_simple_index_list_name_with_underscore_no_egg(root, testapp):
     assert len(resp.html("a")) == 2
     hrefs = set([x["href"] for x in resp.html("a")])
     assert hrefs == set(["foo_bar/", "foo-bar/"])
+
+
+def test_mimetype(root, testapp):
+    root.join("foo_bar-1.0.tar.gz").write("")
+    root.join("foo_bar-1.0.tgz").write("")
+    root.join("foo_bar-1.0.tar.bz2").write("")
+    resp = testapp.get("/packages/foo_bar-1.0.tar.gz")
+    assert resp.content_type == 'application/x-gzip'
+    resp = testapp.get("/packages/foo_bar-1.0.tgz")
+    assert resp.content_type == 'application/x-gzip'
+    resp = testapp.get("/packages/foo_bar-1.0.tar.bz2")
+    assert resp.content_type == 'application/octet-stream'
+
+
