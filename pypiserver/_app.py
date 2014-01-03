@@ -230,7 +230,15 @@ def server_static(filename):
     for x in entries:
         f = x.relfn.replace("\\", "/")
         if f == filename:
-            return static_file(filename, root=x.root)
+            # pip>=1.5 respects the Content Encoding header, do not send it, as
+            # it can lead to double decompression. Stay consistent with pypi.
+            if filename.endswith((".tgz", ".gz")):
+                mimetype = "application/x-gzip"
+            elif filename.endswith(".bz2"):
+                mimetype = "application/octet-stream"
+            else:
+                mimetype = "auto"
+            return static_file(filename, root=x.root, mimetype=mimetype)
 
     return HTTPError(404)
 
