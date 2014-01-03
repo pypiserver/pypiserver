@@ -1,2 +1,3 @@
 include .gitignore
+include MANIFEST.in
 include pypi-server-standalone.py
