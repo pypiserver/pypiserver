@@ -1,4 +1,4 @@
-import sys, os, itertools, zipfile
+import sys, os, itertools, zipfile, mimetypes
 
 try:
     from io import BytesIO
@@ -230,7 +230,7 @@ def server_static(filename):
     for x in entries:
         f = x.relfn.replace("\\", "/")
         if f == filename:
-            return static_file(filename, root=x.root)
+            return static_file(filename, root=x.root, mimetype=mimetypes.guess_type(filename)[0])
 
     return HTTPError(404)
 
