@@ -85,7 +85,7 @@ def build_releases(pkg, versions):
                                replaces=pkg)
 
 
-def find_updates(pkgset, stable_only=True):
+def find_updates(pkgset, stable_only=True, index_url="https://pypi.python.org/pypi/"):
     no_releases = set()
     filter_releases = filter_stable_releases if stable_only else (lambda x: x)
 
@@ -98,7 +98,7 @@ def find_updates(pkgset, stable_only=True):
     sys.stdout.write("checking %s packages for newer version\n" % len(latest_pkgs),)
     need_update = set()
 
-    pypi = make_pypi_client("https://pypi.python.org/pypi/")
+    pypi = make_pypi_client(index_url)
 
     for count, pkg in enumerate(latest_pkgs):
         if count % 40 == 0:
