@@ -204,6 +204,10 @@ The following additional options can be specified with -U:
   -u
     allow updating to unstable version (alpha, beta, rc, dev versions)
 
+  --index-url INDEX_URL
+    use a different pip index url while updating. The default is to use
+    https://pypi.python.org/simple.
+
 Visit http://pypi.python.org/pypi/pypiserver for more information.
 """)
 
@@ -220,6 +224,7 @@ def main(argv=None):
     server = DEFAULT_SERVER
     redirect_to_fallback = True
     fallback_url = "http://pypi.python.org/simple"
+    index_url = "http://pypi.python.org/simple"
     password_file = None
     overwrite = False
 
@@ -230,6 +235,7 @@ def main(argv=None):
     try:
         opts, roots = getopt.getopt(argv[1:], "i:p:r:d:P:Uuxoh", [
             "interface=",
+            "index-url=",
             "passwords=",
             "port=",
             "root=",
@@ -249,6 +255,8 @@ def main(argv=None):
             port = int(v)
         elif k in ("-i", "--interface"):
             host = v
+        elif k == "--index-url":
+            index_url = v
         elif k in ("-r", "--root"):
             roots.append(v)
         elif k == "--disable-fallback":
@@ -288,7 +296,7 @@ def main(argv=None):
     if command == "update":
         packages = frozenset(itertools.chain(*[listdir(r) for r in roots]))
         from pypiserver import manage
-        manage.update(packages, update_directory, update_dry_run, stable_only=update_stable_only)
+        manage.update(packages, update_directory, update_dry_run, stable_only=update_stable_only, index_url=index_url)
         return
 
     a = app(
