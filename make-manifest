@@ -11,7 +11,7 @@ import os
 def main():
     files = sorted(set([x.strip() for x in os.popen("git ls-files")]) -
                    set(("make-manifest", "commit-standalone",
-                        "vendor", ".gitmodules", ".travis.yml", ".travis-runtox.py")))
+                        "vendor", ".gitmodules", ".travis.yml")))
     with open("MANIFEST.in", "w") as f:
         for x in files:
             f.write("include %s\n" % x)
