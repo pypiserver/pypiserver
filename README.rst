@@ -33,6 +33,13 @@ Run the following commands to get your PyPI server up and running::
   pypi-server -p 8080 ~/packages
   pip install -i http://localhost:8080/simple/ ...
 
+.. NOTE::
+
+  The above commands do work on an unix like operating system with a
+  posix shell. If you're using windows, you'll have to run their
+  'windows counterparts'. The same is true for the rest of this
+  documentation.
+
 Alternative Installation as standalone script
 =============================================
 The git repository contains a 'pypi-server-standalone.py' script,
