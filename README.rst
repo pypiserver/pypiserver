@@ -372,8 +372,7 @@ The following limitations are known:
 
 - pypiserver doesn't implement the XMLRPC interface: pip search
   will not work.
-- pypiserver doesn't implement the json based '/pypi' interface. pyg_
-  uses that and will not work.
+- pypiserver doesn't implement the json based '/pypi' interface.
 
 Please use github's bugtracker
 https://github.com/schmir/pypiserver/issues if you find any other
@@ -605,4 +604,3 @@ Changelog
 
 .. _bottle: http://bottlepy.org
 .. _PyPI: http://pypi.python.org
-.. _pyg: http://pypi.python.org/pypi/pyg
