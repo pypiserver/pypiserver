@@ -9,6 +9,7 @@ sys.modules["bottle"] = bottle
 from bottle import run, server_names
 
 mimetypes.add_type("application/octet-stream", ".egg")
+mimetypes.add_type("application/octet-stream", ".whl")
 
 DEFAULT_SERVER = None
 
