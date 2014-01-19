@@ -31,6 +31,8 @@ files = [
     ("package-123-2013.02.17.dev123.zip", "package-123", "2013.02.17.dev123"),
     ("package-123-20000101.zip", "package-123", "20000101"),
     ("pyelasticsearch-0.5-brainbot-1-20130712.zip", "pyelasticsearch", "0.5-brainbot-1-20130712"),
+    ("pywin32-217-cp27-none-win32.whl", "pywin32", "217"),
+    ("pywin32-217.1-cp27-none-win32.whl", "pywin32", "217.1"),
     ("package.zip", "package", ""),
 ]
 
