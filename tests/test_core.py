@@ -32,6 +32,7 @@ files = [
     ("package-123-20000101.zip", "package-123", "20000101"),
     ("pyelasticsearch-0.5-brainbot-1-20130712.zip", "pyelasticsearch", "0.5-brainbot-1-20130712"),
     ("pywin32-217-cp27-none-win32.whl", "pywin32", "217"),
+    ("pywin32-217-55-cp27-none-win32.whl", "pywin32", "217-55"),
     ("pywin32-217.1-cp27-none-win32.whl", "pywin32", "217.1"),
     ("package.zip", "package", ""),
 ]
@@ -40,3 +41,9 @@ files = [
 @pytest.mark.parametrize(("filename", "pkgname", "version"), files)
 def test_guess_pkgname_and_version(filename, pkgname, version):
     assert core.guess_pkgname_and_version(filename) == (pkgname, version)
+
+
+def test_listdir_bad_name(tmpdir):
+    tmpdir.join("foo.whl").ensure()
+    res = list(core.listdir(tmpdir.strpath))
+    assert res == []

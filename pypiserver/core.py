@@ -45,9 +45,31 @@ def parse_version(s):
 
 _archive_suffix_rx = re.compile(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*)$", re.IGNORECASE)
 
+wheel_file_re = re.compile(
+    r"""^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))
+    ((-(?P<build>\d.*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)
+    \.whl|\.dist-info)$""",
+    re.VERBOSE)
+
+
+def _guess_pkgname_and_version_wheel(basename):
+    m = wheel_file_re.match(basename)
+    if not m:
+        return None, None
+    name = m.group("name")
+    ver = m.group("ver")
+    build = m.group("build")
+    if build:
+        return name, ver + "-" + build
+    else:
+        return name, ver
+
 
 def guess_pkgname_and_version(path):
     path = os.path.basename(path)
+    if path.endswith(".whl"):
+        return _guess_pkgname_and_version_wheel(path)
+
     path = _archive_suffix_rx.sub('', path)
     if '-' not in path:
         pkgname, version = path, ''
@@ -90,10 +112,11 @@ def listdir(root):
             if not is_allowed_path(x) or not os.path.isfile(fn):
                 continue
             pkgname, version = guess_pkgname_and_version(x)
-            yield pkgfile(fn=fn, root=root, relfn=fn[len(root) + 1:],
-                          pkgname=pkgname,
-                          version=version,
-                          parsed_version=parse_version(version))
+            if pkgname:
+                yield pkgfile(fn=fn, root=root, relfn=fn[len(root) + 1:],
+                              pkgname=pkgname,
+                              version=version,
+                              parsed_version=parse_version(version))
 
 
 def find_packages(pkgs, prefix=""):
