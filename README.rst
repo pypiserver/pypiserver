@@ -407,7 +407,7 @@ MIT license::
 
 The remaining part is distributed under the zlib/libpng license::
 
-  Copyright (c) 2011-2013 Ralf Schmitt
+  Copyright (c) 2011-2014 Ralf Schmitt
 
   This software is provided 'as-is', without any express or implied
   warranty. In no event will the authors be held liable for any damages
