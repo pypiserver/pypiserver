@@ -435,27 +435,6 @@ There are lots of other projects, which allow you to run your own
 PyPI server. If pypiserver doesn't work for you, try one of the
 following alternatives:
 
-chishop (http://pypi.python.org/pypi/chishop)
-  a django based server
-
-localshop (http://pypi.python.org/pypi/localshop/)
-  a django based server
-
-simplepypi (http://pypi.python.org/pypi/simplepypi)
-  a twisted based solution
-
-ClueReleaseManager (http://pypi.python.org/pypi/ClueReleaseManager)
-  Werkzeug based solution
-
-haufe.eggserver (http://pypi.python.org/pypi/haufe.eggserver)
-  GROK/Zope based
-
-scrambled (http://pypi.python.org/pypi/scrambled)
-  doesn't require external dependencies, no uploads.
-
-EggBasket (http://pypi.python.org/pypi/EggBasket)
-  TurboGears based
-
 devpi-server (https://pypi.python.org/pypi/devpi-server)
   easy-to-use caching proxy server
 
