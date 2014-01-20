@@ -347,7 +347,7 @@ unstable packages on different paths::
 Source
 ===========
 Source releases can be downloaded from
-http://pypi.python.org/pypi/pypiserver
+https://pypi.python.org/pypi/pypiserver
 
 https://github.com/schmir/pypiserver carries a git repository of the
 in-development version.
