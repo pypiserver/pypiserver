@@ -6,8 +6,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 1.1.4
-:Date:    2014-01-03
+:Version: 1.1.5
+:Date:    2014-01-20
 :Download: https://pypi.python.org/pypi/pypiserver#downloads
 :Code: https://github.com/schmir/pypiserver
 
@@ -137,7 +137,7 @@ pypi-server -h will print a detailed usage message::
     -u
       allow updating to unstable version (alpha, beta, rc, dev versions)
 
-  Visit http://pypi.python.org/pypi/pypiserver for more information.
+  Visit https://pypi.python.org/pypi/pypiserver for more information.
 
 
 
@@ -443,6 +443,16 @@ proxypypi (https://pypi.python.org/pypi/proxypypi)
 
 Changelog
 =========
+1.1.5 (2014-01-20)
+------------------
+- only list devpi-server and proxypypi as alternatives
+- fix wheel file handling for certain wheels
+- serve wheel files as application/octet-stream
+- make pypiserver executable from wheel file
+- build universal wheel
+- remove scripts subdirectory
+- add --index-url cli parameter
+
 1.1.4 (2014-01-03)
 ------------------
 - make pypiserver compatible with pip 1.5
