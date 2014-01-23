@@ -85,7 +85,7 @@ def build_releases(pkg, versions):
                                replaces=pkg)
 
 
-def find_updates(pkgset, stable_only=True, index_url="https://pypi.python.org/pypi/"):
+def find_updates(pkgset, stable_only=True, xmlrpc_url="https://pypi.python.org/pypi/"):
     no_releases = set()
     filter_releases = filter_stable_releases if stable_only else (lambda x: x)
 
@@ -98,7 +98,7 @@ def find_updates(pkgset, stable_only=True, index_url="https://pypi.python.org/py
     sys.stdout.write("checking %s packages for newer version\n" % len(latest_pkgs),)
     need_update = set()
 
-    pypi = make_pypi_client(index_url)
+    pypi = make_pypi_client(xmlrpc_url)
 
     for count, pkg in enumerate(latest_pkgs):
         if count % 40 == 0:
@@ -127,8 +127,10 @@ def find_updates(pkgset, stable_only=True, index_url="https://pypi.python.org/py
     return need_update
 
 
-def update(pkgset, destdir=None, dry_run=False, stable_only=True, index_url="https://pypi.python.org/simple"):
-    need_update = find_updates(pkgset, stable_only=stable_only, index_url=index_url)
+def update(pkgset, destdir=None, dry_run=False, stable_only=True,
+           index_url="https://pypi.python.org/simple",
+           xmlrpc_url="https://pypi.python.org/pypi/"):
+    need_update = find_updates(pkgset, stable_only=stable_only, xmlrpc_url=xmlrpc_url)
     for pkg in sorted(need_update, key=lambda x: x.pkgname):
         sys.stdout.write("# update %s from %s to %s\n" % (pkg.pkgname, pkg.replaces.version, pkg.version))
 
