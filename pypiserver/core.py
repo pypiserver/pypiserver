@@ -232,6 +232,10 @@ The following additional options can be specified with -U:
     use a different pip index url while updating. The default is to use
     https://pypi.python.org/simple.
 
+  --xmlrpc-url XMLRPC_URL
+    use a different xmlrpc url while updating. The default is to use
+    https://pypi.python.org/pypi/
+
 Visit http://pypi.python.org/pypi/pypiserver for more information.
 """)
 
@@ -249,6 +253,7 @@ def main(argv=None):
     redirect_to_fallback = True
     fallback_url = "http://pypi.python.org/simple"
     index_url = "http://pypi.python.org/simple"
+    xmlrpc_url = "https://pypi.python.org/pypi/"
     password_file = None
     overwrite = False
 
@@ -265,6 +270,7 @@ def main(argv=None):
             "root=",
             "server=",
             "fallback-url=",
+            "xmlrpc-url=",
             "disable-fallback",
             "overwrite",
             "version",
@@ -287,6 +293,8 @@ def main(argv=None):
             redirect_to_fallback = False
         elif k == "--fallback-url":
             fallback_url = v
+        elif k == "--xmlrpc-url":
+            xmlrpc_url = v
         elif k == "--server":
             if v not in server_names:
                 sys.exit("unknown server %r. choose one of %s" % (
@@ -320,7 +328,9 @@ def main(argv=None):
     if command == "update":
         packages = frozenset(itertools.chain(*[listdir(r) for r in roots]))
         from pypiserver import manage
-        manage.update(packages, update_directory, update_dry_run, stable_only=update_stable_only, index_url=index_url)
+        manage.update(packages, update_directory, update_dry_run,
+                      stable_only=update_stable_only,
+                      index_url=index_url, xmlrpc_url=xmlrpc_url)
         return
 
     a = app(
