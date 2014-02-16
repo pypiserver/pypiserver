@@ -127,12 +127,12 @@ def find_updates(pkgset, stable_only=True, index_url="https://pypi.python.org/py
     return need_update
 
 
-def update(pkgset, destdir=None, dry_run=False, stable_only=True, index_url="https://pypi.python.org/simple"):
-    need_update = find_updates(pkgset, stable_only=stable_only, index_url=index_url)
+def update(pkgset, destdir=None, dry_run=False, stable_only=True):
+    need_update = find_updates(pkgset, stable_only=stable_only)
     for pkg in sorted(need_update, key=lambda x: x.pkgname):
         sys.stdout.write("# update %s from %s to %s\n" % (pkg.pkgname, pkg.replaces.version, pkg.version))
 
-        cmd = ["pip", "-q", "install", "--no-deps", "-i", index_url,
+        cmd = ["pip", "-q", "install", "--no-deps", "-i", "https://pypi.python.org/simple",
                "-d", destdir or os.path.dirname(pkg.replaces.fn),
                "%s==%s" % (pkg.pkgname, pkg.version)]
 
