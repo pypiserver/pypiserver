@@ -12,9 +12,10 @@ else:
 
 from bottle import static_file, redirect, request, HTTPError, Bottle
 from pypiserver import __version__
-from pypiserver.core import listdir, find_packages, store, get_prefixes, exists
+from pypiserver.core import listdir, find_packages, store, unzip_to, get_prefixes, exists
 
 packages = None
+docs = None
 
 
 class configuration(object):
@@ -36,8 +37,10 @@ def configure(root=None,
               redirect_to_fallback=True,
               fallback_url=None,
               password_file=None,
+              docs_directory=None,
               overwrite=False):
     global packages
+    global docs
 
     if root is None:
         root = os.path.expanduser("~/packages")
@@ -60,6 +63,8 @@ def configure(root=None,
 
     packages = lambda: itertools.chain(*[listdir(r) for r in roots])
     packages.root = roots[0]
+
+    docs = docs_directory
 
     config.redirect_to_fallback = redirect_to_fallback
     config.fallback_url = fallback_url
@@ -135,6 +140,12 @@ def update():
             info = zf.getinfo('index.html')
         except Exception:
             raise HTTPError(400, output="not a zip file")
+
+        if docs is not None:
+            name = request.forms.get("name")
+            if not name:
+                raise HTTPError(400, "Name not specified")
+            unzip_to(docs,name,zf)
         return ""
 
     if action == "remove_pkg":

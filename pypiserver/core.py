@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
-import os, sys, getopt, re, mimetypes, warnings, itertools
+import os, os.path, sys, shutil, getopt, re, mimetypes, warnings, itertools
 
 warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
 from pypiserver import bottle, __version__, app
@@ -160,6 +160,16 @@ def store(root, filename, data):
     dest_fh.write(data)
     dest_fh.close()
     return True
+
+
+def unzip_to(docs_directory,package_name,zipfile):
+    if docs_directory is None: return False
+    # Create a documentation folder docs_directory
+    package_docs_directory = os.path.join(docs_directory,package_name)
+    if os.path.exists(package_docs_directory):
+        shutil.rmtree(package_docs_directory)
+    os.mkdir(package_docs_directory)
+    zipfile.extractall(package_docs_directory)
 
 
 def usage():
