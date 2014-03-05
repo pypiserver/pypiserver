@@ -373,6 +373,9 @@ The following limitations are known:
 - pypiserver doesn't implement the XMLRPC interface: pip search
   will not work.
 - pypiserver doesn't implement the json based '/pypi' interface.
+- pypiserver accepts documentation uploads but does not save them to
+  disk (see https://github.com/schmir/pypiserver/issues/47 for a
+  discussion)
 
 Please use github's bugtracker
 https://github.com/schmir/pypiserver/issues if you find any other
