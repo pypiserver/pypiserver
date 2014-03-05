@@ -6,8 +6,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 
 :Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 1.1.5
-:Date:    2014-01-20
+:Version: 1.1.6
+:Date:    2014-03-05
 :Download: https://pypi.python.org/pypi/pypiserver#downloads
 :Code: https://github.com/schmir/pypiserver
 
@@ -446,6 +446,10 @@ proxypypi (https://pypi.python.org/pypi/proxypypi)
 
 Changelog
 =========
+1.1.6 (2014-03-05)
+------------------
+- remove --index-url cli parameter introduced in 1.1.5
+
 1.1.5 (2014-01-20)
 ------------------
 - only list devpi-server and proxypypi as alternatives
