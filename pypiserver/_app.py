@@ -241,7 +241,7 @@ def bad_url(prefix):
     p = request.fullpath
     if p.endswith("/"):
         p = p[:-1]
-    p = p[:p.rfind('/')]
+    p = p.rsplit('/', 1)[0]
     p += "/simple/%s/" % prefix
 
     return redirect(p)
