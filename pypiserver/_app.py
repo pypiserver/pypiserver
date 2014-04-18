@@ -239,8 +239,9 @@ def server_static(filename):
 @app.route('/:prefix/')
 def bad_url(prefix):
     p = request.fullpath
-    if not p.endswith("/"):
-        p += "/"
-    p += "../simple/%s/" % prefix
+    if p.endswith("/"):
+        p = p[:-1]
+    p = p.rsplit('/', 1)[0]
+    p += "/simple/%s/" % prefix
 
     return redirect(p)
