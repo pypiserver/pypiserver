@@ -43,7 +43,7 @@ def parse_version(s):
 
 # -- end of distribute's code
 
-_archive_suffix_rx = re.compile(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*)$", re.IGNORECASE)
+_archive_suffix_rx = re.compile(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$", re.IGNORECASE)
 
 wheel_file_re = re.compile(
     r"""^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))
