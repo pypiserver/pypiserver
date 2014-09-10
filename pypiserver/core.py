@@ -1,10 +1,18 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
-import os, sys, getopt, re, mimetypes, warnings, itertools, logging
+import os
+import sys
+import getopt
+import re
+import mimetypes
+import warnings
+import itertools
+import logging
 
 warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
 from pypiserver import bottle, __version__, app
+
 sys.modules["bottle"] = bottle
 from bottle import run, server_names
 
@@ -32,7 +40,7 @@ def _parse_version_parts(s):
         if part in ['', '.']:
             continue
         if part[:1] in '0123456789':
-            yield part.zfill(8)    # pad for numeric comparison
+            yield part.zfill(8)  # pad for numeric comparison
         else:
             yield '*' + part
 
@@ -51,7 +59,9 @@ def parse_version(s):
 
 # -- end of distribute's code
 
-_archive_suffix_rx = re.compile(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$", re.IGNORECASE)
+_archive_suffix_rx = re.compile(
+    r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$", 
+    re.IGNORECASE)
 
 wheel_file_re = re.compile(
     r"""^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))
@@ -102,7 +112,7 @@ def is_allowed_path(path_part):
     return not (p.startswith(".") or "/." in p)
 
 
-class pkgfile(object):
+class PkgFile(object):
     def __init__(self, **kw):
         self.__dict__.update(kw)
 
@@ -122,11 +132,11 @@ def listdir(root):
                 continue
             res = guess_pkgname_and_version(x)
             if not res:
-                ##Seems the current file isn't a proper package
+                # #Seems the current file isn't a proper package
                 continue
             pkgname, version = res
             if pkgname:
-                yield pkgfile(fn=fn, root=root, relfn=fn[len(root) + 1:],
+                yield PkgFile(fn=fn, root=root, relfn=fn[len(root) + 1:],
                               pkgname=pkgname,
                               version=version,
                               parsed_version=parse_version(version))
@@ -409,6 +419,7 @@ def main(argv=None):
     if command == "update":
         packages = frozenset(itertools.chain(*[listdir(r) for r in roots]))
         from pypiserver import manage
+
         manage.update(packages, update_directory, update_dry_run, stable_only=update_stable_only)
         return
 
@@ -424,7 +435,8 @@ def main(argv=None):
         cache_control=cache_control,
     )
     server = server or "auto"
-    sys.stdout.write("This is pypiserver %s serving %r on http://%s:%s\n\n" % (__version__, ", ".join(roots), host, port))
+    sys.stdout.write(
+        "This is pypiserver %s serving %r on http://%s:%s\n\n" % (__version__, ", ".join(roots), host, port))
     sys.stdout.flush()
     run(app=a, host=host, port=port, server=server)
 

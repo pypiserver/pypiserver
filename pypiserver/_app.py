@@ -1,4 +1,11 @@
-import sys, os, io, itertools, zipfile, mimetypes, logging, pkg_resources
+import sys
+import os
+import io
+import itertools
+import zipfile
+import mimetypes
+import logging
+import pkg_resources
 
 try:
     from io import BytesIO
@@ -18,7 +25,7 @@ log = logging.getLogger('pypiserver.http')
 packages = None
 
 
-class configuration(object):
+class Configuration(object):
     def __init__(self):
         self.fallback_url = "http://pypi.python.org/simple"
         self.redirect_to_fallback = True
@@ -26,7 +33,7 @@ class configuration(object):
         self.welcome_file = None
         self.welcome_msg = None
 
-config = configuration()
+config = Configuration()
 
 
 def validate_user(username, password):
@@ -97,7 +104,7 @@ def configure(root=None,
     for r in roots:
         try:
             os.listdir(r)
-        except Exception:
+        except OSError:
             err = sys.exc_info()[1]
             sys.exit("Error: while trying to list %r: %s" % (r, err))
 
@@ -215,7 +222,7 @@ def update():
         zip_data = content.file.read()
         try:
             zf = zipfile.ZipFile(BytesIO(zip_data))
-            info = zf.getinfo('index.html')
+            zf.getinfo('index.html')
         except Exception:
             raise HTTPError(400, output="not a zip file")
         return ""
@@ -283,8 +290,8 @@ def simple(prefix=""):
         if config.redirect_to_fallback:
             return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
         return HTTPError(404)
-    res = ["<html><head><title>Links for %s</title></head><body>\n" % prefix]
-    res.append("<h1>Links for %s</h1>\n" % prefix)
+    res = ["<html><head><title>Links for %s</title></head><body>\n" % prefix,
+           "<h1>Links for %s</h1>\n" % prefix]
     for x in files:
         abspath = urljoin(fp, "../../packages/%s" % x.replace("\\", "/"))
 
@@ -301,7 +308,8 @@ def list_packages():
     if not fp.endswith("/"):
         fp += "/"
 
-    files = [x.relfn for x in sorted(find_packages(packages()), key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version))]
+    files = [x.relfn for x in sorted(find_packages(packages()),
+                                     key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version))]
 
     res = ["<html><head><title>Index of packages</title></head><body>\n"]
     for x in files:
