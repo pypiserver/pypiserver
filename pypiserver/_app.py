@@ -1,3 +1,4 @@
+import pkg_resources
 import sys, os, itertools, zipfile, mimetypes
 
 try:
@@ -85,25 +86,10 @@ def root():
     except:
         numpkgs = 0
 
-    return """<html><head><title>Welcome to pypiserver!</title></head><body>
-<h1>Welcome to pypiserver!</h1>
-<p>This is a PyPI compatible package index serving %(NUMPKGS)s packages.</p>
-
-<p> To use this server with pip, run the the following command:
-<blockquote><pre>
-pip install -i %(URL)ssimple/ PACKAGE [PACKAGE2...]
-</pre></blockquote></p>
-
-<p> To use this server with easy_install, run the the following command:
-<blockquote><pre>
-easy_install -i %(URL)ssimple/ PACKAGE
-</pre></blockquote></p>
-
-<p>The complete list of all packages can be found <a href="%(PACKAGES)s">here</a> or via the <a href="%(SIMPLE)s">simple</a> index.</p>
-
-<p>This instance is running version %(VERSION)s of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
-</body></html>
-""" % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs,
+    welcome_msg = pkg_resources.resource_string(__name__, 'welcome.html')  # @UndefinedVariable
+    
+    return welcome_msg % dict(
+           URL=request.url, VERSION=__version__, NUMPKGS=numpkgs,
            PACKAGES=urljoin(fp, "packages/"),
            SIMPLE=urljoin(fp, "simple/"))
 
