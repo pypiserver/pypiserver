@@ -112,6 +112,9 @@ pypi-server -h will print a detailed usage message::
     -o, --overwrite
       allow overwriting existing package files
 
+    --welcome HTML_FILE
+      uses the ASCII contents of HTML_FILE as welcome message response.
+
     -v
       enable INFO logging;  repeate for more verbosity.
 

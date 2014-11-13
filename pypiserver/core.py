@@ -213,6 +213,9 @@ pypi-server understands the following options:
   -o, --overwrite
     allow overwriting existing package files
 
+  --welcome HTML_FILE
+    uses the ASCII contents of HTML_FILE as welcome message response.
+
   -v
     enable verbose logging;  repeate for more verbosity.
 
@@ -283,6 +286,7 @@ def main(argv=None):
     log_req_frmt = None
     log_res_frmt = None
     log_err_frmt = None
+    welcome_file = None
 
     update_dry_run = True
     update_directory = None
@@ -303,6 +307,7 @@ def main(argv=None):
             "log-req-frmt=",
             "log-res-frmt=",
             "log-err-frmt=",
+            "welcome=",
             "version",
             "help"
         ])
@@ -326,6 +331,8 @@ def main(argv=None):
                 sys.exit("unknown server %r. choose one of %s" % (
                     v, ", ".join(server_names.keys())))
             server = v
+        elif k == "--welcome":
+            welcome_file = v
         elif k == "--version":
             sys.stdout.write("pypiserver %s\n" % __version__)
             sys.exit(0)
@@ -379,6 +386,7 @@ def main(argv=None):
         fallback_url=fallback_url,
         overwrite=overwrite,
         log_req_frmt=log_req_frmt, log_res_frmt=log_res_frmt, log_err_frmt=log_err_frmt,
+        welcome_file=welcome_file,
     )
     server = server or "auto"
     sys.stdout.write("This is pypiserver %s serving %r on http://%s:%s\n\n" % (__version__, ", ".join(roots), host, port))
