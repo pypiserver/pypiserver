@@ -51,6 +51,18 @@ def test_root_hostname(testapp):
     # go("http://systemexit.de/")
 
 
+def test_root_welcome_msg(root):
+    wmsg = u"Hey there!"
+    wfile = root.join("testwelcome.html")
+    wfile.write(wmsg)
+
+    from pypiserver import app
+    app = app(root=root.strpath, welcome_file=wfile.strpath)
+    testapp = webtest.TestApp(app)
+    resp = testapp.get("/")
+    resp.mustcontain(wmsg)
+
+
 def test_packages_empty(testapp):
     resp = testapp.get("/packages")
     assert len(resp.html("a")) == 0

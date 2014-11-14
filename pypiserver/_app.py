@@ -23,6 +23,8 @@ class configuration(object):
         self.fallback_url = "http://pypi.python.org/simple"
         self.redirect_to_fallback = True
         self.htpasswdfile = None
+        self.welcome_file = None
+        self.welcome_msg = None
 
 config = configuration()
 
@@ -37,7 +39,8 @@ def configure(root=None,
               redirect_to_fallback=True,
               fallback_url=None,
               password_file=None,
-              overwrite=False):
+              overwrite=False,
+              welcome_file=None):
     global packages
 
     if root is None:
@@ -68,6 +71,14 @@ def configure(root=None,
         from passlib.apache import HtpasswdFile
         config.htpasswdfile = HtpasswdFile(password_file)
     config.overwrite = overwrite
+    
+    config.welcome_file = welcome_file
+    if config.welcome_file:
+        with open(config.welcome_file, 'rb') as fd:
+            config.welcome_msg = fd.read()
+    else:
+        config.welcome_msg = pkg_resources.resource_string(__name__, 'welcome.html')  # @UndefinedVariable
+    
 
 app = Bottle()
 
@@ -86,12 +97,13 @@ def root():
     except:
         numpkgs = 0
 
-    welcome_msg = pkg_resources.resource_string(__name__, 'welcome.html')  # @UndefinedVariable
-    
-    return welcome_msg % dict(
-           URL=request.url, VERSION=__version__, NUMPKGS=numpkgs,
+    return config.welcome_msg % dict(
+           URL=request.url, 
+           VERSION=__version__, 
+           NUMPKGS=numpkgs,
            PACKAGES=urljoin(fp, "packages/"),
-           SIMPLE=urljoin(fp, "simple/"))
+           SIMPLE=urljoin(fp, "simple/")
+    )
 
 
 @app.post('/')

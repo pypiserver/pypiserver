@@ -84,3 +84,15 @@ def test_fallback_url_default(main):
     main([])
     assert main.app.module.config.fallback_url == \
         "http://pypi.python.org/simple"
+
+
+def test_welcome_file(main):
+    sample_msg_file = os.path.join(os.path.dirname(__file__), 'sample_msg.html')
+    main(["--welcome", sample_msg_file])
+    with open(sample_msg_file) as fd:
+        welcome_msg = fd.read()
+    assert 'Hello pypiserver tester!' in main.app.module.config.welcome_msg
+
+def test_welcome_file_default(main):
+    main([])
+    assert 'Welcome to pypiserver!' in main.app.module.config.welcome_msg
