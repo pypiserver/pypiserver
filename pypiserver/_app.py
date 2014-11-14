@@ -1,3 +1,4 @@
+import pkg_resources
 import sys, os, itertools, zipfile, mimetypes
 
 try:
@@ -22,6 +23,8 @@ class configuration(object):
         self.fallback_url = "http://pypi.python.org/simple"
         self.redirect_to_fallback = True
         self.htpasswdfile = None
+        self.welcome_file = None
+        self.welcome_msg = None
 
 config = configuration()
 
@@ -36,7 +39,8 @@ def configure(root=None,
               redirect_to_fallback=True,
               fallback_url=None,
               password_file=None,
-              overwrite=False):
+              overwrite=False,
+              welcome_file=None):
     global packages
 
     if root is None:
@@ -67,6 +71,14 @@ def configure(root=None,
         from passlib.apache import HtpasswdFile
         config.htpasswdfile = HtpasswdFile(password_file)
     config.overwrite = overwrite
+    
+    config.welcome_file = welcome_file
+    if config.welcome_file:
+        with open(config.welcome_file, 'rb') as fd:
+            config.welcome_msg = fd.read()
+    else:
+        config.welcome_msg = pkg_resources.resource_string(__name__, 'welcome.html')  # @UndefinedVariable
+    
 
 app = Bottle()
 
@@ -85,27 +97,13 @@ def root():
     except:
         numpkgs = 0
 
-    return """<html><head><title>Welcome to pypiserver!</title></head><body>
-<h1>Welcome to pypiserver!</h1>
-<p>This is a PyPI compatible package index serving %(NUMPKGS)s packages.</p>
-
-<p> To use this server with pip, run the the following command:
-<blockquote><pre>
-pip install -i %(URL)ssimple/ PACKAGE [PACKAGE2...]
-</pre></blockquote></p>
-
-<p> To use this server with easy_install, run the the following command:
-<blockquote><pre>
-easy_install -i %(URL)ssimple/ PACKAGE
-</pre></blockquote></p>
-
-<p>The complete list of all packages can be found <a href="%(PACKAGES)s">here</a> or via the <a href="%(SIMPLE)s">simple</a> index.</p>
-
-<p>This instance is running version %(VERSION)s of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
-</body></html>
-""" % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs,
+    return config.welcome_msg % dict(
+           URL=request.url, 
+           VERSION=__version__, 
+           NUMPKGS=numpkgs,
            PACKAGES=urljoin(fp, "packages/"),
-           SIMPLE=urljoin(fp, "simple/"))
+           SIMPLE=urljoin(fp, "simple/")
+    )
 
 
 @app.post('/')

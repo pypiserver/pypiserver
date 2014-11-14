@@ -6,7 +6,8 @@ def app(root=None,
         redirect_to_fallback=True,
         fallback_url=None,
         password_file=None,
-        overwrite=False):
+        overwrite=False,
+        welcome_file=None):
     import sys, os
     from pypiserver import core
     sys.modules.pop("pypiserver._app", None)
@@ -22,7 +23,7 @@ def app(root=None,
         fallback_url = "http://pypi.python.org/simple"
 
     _app.configure(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url,
-                   password_file=password_file, overwrite=overwrite)
+                   password_file=password_file, overwrite=overwrite, welcome_file=welcome_file)
     _app.app.module = _app
 
     bottle.debug(True)
