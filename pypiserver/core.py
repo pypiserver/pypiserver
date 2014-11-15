@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
-import os, sys, getopt, re, mimetypes, warnings, itertools
+import os, sys, getopt, re, mimetypes, warnings, itertools, logging
 
 warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
 from pypiserver import bottle, __version__, app
@@ -12,11 +12,19 @@ mimetypes.add_type("application/octet-stream", ".egg")
 mimetypes.add_type("application/octet-stream", ".whl")
 
 DEFAULT_SERVER = None
+log = logging.getLogger('pypiserver.core')
 
 # --- the following two functions were copied from distribute's pkg_resources module
 component_re = re.compile(r'(\d+ | [a-z]+ | \.| -)', re.VERBOSE)
 replace = {'pre': 'c', 'preview': 'c', '-': 'final-', 'rc': 'c', 'dev': '@'}.get
 
+
+def init_logging(level=None, format=None, filename=None):
+    logging.basicConfig(level=level, format=format)
+    rlog = logging.getLogger()
+    rlog.setLevel(level)
+    if filename:
+        rlog.addHandler(logging.FileHandler(filename))
 
 def _parse_version_parts(s):
     for part in component_re.split(s):
@@ -159,6 +167,8 @@ def store(root, filename, data):
     dest_fh = open(dest_fn, "wb")
     dest_fh.write(data)
     dest_fh.close()
+    
+    log.info("Stored package: %s", filename)
     return True
 
 
@@ -203,6 +213,28 @@ pypi-server understands the following options:
   -o, --overwrite
     allow overwriting existing package files
 
+  -v
+    enable verbose logging;  repeate for more verbosity.
+
+  --log-file <FILE>
+    write logging info into this FILE.
+
+  --log-frmt <FILE>
+    the logging format-string.  (see `logging.LogRecord` class from standard python library)
+    [Default: %(asctime)s|%(levelname)s|%(thread)d|%(message)s] 
+
+  --log-req-frmt FORMAT
+    a format-string selecting Http-Request properties to log; set to  '%s' to see them all.
+    [Default: %(bottle.request)s] 
+    
+  --log-res-frmt FORMAT
+    a format-string selecting Http-Response properties to log; set to  '%s' to see them all.
+    [Default: %(status)s]
+
+  --log-err-frmt FORMAT
+    a format-string selecting Http-Error properties to log; set to  '%s' to see them all.
+    [Default: %(body)s: %(exception)s \n%(traceback)s]
+
 pypi-server -h
 pypi-server --help
   show this help message
@@ -231,7 +263,6 @@ The following additional options can be specified with -U:
 Visit http://pypi.python.org/pypi/pypiserver for more information.
 """)
 
-
 def main(argv=None):
     if argv is None:
         argv = sys.argv
@@ -246,13 +277,19 @@ def main(argv=None):
     fallback_url = "http://pypi.python.org/simple"
     password_file = None
     overwrite = False
+    verbosity = 1
+    log_file = None
+    log_frmt = None
+    log_req_frmt = None
+    log_res_frmt = None
+    log_err_frmt = None
 
     update_dry_run = True
     update_directory = None
     update_stable_only = True
 
     try:
-        opts, roots = getopt.getopt(argv[1:], "i:p:r:d:P:Uuxoh", [
+        opts, roots = getopt.getopt(argv[1:], "i:p:r:d:P:Uuvxoh", [
             "interface=",
             "passwords=",
             "port=",
@@ -261,6 +298,11 @@ def main(argv=None):
             "fallback-url=",
             "disable-fallback",
             "overwrite",
+            "log-file=",
+            "log-frmt=",
+            "log-req-frmt=",
+            "log-res-frmt=",
+            "log-err-frmt=",
             "version",
             "help"
         ])
@@ -299,6 +341,18 @@ def main(argv=None):
             password_file = v
         elif k in ("-o", "--overwrite"):
             overwrite = True
+        elif k == "--log-file":
+            log_file = v
+        elif k == "--log-frmt":
+            log_frmt = v
+        elif k == "--log-req-frmt":
+            log_req_frmt = v
+        elif k == "--log-res-frmt":
+            log_res_frmt = v
+        elif k == "--log-err-frmt":
+            log_err_frmt = v
+        elif k == "-v":
+            verbosity += 1
         elif k in ("-h", "--help"):
             usage()
             sys.exit(0)
@@ -308,7 +362,10 @@ def main(argv=None):
 
     roots = [os.path.abspath(x) for x in roots]
 
-
+    verbose_levels = [logging.WARNING, logging.INFO, logging.DEBUG, logging.NOTSET]
+    log_level = list(zip(verbose_levels, range(verbosity)))[-1][0]
+    init_logging(level=log_level, filename=log_file, format=log_frmt)
+    
     if command == "update":
         packages = frozenset(itertools.chain(*[listdir(r) for r in roots]))
         from pypiserver import manage
@@ -321,6 +378,7 @@ def main(argv=None):
         password_file=password_file,
         fallback_url=fallback_url,
         overwrite=overwrite,
+        log_req_frmt=log_req_frmt, log_res_frmt=log_res_frmt, log_err_frmt=log_err_frmt,
     )
     server = server or "auto"
     sys.stdout.write("This is pypiserver %s serving %r on http://%s:%s\n\n" % (__version__, ", ".join(roots), host, port))
