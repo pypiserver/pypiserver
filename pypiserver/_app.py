@@ -1,4 +1,4 @@
-import sys, os, itertools, zipfile, mimetypes
+import sys, os, itertools, zipfile, mimetypes, logging
 
 try:
     from io import BytesIO
@@ -10,10 +10,11 @@ if sys.version_info >= (3, 0):
 else:
     from urlparse import urljoin
 
-from bottle import static_file, redirect, request, HTTPError, Bottle
+from bottle import static_file, redirect, request, response, HTTPError, Bottle
 from pypiserver import __version__
 from pypiserver.core import listdir, find_packages, store, get_prefixes, exists
 
+log = logging.getLogger('pypiserver.http')
 packages = None
 
 
@@ -36,8 +37,20 @@ def configure(root=None,
               redirect_to_fallback=True,
               fallback_url=None,
               password_file=None,
-              overwrite=False):
+              overwrite=False,
+              log_req_frmt=None, 
+              log_res_frmt=None,
+              log_err_frmt=None):
     global packages
+
+    log.info("Starting(%s)", dict(root=root,
+              redirect_to_fallback=redirect_to_fallback,
+              fallback_url=fallback_url,
+              password_file=password_file,
+              overwrite=overwrite,
+              log_req_frmt=log_req_frmt, 
+              log_res_frmt=log_res_frmt,
+              log_err_frmt=log_err_frmt))
 
     if root is None:
         root = os.path.expanduser("~/packages")
@@ -68,7 +81,31 @@ def configure(root=None,
         config.htpasswdfile = HtpasswdFile(password_file)
     config.overwrite = overwrite
 
+    config.log_req_frmt = log_req_frmt
+    config.log_res_frmt = log_res_frmt
+    config.log_err_frmt = log_err_frmt
+
 app = Bottle()
+
+
+@app.hook('before_request')
+def log_request():
+    log.info(config.log_req_frmt, request.environ)
+
+
+@app.hook('after_request')
+def log_response():
+    log.info(config.log_res_frmt, #vars(response))  ## DOES NOT WORK!
+            dict(
+                response=response, 
+                status=response.status, headers=response.headers, 
+                body=response.body, cookies=response.COOKIES,
+    ))
+
+
+@app.error
+def log_error(http_error):
+    log.info(config.log_err_frmt, vars(http_error))
 
 
 @app.route("/favicon.ico")

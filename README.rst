@@ -111,7 +111,29 @@ pypi-server -h will print a detailed usage message::
 
     -o, --overwrite
       allow overwriting existing package files
-      
+
+    -v
+      enable INFO logging;  repeate for more verbosity.
+
+    --log-file <FILE>
+      write logging info into this FILE.
+
+    --log-frmt <FILE>
+      the logging format-string.  (see `logging.LogRecord` class from standard python library)
+      [Default: %(asctime)s|%(levelname)s|%(thread)d|%(message)s] 
+
+    --log-req-frmt FORMAT
+      a format-string selecting Http-Request properties to log; set to  '%s' to see them all.
+      [Default: %(bottle.request)s] 
+
+    --log-res-frmt FORMAT
+      a format-string selecting Http-Response properties to log; set to  '%s' to see them all.
+      [Default: %(status)s]
+
+    --log-err-frmt FORMAT
+      a format-string selecting Http-Error properties to log; set to  '%s' to see them all.
+      [Default: %(body)s: %(exception)s \n%(traceback)s]
+
   pypi-server -h
   pypi-server --help
     show this help message

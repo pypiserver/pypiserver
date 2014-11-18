@@ -3,6 +3,10 @@
 from pypiserver import core  # do no remove. needed for bottle
 import pytest, bottle, webtest
 
+## Enable logging to detect any problems with it
+##
+import logging
+core.init_logging(level=logging.NOTSET)
 
 @pytest.fixture()
 def _app(app):
