@@ -1,4 +1,4 @@
-import sys, os, itertools, zipfile, mimetypes, logging, contextlib
+import sys, os, itertools, zipfile, mimetypes, logging
 
 try:
     from io import BytesIO
