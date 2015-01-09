@@ -96,8 +96,8 @@ pypi-server -h will print a detailed usage message::
       error will occur.
 
     -P PASSWORD_FILE, --passwords PASSWORD_FILE
-      use apache htpasswd file PASSWORD_FILE in order to enable password
-      protected uploads.
+      use apache htpasswd file PASSWORD_FILE to set usernames & passwords
+      used for authentication (requires giving the -s option as well).
 
     --disable-fallback
       disable redirect to real PyPI index for packages not found in the
