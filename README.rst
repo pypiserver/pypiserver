@@ -88,6 +88,13 @@ pypi-server -h will print a detailed usage message::
     -i INTERFACE, --interface INTERFACE
       listen on interface INTERFACE (default: 0.0.0.0, any interface)
 
+    -a (update|download|list), ... --authenticate (update|download|list), ...
+      comma-separated list of actions to authenticate (requires giving also
+      the -P option). For example to password-protect package uploads and
+      downloads while leaving listings public, give: -a update,download.
+      Note: make sure there is no space around the comma(s); otherwise, an
+      error will occur.
+
     -P PASSWORD_FILE, --passwords PASSWORD_FILE
       use apache htpasswd file PASSWORD_FILE in order to enable password
       protected uploads.
