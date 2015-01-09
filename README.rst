@@ -475,6 +475,13 @@ proxypypi (https://pypi.python.org/pypi/proxypypi)
 
 Changelog
 =========
+
+1.1.7 (2015-01-10)
+------------------
+- support password protected package listings and downloads,
+  in addition to uploads (use the -a, --authenticate option
+  to specify which to protect).
+
 1.1.6 (2014-03-05)
 ------------------
 - remove --index-url cli parameter introduced in 1.1.5
