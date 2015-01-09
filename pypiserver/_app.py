@@ -1,4 +1,4 @@
-import sys, os, itertools, zipfile, mimetypes, logging
+import sys, os, itertools, zipfile, mimetypes, logging, contextlib
 
 try:
     from io import BytesIO
@@ -33,9 +33,29 @@ def validate_user(username, password):
         return config.htpasswdfile.check_password(username, password)
 
 
+class auth(object):
+    "decorator to apply authentication if specified for the decorated method & action"
+
+    def __init__(self, action):
+        self.action = action
+
+    def __call__(self, method):
+
+        def protector(*args, **kwargs):
+            if self.action in config.authenticated:
+                if not request.auth or request.auth[1] is None:
+                    raise HTTPError(401, header={"WWW-Authenticate": 'Basic realm="pypi"'})
+                if not validate_user(*request.auth):
+                    raise HTTPError(403)
+            return method(*args, **kwargs)
+
+        return protector
+
+
 def configure(root=None,
               redirect_to_fallback=True,
               fallback_url=None,
+              authenticated=[],
               password_file=None,
               overwrite=False,
               log_req_frmt=None, 
@@ -46,11 +66,14 @@ def configure(root=None,
     log.info("Starting(%s)", dict(root=root,
               redirect_to_fallback=redirect_to_fallback,
               fallback_url=fallback_url,
+              authenticated=authenticated,
               password_file=password_file,
               overwrite=overwrite,
               log_req_frmt=log_req_frmt, 
               log_res_frmt=log_res_frmt,
               log_err_frmt=log_err_frmt))
+
+    config.authenticated = authenticated
 
     if root is None:
         root = os.path.expanduser("~/packages")
@@ -146,13 +169,8 @@ easy_install -i %(URL)ssimple/ PACKAGE
 
 
 @app.post('/')
+@auth("update")
 def update():
-    if not request.auth or request.auth[1] is None:
-        raise HTTPError(401, header={"WWW-Authenticate": 'Basic realm="pypi"'})
-
-    if not validate_user(*request.auth):
-        raise HTTPError(403)
-
     try:
         action = request.forms[':action']
     except KeyError:
@@ -208,11 +226,13 @@ def update():
 
 
 @app.route("/simple")
+@auth("list")
 def simpleindex_redirect():
     return redirect(request.fullpath + "/")
 
 
 @app.route("/simple/")
+@auth("list")
 def simpleindex():
     res = ["<html><head><title>Simple Index</title></head><body>\n"]
     for x in sorted(get_prefixes(packages())):
@@ -223,6 +243,7 @@ def simpleindex():
 
 @app.route("/simple/:prefix")
 @app.route("/simple/:prefix/")
+@auth("list")
 def simple(prefix=""):
     fp = request.fullpath
     if not fp.endswith("/"):
@@ -246,6 +267,7 @@ def simple(prefix=""):
 
 @app.route('/packages')
 @app.route('/packages/')
+@auth("list")
 def list_packages():
     fp = request.fullpath
     if not fp.endswith("/"):
@@ -262,6 +284,7 @@ def list_packages():
 
 
 @app.route('/packages/:filename#.*#')
+@auth("download")
 def server_static(filename):
     entries = find_packages(packages())
     for x in entries:

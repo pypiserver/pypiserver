@@ -189,9 +189,15 @@ pypi-server understands the following options:
   -i INTERFACE, --interface INTERFACE
     listen on interface INTERFACE (default: 0.0.0.0, any interface)
 
+  -a [update|download|list], ... --authenticate update|download|list], ...
+    comma-separated list of actions to authenticate (requires giving also
+    the -P option). The "update" action sets up authentication of any
+    repository update given via python setup.py command, such as package
+    upload or removal.
+
   -P PASSWORD_FILE, --passwords PASSWORD_FILE
-    use apache htpasswd file PASSWORD_FILE in order to enable password
-    protected uploads.
+    use apache htpasswd file PASSWORD_FILE to set usernames & passwords
+    used for authentication (requires giving the -s option as well).
 
   --disable-fallback
     disable redirect to real PyPI index for packages not found in the
@@ -275,6 +281,7 @@ def main(argv=None):
     server = DEFAULT_SERVER
     redirect_to_fallback = True
     fallback_url = "http://pypi.python.org/simple"
+    authenticated = []
     password_file = None
     overwrite = False
     verbosity = 1
@@ -289,9 +296,10 @@ def main(argv=None):
     update_stable_only = True
 
     try:
-        opts, roots = getopt.getopt(argv[1:], "i:p:r:d:P:Uuvxoh", [
+        opts, roots = getopt.getopt(argv[1:], "i:p:a:r:d:P:Uuvxoh", [
             "interface=",
             "passwords=",
+            "authenticate=",
             "port=",
             "root=",
             "server=",
@@ -313,6 +321,13 @@ def main(argv=None):
     for k, v in opts:
         if k in ("-p", "--port"):
             port = int(v)
+        elif k in ("-a", "--authenticate"):
+            authenticated = [a.strip() for a in v.split(',')]
+            actions = ("list", "download", "update")
+            for a in authenticated:
+                if a not in actions:
+                    errmsg = "Incorrect action '%s' given with option '%s'" % (k, a)
+                    sys.exit(errmsg)
         elif k in ("-i", "--interface"):
             host = v
         elif k in ("-r", "--root"):
@@ -375,6 +390,7 @@ def main(argv=None):
     a = app(
         root=roots,
         redirect_to_fallback=redirect_to_fallback,
+        authenticated=authenticated,
         password_file=password_file,
         fallback_url=fallback_url,
         overwrite=overwrite,
