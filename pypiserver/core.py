@@ -189,11 +189,12 @@ pypi-server understands the following options:
   -i INTERFACE, --interface INTERFACE
     listen on interface INTERFACE (default: 0.0.0.0, any interface)
 
-  -a [update|download|list], ... --authenticate update|download|list], ...
+  -a (update|download|list), ... --authenticate (update|download|list), ...
     comma-separated list of actions to authenticate (requires giving also
-    the -P option). The "update" action sets up authentication of any
-    repository update given via python setup.py command, such as package
-    upload or removal.
+    the -P option). For example to password-protect package uploads and
+    downloads while leaving listings public, give: -a update,download.
+    Note: make sure there is no space around the comma(s); otherwise, an
+    error will occur.
 
   -P PASSWORD_FILE, --passwords PASSWORD_FILE
     use apache htpasswd file PASSWORD_FILE to set usernames & passwords
@@ -322,11 +323,11 @@ def main(argv=None):
         if k in ("-p", "--port"):
             port = int(v)
         elif k in ("-a", "--authenticate"):
-            authenticated = [a.strip() for a in v.split(',')]
+            authenticated = [a.strip() for a in v.strip(',').split(',')]
             actions = ("list", "download", "update")
             for a in authenticated:
                 if a not in actions:
-                    errmsg = "Incorrect action '%s' given with option '%s'" % (k, a)
+                    errmsg = "Incorrect action '%s' given with option '%s'" % (a, k)
                     sys.exit(errmsg)
         elif k in ("-i", "--interface"):
             host = v
@@ -371,6 +372,9 @@ def main(argv=None):
         elif k in ("-h", "--help"):
             usage()
             sys.exit(0)
+
+    if (password_file or authenticated) and not (password_file and authenticated):
+        sys.exit("Must give both password file (-P) and actions to authenticate (-a).")
 
     if len(roots) == 0:
         roots.append(os.path.expanduser("~/packages"))
