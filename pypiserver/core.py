@@ -235,6 +235,11 @@ pypi-server understands the following options:
     a format-string selecting Http-Error properties to log; set to  '%s' to see them all.
     [Default: %(body)s: %(exception)s \n%(traceback)s]
 
+  --cache-control AGE
+    Add "Cache-Control: max-age=AGE, public" header to package downloads.
+    Pip 6+ needs this for caching.
+
+
 pypi-server -h
 pypi-server --help
   show this help message
@@ -283,6 +288,7 @@ def main(argv=None):
     log_req_frmt = None
     log_res_frmt = None
     log_err_frmt = None
+    cache_control = None
 
     update_dry_run = True
     update_directory = None
@@ -303,6 +309,7 @@ def main(argv=None):
             "log-req-frmt=",
             "log-res-frmt=",
             "log-err-frmt=",
+            "cache-control=",
             "version",
             "help"
         ])
@@ -351,6 +358,8 @@ def main(argv=None):
             log_res_frmt = v
         elif k == "--log-err-frmt":
             log_err_frmt = v
+        elif k == "--cache-control":
+            cache_control = v
         elif k == "-v":
             verbosity += 1
         elif k in ("-h", "--help"):
@@ -379,6 +388,7 @@ def main(argv=None):
         fallback_url=fallback_url,
         overwrite=overwrite,
         log_req_frmt=log_req_frmt, log_res_frmt=log_res_frmt, log_err_frmt=log_err_frmt,
+        cache_control=cache_control,
     )
     server = server or "auto"
     sys.stdout.write("This is pypiserver %s serving %r on http://%s:%s\n\n" % (__version__, ", ".join(roots), host, port))

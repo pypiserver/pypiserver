@@ -40,7 +40,8 @@ def configure(root=None,
               overwrite=False,
               log_req_frmt=None, 
               log_res_frmt=None,
-              log_err_frmt=None):
+              log_err_frmt=None,
+              cache_control=None):
     global packages
 
     log.info("Starting(%s)", dict(root=root,
@@ -50,7 +51,8 @@ def configure(root=None,
               overwrite=overwrite,
               log_req_frmt=log_req_frmt, 
               log_res_frmt=log_res_frmt,
-              log_err_frmt=log_err_frmt))
+              log_err_frmt=log_err_frmt,
+              cache_control=cache_control))
 
     if root is None:
         root = os.path.expanduser("~/packages")
@@ -76,6 +78,7 @@ def configure(root=None,
 
     config.redirect_to_fallback = redirect_to_fallback
     config.fallback_url = fallback_url
+    config.cache_control = cache_control
     if password_file:
         from passlib.apache import HtpasswdFile
         config.htpasswdfile = HtpasswdFile(password_file)
@@ -267,7 +270,10 @@ def server_static(filename):
     for x in entries:
         f = x.relfn.replace("\\", "/")
         if f == filename:
-            return static_file(filename, root=x.root, mimetype=mimetypes.guess_type(filename)[0])
+            response = static_file(filename, root=x.root, mimetype=mimetypes.guess_type(filename)[0])
+            if config.cache_control:
+                response.set_header("Cache-Control", "public, max-age=%s" % config.cache_control)
+            return response
 
     return HTTPError(404)
 
