@@ -227,3 +227,20 @@ def test_simple_index_list_name_with_underscore_no_egg(root, testapp):
     assert len(resp.html("a")) == 2
     hrefs = set([x["href"] for x in resp.html("a")])
     assert hrefs == set(["foo_bar/", "foo-bar/"])
+
+
+def test_no_cache_control_set(root, _app, testapp):
+    assert not _app.config.cache_control
+    root.join("foo_bar-1.0.tar.gz").write("")
+    resp = testapp.get("/packages/foo_bar-1.0.tar.gz")
+    assert "Cache-Control" not in resp.headers
+
+
+def test_cache_control_set(root):
+    from pypiserver import app
+    AGE = 86400
+    app_with_cache = webtest.TestApp(app(root=root.strpath, cache_control=AGE))
+    root.join("foo_bar-1.0.tar.gz").write("")
+    resp = app_with_cache.get("/packages/foo_bar-1.0.tar.gz")
+    assert "Cache-Control" in resp.headers
+    assert resp.headers["Cache-Control"] == 'public, max-age=%s' % AGE
