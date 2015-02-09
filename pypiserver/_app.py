@@ -41,7 +41,8 @@ def configure(root=None,
               log_req_frmt=None, 
               log_res_frmt=None,
               log_err_frmt=None,
-              cache_control=None):
+              cache_control=None,
+              no_auth=None):
     global packages
 
     log.info("Starting(%s)", dict(root=root,
@@ -52,7 +53,8 @@ def configure(root=None,
               log_req_frmt=log_req_frmt, 
               log_res_frmt=log_res_frmt,
               log_err_frmt=log_err_frmt,
-              cache_control=cache_control))
+              cache_control=cache_control,
+              no_auth=no_auth))
 
     if root is None:
         root = os.path.expanduser("~/packages")
@@ -79,6 +81,7 @@ def configure(root=None,
     config.redirect_to_fallback = redirect_to_fallback
     config.fallback_url = fallback_url
     config.cache_control = cache_control
+    config.no_auth = no_auth
     if password_file:
         from passlib.apache import HtpasswdFile
         config.htpasswdfile = HtpasswdFile(password_file)
@@ -153,8 +156,8 @@ def update():
     if not request.auth or request.auth[1] is None:
         raise HTTPError(401, header={"WWW-Authenticate": 'Basic realm="pypi"'})
 
-    if not validate_user(*request.auth):
-        raise HTTPError(403)
+    if not config.no_auth and not validate_user(*request.auth):
+            raise HTTPError(403)
 
     try:
         action = request.forms[':action']

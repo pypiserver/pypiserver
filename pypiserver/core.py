@@ -289,6 +289,7 @@ def main(argv=None):
     log_res_frmt = None
     log_err_frmt = None
     cache_control = None
+    no_auth = False
 
     update_dry_run = True
     update_directory = None
@@ -310,6 +311,7 @@ def main(argv=None):
             "log-res-frmt=",
             "log-err-frmt=",
             "cache-control=",
+            "no-auth",
             "version",
             "help"
         ])
@@ -360,6 +362,8 @@ def main(argv=None):
             log_err_frmt = v
         elif k == "--cache-control":
             cache_control = v
+        elif k == "--no-auth":
+            no_auth = True
         elif k == "-v":
             verbosity += 1
         elif k in ("-h", "--help"):
@@ -389,6 +393,7 @@ def main(argv=None):
         overwrite=overwrite,
         log_req_frmt=log_req_frmt, log_res_frmt=log_res_frmt, log_err_frmt=log_err_frmt,
         cache_control=cache_control,
+        no_auth=no_auth
     )
     server = server or "auto"
     sys.stdout.write("This is pypiserver %s serving %r on http://%s:%s\n\n" % (__version__, ", ".join(roots), host, port))
