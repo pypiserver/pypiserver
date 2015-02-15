@@ -1,5 +1,5 @@
-__version_info__ = (1, 1, 6)
-version = __version__ = "1.1.6"
+__version_info__ = (1, 1, 7, 'beta.0')
+version = __version__ = "1.1.7-beta.0"
 
 
 def app(root=None,
