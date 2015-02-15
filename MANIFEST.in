@@ -19,3 +19,4 @@ include tests/test_core.py
 include tests/test_main.py
 include tests/test_manage.py
 include tox.ini
+include pypiserver/welcome.html

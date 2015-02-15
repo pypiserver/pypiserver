@@ -468,6 +468,12 @@ proxypypi (https://pypi.python.org/pypi/proxypypi)
 
 Changelog
 =========
+
+This fork
+---------
+- allow custom --welcome-template
+- allow to bypass auth with --no-auth
+
 1.1.6 (2014-03-05)
 ------------------
 - remove --index-url cli parameter introduced in 1.1.5

@@ -11,7 +11,8 @@ def app(root=None,
         log_res_frmt="%(status)s", 
         log_err_frmt="%(body)s: %(exception)s \n%(traceback)s",
         cache_control=None,
-        no_auth=None):
+        no_auth=None,
+        welcome_template=None):
     import sys, os
     from pypiserver import core
     sys.modules.pop("pypiserver._app", None)
@@ -29,7 +30,7 @@ def app(root=None,
     _app.configure(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url,
                    password_file=password_file, overwrite=overwrite, 
                    log_req_frmt=log_req_frmt, log_res_frmt=log_res_frmt, log_err_frmt=log_err_frmt,
-                   cache_control=cache_control, no_auth=no_auth)
+                   cache_control=cache_control, no_auth=no_auth, welcome_template=welcome_template)
     _app.app.module = _app
 
     bottle.debug(True)

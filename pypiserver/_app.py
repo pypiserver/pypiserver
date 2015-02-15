@@ -20,9 +20,11 @@ packages = None
 
 class configuration(object):
     def __init__(self):
+        self.welcome_template = None
         self.fallback_url = "http://pypi.python.org/simple"
         self.redirect_to_fallback = True
         self.htpasswdfile = None
+        self.no_auth = None
 
 config = configuration()
 
@@ -42,7 +44,9 @@ def configure(root=None,
               log_res_frmt=None,
               log_err_frmt=None,
               cache_control=None,
-              no_auth=None):
+              no_auth=None,
+              welcome_template=None
+):
     global packages
 
     log.info("Starting(%s)", dict(root=root,
@@ -54,7 +58,8 @@ def configure(root=None,
               log_res_frmt=log_res_frmt,
               log_err_frmt=log_err_frmt,
               cache_control=cache_control,
-              no_auth=no_auth))
+              no_auth=no_auth,
+              welcome_template=welcome_template))
 
     if root is None:
         root = os.path.expanduser("~/packages")
@@ -82,6 +87,7 @@ def configure(root=None,
     config.fallback_url = fallback_url
     config.cache_control = cache_control
     config.no_auth = no_auth
+    config.welcome_template = welcome_template
     if password_file:
         from passlib.apache import HtpasswdFile
         config.htpasswdfile = HtpasswdFile(password_file)
@@ -128,25 +134,7 @@ def root():
     except:
         numpkgs = 0
 
-    return """<html><head><title>Welcome to pypiserver!</title></head><body>
-<h1>Welcome to pypiserver!</h1>
-<p>This is a PyPI compatible package index serving %(NUMPKGS)s packages.</p>
-
-<p> To use this server with pip, run the the following command:
-<blockquote><pre>
-pip install -i %(URL)ssimple/ PACKAGE [PACKAGE2...]
-</pre></blockquote></p>
-
-<p> To use this server with easy_install, run the the following command:
-<blockquote><pre>
-easy_install -i %(URL)ssimple/ PACKAGE
-</pre></blockquote></p>
-
-<p>The complete list of all packages can be found <a href="%(PACKAGES)s">here</a> or via the <a href="%(SIMPLE)s">simple</a> index.</p>
-
-<p>This instance is running version %(VERSION)s of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
-</body></html>
-""" % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs,
+    return config.welcome_template % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs,
            PACKAGES=urljoin(fp, "packages/"),
            SIMPLE=urljoin(fp, "simple/"))
 

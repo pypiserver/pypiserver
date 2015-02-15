@@ -53,4 +53,5 @@ setup(name="pypiserver",
         "Programming Language :: Python :: 3.3",
         "Topic :: Software Development :: Build Tools",
         "Topic :: System :: Software Distribution"],
+      include_package_data=True,
       **extra)

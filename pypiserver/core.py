@@ -239,6 +239,9 @@ pypi-server understands the following options:
     Add "Cache-Control: max-age=AGE, public" header to package downloads.
     Pip 6+ needs this for caching.
 
+  --welcome-template
+    Override default template. Available keys: NUMPKGS, URL, PACKAGES, SIMPLE, VERSION
+
 
 pypi-server -h
 pypi-server --help
@@ -268,11 +271,18 @@ The following additional options can be specified with -U:
 Visit http://pypi.python.org/pypi/pypiserver for more information.
 """)
 
+
+def _get_welcome_template(welcome_template_path):
+    with open(welcome_template_path) as fo:
+        return fo.read()
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv
 
     global packages
+
 
     command = "serve"
     host = "0.0.0.0"
@@ -290,6 +300,9 @@ def main(argv=None):
     log_err_frmt = None
     cache_control = None
     no_auth = False
+    here = os.path.dirname(__file__)
+    default_welcome_template = os.path.join(here, 'welcome.html')
+    welcome_template = _get_welcome_template(default_welcome_template)
 
     update_dry_run = True
     update_directory = None
@@ -311,6 +324,7 @@ def main(argv=None):
             "log-res-frmt=",
             "log-err-frmt=",
             "cache-control=",
+            "welcome-template=",
             "no-auth",
             "version",
             "help"
@@ -362,6 +376,8 @@ def main(argv=None):
             log_err_frmt = v
         elif k == "--cache-control":
             cache_control = v
+        elif k == "--welcome-template":
+            welcome_template = _get_welcome_template(v)
         elif k == "--no-auth":
             no_auth = True
         elif k == "-v":
@@ -393,7 +409,8 @@ def main(argv=None):
         overwrite=overwrite,
         log_req_frmt=log_req_frmt, log_res_frmt=log_res_frmt, log_err_frmt=log_err_frmt,
         cache_control=cache_control,
-        no_auth=no_auth
+        no_auth=no_auth,
+        welcome_template=welcome_template
     )
     server = server or "auto"
     sys.stdout.write("This is pypiserver %s serving %r on http://%s:%s\n\n" % (__version__, ", ".join(roots), host, port))
