@@ -88,9 +88,16 @@ pypi-server -h will print a detailed usage message::
     -i INTERFACE, --interface INTERFACE
       listen on interface INTERFACE (default: 0.0.0.0, any interface)
 
+    -a (update|download|list), ... --authenticate (update|download|list), ...
+      comma-separated list of actions to authenticate (requires giving also
+      the -P option). For example to password-protect package uploads and
+      downloads while leaving listings public, give: -a update,download.
+      Note: make sure there is no space around the comma(s); otherwise, an
+      error will occur.
+
     -P PASSWORD_FILE, --passwords PASSWORD_FILE
-      use apache htpasswd file PASSWORD_FILE in order to enable password
-      protected uploads.
+      use apache htpasswd file PASSWORD_FILE to set usernames & passwords
+      used for authentication (requires giving the -s option as well).
 
     --disable-fallback
       disable redirect to real PyPI index for packages not found in the
@@ -471,6 +478,13 @@ proxypypi (https://pypi.python.org/pypi/proxypypi)
 
 Changelog
 =========
+
+1.1.7 (2015-01-10)
+------------------
+- support password protected package listings and downloads,
+  in addition to uploads (use the -a, --authenticate option
+  to specify which to protect).
+
 1.1.6 (2014-03-05)
 ------------------
 - remove --index-url cli parameter introduced in 1.1.5
