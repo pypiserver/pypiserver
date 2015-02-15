@@ -34,3 +34,6 @@ __pycache__/
 /eggs/
 /parts/
 /.settings/
+
+# IDE files
+/.idea
