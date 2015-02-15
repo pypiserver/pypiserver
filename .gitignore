@@ -17,11 +17,14 @@ ID
 __pycache__/
 /build/
 /dist/
+/*.egg
 /MANIFEST
 /README.html
 /pypi-server-standalone.py
+/.project
+/.pydevproject
 /.tox/
-/pypiserver.egg-info/
+/*.egg-info/
 /.standalone/
 /.coverage
 /htmlcov/
@@ -30,3 +33,4 @@ __pycache__/
 /develop-eggs/
 /eggs/
 /parts/
+/.settings/

@@ -5,8 +5,12 @@ version = __version__ = "1.1.6"
 def app(root=None,
         redirect_to_fallback=True,
         fallback_url=None,
+        authenticated=[],
         password_file=None,
-        overwrite=False):
+        overwrite=False,
+        log_req_frmt="%(bottle.request)s", 
+        log_res_frmt="%(status)s", 
+        log_err_frmt="%(body)s: %(exception)s \n%(traceback)s"):
     import sys, os
     from pypiserver import core
     sys.modules.pop("pypiserver._app", None)
@@ -22,7 +26,8 @@ def app(root=None,
         fallback_url = "http://pypi.python.org/simple"
 
     _app.configure(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url,
-                   password_file=password_file, overwrite=overwrite)
+                   authenticated=authenticated, password_file=password_file, overwrite=overwrite, 
+                   log_req_frmt=log_req_frmt, log_res_frmt=log_res_frmt, log_err_frmt=log_err_frmt)
     _app.app.module = _app
 
     bottle.debug(True)

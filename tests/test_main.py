@@ -1,6 +1,6 @@
 #! /usr/bin/env py.test
 
-import sys, os, pytest
+import sys, os, pytest, logging
 from pypiserver import core
 
 
@@ -84,3 +84,21 @@ def test_fallback_url_default(main):
     main([])
     assert main.app.module.config.fallback_url == \
         "http://pypi.python.org/simple"
+
+@pytest.fixture
+def logfile(tmpdir):
+    return tmpdir.mkdir("logs").join('test.log')
+
+def test_logging(main, logfile):
+    main(["-v", "--log-file", logfile.strpath])
+    assert logfile.check(), logfile
+    
+def test_logging_verbosity(main):
+    main([])
+    assert logging.getLogger().level == logging.WARN 
+    main(["-v"])
+    assert logging.getLogger().level == logging.INFO 
+    main(["-v", "-v"])
+    assert logging.getLogger().level == logging.DEBUG 
+    main(["-v", "-v", "-v"])
+    assert logging.getLogger().level == logging.NOTSET

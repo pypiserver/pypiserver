@@ -1,4 +1,4 @@
-import sys, os, itertools, zipfile, mimetypes
+import sys, os, itertools, zipfile, mimetypes, logging
 
 try:
     from io import BytesIO
@@ -10,10 +10,11 @@ if sys.version_info >= (3, 0):
 else:
     from urlparse import urljoin
 
-from bottle import static_file, redirect, request, HTTPError, Bottle
+from bottle import static_file, redirect, request, response, HTTPError, Bottle
 from pypiserver import __version__
 from pypiserver.core import listdir, find_packages, store, get_prefixes, exists
 
+log = logging.getLogger('pypiserver.http')
 packages = None
 
 
@@ -32,12 +33,47 @@ def validate_user(username, password):
         return config.htpasswdfile.check_password(username, password)
 
 
+class auth(object):
+    "decorator to apply authentication if specified for the decorated method & action"
+
+    def __init__(self, action):
+        self.action = action
+
+    def __call__(self, method):
+
+        def protector(*args, **kwargs):
+            if self.action in config.authenticated:
+                if not request.auth or request.auth[1] is None:
+                    raise HTTPError(401, header={"WWW-Authenticate": 'Basic realm="pypi"'})
+                if not validate_user(*request.auth):
+                    raise HTTPError(403)
+            return method(*args, **kwargs)
+
+        return protector
+
+
 def configure(root=None,
               redirect_to_fallback=True,
               fallback_url=None,
+              authenticated=[],
               password_file=None,
-              overwrite=False):
+              overwrite=False,
+              log_req_frmt=None, 
+              log_res_frmt=None,
+              log_err_frmt=None):
     global packages
+
+    log.info("Starting(%s)", dict(root=root,
+              redirect_to_fallback=redirect_to_fallback,
+              fallback_url=fallback_url,
+              authenticated=authenticated,
+              password_file=password_file,
+              overwrite=overwrite,
+              log_req_frmt=log_req_frmt, 
+              log_res_frmt=log_res_frmt,
+              log_err_frmt=log_err_frmt))
+
+    config.authenticated = authenticated
 
     if root is None:
         root = os.path.expanduser("~/packages")
@@ -68,7 +104,31 @@ def configure(root=None,
         config.htpasswdfile = HtpasswdFile(password_file)
     config.overwrite = overwrite
 
+    config.log_req_frmt = log_req_frmt
+    config.log_res_frmt = log_res_frmt
+    config.log_err_frmt = log_err_frmt
+
 app = Bottle()
+
+
+@app.hook('before_request')
+def log_request():
+    log.info(config.log_req_frmt, request.environ)
+
+
+@app.hook('after_request')
+def log_response():
+    log.info(config.log_res_frmt, #vars(response))  ## DOES NOT WORK!
+            dict(
+                response=response, 
+                status=response.status, headers=response.headers, 
+                body=response.body, cookies=response.COOKIES,
+    ))
+
+
+@app.error
+def log_error(http_error):
+    log.info(config.log_err_frmt, vars(http_error))
 
 
 @app.route("/favicon.ico")
@@ -109,13 +169,8 @@ easy_install -i %(URL)ssimple/ PACKAGE
 
 
 @app.post('/')
+@auth("update")
 def update():
-    if not request.auth or request.auth[1] is None:
-        raise HTTPError(401, header={"WWW-Authenticate": 'Basic realm="pypi"'})
-
-    if not validate_user(*request.auth):
-        raise HTTPError(403)
-
     try:
         action = request.forms[':action']
     except KeyError:
@@ -171,11 +226,13 @@ def update():
 
 
 @app.route("/simple")
+@auth("list")
 def simpleindex_redirect():
     return redirect(request.fullpath + "/")
 
 
 @app.route("/simple/")
+@auth("list")
 def simpleindex():
     res = ["<html><head><title>Simple Index</title></head><body>\n"]
     for x in sorted(get_prefixes(packages())):
@@ -186,6 +243,7 @@ def simpleindex():
 
 @app.route("/simple/:prefix")
 @app.route("/simple/:prefix/")
+@auth("list")
 def simple(prefix=""):
     fp = request.fullpath
     if not fp.endswith("/"):
@@ -209,6 +267,7 @@ def simple(prefix=""):
 
 @app.route('/packages')
 @app.route('/packages/')
+@auth("list")
 def list_packages():
     fp = request.fullpath
     if not fp.endswith("/"):
@@ -225,6 +284,7 @@ def list_packages():
 
 
 @app.route('/packages/:filename#.*#')
+@auth("download")
 def server_static(filename):
     entries = find_packages(packages())
     for x in entries:

@@ -3,6 +3,11 @@
 import pytest
 from pypiserver import core
 
+## Enable logging to detect any problems with it
+##
+import logging
+core.init_logging(level=logging.NOTSET)
+
 
 files = [
     ("pytz-2012b.tar.bz2", "pytz", "2012b"),
