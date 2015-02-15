@@ -51,7 +51,7 @@ def parse_version(s):
 
 # -- end of distribute's code
 
-_archive_suffix_rx = re.compile(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*)$", re.IGNORECASE)
+_archive_suffix_rx = re.compile(r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$", re.IGNORECASE)
 
 wheel_file_re = re.compile(
     r"""^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))
@@ -77,7 +77,8 @@ def guess_pkgname_and_version(path):
     path = os.path.basename(path)
     if path.endswith(".whl"):
         return _guess_pkgname_and_version_wheel(path)
-
+    if not _archive_suffix_rx.search(path):
+        return
     path = _archive_suffix_rx.sub('', path)
     if '-' not in path:
         pkgname, version = path, ''
@@ -119,7 +120,11 @@ def listdir(root):
             fn = os.path.join(root, dirpath, x)
             if not is_allowed_path(x) or not os.path.isfile(fn):
                 continue
-            pkgname, version = guess_pkgname_and_version(x)
+            res = guess_pkgname_and_version(x)
+            if not res:
+                ##Seems the current file isn't a proper package
+                continue
+            pkgname, version = res
             if pkgname:
                 yield pkgfile(fn=fn, root=root, relfn=fn[len(root) + 1:],
                               pkgname=pkgname,
