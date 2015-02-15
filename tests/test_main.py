@@ -39,7 +39,7 @@ def main(request, monkeypatch):
 
 def test_default_pkgdir(main):
     main([])
-    assert main.pkgdir == os.path.expanduser("~/packages")
+    assert os.path.normpath(main.pkgdir) == os.path.normpath(os.path.expanduser("~/packages"))
 
 
 def test_noargs(main):
@@ -102,3 +102,12 @@ def test_logging_verbosity(main):
     assert logging.getLogger().level == logging.DEBUG 
     main(["-v", "-v", "-v"])
     assert logging.getLogger().level == logging.NOTSET
+
+def test_welcome_file(main):
+    sample_msg_file = os.path.join(os.path.dirname(__file__), "sample_msg.html")
+    main(["--welcome", sample_msg_file])
+    assert "Hello pypiserver tester!" in main.app.module.config.welcome_msg
+
+def test_welcome_file_default(main):
+    main([])
+    assert "Welcome to pypiserver!" in main.app.module.config.welcome_msg

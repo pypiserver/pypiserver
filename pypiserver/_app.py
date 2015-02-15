@@ -1,4 +1,4 @@
-import sys, os, itertools, zipfile, mimetypes, logging
+import sys, os, io, itertools, zipfile, mimetypes, logging, pkg_resources
 
 try:
     from io import BytesIO
@@ -23,6 +23,8 @@ class configuration(object):
         self.fallback_url = "http://pypi.python.org/simple"
         self.redirect_to_fallback = True
         self.htpasswdfile = None
+        self.welcome_file = None
+        self.welcome_msg = None
 
 config = configuration()
 
@@ -60,7 +62,8 @@ def configure(root=None,
               overwrite=False,
               log_req_frmt=None, 
               log_res_frmt=None,
-              log_err_frmt=None):
+              log_err_frmt=None,
+              welcome_file=None):
     global packages
 
     log.info("Starting(%s)", dict(root=root,
@@ -69,6 +72,7 @@ def configure(root=None,
               authenticated=authenticated,
               password_file=password_file,
               overwrite=overwrite,
+              welcome_file=welcome_file,
               log_req_frmt=log_req_frmt, 
               log_res_frmt=log_res_frmt,
               log_err_frmt=log_err_frmt))
@@ -103,6 +107,40 @@ def configure(root=None,
         from passlib.apache import HtpasswdFile
         config.htpasswdfile = HtpasswdFile(password_file)
     config.overwrite = overwrite
+    
+    ## Read welcome-msg from external file,
+    #     or failback to the embedded-msg (ie. in standalone mode).
+    #
+    try:
+        if not welcome_file:
+            welcome_file = pkg_resources.resource_filename(__name__, "welcome.html")  # @UndefinedVariable
+        config.welcome_file = welcome_file
+        with io.open(config.welcome_file, 'r', encoding='utf-8') as fd:
+            config.welcome_msg = fd.read()
+    except Exception:
+        log.warning("Could not load welcome-file(%s)!", welcome_file, exc_info=1)
+    if not config.welcome_msg:
+        from textwrap import dedent
+        config.welcome_msg = dedent("""\
+            <html><head><title>Welcome to pypiserver!</title></head><body>
+            <h1>Welcome to pypiserver!</h1>
+            <p>This is a PyPI compatible package index serving %(NUMPKGS)s packages.</p>
+            
+            <p> To use this server with pip, run the the following command:
+            <blockquote><pre>
+            pip install -i %(URL)ssimple/ PACKAGE [PACKAGE2...]
+            </pre></blockquote></p>
+            
+            <p> To use this server with easy_install, run the the following command:
+            <blockquote><pre>
+            easy_install -i %(URL)ssimple/ PACKAGE
+            </pre></blockquote></p>
+            
+            <p>The complete list of all packages can be found <a href="%(PACKAGES)s">here</a> or via the <a href="%(SIMPLE)s">simple</a> index.</p>
+            
+            <p>This instance is running version %(VERSION)s of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
+            </body></html>\
+        """)
 
     config.log_req_frmt = log_req_frmt
     config.log_res_frmt = log_res_frmt
@@ -145,27 +183,13 @@ def root():
     except:
         numpkgs = 0
 
-    return """<html><head><title>Welcome to pypiserver!</title></head><body>
-<h1>Welcome to pypiserver!</h1>
-<p>This is a PyPI compatible package index serving %(NUMPKGS)s packages.</p>
-
-<p> To use this server with pip, run the the following command:
-<blockquote><pre>
-pip install -i %(URL)ssimple/ PACKAGE [PACKAGE2...]
-</pre></blockquote></p>
-
-<p> To use this server with easy_install, run the the following command:
-<blockquote><pre>
-easy_install -i %(URL)ssimple/ PACKAGE
-</pre></blockquote></p>
-
-<p>The complete list of all packages can be found <a href="%(PACKAGES)s">here</a> or via the <a href="%(SIMPLE)s">simple</a> index.</p>
-
-<p>This instance is running version %(VERSION)s of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
-</body></html>
-""" % dict(URL=request.url, VERSION=__version__, NUMPKGS=numpkgs,
+    return config.welcome_msg % dict(
+           URL=request.url, 
+           VERSION=__version__, 
+           NUMPKGS=numpkgs,
            PACKAGES=urljoin(fp, "packages/"),
-           SIMPLE=urljoin(fp, "simple/"))
+           SIMPLE=urljoin(fp, "simple/")
+    )
 
 
 @app.post('/')
