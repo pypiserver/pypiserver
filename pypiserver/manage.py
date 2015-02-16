@@ -1,7 +1,9 @@
-
-import sys, os
-from pypiserver import core
+import sys
+import os
 from subprocess import call
+
+from pypiserver import core
+
 
 if sys.version_info >= (3, 0):
     from xmlrpc.client import Server
@@ -10,7 +12,8 @@ if sys.version_info >= (3, 0):
         return Server(url)
 else:
     from xmlrpclib import Server, Transport
-    import httplib, urllib
+    import httplib
+    import urllib
 
     class ProxiedTransport(Transport):
 
@@ -79,7 +82,7 @@ def build_releases(pkg, versions):
     for x in versions:
         parsed_version = core.parse_version(x)
         if parsed_version > pkg.parsed_version:
-            yield core.pkgfile(version=x,
+            yield core.PkgFile(version=x,
                                parsed_version=parsed_version,
                                pkgname=pkg.pkgname,
                                replaces=pkg)
