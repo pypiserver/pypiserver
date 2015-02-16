@@ -1,7 +1,7 @@
 #! /usr/bin/env py.test
 
 import pytest, py
-from pypiserver.core import parse_version, pkgfile, guess_pkgname_and_version
+from pypiserver.core import parse_version, PkgFile, guess_pkgname_and_version
 from pypiserver.manage import is_stable_version, build_releases, filter_stable_releases, filter_latest_pkgs
 
 
@@ -13,7 +13,7 @@ def touch_files(root, files):
 
 def pkgfile_from_path(fn):
     pkgname, version = guess_pkgname_and_version(fn)
-    return pkgfile(root=py.path.local(fn).parts()[1].strpath,
+    return PkgFile(root=py.path.local(fn).parts()[1].strpath,
                    fn=fn, pkgname=pkgname, version=version, parsed_version=parse_version(version))
 
 
