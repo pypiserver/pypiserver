@@ -5,7 +5,7 @@ version = __version__ = "1.1.7-beta.0"
 def app(root=None,
         redirect_to_fallback=True,
         fallback_url=None,
-        authenticated=[],
+        authenticated=None,
         password_file=None,
         overwrite=False,
         log_req_frmt="%(bottle.request)s", 
@@ -29,7 +29,7 @@ def app(root=None,
         fallback_url = "http://pypi.python.org/simple"
 
     _app.configure(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url,
-                   authenticated=authenticated, password_file=password_file, overwrite=overwrite, 
+                   authenticated=authenticated or [], password_file=password_file, overwrite=overwrite, 
                    log_req_frmt=log_req_frmt, log_res_frmt=log_res_frmt, log_err_frmt=log_err_frmt,
                    welcome_file=welcome_file,
                    cache_control=cache_control,
