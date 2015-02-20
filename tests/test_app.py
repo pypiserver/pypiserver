@@ -56,7 +56,7 @@ def test_root_hostname(testapp):
 
 
 def test_root_welcome_msg(root):
-    wmsg = "Hey there!"
+    wmsg = "<html><body>Hey there!</body></html>"
     wfile = root.join("testwelcome.html")
     wfile.write(wmsg)
 
@@ -66,6 +66,9 @@ def test_root_welcome_msg(root):
     resp = testapp.get("/")
     resp.mustcontain(wmsg)
 
+def test_root_welcome_msg_antiXSS(testapp):
+    resp = testapp.get("/?<alert>Red</alert>", headers={"Host": "somehost.org"})
+    resp.mustcontain("alert", "somehost.org", no="<alert>")
 
 def test_packages_empty(testapp):
     resp = testapp.get("/packages")

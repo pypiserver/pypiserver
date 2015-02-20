@@ -12,12 +12,12 @@ try:
 except ImportError:
     from StringIO import StringIO as BytesIO
 
-if sys.version_info >= (3, 0):
+try:                    #PY3
     from urllib.parse import urljoin
-else:
+except ImportError:     #PY2
     from urlparse import urljoin
 
-from bottle import static_file, redirect, request, response, HTTPError, Bottle
+from bottle import static_file, redirect, request, response, HTTPError, Bottle, template
 from pypiserver import __version__
 from pypiserver.core import listdir, find_packages, store, get_prefixes, exists
 
@@ -135,21 +135,21 @@ def configure(root=None,
         config.welcome_msg = dedent("""\
             <html><head><title>Welcome to pypiserver!</title></head><body>
             <h1>Welcome to pypiserver!</h1>
-            <p>This is a PyPI compatible package index serving %(NUMPKGS)s packages.</p>
+            <p>This is a PyPI compatible package index serving {{NUMPKGS}} packages.</p>
             
             <p> To use this server with pip, run the the following command:
             <blockquote><pre>
-            pip install -i %(URL)ssimple/ PACKAGE [PACKAGE2...]
+            pip install -i {{URL}}simple/ PACKAGE [PACKAGE2...]
             </pre></blockquote></p>
             
             <p> To use this server with easy_install, run the the following command:
             <blockquote><pre>
-            easy_install -i %(URL)ssimple/ PACKAGE
+            easy_install -i {{URL}}simple/ PACKAGE
             </pre></blockquote></p>
             
-            <p>The complete list of all packages can be found <a href="%(PACKAGES)s">here</a> or via the <a href="%(SIMPLE)s">simple</a> index.</p>
+            <p>The complete list of all packages can be found <a href="{{PACKAGES}}">here</a> or via the <a href="{{SIMPLE}}">simple</a> index.</p>
             
-            <p>This instance is running version %(VERSION)s of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
+            <p>This instance is running version {{VERSION}} of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
             </body></html>\
         """)
 
@@ -194,7 +194,8 @@ def root():
     except:
         numpkgs = 0
 
-    return config.welcome_msg % dict(
+    msg = config.welcome_msg + '\n' ## Enrure template() does not considere `msg` as filename!
+    return template(msg, 
            URL=request.url, 
            VERSION=__version__, 
            NUMPKGS=numpkgs,
