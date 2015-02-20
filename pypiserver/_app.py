@@ -64,7 +64,7 @@ class auth(object):
 def configure(root=None,
               redirect_to_fallback=True,
               fallback_url=None,
-              authenticated=[],
+              authenticated=None,
               password_file=None,
               overwrite=False,
               log_req_frmt=None, 
@@ -87,7 +87,7 @@ def configure(root=None,
               log_err_frmt=log_err_frmt,
               cache_control=cache_control))
 
-    config.authenticated = authenticated
+    config.authenticated = authenticated or []
 
     if root is None:
         root = os.path.expanduser("~/packages")

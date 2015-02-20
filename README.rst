@@ -479,11 +479,16 @@ proxypypi (https://pypi.python.org/pypi/proxypypi)
 Changelog
 =========
 
-1.1.7 (2015-01-10)
+1.1.7 (2015-02-23)
 ------------------
-- support password protected package listings and downloads,
+- #65, #66: Improve Auth for private repos by supporting i
+  password protected package listings and downloads,
   in addition to uploads (use the -a, --authenticate option
   to specify which to protect).
+- #67: Add cache-control http-header, reqed by pip.
+- #56, #70: Ignore non-packages when serving.
+- #58, #62: Log all http-requests.
+- #61: Possible to change welcome-msg.
 
 1.1.6 (2014-03-05)
 ------------------
