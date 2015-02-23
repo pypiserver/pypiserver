@@ -194,7 +194,7 @@ def root():
     except:
         numpkgs = 0
 
-    msg = config.welcome_msg + '\n' ## Enrure template() does not considere `msg` as filename!
+    msg = config.welcome_msg + '\n' ## Ensure template() does not consider `msg` as filename!
     return template(msg, 
            URL=request.url, 
            VERSION=__version__, 
