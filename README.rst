@@ -82,22 +82,22 @@ pypi-server -h will print a detailed usage message::
 
   pypi-server understands the following options:
 
-    -p PORT, --port PORT
+    -p, --port PORT
       listen on port PORT (default: 8080)
 
-    -i INTERFACE, --interface INTERFACE
+    -i, --interface INTERFACE
       listen on interface INTERFACE (default: 0.0.0.0, any interface)
 
-    -a (update|download|list), ... --authenticate (update|download|list), ...
-      comma-separated list of actions to authenticate (requires giving also
-      the -P option). For example to password-protect package uploads and
-      downloads while leaving listings public, give: -a update,download.
-      Note: make sure there is no space around the comma(s); otherwise, an
-      error will occur.
+    -a, --authenticate (UPDATE|download|list), ...
+      comma-separated list of (case-insensitive) actions to authenticate
+      (requires giving also the -P option). For example to password-protect 
+      package uploads & downloads while leaving listings public, give: 
+        -a update,download.
+      If unspecified, only 'update' is password-protected.
 
-    -P PASSWORD_FILE, --passwords PASSWORD_FILE
+    -P, --passwords PASSWORD_FILE
       use apache htpasswd file PASSWORD_FILE to set usernames & passwords
-      used for authentication (requires giving the -s option as well).
+      used for authentication of certain actions (see -a option).
 
     --disable-fallback
       disable redirect to real PyPI index for packages not found in the
@@ -113,7 +113,7 @@ pypi-server -h will print a detailed usage message::
       default is to use "auto" which chooses one of paste, cherrypy,
       twisted or wsgiref.
 
-    -r PACKAGES_DIRECTORY, --root PACKAGES_DIRECTORY
+    -r, --root PACKAGES_DIRECTORY
       [deprecated] serve packages from PACKAGES_DIRECTORY
 
     -o, --overwrite
