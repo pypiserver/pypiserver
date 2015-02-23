@@ -489,6 +489,8 @@ Changelog
 - #56, #70: Ignore non-packages when serving.
 - #58, #62: Log all http-requests.
 - #61: Possible to change welcome-msg.
+- #77, #78: Avoid XSS by generating web-content with SimpleTemplate 
+  instead of python's string-substs. 
 
 1.1.6 (2014-03-05)
 ------------------

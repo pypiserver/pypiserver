@@ -270,11 +270,20 @@ def simpleindex_redirect():
 @app.route("/simple/")
 @auth("list")
 def simpleindex():
-    res = ["<html><head><title>Simple Index</title></head><body>\n"]
-    for x in sorted(get_prefixes(packages())):
-        res.append('<a href="%s/">%s</a><br>\n' % (x, x))
-    res.append("</body></html>")
-    return "".join(res)
+    links = sorted(get_prefixes(packages()))
+    tmpl = """\
+    <html>
+        <head>
+            <title>Simple Index</title>
+        </head>
+        <body>
+            <h1>Simple Index</h1>
+            % for p in links:
+                 <a href="{{p}}/">{{p}}</a><br>
+        </body>
+    </html>
+    """
+    return template(tmpl, links=links)
 
 
 @app.route("/simple/:prefix")
@@ -286,19 +295,25 @@ def simple(prefix=""):
         fp += "/"
 
     files = [x.relfn for x in sorted(find_packages(packages(), prefix=prefix), key=lambda x: x.parsed_version)]
-
     if not files:
         if config.redirect_to_fallback:
             return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
         return HTTPError(404)
-    res = ["<html><head><title>Links for %s</title></head><body>\n" % prefix,
-           "<h1>Links for %s</h1>\n" % prefix]
-    for x in files:
-        abspath = urljoin(fp, "../../packages/%s" % x.replace("\\", "/"))
-
-        res.append('<a href="%s">%s</a><br>\n' % (abspath, os.path.basename(x)))
-    res.append("</body></html>\n")
-    return "".join(res)
+    
+    links = [(os.path.basename(f), urljoin(fp, "../../packages/%s" % f.replace("\\", "/"))) for f in files]
+    tmpl = """\
+    <html>
+        <head>
+            <title>Links for {{prefix}}</title>
+        </head>
+        <body>
+            <h1>Links for {{prefix}}</h1>
+            % for file, href in links:
+                 <a href="{{href}}">{{file}}</a><br>
+        </body>
+    </html>
+    """
+    return template(tmpl, prefix=prefix, links=links)
 
 
 @app.route('/packages')
@@ -311,13 +326,20 @@ def list_packages():
 
     files = [x.relfn for x in sorted(find_packages(packages()),
                                      key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version))]
-
-    res = ["<html><head><title>Index of packages</title></head><body>\n"]
-    for x in files:
-        x = x.replace("\\", "/")
-        res.append('<a href="%s">%s</a><br>\n' % (urljoin(fp, x), x))
-    res.append("</body></html>\n")
-    return "".join(res)
+    links = [(f.replace("\\", "/"), urljoin(fp, f)) for f in files]
+    tmpl = """\
+    <html>
+        <head>
+            <title>Index of packages</title>
+        </head>
+        <body>
+            <h1>Index of packages</h1>
+            % for file, href in links:
+                 <a href="{{href}}">{{file}}</a><br>
+        </body>
+    </html>
+    """
+    return template(tmpl, links=links)
 
 
 @app.route('/packages/:filename#.*#')

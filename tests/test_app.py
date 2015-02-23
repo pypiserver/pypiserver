@@ -47,7 +47,7 @@ def testpriv(priv):
                         ])
 def welcome_file_no_vars(request, root):
     wfile = root.join("testwelcome.html")
-    wfile.write_text(request.param, 'utf-8')
+    wfile.write(request.param)
     
     return wfile
 
@@ -62,7 +62,7 @@ def welcome_file_all_vars(request, root):
     {{SIMPLE}}
     """
     wfile = root.join("testwelcome.html")
-    wfile.write_text(msg, 'utf-8')
+    wfile.write(msg)
     
     return wfile
 
@@ -87,7 +87,7 @@ def test_root_welcome_msg_no_vars(root, welcome_file_no_vars):
     testapp = webtest.TestApp(app)
     resp = testapp.get("/")
     from pypiserver import __version__ as pver
-    resp.mustcontain(welcome_file_no_vars.read_text('utf-8'), no=pver)
+    resp.mustcontain(welcome_file_no_vars.read(), no=pver)
 
 
 def test_root_welcome_msg_all_vars(root, welcome_file_all_vars):
