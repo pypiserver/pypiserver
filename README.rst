@@ -31,7 +31,7 @@ Run the following commands to get your PyPI server up and running::
   mkdir ~/packages
   # copy some source packages or eggs to this directory
   pypi-server -p 8080 ~/packages
-  pip install -i http://localhost:8080/simple/ ...
+  pip install  --extra-index-url http://localhost:8080/simple/ ...
 
 .. NOTE::
 
@@ -182,15 +182,21 @@ good idea to configure them to always use your local pypi index.
 
 pip
 -----
-For pip this can be done by setting the environment variable
-PIP_INDEX_URL in your .bashrc/.profile/.zshrc::
+For *pip* this can be done by setting the environment variable
+PIP_EXTRA_INDEX_URL in your .bashrc/.profile/.zshrc::
 
-  export PIP_INDEX_URL=http://localhost:8080/simple/
+  export PIP_EXTRA_INDEX_URL=http://localhost:8080/simple/
 
 or by adding the following lines to ~/.pip/pip.conf::
 
   [global]
-  index-url = http://localhost:8080/simple/
+  extra-index-url = http://localhost:8080/simple/
+
+.. Note::
+    If you have installed *pypi-server* on a remote url without *https* 
+    you wil receive an "untrusted" warning from `pip`, urging you to append
+    the '--trusted-host` option.  You can include this option permanently
+    in your configuration-files or environment variables.
 
 easy_install
 ------------
@@ -256,10 +262,10 @@ looks like::
   no releases found on pypi for PyXML, Pymacs, mercurial, setuptools
 
   # update raven from 1.4.3 to 1.4.4
-  pip -q install --no-deps -i http://pypi.python.org/simple -d /home/ralf/packages/mirror raven==1.4.4
+  pip -q install --no-deps  --extra-index-url http://pypi.python.org/simple -d /home/ralf/packages/mirror raven==1.4.4
 
   # update greenlet from 0.3.3 to 0.3.4
-  pip -q install --no-deps -i http://pypi.python.org/simple -d /home/ralf/packages/mirror greenlet==0.3.4
+  pip -q install --no-deps  --extra-index-url http://pypi.python.org/simple -d /home/ralf/packages/mirror greenlet==0.3.4
 
 It first prints for each package a single character after checking the
 available versions on pypi. A dot means the package is up-to-date, 'u'
