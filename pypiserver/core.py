@@ -435,9 +435,8 @@ def main(argv=None):
         cache_control=cache_control,
     )
     server = server or "auto"
-    sys.stdout.write(
-        "This is pypiserver %s serving %r on http://%s:%s\n\n" % (__version__, ", ".join(roots), host, port))
-    sys.stdout.flush()
+    log.info("This is pypiserver %s serving %r on http://%s:%s\n\n", 
+        __version__, ", ".join(roots), host, port)
     run(app=a, host=host, port=port, server=server)
 
 
