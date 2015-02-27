@@ -41,6 +41,32 @@ def testpriv(priv):
     return webtest.TestApp(priv)
 
 
+@pytest.fixture(params=["  ",  ## Mustcontain test below fails when string is empty.
+                        "Hey there!", 
+                        "<html><body>Hey there!</body></html>",
+                        ])
+def welcome_file_no_vars(request, root):
+    wfile = root.join("testwelcome.html")
+    wfile.write(request.param)
+    
+    return wfile
+
+
+@pytest.fixture() 
+def welcome_file_all_vars(request, root):
+    msg ="""
+    {{URL}}
+    {{VERSION}}
+    {{NUMPKGS}}
+    {{PACKAGES}}
+    {{SIMPLE}}
+    """
+    wfile = root.join("testwelcome.html")
+    wfile.write(msg)
+    
+    return wfile
+
+
 def test_root_count(root, testapp):
     resp = testapp.get("/")
     resp.mustcontain("PyPI compatible package index serving 0 packages")
@@ -55,16 +81,39 @@ def test_root_hostname(testapp):
     # go("http://systemexit.de/")
 
 
-def test_root_welcome_msg(root):
-    wmsg = "Hey there!"
-    wfile = root.join("testwelcome.html")
-    wfile.write(wmsg)
-
+def test_root_welcome_msg_no_vars(root, welcome_file_no_vars):
     from pypiserver import app
-    app = app(root=root.strpath, welcome_file=wfile.strpath)
+    app = app(root=root.strpath, welcome_file=welcome_file_no_vars.strpath)
     testapp = webtest.TestApp(app)
     resp = testapp.get("/")
-    resp.mustcontain(wmsg)
+    from pypiserver import __version__ as pver
+    resp.mustcontain(welcome_file_no_vars.read(), no=pver)
+
+
+def test_root_welcome_msg_all_vars(root, welcome_file_all_vars):
+    from pypiserver import app
+    app = app(root=root.strpath, welcome_file=welcome_file_all_vars.strpath)
+    testapp = webtest.TestApp(app)
+    resp = testapp.get("/")
+    
+    from pypiserver import __version__ as pver
+    resp.mustcontain(pver)
+
+
+def test_root_welcome_msg_antiXSS(testapp):
+    """https://github.com/pypiserver/pypiserver/issues/77"""
+    resp = testapp.get("/?<alert>Red</alert>", headers={"Host": "somehost.org"})
+    resp.mustcontain("alert", "somehost.org", no="<alert>")
+
+
+def test_root_remove_not_found_msg_antiXSS(testapp):
+    """https://github.com/pypiserver/pypiserver/issues/77"""
+    resp = testapp.post("/",  expect_errors=True,
+                        headers={"Host": "somehost.org"},
+                        params={':action': 'remove_pkg',
+                                'name': '<alert>Red</alert>',
+                                'version':'1.1.1'})
+    resp.mustcontain("alert", "somehost.org", no="<alert>")
 
 
 def test_packages_empty(testapp):
