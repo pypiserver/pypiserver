@@ -5,55 +5,67 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
 
 
-:Authors: Ralf Schmitt <ralf@systemexit.de>
-:Version: 1.1.6
-:Date:    2014-03-05
-:Download: https://pypi.python.org/pypi/pypiserver#downloads
-:Code: https://github.com/schmir/pypiserver
+:Authors:   Ralf Schmitt <ralf@systemexit.de>, Kostis Anagnostopoulos <ankostis@gmail.com>
+:Version:   1.1.7
+:Date:      2015-02-28
+:Source:    https://github.com/pypiserver/pypiserver
+:Download:  https://pypi.python.org/pypi/pypiserver#downloads
 
 
 .. contents:: Table of Contents
   :backlinks: top
 
 
-pypiserver is a minimal PyPI compatible server. It can be used to
-serve a set of packages and eggs to easy_install or pip.
+*pypiserver* is a minimal PyPI_ compatible server. It can be used to
+upload and serve a set of packages, wheels and eggs to *pip* or
+*easy_install*.
+
 
 Installation and Usage/Quickstart
 =================================
-pypiserver will work with python 2.5, 2.6, 2.7, 3.2 and 3.3. python
+*pypiserver* will work with python 2.5 --> 2.7 and 3.2 --> 3.4. Python
 3.0 and 3.1 may also work, but pypiserver is not being tested with
 these versions.
 
 Run the following commands to get your PyPI server up and running::
 
+  ## Installation.
   pip install pypiserver
-  mkdir ~/packages
-  # copy some source packages or eggs to this directory
-  pypi-server -p 8080 ~/packages
-  pip install -i http://localhost:8080/simple/ ...
+  mkdir ~/packages          ## Copy packages/wheels/eggs to this directory.
+  
+  ## Start server.
+  pypi-server -p 8080 ~/packages &
 
-.. NOTE::
+  ## Install hosted packages.
+  pip install  --extra-index-url http://localhost:8080/simple/ ...
 
+
+You can even install the latest *pypiserver* directly from github with this command,
+assuming you have *git* installed on your `PATH`::
+
+  pip install git+git://github.com/pypiserver/pypiserver.git
+
+.. Note::
   The above commands do work on an unix like operating system with a
   posix shell. If you're using windows, you'll have to run their
   'windows counterparts'. The same is true for the rest of this
   documentation.
 
+
 Alternative Installation as standalone script
 =============================================
-The git repository contains a 'pypi-server-standalone.py' script,
+The git repository contains a ``pypi-server-standalone.py`` script,
 which is a single python file ready to be executed without any other
 dependencies.
 
-Run the following commands to download the script with wget::
+Run the following commands to download the script with `wget`::
 
-  wget https://raw.github.com/schmir/pypiserver/standalone/pypi-server-standalone.py
+  wget https://raw.github.com/pypiserver/pypiserver/standalone/pypi-server-standalone.py
   chmod +x pypi-server-standalone.py
 
-or with curl::
+or with `curl`::
 
-  curl -O https://raw.github.com/schmir/pypiserver/standalone/pypi-server-standalone.py
+  curl -O https://raw.github.com/pypiserver/pypiserver/standalone/pypi-server-standalone.py
   chmod +x pypi-server-standalone.py
 
 The server can then be started with::
@@ -62,11 +74,13 @@ The server can then be started with::
 
 Feel free to rename the script and move it into your $PATH.
 
+
 Running on heroku/dotcloud
 =================================
 https://github.com/dexterous/pypiserver-on-the-cloud contains
 instructions on how to run pypiserver on one of the supported cloud
 service providers.
+
 
 Detailed Usage
 =================================
@@ -82,22 +96,22 @@ pypi-server -h will print a detailed usage message::
 
   pypi-server understands the following options:
 
-    -p PORT, --port PORT
+    -p, --port PORT
       listen on port PORT (default: 8080)
 
-    -i INTERFACE, --interface INTERFACE
+    -i, --interface INTERFACE
       listen on interface INTERFACE (default: 0.0.0.0, any interface)
 
-    -a (update|download|list), ... --authenticate (update|download|list), ...
-      comma-separated list of actions to authenticate (requires giving also
-      the -P option). For example to password-protect package uploads and
-      downloads while leaving listings public, give: -a update,download.
-      Note: make sure there is no space around the comma(s); otherwise, an
-      error will occur.
+    -a, --authenticate (UPDATE|download|list), ...
+      comma-separated list of (case-insensitive) actions to authenticate
+      (requires giving also the -P option). For example to password-protect 
+      package uploads & downloads while leaving listings public, give: 
+        -a update,download.
+      If unspecified, only 'update' is password-protected.
 
-    -P PASSWORD_FILE, --passwords PASSWORD_FILE
+    -P, --passwords PASSWORD_FILE
       use apache htpasswd file PASSWORD_FILE to set usernames & passwords
-      used for authentication (requires giving the -s option as well).
+      used for authentication of certain actions (see -a option).
 
     --disable-fallback
       disable redirect to real PyPI index for packages not found in the
@@ -113,7 +127,7 @@ pypi-server -h will print a detailed usage message::
       default is to use "auto" which chooses one of paste, cherrypy,
       twisted or wsgiref.
 
-    -r PACKAGES_DIRECTORY, --root PACKAGES_DIRECTORY
+    -r, --root PACKAGES_DIRECTORY
       [deprecated] serve packages from PACKAGES_DIRECTORY
 
     -o, --overwrite
@@ -124,6 +138,10 @@ pypi-server -h will print a detailed usage message::
 
     -v
       enable INFO logging;  repeate for more verbosity.
+
+    --log-conf <FILE>
+      read logging configuration from FILE.
+      By default, configuration is read from `log.conf` if found in server's dir.
 
     --log-file <FILE>
       write logging info into this FILE.
@@ -180,44 +198,50 @@ cumbersome. Since pypi-server redirects pip/easy_install to the
 pypi.python.org index if it doesn't have a requested package, it's a
 good idea to configure them to always use your local pypi index.
 
-pip
+`pip`
 -----
-For pip this can be done by setting the environment variable
-PIP_INDEX_URL in your .bashrc/.profile/.zshrc::
+For *pip* this can be done by setting the environment variable
+`PIP_EXTRA_INDEX_URL` in your `.bashrc`/`.profile`/`.zshrc`::
 
-  export PIP_INDEX_URL=http://localhost:8080/simple/
+  export PIP_EXTRA_INDEX_URL=http://localhost:8080/simple/
 
 or by adding the following lines to ~/.pip/pip.conf::
 
   [global]
-  index-url = http://localhost:8080/simple/
+  extra-index-url = http://localhost:8080/simple/
 
-easy_install
-------------
-For easy_install it can be configured with the following setting in
-~/.pydistutils.cfg::
+.. Note::
+    If you have installed *pypi-server* on a remote url without *https* 
+    you wil receive an "untrusted" warning from `pip`, urging you to append
+    the '--trusted-host` option.  You can include this option permanently
+    in your configuration-files or environment variables.
+
+`easy_install`
+--------------
+For *easy_install* it can be configured with the following setting in
+`~/.pydistutils.cfg`::
 
   [easy_install]
   index_url = http://localhost:8080/simple/
 
 
-Uploads via setup.py upload
-===========================
-Uploading packages via `python setup.py upload` is also
-possible. First make sure you have the passlib module installed::
+Uploads via `setup.py` upload
+=============================
+Uploading packages via ``python setup.py upload`` is also
+possible. First make sure you have the *passlib* module installed::
 
   pip install passlib
 
-Then create a apache htpassword file with::
+Then create a apache *htpassword* file with::
 
   htpasswd -sc .htaccess myusername
 
 You'll be prompted for a password. You'll need to restart the server
-with the -P option::
+with the `-P` option::
 
   pypi-server -p 8080 -P /path/to/.htaccess /path/to/private_pypi_folder/
 
-Edit or create a ~/.pypirc file with the following content::
+Edit or create a `~/.pypirc` file with the following content::
 
   [distutils]
   index-servers =
@@ -240,13 +264,14 @@ Uploading then works by running::
 
 Managing the package directory
 ==============================
-pypi-server's -U option makes it possible to search for updates of
+The `pypi-server` command has the `-U` option that searches for updates of
 available packages. It scans the package directory for available
 packages and searches on pypi.python.org for updates. Without further
-options 'pypi-server -U' will just print a list of commands which must
+options ``pypi-server -U`` will just print a list of commands which must
 be run in order to get the latest version of each package. Output
 looks like::
 
+   $ ./pypi-server -U
   checking 106 packages for newer version
 
   .........u.e...........e..u.............
@@ -256,56 +281,60 @@ looks like::
   no releases found on pypi for PyXML, Pymacs, mercurial, setuptools
 
   # update raven from 1.4.3 to 1.4.4
-  pip -q install --no-deps -i http://pypi.python.org/simple -d /home/ralf/packages/mirror raven==1.4.4
+  pip -q install --no-deps  --extra-index-url http://pypi.python.org/simple -d /home/ralf/packages/mirror raven==1.4.4
 
   # update greenlet from 0.3.3 to 0.3.4
-  pip -q install --no-deps -i http://pypi.python.org/simple -d /home/ralf/packages/mirror greenlet==0.3.4
+  pip -q install --no-deps  --extra-index-url http://pypi.python.org/simple -d /home/ralf/packages/mirror greenlet==0.3.4
 
 It first prints for each package a single character after checking the
-available versions on pypi. A dot means the package is up-to-date, 'u'
-means the package can be updated and 'e' means the list of releases on
-pypi is empty. After that it show a pip command line which can be used
+available versions on pypi. A dot(`.`) means the package is up-to-date, `u`
+means the package can be updated and `e` means the list of releases on
+pypi is empty. After that it shows a *pip* command line which can be used
 to update a one package. Either copy and paste that or run
-"pypi-server -Ux" in order to really execute those commands. You need
-to have pip installed for that to work however.
+``pypi-server -Ux`` in order to really execute those commands. You need
+to have *pip* installed for that to work however.
 
-Specifying an additional '-u' option will also allow alpha, beta and
+Specifying an additional `-u` option will also allow alpha, beta and
 release candidates to be downloaded. Without this option these
 releases won't be considered.
 
 
 Optional dependencies
 =====================
-- pypiserver ships with it's own copy of bottle. It's possible to use
-  bottle with different WSGI servers. pypiserver chooses any of the
-  following paste, cherrypy, twisted, wsgiref (part of python) if
-  available.
-- pypiserver relies on the passlib module for parsing apache htpasswd
-  files. You need to install it, when using the -P, --passwords
-  option. The following command will do that::
+*pypiserver* relies on the *passlib* module for parsing apache htpasswd
+files. You need to install it, when using the `-P`, `--passwords`
+option. The following command will do that::
 
-    pip install passlib
+  pip install passlib
 
 
 Using a different WSGI server
 =============================
-If none of the above servers matches your needs, pypiserver also
-exposes an API to get the internal WSGI app, which you can then run
-under any WSGI server you like. pypiserver.app has the following
-interface::
+- *pypiserver* ships with it's own copy of bottle. 
+  It's possible to use bottle with different WSGI servers. 
 
-  def app(root=None,
-	  redirect_to_fallback=True,
-	  fallback_url="http://pypi.python.org/simple")
+- *pypiserver* chooses any of the
+  following *paste*, *cherrypy*, *twisted*, *wsgiref* (part of python) if
+  available.
 
-and returns the WSGI application. root is the package directory,
-redirect_to_fallback specifies whether to redirect to fallback_url when
-a package is missing.
+- If none of the above servers matches your needs, pypiserver also
+  exposes an API to get the internal WSGI app, which you can then run
+  under any WSGI server you like. `pypiserver.app` has the following
+  interface::
+
+    def app(root=None,
+	    redirect_to_fallback=True,
+	    fallback_url="http://pypi.python.org/simple")
+
+  and returns the WSGI application. `root` is the package directory,
+  `redirect_to_fallback` specifies whether to redirect to `fallback_url` when
+  a package is missing.
+
 
 gunicorn
-----------------
+--------
 
-The following command uses gunicorn to start pypiserver::
+The following command uses *gunicorn* to start *pypiserver*::
 
   gunicorn -w4 'pypiserver:app("/home/ralf/packages")'
 
@@ -315,8 +344,8 @@ or when using multiple roots::
 
 
 apache/mod_wsgi
-----------------
-In case you're using apache 2 with mod_wsgi, the following config file
+---------------
+In case you're using *apache2* with *mod_wsgi*, the following config-file
 (contributed by Thomas Waldmann) can be used::
 
   # An example pypiserver.wsgi for use with apache2 and mod_wsgi, edit as necessary.
@@ -333,9 +362,10 @@ In case you're using apache 2 with mod_wsgi, the following config file
   import pypiserver
   application = pypiserver.app(PACKAGES, redirect_to_fallback=True, password_file=HTPASSWD)
 
+
 paste/pastedeploy
-----------------------
-paste allows to run multiple WSGI applications under different URL
+-----------------
+*paste* allows to run multiple WSGI applications under different URL
 paths. Therefore it's possible to serve different set of packages on
 different paths.
 
@@ -363,8 +393,7 @@ unstable packages on different paths::
   workers = 5
   accesslog = -
 
-.. NOTE::
-
+.. Note::
   You need to install some more dependencies for this to work,
   e.g. run::
 
@@ -376,17 +405,17 @@ unstable packages on different paths::
 
 
 
-Source
-===========
+Sources
+=======
 Source releases can be downloaded from
 https://pypi.python.org/pypi/pypiserver
 
-https://github.com/schmir/pypiserver carries a git repository of the
+https://github.com/pypiserver/pypiserver carries a git repository of the
 in-development version.
 
 Use::
 
-  git clone https://github.com/schmir/pypiserver.git
+  git clone https://github.com/pypiserver/pypiserver.git
 
 to create a copy of the repository, then::
 
@@ -396,28 +425,30 @@ inside the copy to receive the latest version.
 
 
 Bugs
-=============
-pypiserver does not implement the full API as seen on PyPI_. It
-implements just enough to make easy_install and pip install work.
+====
+*pypiserver* does not implement the full API as seen on PyPI_. It
+implements just enough to make *easy_install* and *pip* install work.
 
 The following limitations are known:
 
-- pypiserver doesn't implement the XMLRPC interface: pip search
+- It doesn't implement the XMLRPC interface: pip search
   will not work.
-- pypiserver doesn't implement the json based '/pypi' interface.
-- pypiserver accepts documentation uploads but does not save them to
-  disk (see https://github.com/schmir/pypiserver/issues/47 for a
+- It doesn't implement the json based '/pypi' interface.
+- It accepts documentation uploads but does not save them to
+  disk (see https://github.com/pypiserver/pypiserver/issues/47 for a
   discussion)
-
-Please use github's bugtracker
-https://github.com/schmir/pypiserver/issues if you find any other
-bugs.
+- It does not handle misspelled packages as pypi-repo does,
+  therefore it is suggested to use it with `--extra-index-url` instead
+  of `--index-url` (see discussion at https://github.com/pypiserver/pypiserver/issues/38)
+  
+Please use github's `bugtracker <https://github.com/pypiserver/pypiserver/issues>`_ 
+if you find any other bugs.
 
 
 License
-=============
-pypiserver contains a copy of bottle_ which is available under the
-MIT license::
+=======
+*pypiserver* contains a copy of bottle_ which is available under the
+*MIT* license::
 
   Copyright (c) 2012, Marcel Hellkamp.
 
@@ -440,7 +471,7 @@ MIT license::
   SOFTWARE.
 
 
-The remaining part is distributed under the zlib/libpng license::
+The remaining part is distributed under the *zlib/libpng* license::
 
   Copyright (c) 2011-2014 Ralf Schmitt
 
@@ -465,183 +496,16 @@ The remaining part is distributed under the zlib/libpng license::
 
 
 Similar Projects
-====================
+================
 There are lots of other projects, which allow you to run your own
-PyPI server. If pypiserver doesn't work for you, try one of the
-following alternatives:
+PyPI server. If *pypiserver* doesn't work for you, the following are
+among the most popular alternatives:
 
-devpi-server (https://pypi.python.org/pypi/devpi-server)
+*devpi-server* (https://pypi.python.org/pypi/devpi-server)
   easy-to-use caching proxy server
 
-proxypypi (https://pypi.python.org/pypi/proxypypi)
+*proxypypi* (https://pypi.python.org/pypi/proxypypi)
   a PyPI caching proxy
-
-Changelog
-=========
-
-1.1.7 (2015-02-23)
-------------------
-- #65, #66: Improve Auth for private repos by supporting i
-  password protected package listings and downloads,
-  in addition to uploads (use the -a, --authenticate option
-  to specify which to protect).
-- #67: Add cache-control http-header, reqed by pip.
-- #56, #70: Ignore non-packages when serving.
-- #58, #62: Log all http-requests.
-- #61: Possible to change welcome-msg.
-- #77, #78: Avoid XSS by generating web-content with SimpleTemplate 
-  instead of python's string-substs. 
-
-1.1.6 (2014-03-05)
-------------------
-- remove --index-url cli parameter introduced in 1.1.5
-
-1.1.5 (2014-01-20)
-------------------
-- only list devpi-server and proxypypi as alternatives
-- fix wheel file handling for certain wheels
-- serve wheel files as application/octet-stream
-- make pypiserver executable from wheel file
-- build universal wheel
-- remove scripts subdirectory
-- add --index-url cli parameter
-
-1.1.4 (2014-01-03)
-------------------
-- make pypiserver compatible with pip 1.5
-  (https://github.com/schmir/pypiserver/pull/42)
-
-1.1.3 (2013-07-22)
-------------------
-- make guessing of package name and version more robust
-
-1.1.2 (2013-06-22)
-------------------
-- fix "pypi-server -U" stable/unstable detection, i.e. do not
-  accidentally update to unstable packages
-
-1.1.1 (2013-05-29)
-------------------
-- add 'overwrite' option to allow overwriting existing package
-  files (default: false)
-- show names with hyphens instead of underscores on the "/simple"
-  listing
-- make the standalone version work with jython 2.5.3
-- upgrade waitress to 0.8.5 in the standalone version
-- workaround broken xmlrpc api on pypi.python.org by using HTTPS
-
-1.1.0 (2013-02-14)
-------------------
-- implement multi-root support (one can now specify multiple package
-  roots)
-- normalize pkgnames, handle underscore like minus
-- sort files by their version, not alphabetically
-- upgrade embedded bottle to 0.11.6
-- upgrade waitress to 0.8.2 in the standalone script
-- merge vsajip's support for verify, doc_upload and remove_pkg
-
-1.0.1 (2013-01-03)
-------------------
-- make 'pypi-server -Ux' work on windows
-  ('module' object has no attribute 'spawnlp',
-  https://github.com/schmir/pypiserver/issues/26)
-- use absolute paths in hrefs for root view
-  (https://github.com/schmir/pypiserver/issues/25)
-- add description of uploads to the documentation
-- make the test suite work on python 3
-- make pypi-server-standalone work with python 2.5
-
-1.0.0 (2012-10-26)
-------------------
-- add passlib and waitress to pypi-server-standalone
-- upgrade bottle to 0.11.3
-- Update scripts/opensuse/pypiserver.init
-- Refuse to re upload existing file
-- Add 'console_scripts' section to 'entry_points', so
-  'pypi-server.exe' will be created on Windows.
-- paste_app_factory now use the the password_file option to create the
-  app. Without this the package upload was not working.
-- Add --fallback-url argument to pypi-server script to make it
-  configurable.
-
-0.6.1 (2012-08-07)
-------------------
-- make 'python setup.py register' work
-- added init scripts to start pypiserver on ubuntu/opensuse
-
-0.6.0 (2012-06-14)
-------------------
-- make pypiserver work with pip on windows
-- add support for password protected uploads
-- make pypiserver work with non-root paths
-- make pypiserver 'paste compatible'
-- allow to serve multiple package directories using paste
-
-0.5.2 (2012-03-27)
-------------------
-- provide a way to get the WSGI app
-- improved package name and version guessing
-- use case insensitive matching when removing archive suffixes
-- fix pytz issue #6
-
-0.5.1 (2012-02-23)
-------------------
-- make 'pypi-server -U' compatible with pip 1.1
-
-0.5.0 (2011-12-05)
-------------------
-- make setup.py install without calling 2to3 by changing source code
-  to be compatible with both python 2 and python 3. We now ship a
-  slightly patched version of bottle. The upcoming bottle 0.11
-  also contains these changes.
-- make the single-file pypi-server-standalone.py work with python 3
-
-0.4.1 (2011-11-23)
-------------------
-- upgrade bottle to 0.9.7, fixes possible installation issues with
-  python 3
-- remove dependency on pkg_resources module when running
-  'pypi-server -U'
-
-0.4.0 (2011-11-19)
-------------------
-- add functionality to manage package updates
-- updated documentation
-- python 3 support has been added
-
-0.3.0 (2011-10-07)
-------------------
-- pypiserver now scans the given root directory and it's
-  subdirectories recursively for packages. Files and directories
-  starting with a dot are now being ignored.
-- /favicon.ico now returns a "404 Not Found" error
-- pypiserver now contains some unit tests to be run with tox
-
-0.2.0 (2011-08-09)
-------------------
-- better matching of package names (i.e. don't install package if only
-  a prefix matches)
-- redirect to the real pypi.python.org server if a package is not found.
-- add some documentation about configuring easy_install/pip
-
-0.1.3 (2011-08-01)
-------------------
-- provide single file script pypi-server-standalone.py
-- better documentation
-
-0.1.2 (2011-08-01)
-------------------
-- prefix comparison is now case insensitive
-- added usage message
-- show minimal information for root url
-
-0.1.1 (2011-07-29)
-------------------
-- don't require external dependencies
-
-0.1.0 (2011-07-29)
-------------------
-- initial release
 
 
 .. _bottle: http://bottlepy.org

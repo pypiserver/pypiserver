@@ -236,7 +236,7 @@ def test_nonroot_simple_packages(root, testpriv):
 
 
 def test_root_no_relative_paths(testpriv):
-    """https://github.com/schmir/pypiserver/issues/25"""
+    """https://github.com/pypiserver/pypiserver/issues/25"""
     resp = testpriv.get("/priv/")
     hrefs = [x["href"] for x in resp.html("a")]
     assert hrefs == ['/priv/packages/', '/priv/simple/', 'http://pypi.python.org/pypi/pypiserver']
