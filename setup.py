@@ -28,7 +28,7 @@ def get_version():
 
 
 setup(name="pypiserver",
-      description="minimal pypi server",
+      description="A minimal PyPI server for use with pip/easy_install.",
       long_description=open("README.rst").read(),
       version=get_version(),
       packages=["pypiserver"],

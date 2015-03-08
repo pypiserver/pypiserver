@@ -3,13 +3,16 @@
 ==============================================================================
 pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
+|dev-status| |build-status| |pypi-status| |downloads-count| |github-issues|
 
-:Authors:   Ralf Schmitt <ralf@systemexit.de>, Kostis Anagnostopoulos <ankostis@gmail.com>
-:Version:   1.1.7
+:Authors:   Ralf Schmitt <ralf@systemexit.de>, 
+            Kostis Anagnostopoulos <ankostis@gmail.com>
+:Version:   1.1.8-beta.0
 :Date:      2015-03-8
 :Source:    https://github.com/pypiserver/pypiserver
-:Download:  https://pypi.python.org/pypi/pypiserver#downloads
+:PyPI repo: https://pypi.python.org/pypi/pypiserver#downloads
 :TravisCI:  https://travis-ci.org/pypiserver/pypiserver
+:License:   zlib/libpng + MIT 
 
 .. contents:: Table of Contents
   :backlinks: top
@@ -18,7 +21,7 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 *pypiserver* is a minimal PyPI_ compatible server. 
 It can be used to upload and serve packages, wheels and eggs 
 to *pip* or *easy_install*.  
-The packages are stored inside a regular directory.
+The packages are stored in regular directories.
 
 
 
@@ -70,7 +73,7 @@ Currently only password-protected uploads are supported!
    .. Tip::
      Read this SO question for running `htpasswd` cmd under *Windows*: 
     
-    http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u
+     http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u
   
 #. You  need to restart the server with the `-P` option only once 
    (but user/password pairs can later be added or updated on the fly)::
@@ -505,3 +508,23 @@ See the `LICENSE.txt` file.
 
 .. _bottle: http://bottlepy.org
 .. _PyPI: http://pypi.python.org
+.. |build-status| image:: https://travis-ci.org/pypiserver/pypiserver.svg
+    :alt: Integration-build status
+    :scale: 100%
+    :target: https://travis-ci.org/pypiserver/pypiserver/builds
+
+.. |pypi-status| image::  https://pypip.in/v/pypiserver/badge.png
+    :target: https://pypi.python.org/pypi/pypiserver/
+    :alt: Latest Version in PyPI
+
+.. |dev-status| image:: https://pypip.in/status/pypiserver/badge.svg
+    :target: https://pypi.python.org/pypi/pypiserver/
+    :alt: Development Status
+
+.. |downloads-count| image:: https://pypip.in/download/pypiserver/badge.svg?period=week
+    :target: https://pypi.python.org/pypi/pypiserver/
+    :alt: Downloads
+
+.. |github-issues| image:: http://img.shields.io/github/issues/pypiserver/pypiserver.svg
+    :target: https://github.com/pypiserver/pypiserver/issues
+    :alt: Issues count

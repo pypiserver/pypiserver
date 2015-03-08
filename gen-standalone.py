@@ -2,19 +2,29 @@
 
 """generate a single file pypi-server script"""
 
-import os, zlib, cPickle, base64, itertools
-
+import os, zlib, base64, itertools
+try:
+    import cPickle
+except ImportError:
+    import pickle as cPickle
 
 def find_files(path):
     for dirpath, dirnames, filenames in os.walk(path):
         for f in filenames:
             yield os.path.join(dirpath, f)
 
+def myExecFile(file, g, l):
+    try:
+        execfile(file, g, l)
+    except NameError:
+        with open(file) as fd:
+            txt = fd.read()
+            exec(txt, g, l)
 
 def get_version():
     d = {}
     try:
-        execfile("pypiserver/__init__.py", d, d)
+        myExecFile("pypiserver/__init__.py", d, d)
     except (ImportError, RuntimeError):
         pass
     return d["__version__"]
@@ -44,8 +54,8 @@ def main():
     script = script.replace('@SOURCES@', data)
     dst = "pypi-server-standalone.py"
     open(dst, "w").write(script)
-    os.chmod(dst, 0755)
-    print "created", dst
+    os.chmod(dst, 755)
+    print("created %s"%dst)
 
 
 if __name__ == '__main__':
