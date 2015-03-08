@@ -1,4 +1,5 @@
 include *.rst
+include *.txt
 include *.py
 include buildout.cfg
 include pypi-server
