@@ -4,58 +4,166 @@
 pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
 
-
 :Authors:   Ralf Schmitt <ralf@systemexit.de>, Kostis Anagnostopoulos <ankostis@gmail.com>
 :Version:   1.1.7
-:Date:      2015-02-28
+:Date:      2015-03-8
 :Source:    https://github.com/pypiserver/pypiserver
 :Download:  https://pypi.python.org/pypi/pypiserver#downloads
-
+:TravisCI:  https://travis-ci.org/pypiserver/pypiserver
 
 .. contents:: Table of Contents
   :backlinks: top
 
 
-*pypiserver* is a minimal PyPI_ compatible server. It can be used to
-upload and serve a set of packages, wheels and eggs to *pip* or
-*easy_install*.
+*pypiserver* is a minimal PyPI_ compatible server. 
+It can be used to upload and serve packages, wheels and eggs 
+to *pip* or *easy_install*.  
+The packages are stored inside a regular directory.
 
 
-Installation and Usage/Quickstart
-=================================
-*pypiserver* will work with python 2.5 --> 2.7 and 3.2 --> 3.4. Python
-3.0 and 3.1 may also work, but pypiserver is not being tested with
-these versions.
+
+Quickstart: Installation and Usage
+==================================
+*pypiserver* will work with python 2.5 --> 2.7 and 3.2 --> 3.4. 
+Python 3.0 and 3.1 may also work, but pypiserver is not being tested 
+with these versions.
 
 Run the following commands to get your PyPI server up and running::
 
   ## Installation.
   pip install pypiserver
-  mkdir ~/packages          ## Copy packages/wheels/eggs to this directory.
+  mkdir ~/packages                      ## Copy packages into this directory.
   
   ## Start server.
-  pypi-server -p 8080 ~/packages &
+  ./pypi-server -p 8080 ~/packages &    ## Will listen to all IPs.
 
-  ## Install hosted packages.
+  ## Download and Install hosted packages.
   pip install  --extra-index-url http://localhost:8080/simple/ ...
 
+See also `Client-side configurations`_ for avoiding tedious typing.
 
-You can even install the latest *pypiserver* directly from github with this command,
-assuming you have *git* installed on your `PATH`::
+.. Note::
+  The above commands work on a unix-like operating system with a posix shell.
+  The ``~`` character expands to user's home directory.
+   
+  If you're using windows, you'll have to use their "windows counterparts". 
+  The same is true for the rest of this documentation.
+
+
+Uploading packages from sources, remotely
+-----------------------------------------
+Instead of copying packages directly to the server's folder, 
+you may also upload them remotely with a ``python setup.py upload`` command.
+Currently only password-protected uploads are supported!
+
+#. First make sure you have the *passlib* module installed, 
+   which is needed for parsing the apache *htpasswd* file specified by
+   the `-P`, `--passwords` option (see next steps)::
+
+     pip install passlib
+
+#. Create the apache *htpasswd* file with at least one user/password pair 
+   with this command (you'll be prompted for a password)::
+
+     htpasswd -sc .htaccess <some_username>
+
+   .. Tip::
+     Read this SO question for running `htpasswd` cmd under *Windows*: 
+    
+    http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u
+  
+#. You  need to restart the server with the `-P` option only once 
+   (but user/password pairs can later be added or updated on the fly)::
+
+     ./pypi-server -p 8080 -P .htaccess ~/packages &
+
+#. On client-side, edit or create a `~/.pypirc` file with a similar content::
+
+     [distutils]
+     index-servers =
+       pypi
+       internal
+     
+     [pypi]
+     username:<your_pypi_username>
+     password:<your_pypi_passwd>
+     
+     [internal]
+     repository: http://localhost:8080
+     username: <some_username>
+     password: <some_passwd>
+
+#. Then from within the directory of the python-project you wish to upload, 
+   issue this command::
+
+     python setup.py sdist upload -r internal
+
+
+Client-side configurations
+--------------------------
+Always specifying the the pypi url on the command line is a bit
+cumbersome. Since pypi-server redirects pip/easy_install to the
+pypi.python.org index if it doesn't have a requested package, it's a
+good idea to configure them to always use your local pypi index.
+
+`pip`
+~~~~~
+For *pip* this can be done by setting the environment variable
+`PIP_EXTRA_INDEX_URL` in your `.bashrc`/`.profile`/`.zshrc`::
+
+  export PIP_EXTRA_INDEX_URL=http://localhost:8080/simple/
+
+or by adding the following lines to `~/.pip/pip.conf`::
+
+  [global]
+  extra-index-url = http://localhost:8080/simple/
+
+.. Note::
+    If you have installed *pypi-server* on a remote url without *https* 
+    you wil receive an "untrusted" warning from *pip*, urging you to append
+    the `--trusted-host` option.  You can also include this option permanently
+    in your configuration-files or environment variables.
+
+`easy_install`
+~~~~~~~~~~~~~~
+For *easy_install* it can be configured with the following setting in
+`~/.pydistutils.cfg`::
+
+  [easy_install]
+  index_url = http://localhost:8080/simple/
+
+
+
+Alternative Installation methods 
+================================
+When trying the methods below, first use the following command to check whether 
+previous versions of *pypiserver* already exist, and (optionally) uninstall them::
+
+  ## VERSION-CHECK: Fails if not installed.
+  pypi-server --version
+  
+  ## UNINSTALL: Invoke again untill it fails. 
+  pip uninstall pypiserver
+  
+
+Installing the very latest version
+----------------------------------
+In case the latest version in *pypi* is a pre-release, you have to use 
+*pip*'s `--pre` option.  And to update an existing installation combine it
+with `--ignore-installed`::
+
+  pip install pypiserver --pre -I
+  
+You can even install the latest *pypiserver* directly from *github* with the
+following command, assuming you have *git* installed on your `$PATH`::
 
   pip install git+git://github.com/pypiserver/pypiserver.git
 
-.. Note::
-  The above commands do work on an unix like operating system with a
-  posix shell. If you're using windows, you'll have to run their
-  'windows counterparts'. The same is true for the rest of this
-  documentation.
 
-
-Alternative Installation as standalone script
-=============================================
+Installing it as standalone script
+----------------------------------
 The git repository contains a ``pypi-server-standalone.py`` script,
-which is a single python file ready to be executed without any other
+which is a single python file that can be executed without any other
 dependencies.
 
 Run the following commands to download the script with `wget`::
@@ -68,23 +176,24 @@ or with `curl`::
   curl -O https://raw.github.com/pypiserver/pypiserver/standalone/pypi-server-standalone.py
   chmod +x pypi-server-standalone.py
 
-The server can then be started with::
+You can then start-up the server with::
 
   ./pypi-server-standalone.py
 
-Feel free to rename the script and move it into your $PATH.
+Feel free to rename the script and move it into your `$PATH`.
 
 
 Running on heroku/dotcloud
-=================================
+--------------------------
 https://github.com/dexterous/pypiserver-on-the-cloud contains
 instructions on how to run pypiserver on one of the supported cloud
 service providers.
 
 
+
 Detailed Usage
 =================================
-pypi-server -h will print a detailed usage message::
+Running ``pypi-server -h`` will print a detailed usage message::
 
   pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
     start PyPI compatible package server serving packages from
@@ -107,7 +216,7 @@ pypi-server -h will print a detailed usage message::
       (requires giving also the -P option). For example to password-protect 
       package uploads & downloads while leaving listings public, give: 
         -a update,download.
-      If unspecified, only 'update' is password-protected.
+      By default, only 'update' is password-protected.
 
     -P, --passwords PASSWORD_FILE
       use apache htpasswd file PASSWORD_FILE to set usernames & passwords
@@ -191,79 +300,8 @@ pypi-server -h will print a detailed usage message::
 
 
 
-Configuring pip/easy_install
-============================
-Always specifying the the pypi url on the command line is a bit
-cumbersome. Since pypi-server redirects pip/easy_install to the
-pypi.python.org index if it doesn't have a requested package, it's a
-good idea to configure them to always use your local pypi index.
-
-`pip`
------
-For *pip* this can be done by setting the environment variable
-`PIP_EXTRA_INDEX_URL` in your `.bashrc`/`.profile`/`.zshrc`::
-
-  export PIP_EXTRA_INDEX_URL=http://localhost:8080/simple/
-
-or by adding the following lines to ~/.pip/pip.conf::
-
-  [global]
-  extra-index-url = http://localhost:8080/simple/
-
-.. Note::
-    If you have installed *pypi-server* on a remote url without *https* 
-    you wil receive an "untrusted" warning from `pip`, urging you to append
-    the '--trusted-host` option.  You can include this option permanently
-    in your configuration-files or environment variables.
-
-`easy_install`
---------------
-For *easy_install* it can be configured with the following setting in
-`~/.pydistutils.cfg`::
-
-  [easy_install]
-  index_url = http://localhost:8080/simple/
-
-
-Uploads via `setup.py` upload
-=============================
-Uploading packages via ``python setup.py upload`` is also
-possible. First make sure you have the *passlib* module installed::
-
-  pip install passlib
-
-Then create a apache *htpassword* file with::
-
-  htpasswd -sc .htaccess myusername
-
-You'll be prompted for a password. You'll need to restart the server
-with the `-P` option::
-
-  pypi-server -p 8080 -P /path/to/.htaccess /path/to/private_pypi_folder/
-
-Edit or create a `~/.pypirc` file with the following content::
-
-  [distutils]
-  index-servers =
-    pypi
-    internal
-
-  [pypi]
-  username:pypiusername
-  password:pypipasswd
-
-  [internal]
-  repository: http://127.0.0.1:8080
-  username: myusername
-  password: mypasswd
-
-Uploading then works by running::
-
-  python setup.py sdist upload -r internal
-
-
 Managing the package directory
-==============================
+------------------------------
 The `pypi-server` command has the `-U` option that searches for updates of
 available packages. It scans the package directory for available
 packages and searches on pypi.python.org for updates. Without further
@@ -299,17 +337,8 @@ release candidates to be downloaded. Without this option these
 releases won't be considered.
 
 
-Optional dependencies
-=====================
-*pypiserver* relies on the *passlib* module for parsing apache htpasswd
-files. You need to install it, when using the `-P`, `--passwords`
-option. The following command will do that::
-
-  pip install passlib
-
-
 Using a different WSGI server
-=============================
+-----------------------------
 - *pypiserver* ships with it's own copy of bottle. 
   It's possible to use bottle with different WSGI servers. 
 
@@ -332,7 +361,7 @@ Using a different WSGI server
 
 
 gunicorn
---------
+~~~~~~~~
 
 The following command uses *gunicorn* to start *pypiserver*::
 
@@ -344,7 +373,7 @@ or when using multiple roots::
 
 
 apache/mod_wsgi
----------------
+~~~~~~~~~~~~~~~
 In case you're using *apache2* with *mod_wsgi*, the following config-file
 (contributed by Thomas Waldmann) can be used::
 
@@ -364,7 +393,7 @@ In case you're using *apache2* with *mod_wsgi*, the following config-file
 
 
 paste/pastedeploy
------------------
+~~~~~~~~~~~~~~~~~
 *paste* allows to run multiple WSGI applications under different URL
 paths. Therefore it's possible to serve different set of packages on
 different paths.
@@ -407,11 +436,10 @@ unstable packages on different paths::
 
 Sources
 =======
-Source releases can be downloaded from
+Python-packages with source releases can be downloaded from
 https://pypi.python.org/pypi/pypiserver
 
-https://github.com/pypiserver/pypiserver carries a git repository of the
-in-development version.
+The in-development sources are hosted at https://github.com/pypiserver/pypiserver.
 
 Use::
 
@@ -421,13 +449,14 @@ to create a copy of the repository, then::
 
   git pull
 
-inside the copy to receive the latest version.
+inside the copy to receive any later changes.
+
 
 
 Bugs
 ====
 *pypiserver* does not implement the full API as seen on PyPI_. It
-implements just enough to make *easy_install* and *pip* install work.
+implements just enough to make ``easy_install`` and ``pip install`` to work.
 
 The following limitations are known:
 
@@ -444,11 +473,6 @@ The following limitations are known:
 Please use github's `bugtracker <https://github.com/pypiserver/pypiserver/issues>`_ 
 if you find any other bugs.
 
-
-License
-=======
-*pypiserver* contains a copy of bottle_ which is available under the
-*MIT* license, and the remaining part is distributed under the *zlib/libpng* license.
 
 
 Similar Projects
@@ -467,8 +491,16 @@ among the most popular alternatives:
   a simple cmd-line tool that builds a PyPI-compatible local folder from pip requirements
   (version: 0.6.7, access date: 8/3/2015)
 
-- Check this SO question: ` How to roll my own pypi? 
-  <http://stackoverflow.com/questions/1235331/how-to-roll-my-own-pypi>`_
+- Check this SO question: ` How to roll my own pypi <http://stackoverflow.com/questions/1235331/how-to-roll-my-own-pypi>`_
+
+
+
+License
+=======
+*pypiserver* contains a copy of bottle_ which is available under the
+*MIT* license, and the remaining part is distributed under the *zlib/libpng* license.
+See the `LICENSE.txt` file.
+
 
 
 .. _bottle: http://bottlepy.org

@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.1.7 (2015-02-28)
+1.1.7 (2015-03-8)
 ------------------
 1st release under cooperative ownership:
 
@@ -15,7 +15,8 @@ Changelog
 - #61: Possible to change welcome-msg.
 - #77, #78: Avoid XSS by generating web-content with SimpleTemplate 
   instead of python's string-substs.
-- #38: Instruct to use --extra-index-url for misspelled dependencies to work. 
+- #38, #79: Instruct to use --extra-index-url for misspelled dependencies to work,
+  reorganize README instructions. 
  
 
 1.1.6 (2014-03-05)

@@ -255,6 +255,9 @@ def update():
         raise HTTPError(400, output="bad filename")
 
     if not config.overwrite and exists(packages.root, content.filename):
+        log.warn("Cannot upload package(%s) since it already exists! \n" +
+                 "  You may use `--overwrite` option when starting server to disable this check. ", 
+                 content.filename)
         raise HTTPError(409, output="file already exists")
 
     store(packages.root, content.filename, content.value)

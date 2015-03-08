@@ -209,7 +209,7 @@ pypi-server understands the following options:
     (requires giving also the -P option). For example to password-protect 
     package uploads & downloads while leaving listings public, give: 
       -a update,download.
-    If unspecified, only 'update' is password-protected.
+    By default, only 'update' is password-protected.
 
   -P, --passwords PASSWORD_FILE
     use apache htpasswd file PASSWORD_FILE to set usernames & passwords
@@ -290,7 +290,7 @@ The following additional options can be specified with -U:
   -u
     allow updating to unstable version (alpha, beta, rc, dev versions)
 
-Visit http://pypi.python.org/pypi/pypiserver for more information.
+Visit https://pypi.python.org/pypi/pypiserver for more information.
 """)
 
 def main(argv=None):
@@ -354,7 +354,7 @@ def main(argv=None):
             actions = ("list", "download", "update")
             for a in authenticated:
                 if a not in actions:
-                    errmsg = "Incorrect action '%s' given with option '%s'" % (a, k)
+                    errmsg = "Action '%s' for option `%s` not one of %s!" % (a, k, actions)
                     sys.exit(errmsg)
         elif k in ("-i", "--interface"):
             host = v
