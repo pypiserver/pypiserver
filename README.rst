@@ -249,7 +249,7 @@ Running ``pypi-server -h`` will print a detailed usage message::
       uses the ASCII contents of HTML_FILE as welcome message response.
 
     -v
-      enable INFO logging;  repeate for more verbosity.
+      enable INFO logging;  repeat for more verbosity.
 
     --log-conf <FILE>
       read logging configuration from FILE.
