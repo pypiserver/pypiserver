@@ -38,7 +38,7 @@ Run the following commands to get your PyPI server up and running::
   mkdir ~/packages                      ## Copy packages into this directory.
   
   ## Start server.
-  ./pypi-server -p 8080 ~/packages &    ## Will listen to all IPs.
+  pypi-server -p 8080 ~/packages &      ## Will listen to all IPs.
 
   ## Download and Install hosted packages.
   pip install  --extra-index-url http://localhost:8080/simple/ ...
