@@ -297,7 +297,7 @@ def simple(prefix=""):
     if not fp.endswith("/"):
         fp += "/"
 
-    files = [x.relfn for x in sorted(find_packages(packages(), prefix=prefix), key=lambda x: x.parsed_version)]
+    files = [x.relfn for x in sorted(find_packages(packages(), prefix=prefix), key=lambda x: (x.parsed_version, x.relfn))]
     if not files:
         if config.redirect_to_fallback:
             return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
