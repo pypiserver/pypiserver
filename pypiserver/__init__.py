@@ -21,7 +21,7 @@ def app(root=None,
     __import__("pypiserver._app")
     _app = sys.modules["pypiserver._app"]
 
-    import bottle
+    from . import bottle
 
     if root is None:
         root = os.path.expanduser("~/packages")

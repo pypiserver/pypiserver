@@ -4,15 +4,14 @@ from subprocess import call
 
 from pypiserver import core
 
-
 if sys.version_info >= (3, 0):
     from xmlrpc.client import Server
 
     def make_pypi_client(url):
         return Server(url)
 else:
-    from xmlrpclib import Server, Transport
-    import httplib
+    from xmlrpclib import Transport  # @UnresolvedImport
+    import httplib  # @UnresolvedImport
     import urllib
 
     class ProxiedTransport(Transport):
@@ -29,7 +28,8 @@ else:
             return _http_connection(self.proxy)
 
         def send_request(self, connection, handler, request_body):
-            connection.putrequest("POST", 'http://%s%s' % (self.realhost, handler))
+            connection.putrequest(
+                "POST", 'http://%s%s' % (self.realhost, handler))
 
         def send_host(self, connection, host):
             connection.putheader('Host', self.realhost)
@@ -38,7 +38,8 @@ else:
         http_proxy_url = urllib.getproxies().get("http", "")
 
         if http_proxy_url:
-            http_proxy_spec = urllib.splithost(urllib.splittype(http_proxy_url)[1])[0]
+            http_proxy_spec = urllib.splithost(
+                urllib.splittype(http_proxy_url)[1])[0]
             transport = ProxiedTransport()
             transport.set_proxy(http_proxy_spec)
         else:
@@ -98,7 +99,8 @@ def find_updates(pkgset, stable_only=True):
 
     latest_pkgs = frozenset(filter_latest_pkgs(pkgset))
 
-    sys.stdout.write("checking %s packages for newer version\n" % len(latest_pkgs),)
+    sys.stdout.write(
+        "checking %s packages for newer version\n" % len(latest_pkgs),)
     need_update = set()
 
     pypi = make_pypi_client("https://pypi.python.org/pypi/")
@@ -125,7 +127,8 @@ def find_updates(pkgset, stable_only=True):
     write("\n\n")
 
     if no_releases:
-        sys.stdout.write("no releases found on pypi for %s\n\n" % (", ".join(sorted(no_releases)),))
+        sys.stdout.write("no releases found on pypi for %s\n\n" %
+                         (", ".join(sorted(no_releases)),))
 
     return need_update
 
@@ -133,7 +136,8 @@ def find_updates(pkgset, stable_only=True):
 def update(pkgset, destdir=None, dry_run=False, stable_only=True):
     need_update = find_updates(pkgset, stable_only=stable_only)
     for pkg in sorted(need_update, key=lambda x: x.pkgname):
-        sys.stdout.write("# update %s from %s to %s\n" % (pkg.pkgname, pkg.replaces.version, pkg.version))
+        sys.stdout.write("# update %s from %s to %s\n" %
+                         (pkg.pkgname, pkg.replaces.version, pkg.version))
 
         cmd = ["pip", "-q", "install", "--no-deps", "-i", "https://pypi.python.org/simple",
                "-d", destdir or os.path.dirname(pkg.replaces.fn),
