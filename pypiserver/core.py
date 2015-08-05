@@ -34,6 +34,7 @@ def init_logging(level=None, format=None, filename=None):
     if filename:
         rlog.addHandler(logging.FileHandler(filename))
 
+
 def _parse_version_parts(s):
     for part in component_re.split(s):
         part = replace(part, part)
@@ -60,7 +61,7 @@ def parse_version(s):
 # -- end of distribute's code
 
 _archive_suffix_rx = re.compile(
-    r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$", 
+    r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$",
     re.IGNORECASE)
 
 wheel_file_re = re.compile(
@@ -97,9 +98,11 @@ def guess_pkgname_and_version(path):
     elif '.' not in path:
         pkgname, version = path.rsplit('-', 1)
     else:
-        parts = re.split(r'-(?=(?i)v?\d+[\.a-z])', path)
-        pkgname = '-'.join(parts[:-1])
-        version = parts[-1]
+        pkgname = re.split(r'-(?i)v?\d+[\.a-z]', path)[0]
+        ver_spec = path[len(pkgname) + 1:]
+        parts = re.split(r'[\.\-](?=(?i)cp\d|py\d|macosx|linux|sunos|'
+                         'solaris|irix|aix|cygwin|win)', ver_spec)
+        version = parts[0]
     return pkgname, version
 
 
@@ -182,7 +185,7 @@ def store(root, filename, data):
     dest_fh = open(dest_fn, "wb")
     dest_fh.write(data)
     dest_fh.close()
-    
+
     log.info("Stored package: %s", filename)
     return True
 
@@ -292,6 +295,7 @@ The following additional options can be specified with -U:
 
 Visit https://pypi.python.org/pypi/pypiserver for more information.
 """)
+
 
 def main(argv=None):
     if argv is None:
@@ -415,7 +419,7 @@ def main(argv=None):
     verbose_levels = [logging.WARNING, logging.INFO, logging.DEBUG, logging.NOTSET]
     log_level = list(zip(verbose_levels, range(verbosity)))[-1][0]
     init_logging(level=log_level, filename=log_file, format=log_frmt)
-    
+
     if command == "update":
         packages = frozenset(itertools.chain(*[listdir(r) for r in roots]))
         from pypiserver import manage
@@ -435,8 +439,8 @@ def main(argv=None):
         cache_control=cache_control,
     )
     server = server or "auto"
-    log.info("This is pypiserver %s serving %r on http://%s:%s\n\n", 
-        __version__, ", ".join(roots), host, port)
+    log.info("This is pypiserver %s serving %r on http://%s:%s\n\n",
+             __version__, ", ".join(roots), host, port)
     run(app=a, host=host, port=port, server=server)
 
 
