@@ -215,15 +215,14 @@ pypi-server understands the following options:
       -P foo/htpasswd.txt  -a update,download
     To drop all authentications, use:
       -P .  -a ''
-    For example to password-protect package uploads & downloads while leaving
-    listings public, give:
-      -P -a update,download
     By default, only 'update' is password-protected.
 
   -P, --passwords PASSWORD_FILE
     use apache htpasswd file PASSWORD_FILE to set usernames & passwords
     used for authentication of certain actions (see -a option).
-    Set it explicitly to '.' to allow empty list of actions to authenticate.
+    Set it explicitly to '.' to allow empty list of actions to authenticate;
+    then no `register` command is neccessary, but `~/.pypirc` still needs 
+    `username` and `password` fields, even if bogus. 
 
   --disable-fallback
     disable redirect to real PyPI index for packages not found in the
