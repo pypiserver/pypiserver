@@ -209,14 +209,21 @@ pypi-server understands the following options:
 
   -a, --authenticate (UPDATE|download|list), ...
     comma-separated list of (case-insensitive) actions to authenticate
-    (requires giving also the -P option). For example to password-protect 
-    package uploads & downloads while leaving listings public, give: 
-      -a update,download.
+    Requires -P option and cannot not be empty unless -P is '.'
+    For example to password-protect package downloads (in addition to uploads)
+    while leaving listings public, give:
+      -P foo/htpasswd.txt  -a update,download
+    To drop all authentications, use:
+      -P .  -a ''
+    For example to password-protect package uploads & downloads while leaving
+    listings public, give:
+      -P -a update,download
     By default, only 'update' is password-protected.
 
   -P, --passwords PASSWORD_FILE
     use apache htpasswd file PASSWORD_FILE to set usernames & passwords
     used for authentication of certain actions (see -a option).
+    Set it explicitly to '.' to allow empty list of actions to authenticate.
 
   --disable-fallback
     disable redirect to real PyPI index for packages not found in the
@@ -249,12 +256,12 @@ pypi-server understands the following options:
 
   --log-frmt <FILE>
     the logging format-string.  (see `logging.LogRecord` class from standard python library)
-    [Default: %(asctime)s|%(levelname)s|%(thread)d|%(message)s] 
+    [Default: %(asctime)s|%(levelname)s|%(thread)d|%(message)s]
 
   --log-req-frmt FORMAT
     a format-string selecting Http-Request properties to log; set to  '%s' to see them all.
-    [Default: %(bottle.request)s] 
-    
+    [Default: %(bottle.request)s]
+
   --log-res-frmt FORMAT
     a format-string selecting Http-Response properties to log; set to  '%s' to see them all.
     [Default: %(status)s]
@@ -354,7 +361,9 @@ def main(argv=None):
         if k in ("-p", "--port"):
             port = int(v)
         elif k in ("-a", "--authenticate"):
-            authenticated = [a.lower() for a in re.split("[, ]+", v.strip(" ,"))]
+            authenticated = [a.lower() 
+                    for a in re.split("[, ]+", v.strip(" ,"))
+                    if a]
             actions = ("list", "download", "update")
             for a in authenticated:
                 if a not in actions:
@@ -408,8 +417,8 @@ def main(argv=None):
             usage()
             sys.exit(0)
 
-    if password_file and not (password_file and authenticated):
-        sys.exit("Must give both password file (-P) and actions to authenticate (-a).")
+    if password_file and password_file != '.' and not authenticated:
+        sys.exit("Actions to authenticate (-a) must not be empty, unless password file (-P) is '.'!")
 
     if len(roots) == 0:
         roots.append(os.path.expanduser("~/packages"))

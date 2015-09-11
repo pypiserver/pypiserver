@@ -216,14 +216,21 @@ Running ``pypi-server -h`` will print a detailed usage message::
 
     -a, --authenticate (UPDATE|download|list), ...
       comma-separated list of (case-insensitive) actions to authenticate
-      (requires giving also the -P option). For example to password-protect 
-      package uploads & downloads while leaving listings public, give: 
-        -a update,download.
+      Requires -P option and cannot not be empty unless -P is '.'
+      For example to password-protect package downloads (in addition to uploads)
+      while leaving listings public, give:
+        -P foo/htpasswd.txt  -a update,download
+      To drop all authentications, use:
+        -P .  -a ''
+      For example to password-protect package uploads & downloads while leaving
+      listings public, give:
+        -P -a update,download
       By default, only 'update' is password-protected.
 
     -P, --passwords PASSWORD_FILE
       use apache htpasswd file PASSWORD_FILE to set usernames & passwords
       used for authentication of certain actions (see -a option).
+      Set it explicitly to '.' to allow empty list of actions to authenticate.
 
     --disable-fallback
       disable redirect to real PyPI index for packages not found in the

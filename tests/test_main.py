@@ -2,6 +2,10 @@
 
 import sys, os, pytest, logging
 from pypiserver import core
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 
 class main_wrapper(object):
@@ -111,3 +115,22 @@ def test_welcome_file(main):
 def test_welcome_file_default(main):
     main([])
     assert "Welcome to pypiserver!" in main.app.module.config.welcome_msg
+
+def test_password_without_auth_list(main, monkeypatch):
+    sysexit = mock.MagicMock(side_effect=ValueError('BINGO'))
+    monkeypatch.setattr('sys.exit', sysexit)
+    with pytest.raises(ValueError) as excinfo:
+        main(["-P", "pswd-file", "-a", ""])
+    assert excinfo.value.args[0] == 'BINGO'
+
+def test_password_alone(main, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'passlib', mock.MagicMock())
+    monkeypatch.setitem(sys.modules, 'passlib.apache', mock.MagicMock())
+    main(["-P", "pswd-file"])
+    assert main.app.module.config.authenticated == ['update']
+
+def test_dot_password_without_auth_list(main, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'passlib', mock.MagicMock())
+    monkeypatch.setitem(sys.modules, 'passlib.apache', mock.MagicMock())
+    main(["-P", ".", "-a", ""])
+    assert main.app.module.config.authenticated == []

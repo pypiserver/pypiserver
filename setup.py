@@ -14,8 +14,10 @@ except ImportError:
 
 if sys.version_info >= (3, 0):
     exec("def do_exec(co, loc): exec(co, loc)\n")
+    tests_require = []  
 else:
     exec("def do_exec(co, loc): exec co in loc\n")
+    tests_require =  ['mock']
 
 
 def get_version():
@@ -33,7 +35,8 @@ setup(name="pypiserver",
       version=get_version(),
       packages=["pypiserver"],
       package_data={'pypiserver': ['welcome.html']},
-      url="https://github.com/pypiserver/pypiserver",
+      tests_require=tests_require,
+        url="https://github.com/pypiserver/pypiserver",
       maintainer="Ralf Schmitt, Kostis Anagnostopoulos",
       maintainer_email="ralf@systemexit.de, ankostis@gmail.com",
       classifiers=[
