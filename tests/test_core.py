@@ -40,6 +40,9 @@ files = [
     ("pywin32-217-55-cp27-none-win32.whl", "pywin32", "217-55"),
     ("pywin32-217.1-cp27-none-win32.whl", "pywin32", "217.1"),
     ("package.zip", "package", ""),
+    ("package-name-0.0.1.dev0.linux-x86_64.tar.gz", "package-name", "0.0.1.dev0"),
+    ("package-name-0.0.1.dev0.macosx-10.10-intel.tar.gz", "package-name", "0.0.1.dev0"),
+    ("package-name-0.0.1.alpha.1.win-amd64-py3.2.exe", "package-name", "0.0.1.alpha.1"),
 ]
 
 
