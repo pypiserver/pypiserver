@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ECLIPSE project file
+	Just copy this file long with `.pydevproject` in wour working-dir 
+	but without the `.sample` suffix, and import it into eclipse/liclise.
+-->
+<projectDescription>
+	<name>Pypiserver</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.python.pydev.PyDevBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.python.pydev.pythonNature</nature>
+	</natures>
+</projectDescription>
