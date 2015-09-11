@@ -38,7 +38,9 @@ config = Configuration()
 
 
 def validate_user(username, password):
-    if config.htpasswdfile is not None:
+    if config.htpasswdfile is None:
+        return True
+    else:
         config.htpasswdfile.load_if_changed()
         return config.htpasswdfile.check_password(username, password)
 
