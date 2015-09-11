@@ -1,5 +1,6 @@
-__version_info__ = (1, 1, 7)
-version = __version__ = "1.1.8-beta.0"
+import re as _re
+version = __version__ = "1.1.8-beta.1"
+__version_info__ = tuple(_re.split('[.-]', __version__))
 
 
 def app(root=None,
