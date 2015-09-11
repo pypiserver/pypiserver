@@ -242,7 +242,7 @@ pypi-server understands the following options:
     uses the ASCII contents of HTML_FILE as welcome message response.
 
   -v
-    enable verbose logging;  repeate for more verbosity.
+    enable verbose logging;  repeat for more verbosity.
 
   --log-file <FILE>
     write logging info into this FILE.
@@ -314,10 +314,10 @@ def main(argv=None):
     overwrite = False
     verbosity = 1
     log_file = None
-    log_frmt = None
-    log_req_frmt = None
-    log_res_frmt = None
-    log_err_frmt = None
+    log_frmt = "g%(asctime)s|%(levelname)s|%(thread)d|%(message)s"
+    log_req_frmt = "%(bottle.request)s"
+    log_res_frmt = "%(status)s"
+    log_err_frmt = "%(body)s: %(exception)s \n%(traceback)s"
     welcome_file = None
     cache_control = None
 

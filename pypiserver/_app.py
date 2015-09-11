@@ -12,20 +12,21 @@ try:
 except ImportError:
     from StringIO import StringIO as BytesIO
 
-try:                    #PY3
+try:  # PY3
     from urllib.parse import urljoin
-except ImportError:     #PY2
+except ImportError:  # PY2
     from urlparse import urljoin
 
-from bottle import static_file, redirect, request, response, HTTPError, Bottle, template
-from pypiserver import __version__
-from pypiserver.core import listdir, find_packages, store, get_prefixes, exists
+from .bottle import static_file, redirect, request, response, HTTPError, Bottle, template
+from . import __version__
+from .core import listdir, find_packages, store, get_prefixes, exists
 
 log = logging.getLogger('pypiserver.http')
 packages = None
 
 
 class Configuration(object):
+
     def __init__(self):
         self.fallback_url = "http://pypi.python.org/simple"
         self.redirect_to_fallback = True
@@ -53,7 +54,8 @@ class auth(object):
         def protector(*args, **kwargs):
             if self.action in config.authenticated:
                 if not request.auth or request.auth[1] is None:
-                    raise HTTPError(401, header={"WWW-Authenticate": 'Basic realm="pypi"'})
+                    raise HTTPError(
+                        401, header={"WWW-Authenticate": 'Basic realm="pypi"'})
                 if not validate_user(*request.auth):
                     raise HTTPError(403)
             return method(*args, **kwargs)
@@ -67,25 +69,25 @@ def configure(root=None,
               authenticated=None,
               password_file=None,
               overwrite=False,
-              log_req_frmt=None, 
+              log_req_frmt=None,
               log_res_frmt=None,
               log_err_frmt=None,
               welcome_file=None,
               cache_control=None,
-             ):
+              ):
     global packages
 
     log.info("Starting(%s)", dict(root=root,
-              redirect_to_fallback=redirect_to_fallback,
-              fallback_url=fallback_url,
-              authenticated=authenticated,
-              password_file=password_file,
-              overwrite=overwrite,
-              welcome_file=welcome_file,
-              log_req_frmt=log_req_frmt, 
-              log_res_frmt=log_res_frmt,
-              log_err_frmt=log_err_frmt,
-              cache_control=cache_control))
+                                  redirect_to_fallback=redirect_to_fallback,
+                                  fallback_url=fallback_url,
+                                  authenticated=authenticated,
+                                  password_file=password_file,
+                                  overwrite=overwrite,
+                                  welcome_file=welcome_file,
+                                  log_req_frmt=log_req_frmt,
+                                  log_res_frmt=log_res_frmt,
+                                  log_err_frmt=log_err_frmt,
+                                  cache_control=cache_control))
 
     config.authenticated = authenticated or []
 
@@ -115,40 +117,42 @@ def configure(root=None,
     config.fallback_url = fallback_url
     config.cache_control = cache_control
     if password_file:
-        from passlib.apache import HtpasswdFile
+        from passlib.apache import HtpasswdFile  # @UnresolvedImport
         config.htpasswdfile = HtpasswdFile(password_file)
     config.overwrite = overwrite
-    
-    ## Read welcome-msg from external file,
+
+    # Read welcome-msg from external file,
     #     or failback to the embedded-msg (ie. in standalone mode).
     #
     try:
         if not welcome_file:
-            welcome_file = pkg_resources.resource_filename(__name__, "welcome.html")  # @UndefinedVariable
+            welcome_file = pkg_resources.resource_filename(  # @UndefinedVariable
+                __name__, "welcome.html")  # @UndefinedVariable
         config.welcome_file = welcome_file
         with io.open(config.welcome_file, 'r', encoding='utf-8') as fd:
             config.welcome_msg = fd.read()
     except Exception:
-        log.warning("Could not load welcome-file(%s)!", welcome_file, exc_info=1)
+        log.warning(
+            "Could not load welcome-file(%s)!", welcome_file, exc_info=1)
     if not config.welcome_msg:
         from textwrap import dedent
         config.welcome_msg = dedent("""\
             <html><head><title>Welcome to pypiserver!</title></head><body>
             <h1>Welcome to pypiserver!</h1>
             <p>This is a PyPI compatible package index serving {{NUMPKGS}} packages.</p>
-            
+
             <p> To use this server with pip, run the the following command:
             <blockquote><pre>
             pip install -i {{URL}}simple/ PACKAGE [PACKAGE2...]
             </pre></blockquote></p>
-            
+
             <p> To use this server with easy_install, run the the following command:
             <blockquote><pre>
             easy_install -i {{URL}}simple/ PACKAGE
             </pre></blockquote></p>
-            
+
             <p>The complete list of all packages can be found <a href="{{PACKAGES}}">here</a> or via the <a href="{{SIMPLE}}">simple</a> index.</p>
-            
+
             <p>This instance is running version {{VERSION}} of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
             </body></html>\
         """)
@@ -167,12 +171,12 @@ def log_request():
 
 @app.hook('after_request')
 def log_response():
-    log.info(config.log_res_frmt, #vars(response))  ## DOES NOT WORK!
-            dict(
-                response=response, 
-                status=response.status, headers=response.headers, 
-                body=response.body, cookies=response.COOKIES,
-    ))
+    log.info(config.log_res_frmt,  # vars(response))  ## DOES NOT WORK!
+             dict(
+                 response=response,
+                 status=response.status, headers=response.headers,
+                 body=response.body, cookies=response.COOKIES,
+             ))
 
 
 @app.error
@@ -194,14 +198,15 @@ def root():
     except:
         numpkgs = 0
 
-    msg = config.welcome_msg + '\n' ## Ensure template() does not consider `msg` as filename!
-    return template(msg, 
-           URL=request.url, 
-           VERSION=__version__, 
-           NUMPKGS=numpkgs,
-           PACKAGES=urljoin(fp, "packages/"),
-           SIMPLE=urljoin(fp, "simple/")
-    )
+    # Ensure template() does not consider `msg` as filename!
+    msg = config.welcome_msg + '\n'
+    return template(msg,
+                    URL=request.url,
+                    VERSION=__version__,
+                    NUMPKGS=numpkgs,
+                    PACKAGES=urljoin(fp, "packages/"),
+                    SIMPLE=urljoin(fp, "simple/")
+                    )
 
 
 @app.post('/')
@@ -256,7 +261,7 @@ def update():
 
     if not config.overwrite and exists(packages.root, content.filename):
         log.warn("Cannot upload package(%s) since it already exists! \n" +
-                 "  You may use `--overwrite` option when starting server to disable this check. ", 
+                 "  You may use `--overwrite` option when starting server to disable this check. ",
                  content.filename)
         raise HTTPError(409, output="file already exists")
 
@@ -297,13 +302,15 @@ def simple(prefix=""):
     if not fp.endswith("/"):
         fp += "/"
 
-    files = [x.relfn for x in sorted(find_packages(packages(), prefix=prefix), key=lambda x: (x.parsed_version, x.relfn))]
+    files = [x.relfn for x in sorted(find_packages(
+        packages(), prefix=prefix), key=lambda x: (x.parsed_version, x.relfn))]
     if not files:
         if config.redirect_to_fallback:
             return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
         return HTTPError(404)
-    
-    links = [(os.path.basename(f), urljoin(fp, "../../packages/%s" % f.replace("\\", "/"))) for f in files]
+
+    links = [(os.path.basename(f), urljoin(fp, "../../packages/%s" %
+                                           f.replace("\\", "/"))) for f in files]
     tmpl = """\
     <html>
         <head>
@@ -352,9 +359,11 @@ def server_static(filename):
     for x in entries:
         f = x.relfn.replace("\\", "/")
         if f == filename:
-            response = static_file(filename, root=x.root, mimetype=mimetypes.guess_type(filename)[0])
+            response = static_file(
+                filename, root=x.root, mimetype=mimetypes.guess_type(filename)[0])
             if config.cache_control:
-                response.set_header("Cache-Control", "public, max-age=%s" % config.cache_control)
+                response.set_header(
+                    "Cache-Control", "public, max-age=%s" % config.cache_control)
             return response
 
     return HTTPError(404)
