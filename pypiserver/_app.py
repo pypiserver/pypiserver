@@ -116,7 +116,7 @@ def configure(root=None,
     config.redirect_to_fallback = redirect_to_fallback
     config.fallback_url = fallback_url
     config.cache_control = cache_control
-    if password_file:
+    if password_file and password_file != '.':
         from passlib.apache import HtpasswdFile  # @UnresolvedImport
         config.htpasswdfile = HtpasswdFile(password_file)
     config.overwrite = overwrite

@@ -130,7 +130,5 @@ def test_password_alone(main, monkeypatch):
     assert main.app.module.config.authenticated == ['update']
 
 def test_dot_password_without_auth_list(main, monkeypatch):
-    monkeypatch.setitem(sys.modules, 'passlib', mock.MagicMock())
-    monkeypatch.setitem(sys.modules, 'passlib.apache', mock.MagicMock())
     main(["-P", ".", "-a", ""])
     assert main.app.module.config.authenticated == []
