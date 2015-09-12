@@ -473,15 +473,17 @@ implements just enough to make ``easy_install`` and ``pip install`` to work.
 
 The following limitations are known:
 
-- It doesn't implement the XMLRPC interface: pip search
+- It doesn't implement the XMLRPC json API interface: pip search
   will not work.
-- It doesn't implement the json based '/pypi' interface.
+- Command ``pypi -U`` that compaes uploaded packages with *pypi* to see if
+  they are outdated does not respect a http-proxy environment variable
+  (see https://github.com/pypiserver/pypiserver/issues/19).
 - It accepts documentation uploads but does not save them to
   disk (see https://github.com/pypiserver/pypiserver/issues/47 for a
   discussion)
 - It does not handle misspelled packages as pypi-repo does,
   therefore it is suggested to use it with `--extra-index-url` instead
-  of `--index-url` (see discussion at https://github.com/pypiserver/pypiserver/issues/38)
+  of `--index-url` (see https://github.com/pypiserver/pypiserver/issues/38)
 
 Please use github's `bugtracker <https://github.com/pypiserver/pypiserver/issues>`_
 if you find any other bugs.
