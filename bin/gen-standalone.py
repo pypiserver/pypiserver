@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 """generate a single file pypi-server script"""
+from __future__ import unicode_literals
 
 import os, zlib, base64, itertools
 try:
@@ -47,13 +48,16 @@ def main():
     data = zlib.compress(data, 9)
     data = base64.encodestring(data)
 
-    data = '%s' % (data)
+    try:
+        data = str(data, encoding='ascii')
+    except TypeError: # we were in PY2
+        data = '%s' % data
 
     script = open("pypi-server-in.py").read()
     script = script.replace("@VERSION@", get_version())
     script = script.replace('@SOURCES@', data)
     dst = "pypi-server-standalone.py"
-    open(dst, "w").write(script)
+    open(dst, "wt").write(script)
     os.chmod(dst, 755)
     print("created %s"%dst)
 
