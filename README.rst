@@ -8,7 +8,7 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 
 :Authors:   Ralf Schmitt <ralf@systemexit.de>,
             Kostis Anagnostopoulos <ankostis@gmail.com>
-:Version:   1.1.8-beta.0
+:Version:   1.1.8-beta.1
 :Date:      2015-03-8
 :Source:    https://github.com/pypiserver/pypiserver
 :PyPI repo: https://pypi.python.org/pypi/pypiserver#downloads
