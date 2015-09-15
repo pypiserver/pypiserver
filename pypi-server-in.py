@@ -62,9 +62,5 @@ importer.sources = sources
 sys.meta_path.append(importer)
 
 if __name__ == "__main__":
-    from pypiserver import core
-    if sys.version_info >= (2, 6):
-        core.DEFAULT_SERVER = "waitress"
-    else:
-        core.bottle.AutoServer.adapters.remove(core.bottle.WaitressServer)
-    core.main()
+    from pypiserver import __main__
+    __main__.main()

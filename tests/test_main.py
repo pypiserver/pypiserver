@@ -1,7 +1,7 @@
 #! /usr/bin/env py.test
 
 import sys, os, pytest, logging
-from pypiserver import core
+from pypiserver import core, __main__
 try:
     from unittest import mock
 except ImportError:
@@ -16,7 +16,7 @@ class main_wrapper(object):
 
     def __call__(self, argv):
         sys.stdout.write("Running %s\n" % (argv,))
-        core.main(["pypi-server"] + argv)
+        __main__.main(["pypi-server"] + argv)
         return self.run_kwargs
 
 
@@ -35,8 +35,8 @@ def main(request, monkeypatch):
         main.pkgdir = pkgdir
         return []
 
-    monkeypatch.setattr(core, "run", run)
-    monkeypatch.setattr(os, "listdir", listdir)
+    monkeypatch.setattr("pypiserver.bottle.run", run)
+    monkeypatch.setattr("os.listdir", listdir)
 
     return main
 

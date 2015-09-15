@@ -3,6 +3,7 @@ import os
 from subprocess import call
 
 from pypiserver import core
+import itertools
 
 if sys.version_info >= (3, 0):
     from xmlrpc.client import Server
@@ -146,3 +147,7 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
         sys.stdout.write("%s\n\n" % (" ".join(cmd),))
         if not dry_run:
             call(cmd)
+
+def update_all_packages(roots, destdir=None, dry_run=False, stable_only=True):
+    packages = frozenset(itertools.chain(*[core.listdir(r) for r in roots]))
+    update(packages, destdir, dry_run, stable_only)

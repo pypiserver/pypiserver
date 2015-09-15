@@ -4,17 +4,17 @@ import sys, os
 
 try:
     from setuptools import setup
-    extra = dict(entry_points={
-            'paste.app_factory': ['main=pypiserver:paste_app_factory'],
-            'console_scripts': ['pypi-server=pypiserver.core:main']
-            })
+    extra = {'entry_points': {
+                'paste.app_factory': ['main=pypiserver:paste_app_factory'],
+                'console_scripts': ['pypi-server=pypiserver.__main__:main']
+            }}
 except ImportError:
     from distutils.core import setup
     extra = dict(scripts=["pypi-server"])
 
 if sys.version_info >= (3, 0):
     exec("def do_exec(co, loc): exec(co, loc)\n")
-    tests_require = []  
+    tests_require = []
 else:
     exec("def do_exec(co, loc): exec co in loc\n")
     tests_require =  ['mock']

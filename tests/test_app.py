@@ -1,12 +1,12 @@
 #! /usr/bin/env py.test
 
-from pypiserver import core  # do no remove. needed for bottle
-import pytest, bottle, webtest
+from pypiserver import __main__, bottle # do no remove. needed for bottle
+import pytest, webtest
 
 ## Enable logging to detect any problems with it
 ##
 import logging
-core.init_logging(level=logging.NOTSET)
+__main__.init_logging(level=logging.NOTSET)
 
 @pytest.fixture()
 def _app(app):

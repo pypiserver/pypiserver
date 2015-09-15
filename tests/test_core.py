@@ -1,12 +1,12 @@
 #! /usr/bin/env py.test
 
 import pytest
-from pypiserver import core
+from pypiserver import core, __main__
 
 ## Enable logging to detect any problems with it
 ##
 import logging
-core.init_logging(level=logging.NOTSET)
+__main__.init_logging(level=logging.NOTSET)
 
 
 files = [
