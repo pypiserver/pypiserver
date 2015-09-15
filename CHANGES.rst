@@ -1,6 +1,17 @@
 Changelog
 =========
 
+1.1.8 (2015-09-15)
+------------------
+"Finikounda" release.
+
+- Allow un-authenticated uploads (no htpasswd file) (#55).
+- Fixes on package-name handling (#85 and #88, #89).
+- Respect logging cmd-line options (#81).
+- Add TCs for standalone script and other build-issues (#92)
+- See milestone:M1.1.8 on github for all fixes included.
+
+
 1.1.7 (2015-03-8)
 ------------------
 1st release under cooperative ownership:
@@ -13,11 +24,11 @@ Changelog
 - #56, #70: Ignore non-packages when serving.
 - #58, #62: Log all http-requests.
 - #61: Possible to change welcome-msg.
-- #77, #78: Avoid XSS by generating web-content with SimpleTemplate 
+- #77, #78: Avoid XSS by generating web-content with SimpleTemplate
   instead of python's string-substs.
 - #38, #79: Instruct to use --extra-index-url for misspelled dependencies to work,
-  reorganize README instructions. 
- 
+  reorganize README instructions.
+
 
 1.1.6 (2014-03-05)
 ------------------

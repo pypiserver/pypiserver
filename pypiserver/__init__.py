@@ -1,5 +1,5 @@
 import re as _re
-version = __version__ = "1.1.8-beta.1"
+version = __version__ = "1.1.8"
 __version_info__ = tuple(_re.split('[.-]', __version__))
 
 
