@@ -6,13 +6,12 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 |pypi-ver| |travis-status| |dependencies| |downloads-count| |python-ver| \
 |proj-license|
 
-:Authors:   Ralf Schmitt <ralf@systemexit.de>,
-            Kostis Anagnostopoulos <ankostis@gmail.com>
+:Maintainer:Kostis Anagnostopoulos <ankostis@gmail.com>
 :Version:   1.1.8
 :Date:      2015-03-8
 :Source:    https://github.com/pypiserver/pypiserver
-:PyPI repo: https://pypi.python.org/pypi/pypiserver#downloads
-:TravisCI:  https://travis-ci.org/pypiserver/pypiserver
+:PyPI:      https://pypi.python.org/pypi/pypiserver#downloads
+:Travis:    https://travis-ci.org/pypiserver/pypiserver
 :License:   zlib/libpng + MIT
 
 .. contents:: Table of Contents
