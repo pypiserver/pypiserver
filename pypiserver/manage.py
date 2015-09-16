@@ -2,7 +2,7 @@ import sys
 import os
 from subprocess import call
 
-from pypiserver import core
+from . import core
 import itertools
 
 if sys.version_info >= (3, 0):

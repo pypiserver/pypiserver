@@ -17,10 +17,7 @@ def app(root=None,
         ):
     import sys
     import os
-    from pypiserver import core
-    sys.modules.pop("pypiserver._app", None)
-    __import__("pypiserver._app")
-    _app = sys.modules["pypiserver._app"]
+    from . import core, _app
 
     from . import bottle
 
