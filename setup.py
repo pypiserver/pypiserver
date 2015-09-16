@@ -1,29 +1,21 @@
 #! /usr/bin/env python
 
-import sys, os
+import sys
 
-try:
-    from setuptools import setup
-    extra = {'entry_points': {
-                'paste.app_factory': ['main=pypiserver:paste_app_factory'],
-                'console_scripts': ['pypi-server=pypiserver.__main__:main']
-            }}
-except ImportError:
-    from distutils.core import setup
-    extra = dict(scripts=["pypi-server"])
+from setuptools import setup
 
+tests_require =  ['pytest']
 if sys.version_info >= (3, 0):
     exec("def do_exec(co, loc): exec(co, loc)\n")
-    tests_require = []
 else:
     exec("def do_exec(co, loc): exec co in loc\n")
-    tests_require =  ['mock']
+    tests_require.append('mock')
 
 
 def get_version():
     d = {}
     try:
-        do_exec(open("pypiserver/__init__.py").read(), d)
+        do_exec(open("pypiserver/__init__.py").read(), d)  # @UndefinedVariable
     except (ImportError, RuntimeError):
         pass
     return d["__version__"]
@@ -35,10 +27,15 @@ setup(name="pypiserver",
       version=get_version(),
       packages=["pypiserver"],
       package_data={'pypiserver': ['welcome.html']},
+      setup_requires=[
+          'setuptools',
+          'setuptools-git >= 0.3',  # Gather package-data from all files in git.
+          'wheel',
+      ],
       tests_require=tests_require,
-        url="https://github.com/pypiserver/pypiserver",
-      maintainer="Ralf Schmitt, Kostis Anagnostopoulos",
-      maintainer_email="ralf@systemexit.de, ankostis@gmail.com",
+      url="https://github.com/pypiserver/pypiserver",
+      maintainer="Kostis Anagnostopoulos",
+      maintainer_email="ankostis@gmail.com",
       classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment",
@@ -63,4 +60,12 @@ setup(name="pypiserver",
         "Topic :: Software Development :: Build Tools",
         "Topic :: System :: Software Distribution"],
       zip_safe=False,
-      **extra)
+      entry_points={
+            'paste.app_factory': ['main=pypiserver:paste_app_factory'],
+            'console_scripts': ['pypi-server=pypiserver.__main__:main']
+        },
+      options={
+          'bdist_wheel': {'universal': True},
+      },
+      platforms=['any'],
+      )

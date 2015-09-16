@@ -1,9 +1,0 @@
-include *.rst
-include *.txt
-include *.py
-include buildout.cfg
-include pypi-server
-include pypiserver/welcome.html
-include setup.cfg
-include tests/*
-include tox.ini
