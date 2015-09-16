@@ -21,7 +21,7 @@ def init_logging(level=None, frmt=None, filename=None):
 
 
 def usage():
-    sys.stdout.write("""pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
+    return """pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
   start PyPI compatible package server serving packages from
   PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
   command line, it uses the default ~/packages.  pypiserver scans this
@@ -130,7 +130,7 @@ The following additional options can be specified with -U:
     allow updating to unstable version (alpha, beta, rc, dev versions)
 
 Visit https://pypi.python.org/pypi/pypiserver for more information.
-""")
+"""
 
 
 def main(argv=None):
@@ -241,7 +241,7 @@ def main(argv=None):
         elif k == "-v":
             verbosity += 1
         elif k in ("-h", "--help"):
-            usage()
+            print(usage())
             sys.exit(0)
 
     if password_file and password_file != '.' and not authenticated:

@@ -126,37 +126,16 @@ def configure(root=None,
     #
     try:
         if not welcome_file:
-            welcome_file = pkg_resources.resource_filename(  # @UndefinedVariable
-                __name__, "welcome.html")  # @UndefinedVariable
-        config.welcome_file = welcome_file
-        with io.open(config.welcome_file, 'r', encoding='utf-8') as fd:
-            config.welcome_msg = fd.read()
+            config.welcome_file = "welcome.html"
+            config.welcome_msg = pkg_resources.resource_string(  # @UndefinedVariable
+                __name__, "welcome.html").decode("utf-8")  # @UndefinedVariable
+        else:
+            config.welcome_file = welcome_file
+            with io.open(welcome_file, 'r', encoding='utf-8') as fd:
+                config.welcome_msg = fd.read()
     except Exception:
         log.warning(
             "Could not load welcome-file(%s)!", welcome_file, exc_info=1)
-    if not config.welcome_msg:
-        from textwrap import dedent
-        config.welcome_msg = dedent("""\
-            <html><head><title>Welcome to pypiserver!</title></head><body>
-            <h1>Welcome to pypiserver!</h1>
-            <p>This is a PyPI compatible package index serving {{NUMPKGS}} packages.</p>
-
-            <p> To use this server with pip, run the the following command:
-            <blockquote><pre>
-            pip install -i {{URL}}simple/ PACKAGE [PACKAGE2...]
-            </pre></blockquote></p>
-
-            <p> To use this server with easy_install, run the the following command:
-            <blockquote><pre>
-            easy_install -i {{URL}}simple/ PACKAGE
-            </pre></blockquote></p>
-
-            <p>The complete list of all packages can be found <a href="{{PACKAGES}}">here</a> or via the <a href="{{SIMPLE}}">simple</a> index.</p>
-
-            <p>This instance is running version {{VERSION}} of the <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
-            </body></html>\
-        """)
-
     config.log_req_frmt = log_req_frmt
     config.log_res_frmt = log_res_frmt
     config.log_err_frmt = log_err_frmt

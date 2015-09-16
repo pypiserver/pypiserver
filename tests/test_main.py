@@ -1,7 +1,7 @@
 #! /usr/bin/env py.test
 
 import sys, os, pytest, logging
-from pypiserver import core, __main__
+from pypiserver import __main__, core
 try:
     from unittest import mock
 except ImportError:
@@ -96,14 +96,14 @@ def logfile(tmpdir):
 def test_logging(main, logfile):
     main(["-v", "--log-file", logfile.strpath])
     assert logfile.check(), logfile
-    
+
 def test_logging_verbosity(main):
     main([])
-    assert logging.getLogger().level == logging.WARN 
+    assert logging.getLogger().level == logging.WARN
     main(["-v"])
-    assert logging.getLogger().level == logging.INFO 
+    assert logging.getLogger().level == logging.INFO
     main(["-v", "-v"])
-    assert logging.getLogger().level == logging.DEBUG 
+    assert logging.getLogger().level == logging.DEBUG
     main(["-v", "-v", "-v"])
     assert logging.getLogger().level == logging.NOTSET
 

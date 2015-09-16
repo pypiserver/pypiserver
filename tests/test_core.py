@@ -1,11 +1,11 @@
 #! /usr/bin/env py.test
 
 import pytest
-from pypiserver import core, __main__
+from pypiserver import __main__, core
+import logging
 
 ## Enable logging to detect any problems with it
 ##
-import logging
 __main__.init_logging(level=logging.NOTSET)
 
 

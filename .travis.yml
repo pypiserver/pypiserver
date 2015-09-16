@@ -2,6 +2,7 @@ sudo: false
 language: python
 python: 2.7
 env:
+  - TOX_ENV=py25
   - TOX_ENV=py26
   - TOX_ENV=py27
   - TOX_ENV=py32
@@ -9,12 +10,11 @@ env:
   - TOX_ENV=py34
   - TOX_ENV=pypy
 
-install:
-  - pip install tox
-
 script:
-  - tox -e $TOX_ENV
+  - python -m pip install setuptools pip -U
   - ./bin/test_standalone.sh
+  - pip install tox
+  - tox -e $TOX_ENV
 
 branches:
   except:

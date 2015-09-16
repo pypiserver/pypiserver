@@ -1,11 +1,11 @@
 #! /usr/bin/env py.test
 
-from pypiserver import __main__, bottle # do no remove. needed for bottle
+from pypiserver import __main__, bottle
 import pytest, webtest
+import logging
 
 ## Enable logging to detect any problems with it
 ##
-import logging
 __main__.init_logging(level=logging.NOTSET)
 
 @pytest.fixture()
@@ -42,17 +42,17 @@ def testpriv(priv):
 
 
 @pytest.fixture(params=["  ",  ## Mustcontain test below fails when string is empty.
-                        "Hey there!", 
+                        "Hey there!",
                         "<html><body>Hey there!</body></html>",
                         ])
 def welcome_file_no_vars(request, root):
     wfile = root.join("testwelcome.html")
     wfile.write(request.param)
-    
+
     return wfile
 
 
-@pytest.fixture() 
+@pytest.fixture()
 def welcome_file_all_vars(request, root):
     msg ="""
     {{URL}}
@@ -63,7 +63,7 @@ def welcome_file_all_vars(request, root):
     """
     wfile = root.join("testwelcome.html")
     wfile.write(msg)
-    
+
     return wfile
 
 
@@ -95,7 +95,7 @@ def test_root_welcome_msg_all_vars(root, welcome_file_all_vars):
     app = app(root=root.strpath, welcome_file=welcome_file_all_vars.strpath)
     testapp = webtest.TestApp(app)
     resp = testapp.get("/")
-    
+
     from pypiserver import __version__ as pver
     resp.mustcontain(pver)
 

@@ -10,7 +10,7 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 :Version:   1.1.9-dev.0
 :Date:      2015-03-8
 :Source:    https://github.com/pypiserver/pypiserver
-:PyPI:      https://pypi.python.org/pypi/pypiserver#downloads
+:PyPI:      https://pypi.python.org/pypi/pypiserver
 :Travis:    https://travis-ci.org/pypiserver/pypiserver
 :License:   zlib/libpng + MIT
 
@@ -308,7 +308,7 @@ Running ``pypi-server -h`` will print a detailed usage message::
     -u
       allow updating to unstable version (alpha, beta, rc, dev versions)
 
-  Visit https://pypi.python.org/pypi/pypiserver for more information.
+  Visit https://github.com/pypiserver/pypiserver for more information.
 
 
 
@@ -448,11 +448,6 @@ unstable packages on different paths::
 
 Sources
 =======
-Python-packages with source releases can be downloaded from
-https://pypi.python.org/pypi/pypiserver
-
-The in-development sources are hosted at https://github.com/pypiserver/pypiserver.
-
 Use::
 
   git clone https://github.com/pypiserver/pypiserver.git
