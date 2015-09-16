@@ -73,7 +73,12 @@ Currently only password-protected uploads are supported!
    .. Tip::
      Read this SO question for running `htpasswd` cmd under *Windows*:
 
-     http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u
+        http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u
+
+     or if you have bogus passwords for an internal service you may use this
+     public service:
+
+        http://www.htaccesstools.com/htpasswd-generator/
 
      It is also possible to disable authentication even for uploads.
      Read the help for ``-P`` and ``-a`` options to see how it is done.
@@ -231,8 +236,8 @@ Running ``pypi-server -h`` will print a detailed usage message::
       use apache htpasswd file PASSWORD_FILE to set usernames & passwords
       used for authentication of certain actions (see -a option).
       Set it explicitly to '.' to allow empty list of actions to authenticate;
-      then no `register` command is neccessary, but `~/.pypirc` still needs
-      `username` and `password` fields, even if bogus.
+      then no `register` command is neccessary
+      (but `~/.pypirc` still need username and password fields, even if bogus).
 
     --disable-fallback
       disable redirect to real PyPI index for packages not found in the

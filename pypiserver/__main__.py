@@ -6,6 +6,7 @@ import getopt
 import re
 import logging
 from pypiserver import __version__
+from textwrap import dedent
 
 DEFAULT_SERVER = "auto"
 
@@ -21,116 +22,117 @@ def init_logging(level=None, frmt=None, filename=None):
 
 
 def usage():
-    return """pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
-  start PyPI compatible package server serving packages from
-  PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
-  command line, it uses the default ~/packages.  pypiserver scans this
-  directory recursively for packages. It skips packages and
-  directories starting with a dot. Multiple package directories can be
-  specified.
+    return dedent("""\
+  pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
+    start PyPI compatible package server serving packages from
+    PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
+    command line, it uses the default ~/packages.  pypiserver scans this
+    directory recursively for packages. It skips packages and
+    directories starting with a dot. Multiple package directories can be
+    specified.
 
-pypi-server understands the following options:
+  pypi-server understands the following options:
 
-  -p, --port PORT
-    listen on port PORT (default: 8080)
+    -p, --port PORT
+      listen on port PORT (default: 8080)
 
-  -i, --interface INTERFACE
-    listen on interface INTERFACE (default: 0.0.0.0, any interface)
+    -i, --interface INTERFACE
+      listen on interface INTERFACE (default: 0.0.0.0, any interface)
 
-  -a, --authenticate (UPDATE|download|list), ...
-    comma-separated list of (case-insensitive) actions to authenticate
-    Requires -P option and cannot not be empty unless -P is '.'
-    For example to password-protect package downloads (in addition to uploads)
-    while leaving listings public, give:
-      -P foo/htpasswd.txt  -a update,download
-    To drop all authentications, use:
-      -P .  -a ''
-    By default, only 'update' is password-protected.
+    -a, --authenticate (UPDATE|download|list), ...
+      comma-separated list of (case-insensitive) actions to authenticate
+      Requires -P option and cannot not be empty unless -P is '.'
+      For example to password-protect package downloads (in addition to uploads)
+      while leaving listings public, give:
+        -P foo/htpasswd.txt  -a update,download
+      To drop all authentications, use:
+        -P .  -a ''
+      By default, only 'update' is password-protected.
 
-  -P, --passwords PASSWORD_FILE
-    use apache htpasswd file PASSWORD_FILE to set usernames & passwords
-    used for authentication of certain actions (see -a option).
-    Set it explicitly to '.' to allow empty list of actions to authenticate;
-    then no `register` command is neccessary, but `~/.pypirc` still needs
-    `username` and `password` fields, even if bogus.
+    -P, --passwords PASSWORD_FILE
+      use apache htpasswd file PASSWORD_FILE to set usernames & passwords
+      used for authentication of certain actions (see -a option).
+      Set it explicitly to '.' to allow empty list of actions to authenticate;
+      then no `register` command is neccessary
+      (but `~/.pypirc` still need username and password fields, even if bogus).
 
-  --disable-fallback
-    disable redirect to real PyPI index for packages not found in the
-    local index
+    --disable-fallback
+      disable redirect to real PyPI index for packages not found in the
+      local index
 
-  --fallback-url FALLBACK_URL
-    for packages not found in the local index, this URL will be used to
-    redirect to (default: http://pypi.python.org/simple)
+    --fallback-url FALLBACK_URL
+      for packages not found in the local index, this URL will be used to
+      redirect to (default: http://pypi.python.org/simple)
 
-  --server METHOD
-    use METHOD to run the server. Valid values include paste,
-    cherrypy, twisted, gunicorn, gevent, wsgiref, auto. The
-    default is to use "auto" which chooses one of paste, cherrypy,
-    twisted or wsgiref.
+    --server METHOD
+      use METHOD to run the server. Valid values include paste,
+      cherrypy, twisted, gunicorn, gevent, wsgiref, auto. The
+      default is to use "auto" which chooses one of paste, cherrypy,
+      twisted or wsgiref.
 
-  -r, --root PACKAGES_DIRECTORY
-    [deprecated] serve packages from PACKAGES_DIRECTORY
+    -r, --root PACKAGES_DIRECTORY
+      [deprecated] serve packages from PACKAGES_DIRECTORY
 
-  -o, --overwrite
-    allow overwriting existing package files
+    -o, --overwrite
+      allow overwriting existing package files
 
-  --welcome HTML_FILE
-    uses the ASCII contents of HTML_FILE as welcome message response.
+    --welcome HTML_FILE
+      uses the ASCII contents of HTML_FILE as welcome message response.
 
-  -v
-    enable verbose logging;  repeat for more verbosity.
+    -v
+      enable verbose logging;  repeat for more verbosity.
 
-  --log-file <FILE>
-    write logging info into this FILE.
+    --log-file <FILE>
+      write logging info into this FILE.
 
-  --log-frmt <FILE>
-    the logging format-string.  (see `logging.LogRecord` class from standard python library)
-    [Default: %(asctime)s|%(levelname)s|%(thread)d|%(message)s]
+    --log-frmt <FILE>
+      the logging format-string.  (see `logging.LogRecord` class from standard python library)
+      [Default: %(asctime)s|%(levelname)s|%(thread)d|%(message)s]
 
-  --log-req-frmt FORMAT
-    a format-string selecting Http-Request properties to log; set to  '%s' to see them all.
-    [Default: %(bottle.request)s]
+    --log-req-frmt FORMAT
+      a format-string selecting Http-Request properties to log; set to  '%s' to see them all.
+      [Default: %(bottle.request)s]
 
-  --log-res-frmt FORMAT
-    a format-string selecting Http-Response properties to log; set to  '%s' to see them all.
-    [Default: %(status)s]
+    --log-res-frmt FORMAT
+      a format-string selecting Http-Response properties to log; set to  '%s' to see them all.
+      [Default: %(status)s]
 
-  --log-err-frmt FORMAT
-    a format-string selecting Http-Error properties to log; set to  '%s' to see them all.
-    [Default: %(body)s: %(exception)s \n%(traceback)s]
+    --log-err-frmt FORMAT
+      a format-string selecting Http-Error properties to log; set to  '%s' to see them all.
+      [Default: %(body)s: %(exception)s \n%(traceback)s]
 
-  --cache-control AGE
-    Add "Cache-Control: max-age=AGE, public" header to package downloads.
-    Pip 6+ needs this for caching.
+    --cache-control AGE
+      Add "Cache-Control: max-age=AGE, public" header to package downloads.
+      Pip 6+ needs this for caching.
 
 
-pypi-server -h
-pypi-server --help
-  show this help message
+  pypi-server -h
+  pypi-server --help
+    show this help message
 
-pypi-server --version
-  show pypi-server's version
+  pypi-server --version
+    show pypi-server's version
 
-pypi-server -U [OPTIONS] [PACKAGES_DIRECTORY...]
-  update packages in PACKAGES_DIRECTORY. This command searches
-  pypi.python.org for updates and shows a pip command line which
-  updates the package.
+  pypi-server -U [OPTIONS] [PACKAGES_DIRECTORY...]
+    update packages in PACKAGES_DIRECTORY. This command searches
+    pypi.python.org for updates and shows a pip command line which
+    updates the package.
 
-The following additional options can be specified with -U:
+  The following additional options can be specified with -U:
 
-  -x
-    execute the pip commands instead of only showing them
+    -x
+      execute the pip commands instead of only showing them
 
-  -d DOWNLOAD_DIRECTORY
-    download package updates to this directory. The default is to use
-    the directory which contains the latest version of the package to
-    be updated.
+    -d DOWNLOAD_DIRECTORY
+      download package updates to this directory. The default is to use
+      the directory which contains the latest version of the package to
+      be updated.
 
-  -u
-    allow updating to unstable version (alpha, beta, rc, dev versions)
+    -u
+      allow updating to unstable version (alpha, beta, rc, dev versions)
 
-Visit https://pypi.python.org/pypi/pypiserver for more information.
-"""
+  Visit https://pypi.python.org/pypi/pypiserver for more information.
+  """)
 
 
 def main(argv=None):
