@@ -1,5 +1,7 @@
 #! /usr/bin/env py.test
 
+from __future__ import unicode_literals
+
 import contextlib
 import subprocess
 import time
@@ -16,9 +18,10 @@ def packdir(tmpdir):
 @contextlib.contextmanager
 def server(packdir):
     cmd = "python -m pypiserver.__main__ -P. -a. %s" % packdir
+    proc = subprocess.Popen(cmd, 
+                            stderr=subprocess.PIPE, 
+                            stdout=subprocess.PIPE)
     try:
-        proc = subprocess.Popen(
-            cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         yield proc
     finally:
         try:
@@ -31,13 +34,13 @@ def server(packdir):
 def test_centodeps(packdir, monkeypatch):
     from twine.commands import upload
 
-    pypirc_config = {"test": {"repository": "http://localhost:8080",
-                              "username": 'a',
-                              "password": 'a'
-                              }
-                     }
+    pypirc_config = {
+        "repository": "http://localhost:8080",
+        "username": 'a',
+        "password": 'a'
+    }
 
-    monkeypatch.setattr(upload, 'get_repository_from_config', 
+    monkeypatch.setattr(upload.utils, 'get_repository_from_config',
                         lambda *x: pypirc_config)
     dist_path = path.local('tests/centodeps/wheelhouse/centodeps*.whl')
 
@@ -45,7 +48,8 @@ def test_centodeps(packdir, monkeypatch):
         upload.upload([str(dist_path)], repository='test',
                       sign=None, identity=None,
                       username='a', password='a',
-                      comment=None, sign_with=None)
+                      comment=None, sign_with=None,
+                      config_file=None, skip_existing=None)
         time.sleep(1)
     assert list(packdir.visit('centodeps*.whl'))
 
