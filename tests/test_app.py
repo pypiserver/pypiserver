@@ -1,12 +1,21 @@
 #! /usr/bin/env py.test
 
-from pypiserver import __main__, bottle
-import pytest, webtest
+import contextlib
+import glob
 import logging
+import os
+import subprocess
 
-## Enable logging to detect any problems with it
+import pytest
+import webtest
+
+from pypiserver import __main__, bottle
+
+
+# Enable logging to detect any problems with it
 ##
 __main__.init_logging(level=logging.NOTSET)
+
 
 @pytest.fixture()
 def _app(app):
@@ -41,7 +50,7 @@ def testpriv(priv):
     return webtest.TestApp(priv)
 
 
-@pytest.fixture(params=["  ",  ## Mustcontain test below fails when string is empty.
+@pytest.fixture(params=["  ",  # Mustcontain test below fails when string is empty.
                         "Hey there!",
                         "<html><body>Hey there!</body></html>",
                         ])
@@ -54,7 +63,7 @@ def welcome_file_no_vars(request, root):
 
 @pytest.fixture()
 def welcome_file_all_vars(request, root):
-    msg ="""
+    msg = """
     {{URL}}
     {{VERSION}}
     {{NUMPKGS}}
@@ -102,7 +111,8 @@ def test_root_welcome_msg_all_vars(root, welcome_file_all_vars):
 
 def test_root_welcome_msg_antiXSS(testapp):
     """https://github.com/pypiserver/pypiserver/issues/77"""
-    resp = testapp.get("/?<alert>Red</alert>", headers={"Host": "somehost.org"})
+    resp = testapp.get(
+        "/?<alert>Red</alert>", headers={"Host": "somehost.org"})
     resp.mustcontain("alert", "somehost.org", no="<alert>")
 
 
@@ -112,7 +122,7 @@ def test_root_remove_not_found_msg_antiXSS(testapp):
                         headers={"Host": "somehost.org"},
                         params={':action': 'remove_pkg',
                                 'name': '<alert>Red</alert>',
-                                'version':'1.1.1'})
+                                'version': '1.1.1'})
     resp.mustcontain("alert", "somehost.org", no="<alert>")
 
 
@@ -128,7 +138,8 @@ def test_favicon(testapp):
 def test_fallback(root, _app, testapp):
     assert _app.config.redirect_to_fallback
     resp = testapp.get("/simple/pypiserver/", status=302)
-    assert resp.headers["Location"] == "http://pypi.python.org/simple/pypiserver/"
+    assert resp.headers[
+        "Location"] == "http://pypi.python.org/simple/pypiserver/"
 
 
 def test_no_fallback(root, _app, testapp):
@@ -218,7 +229,7 @@ def test_nonroot_simple_index(root, testpriv):
     root.join("foobar-1.0.zip").write("")
 
     for path in ["/priv/simple/foobar",
-                "/priv/simple/foobar/"]:
+                 "/priv/simple/foobar/"]:
         resp = testpriv.get(path)
         links = resp.html("a")
         assert len(links) == 1
@@ -228,7 +239,7 @@ def test_nonroot_simple_index(root, testpriv):
 def test_nonroot_simple_packages(root, testpriv):
     root.join("foobar-1.0.zip").write("123")
     for path in ["/priv/packages",
-                "/priv/packages/"]:
+                 "/priv/packages/"]:
         resp = testpriv.get(path)
         links = resp.html("a")
         assert len(links) == 1
@@ -239,7 +250,8 @@ def test_root_no_relative_paths(testpriv):
     """https://github.com/pypiserver/pypiserver/issues/25"""
     resp = testpriv.get("/priv/")
     hrefs = [x["href"] for x in resp.html("a")]
-    assert hrefs == ['/priv/packages/', '/priv/simple/', 'http://pypi.python.org/pypi/pypiserver']
+    assert hrefs == ['/priv/packages/', '/priv/simple/',
+                     'http://pypi.python.org/pypi/pypiserver']
 
 
 def test_simple_index_list_no_duplicates(root, testapp):

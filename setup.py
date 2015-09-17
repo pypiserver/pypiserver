@@ -4,7 +4,7 @@ import sys
 
 from setuptools import setup
 
-tests_require =  ['pytest']
+tests_require =  ['pytest', 'twine']
 if sys.version_info >= (3, 0):
     exec("def do_exec(co, loc): exec(co, loc)\n")
 else:

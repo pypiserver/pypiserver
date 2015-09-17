@@ -17,8 +17,7 @@ ID
 __pycache__/
 /build/
 /dist/
-/*.egg
-/.eggs
+/*.egg*
 /MANIFEST
 /README.html
 /pypi-server-standalone.py
