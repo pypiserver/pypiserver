@@ -1,7 +1,7 @@
 #! /usr/bin/env py.test
 
 import sys, os, pytest, logging
-from pypiserver import __main__, core
+from pypiserver import __main__
 try:
     from unittest import mock
 except ImportError:

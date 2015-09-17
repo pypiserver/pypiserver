@@ -154,7 +154,7 @@ def log_response():
              dict(
                  response=response,
                  status=response.status, headers=response.headers,
-                 body=response.body, cookies=response.COOKIES,
+                 body=response.body, cookies=response._cookies,
              ))
 
 
@@ -244,7 +244,7 @@ def update():
                  content.filename)
         raise HTTPError(409, output="file already exists")
 
-    store(packages.root, content.filename, content.value)
+    store(packages.root, content.filename, content.save)
     return ""
 
 

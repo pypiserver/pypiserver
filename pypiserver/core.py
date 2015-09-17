@@ -162,12 +162,10 @@ def exists(root, filename):
     return os.path.exists(dest_fn)
 
 
-def store(root, filename, data):
+def store(root, filename, save_method):
     assert "/" not in filename
     dest_fn = os.path.join(root, filename)
-    dest_fh = open(dest_fn, "wb")
-    dest_fh.write(data)
-    dest_fh.close()
+    save_method(dest_fn, overwrite=True) # Overwite check elsewhere.
 
     log.info("Stored package: %s", filename)
     return True
