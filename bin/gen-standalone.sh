@@ -28,7 +28,7 @@ gitversion=$(git describe --tags)
 cat  - $wheel > "$exec_zip" << EOF
 #!/usr/bin/env python
 ##
-## Standalone pypiserver-$gitversion
+## Standalone pypiserver-$gitversion $(date -R)
 ##
 ## Execute it like that:
 ##      $exec_zip <packages_dir>
