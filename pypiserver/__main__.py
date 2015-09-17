@@ -41,20 +41,22 @@ def usage():
 
     -a, --authenticate (UPDATE|download|list), ...
       comma-separated list of (case-insensitive) actions to authenticate
-      Requires -P option and cannot not be empty unless -P is '.'
+      Use '.' or '' for empty. Requires to have set the password (-P option).
       For example to password-protect package downloads (in addition to uploads)
       while leaving listings public, give:
         -P foo/htpasswd.txt  -a update,download
       To drop all authentications, use:
-        -P .  -a ''
+        -P .  -a .
+      Note that when uploads are not protected, the `register` command
+      is not necessary, but `~/.pypirc` still need username and password fields,
+      even if bogus.
       By default, only 'update' is password-protected.
 
     -P, --passwords PASSWORD_FILE
-      use apache htpasswd file PASSWORD_FILE to set usernames & passwords
-      used for authentication of certain actions (see -a option).
-      Set it explicitly to '.' to allow empty list of actions to authenticate;
-      then no `register` command is neccessary
-      (but `~/.pypirc` still need username and password fields, even if bogus).
+      use apache htpasswd file PASSWORD_FILE to set usernames & passwords when
+      authenticating certain actions (see -a option).
+      If you want to allow un-authorized access, set this option and -a
+      explicitly to empty (either '.' or'').
 
     --disable-fallback
       disable redirect to real PyPI index for packages not found in the
@@ -147,7 +149,7 @@ def main(argv=None):
     server = DEFAULT_SERVER
     redirect_to_fallback = True
     fallback_url = "http://pypi.python.org/simple"
-    authenticated = ['update']
+    authed_ops_list = ['update']
     password_file = None
     overwrite = False
     verbosity = 1
@@ -190,17 +192,22 @@ def main(argv=None):
 
     for k, v in opts:
         if k in ("-p", "--port"):
-            port = int(v)
+            try:
+                port = int(v)
+            except Exception as ex:
+                sys.exit("Invalid port(%r)!" % v)
         elif k in ("-a", "--authenticate"):
-            authenticated = [a.lower()
-                             for a in re.split("[, ]+", v.strip(" ,"))
-                             if a]
-            actions = ("list", "download", "update")
-            for a in authenticated:
-                if a not in actions:
-                    errmsg = "Action '%s' for option `%s` not one of %s!" % (
-                        a, k, actions)
-                    sys.exit(errmsg)
+            authed_ops_list = [a.lower()
+                               for a in re.split("[, ]+", v.strip(" ,"))
+                               if a]
+            if authed_ops_list == ['.']:
+                authed_ops_list = []
+            else:
+                actions = ("list", "download", "update")
+                for a in authed_ops_list:
+                    if a not in actions:
+                        errmsg = "Action '%s' for option `%s` not one of %s!"
+                        sys.exit(errmsg % (a, k, actions))
         elif k in ("-i", "--interface"):
             host = v
         elif k in ("-r", "--root"):
@@ -247,18 +254,19 @@ def main(argv=None):
             print(usage())
             sys.exit(0)
 
-    if password_file and password_file != '.' and not authenticated:
-        sys.exit(
-            "Actions to authenticate (-a) must not be empty, unless password file (-P) is '.'!")
+    if (not authed_ops_list and password_file != '.' or 
+            authed_ops_list and password_file == '.'):
+        auth_err = "When auth-ops-list is empty (-a=.), password-file (-P=%r) must also be empty ('.')!"
+        sys.exit(auth_err % password_file)
 
     if len(roots) == 0:
         roots.append(os.path.expanduser("~/packages"))
 
-    roots = [os.path.abspath(x) for x in roots]
+    roots=[os.path.abspath(x) for x in roots]
 
-    verbose_levels = [
+    verbose_levels=[
         logging.WARNING, logging.INFO, logging.DEBUG, logging.NOTSET]
-    log_level = list(zip(verbose_levels, range(verbosity)))[-1][0]
+    log_level=list(zip(verbose_levels, range(verbosity)))[-1][0]
     init_logging(level=log_level, filename=log_file, frmt=log_frmt)
 
     if command == "update":
@@ -280,10 +288,10 @@ def main(argv=None):
             server, ", ".join(server_names.keys())))
 
     from pypiserver import __version__, app
-    a = app(
+    a=app(
         root=roots,
         redirect_to_fallback=redirect_to_fallback,
-        authenticated=authenticated,
+        authenticated=authed_ops_list,
         password_file=password_file,
         fallback_url=fallback_url,
         overwrite=overwrite,

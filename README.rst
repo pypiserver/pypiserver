@@ -81,7 +81,7 @@ Currently only password-protected uploads are supported!
         http://www.htaccesstools.com/htpasswd-generator/
 
      It is also possible to disable authentication even for uploads.
-     Read the help for ``-P`` and ``-a`` options to see how it is done.
+     To avoid lazy security decisions, read help for ``-P`` and ``-a`` options.
 
 #. You  need to restart the server with the `-P` option only once
    (but user/password pairs can later be added or updated on the fly)::
@@ -93,13 +93,13 @@ Currently only password-protected uploads are supported!
      [distutils]
      index-servers =
        pypi
-       internal
+       local
 
      [pypi]
      username:<your_pypi_username>
      password:<your_pypi_passwd>
 
-     [internal]
+     [local]
      repository: http://localhost:8080
      username: <some_username>
      password: <some_passwd>
@@ -107,7 +107,10 @@ Currently only password-protected uploads are supported!
 #. Then from within the directory of the python-project you wish to upload,
    issue this command::
 
-     python setup.py sdist upload -r internal
+     python setup.py sdist upload -r local
+
+#. (optional) Use `twine <https://pypi.python.org/pypi/twine>`_ library 
+   to avoid storing and sending passwords in clear text.
 
 
 Client-side configurations
@@ -224,20 +227,22 @@ Running ``pypi-server -h`` will print a detailed usage message::
 
     -a, --authenticate (UPDATE|download|list), ...
       comma-separated list of (case-insensitive) actions to authenticate
-      Requires -P option and cannot not be empty unless -P is '.'
+      Use '.' or '' for empty. Requires to have set the password (-P option).
       For example to password-protect package downloads (in addition to uploads)
       while leaving listings public, give:
         -P foo/htpasswd.txt  -a update,download
       To drop all authentications, use:
-        -P .  -a ''
+        -P .  -a .
+      Note that when uploads are not protected, the `register` command 
+      is not necessary, but `~/.pypirc` still need username and password fields,
+      even if bogus.
       By default, only 'update' is password-protected.
 
     -P, --passwords PASSWORD_FILE
-      use apache htpasswd file PASSWORD_FILE to set usernames & passwords
-      used for authentication of certain actions (see -a option).
-      Set it explicitly to '.' to allow empty list of actions to authenticate;
-      then no `register` command is neccessary
-      (but `~/.pypirc` still need username and password fields, even if bogus).
+      use apache htpasswd file PASSWORD_FILE to set usernames & passwords when 
+      authenticating certain actions (see -a option).
+      If you want to allow un-authorized access, set this option and -a 
+      explicitly to empty (either '.' or''). 
 
     --disable-fallback
       disable redirect to real PyPI index for packages not found in the

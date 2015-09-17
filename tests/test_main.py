@@ -119,9 +119,20 @@ def test_welcome_file_default(main):
 def test_password_without_auth_list(main, monkeypatch):
     sysexit = mock.MagicMock(side_effect=ValueError('BINGO'))
     monkeypatch.setattr('sys.exit', sysexit)
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ValueError) as ex:
         main(["-P", "pswd-file", "-a", ""])
-    assert excinfo.value.args[0] == 'BINGO'
+    assert ex.value.args[0] == 'BINGO'
+    
+    with pytest.raises(ValueError) as ex:
+        main(["-a", "."])
+    assert ex.value.args[0] == 'BINGO'
+    with pytest.raises(ValueError) as ex:
+        main(["-a", ""])
+    assert ex.value.args[0] == 'BINGO'
+    
+    with pytest.raises(ValueError) as ex:
+        main(["-P", "."])
+    assert ex.value.args[0] == 'BINGO'
 
 def test_password_alone(main, monkeypatch):
     monkeypatch.setitem(sys.modules, 'passlib', mock.MagicMock())
@@ -131,4 +142,7 @@ def test_password_alone(main, monkeypatch):
 
 def test_dot_password_without_auth_list(main, monkeypatch):
     main(["-P", ".", "-a", ""])
+    assert main.app.module.config.authenticated == []
+    
+    main(["-P", ".", "-a", "."])
     assert main.app.module.config.authenticated == []
