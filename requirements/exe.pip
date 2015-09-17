@@ -1,0 +1,7 @@
+## Pip-dependencies for installing and running the project.
+##  from: https://caremad.io/blog/setup-vs-requirement/
+#
+# Install it with:
+#   pip install -r requirements/exe.pip
+
+-e .
