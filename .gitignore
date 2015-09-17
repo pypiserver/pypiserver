@@ -18,6 +18,7 @@ __pycache__/
 /build/
 /dist/
 /*.egg
+/.eggs
 /MANIFEST
 /README.html
 /pypi-server-standalone.py

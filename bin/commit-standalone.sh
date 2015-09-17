@@ -15,6 +15,12 @@ if [ ! -x "$git_wdir" ]; then
     chmod a+x "$git_wdir"
 fi
 
+## Ensure `standalone` branch exists (fails in travis).
+git fetch pypiserver standalone:pypiserver/standalone -f && \
+        git branch --track standalone pypiserver/standalone
+
+set -o errexit
+
 gitversion=$(git describe --tags)
 rm -rf .standalone
 if nwd_dump=$( "$git_wdir" . .standalone standalone 2>&1 ); then
