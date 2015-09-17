@@ -1,11 +1,11 @@
 #! /usr/bin/env python
+from __future__ import print_function
 
 import os
 import sys
 import getopt
 import re
 import logging
-from pypiserver import __version__
 from textwrap import dedent
 
 DEFAULT_SERVER = "auto"
@@ -214,8 +214,9 @@ def main(argv=None):
         elif k == "--welcome":
             welcome_file = v
         elif k == "--version":
-            sys.stdout.write("pypiserver %s\n" % __version__)
-            sys.exit(0)
+            from pypiserver import __version__
+            print("pypiserver %s\n" % __version__)
+            return
         elif k == "-U":
             command = "update"
         elif k == "-x":
@@ -278,7 +279,7 @@ def main(argv=None):
         sys.exit("unknown server %r. choose one of %s" % (
             server, ", ".join(server_names.keys())))
 
-    from pypiserver import app
+    from pypiserver import __version__, app
     a = app(
         root=roots,
         redirect_to_fallback=redirect_to_fallback,
