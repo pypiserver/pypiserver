@@ -12,7 +12,7 @@ tox
 wheel
 pytest>=2.3
 webtest;        python_version != '2.5'
-mock;           python_version < '3'
+mock;           python_version <= '3.2'
 gevent>=1.1b4;  python_version >= '3'
 twine>=1.6.0
 
