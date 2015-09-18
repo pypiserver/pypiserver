@@ -3,12 +3,13 @@
 from __future__ import unicode_literals
 
 import contextlib
+import io
 import subprocess
+import sys
 import time
 
 from py import path  # @UnresolvedImport
 import pytest
-import io
 
 
 @pytest.fixture
@@ -30,6 +31,8 @@ def server(packdir):
             proc.kill()
 
 
+@pytest.mark.skipif(sys.version_info[:2] == (3, 2),
+                    reason="urllib3 fails on twine (see https://travis-ci.org/ankostis/pypiserver/builds/81044993)")
 def test_centodeps(packdir, monkeypatch):
     from twine.commands import upload
 
