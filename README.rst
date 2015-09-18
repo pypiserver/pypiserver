@@ -109,8 +109,14 @@ Currently only password-protected uploads are supported!
 
      python setup.py sdist upload -r local
 
-#. (optional) Use `twine <https://pypi.python.org/pypi/twine>`_ library 
-   to avoid storing and sending passwords in clear text.
+.. Tip::
+    To avoid storing you passwords on disk in clear text, you may either:
+       - Use the `register` command with the `-r` option, like that::
+       
+           python setup.py sdist register -r local upload -r local
+           
+       - Use `twine <https://pypi.python.org/pypi/twine>`_ library which
+         breaks the procedure in two steps. 
 
 
 Client-side configurations
