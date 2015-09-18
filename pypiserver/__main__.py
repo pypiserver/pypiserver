@@ -14,7 +14,7 @@ log = logging.getLogger('pypiserver.main')
 
 
 def init_logging(level=None, frmt=None, filename=None):
-    logging.basicConfig(level=level, format=format)
+    logging.basicConfig(level=level, format=frmt)
     rlog = logging.getLogger()
     rlog.setLevel(level)
     if filename:
