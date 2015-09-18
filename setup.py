@@ -4,7 +4,7 @@ import sys
 
 from setuptools import setup
 
-tests_require =  ['pytest', 'twine']
+tests_require =  ['pytest>=2.3', 'tox', 'twine']
 if sys.version_info >= (3, 0):
     exec("def do_exec(co, loc): exec(co, loc)\n")
 else:
@@ -32,6 +32,7 @@ setup(name="pypiserver",
           'setuptools-git >= 0.3',  # Gather package-data from all files in git.
           'wheel',
       ],
+      install_requires=['passlib'],
       tests_require=tests_require,
       url="https://github.com/pypiserver/pypiserver",
       maintainer="Kostis Anagnostopoulos",

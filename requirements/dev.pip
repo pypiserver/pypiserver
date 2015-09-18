@@ -8,10 +8,14 @@
 pip>6
 setuptools
 setuptools-git>=0.3
+tox
 wheel
-pytest
-webtest
+pytest>=2.3
+webtest;        python_version != '2.5'
 mock;           python_version < '3'
 gevent>=1.1b4;  python_version >= '3'
 twine>=1.6.0
 
+WebOb==0.9.6.1;         python_version == '2.5'
+BeautifulSoup==3.2.1;   python_version == '2.5'
+WebTest==1.4.3;         python_version == '2.5'
