@@ -5,7 +5,7 @@
 
 -r exe.pip
 
-pip>6
+pip>=7
 setuptools
 setuptools-git>=0.3
 tox
