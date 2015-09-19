@@ -7,11 +7,13 @@ import functools
 import os
 import subprocess
 import sys
+import tempfile
 import time
 
 import pip
 from py import path  # @UnresolvedImport
 import pytest
+
 
 _BUFF_SIZE = 4096
 _port = 8090
@@ -32,10 +34,11 @@ def _run_server(packdir, port, with_password, other_cli=''):
         False: "-P. -a."
     }
     pswd_opts = pswd_opt_choices[with_password]
-    cmd = "python -m pypiserver.__main__ -v --overwrite -p %s %s %s %s" % (
-        port, pswd_opts, other_cli, packdir)
+    cmd = ("python -m pypiserver.__main__ -v --overwrite"
+           " -p %s %s %s %s" % (port, pswd_opts, other_cli, packdir))
     proc = subprocess.Popen(cmd.split(), bufsize=_BUFF_SIZE)
     time.sleep(1)
+    assert proc.poll() is None
 
     return Srv(proc, int(port), packdir)
 
@@ -59,16 +62,40 @@ def new_server(packdir, port, with_password=False, other_cli=''):
         _kill_server(srv)
 
 
+@contextlib.contextmanager
+def chdir(d):
+    old_d = os.getcwd()
+    try:
+        os.chdir(d)
+        yield
+    finally:
+        os.chdir(old_d)
+
+
 @pytest.fixture(scope='module')
-def package():
-    dist_path = path.local('tests/centodeps/wheelhouse')
-    pkgs = list(dist_path.visit('centodeps*.whl'))
-    assert len(pkgs) == 1
+def package(request):
+    def fin():
+        tmpdir.remove(True)
+    tmpdir = path.local(tempfile.mkdtemp())
+    request.addfinalizer(fin)
+    print(tmpdir)
+    src_setup_py = path.local().join('tests', 'centodeps-setup.py')
+    assert src_setup_py.check()
+    projdir = tmpdir.join('centodeps')
+    projdir.mkdir()
+    dst_setup_py = projdir.join('setup.py')
+    src_setup_py.copy(dst_setup_py)
+    assert dst_setup_py.check()
 
-    pkg = path.local(pkgs[0])
-    assert pkg.check()
+    with chdir(projdir.strpath):
+        assert os.system('python setup.py bdist_wheel') == 0
+        pkgs = list(projdir.join('dist').visit('centodeps*.whl'))
+        assert len(pkgs) == 1
 
-    return pkg
+        pkg = path.local(pkgs[0])
+        assert pkg.check()
+
+        return pkg
 
 
 @pytest.fixture(scope='module')
@@ -110,14 +137,6 @@ def pypirc(port):
 
 
 @pytest.fixture
-def uploader(pypirc, monkeypatch):
-    from twine.commands import upload
-    monkeypatch.setattr(upload.utils, 'get_repository_from_config',
-                        lambda *x: pypirc)
-    return upload
-
-
-@pytest.fixture
 def empty_packdir(tmpdir):
     return tmpdir.mkdir("dists")
 
@@ -137,7 +156,7 @@ def _run_pip(cmd):
 
 def _run_pip_install(cmd, port, install_dir, user=None, pswd=None):
     url = _build_url(port, user, pswd)
-    ncmd = 'install --download %s -i %s %s' % (install_dir, url, cmd)
+    ncmd = '-vv install --download %s -i %s %s' % (install_dir, url, cmd)
     return _run_pip(ncmd)
 
 
@@ -172,6 +191,22 @@ def test_pipInstall_protectedOk(protected_server, package, pipdir):
     assert pipdir.join(package.basename).check()
 
 
+@pytest.fixture
+def uploader(pypirc, monkeypatch):
+    from twine.commands import upload
+    monkeypatch.setattr(upload.utils, 'get_repository_from_config',
+                        lambda *x: pypirc)
+    return upload
+
+
+@pytest.fixture
+def registerer(pypirc, monkeypatch):
+    from twine.commands import register
+    monkeypatch.setattr(register.utils, 'get_repository_from_config',
+                        lambda *x: pypirc)
+    return register
+
+
 @pytest.mark.skipif(sys.version_info[:2] == (3, 2),
                     reason="urllib3 fails on twine (see https://travis-ci.org/ankostis/pypiserver/builds/81044993)")
 def test_upload(empty_packdir, port, package, uploader):
@@ -186,21 +221,12 @@ def test_upload(empty_packdir, port, package, uploader):
     assert empty_packdir.join(
         package.basename).check(), (package.basename, empty_packdir.listdir())
 
+
+# def test_register_upload(protected_server, pypirc, package, pipdir):
+#     register(package, repository, username, password,
+#              comment=None, config_file=None)
 #
-
-
-# @contextlib.contextmanager
-# def chdir(d):
-#     old_d = os.getcwd()
-#     try:
-#         os.chdir('tests/centodeps')
-#         yield
-#     finally:
-#         os.chdir(old_d)
-
-
-# def test_register_upload(open_server, pypirc, package, pipdir):
 #     with chdir('tests/centodeps'):
 #         url = _build_url(open_server.port, user='a', pswd='a')
-#         cmd = "python setup.py register  sdist upload -r %s" % url
+#         cmd = "python setup.py --no-user-cfg register sdist upload -r %s" % url
 #         assert subprocess.Popen(cmd.split(), bufsize=_BUFF_SIZE) == 0

@@ -9,10 +9,9 @@ if sys.version_info >= (3, 0):
 else:
     exec("def do_exec(co, loc): exec co in loc\n")
 
-tests_require =  ['pytest>=2.3', 'tox', 'twine', 'pip>=7']
+tests_require = ['pytest>=2.3', 'tox', 'twine', 'pip>=7', 'passlib']
 if sys.version_info <= (3, 2):
     tests_require.append('mock')
-
 
 
 def get_version():
@@ -32,42 +31,43 @@ setup(name="pypiserver",
       package_data={'pypiserver': ['welcome.html']},
       setup_requires=[
           'setuptools',
-          'setuptools-git >= 0.3',  # Gather package-data from all files in git.
+          # Gather package-data from all files in git.
+          'setuptools-git >= 0.3',
           'wheel',
       ],
       extras_require={
-            'passlib': ['passlib']
+          'passlib': ['passlib']
       },
       tests_require=tests_require,
       url="https://github.com/pypiserver/pypiserver",
       maintainer="Kostis Anagnostopoulos",
       maintainer_email="ankostis@gmail.com",
       classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Environment :: Web Environment",
-        "Intended Audience :: Developers",
-        "Intended Audience :: System Administrators",
-        "License :: OSI Approved :: BSD License",
-        "License :: OSI Approved :: zlib/libpng License",
-        "Operating System :: MacOS :: MacOS X",
-        "Operating System :: Microsoft :: Windows",
-        "Operating System :: POSIX",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.6",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.2",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
-        "Topic :: Software Development :: Build Tools",
-        "Topic :: System :: Software Distribution"],
+          "Development Status :: 5 - Production/Stable",
+          "Environment :: Web Environment",
+          "Intended Audience :: Developers",
+          "Intended Audience :: System Administrators",
+          "License :: OSI Approved :: BSD License",
+          "License :: OSI Approved :: zlib/libpng License",
+          "Operating System :: MacOS :: MacOS X",
+          "Operating System :: Microsoft :: Windows",
+          "Operating System :: POSIX",
+          "Operating System :: OS Independent",
+          "Programming Language :: Python :: 2",
+          "Programming Language :: Python :: 2.6",
+          "Programming Language :: Python :: 2.7",
+          "Programming Language :: Python :: 3",
+          "Programming Language :: Python :: 3.2",
+          "Programming Language :: Python :: 3.3",
+          "Programming Language :: Python :: 3.4",
+          "Programming Language :: Python :: 3.5",
+          "Topic :: Software Development :: Build Tools",
+          "Topic :: System :: Software Distribution"],
       zip_safe=True,
       entry_points={
-            'paste.app_factory': ['main=pypiserver:paste_app_factory'],
-            'console_scripts': ['pypi-server=pypiserver.__main__:main']
-        },
+          'paste.app_factory': ['main=pypiserver:paste_app_factory'],
+          'console_scripts': ['pypi-server=pypiserver.__main__:main']
+      },
       options={
           'bdist_wheel': {'universal': True},
       },

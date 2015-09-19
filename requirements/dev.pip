@@ -8,13 +8,14 @@
 pip>=7
 setuptools
 setuptools-git>=0.3
+passlib
 tox
 wheel
 pytest>=2.3
 webtest;        python_version != '2.5'
 mock;           python_version <= '3.2'
 gevent>=1.1b4;  python_version >= '3'
-twine>=1.6.0
+twine>=1.6.1
 
 WebOb==0.9.6.1;         python_version == '2.5'
 BeautifulSoup==3.2.1;   python_version == '2.5'
