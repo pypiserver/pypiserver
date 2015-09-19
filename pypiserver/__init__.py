@@ -1,8 +1,11 @@
 import re as _re
-version = __version__ = "1.1.9-dev.0"
+version = __version__ = "1.1.9-dev.1"
 __version_info__ = tuple(_re.split('[.-]', __version__))
-__updated__ = "2015-09-17 02:05:08"
+__updated__ = "2015-09-19 02:07:51"
 
+__title__ = "pypiserver"
+__summary__ = "A minimal PyPI server for use with pip/easy_install."
+__uri__ = "https://github.com/pypiserver/pypiserver"
 
 def app(root=None,
         redirect_to_fallback=True,

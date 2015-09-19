@@ -7,7 +7,7 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 |proj-license|
 
 :Maintainer: Kostis Anagnostopoulos <ankostis@gmail.com>
-:Version:   1.1.9-dev.0
+:Version:   1.1.9-dev.1
 :Date:      2015-03-8
 :Source:    https://github.com/pypiserver/pypiserver
 :PyPI:      https://pypi.python.org/pypi/pypiserver
@@ -112,11 +112,11 @@ Currently only password-protected uploads are supported!
 .. Tip::
     To avoid storing you passwords on disk in clear text, you may either:
        - Use the `register` command with the `-r` option, like that::
-       
+
            python setup.py sdist register -r local upload -r local
-           
+
        - Use `twine <https://pypi.python.org/pypi/twine>`_ library which
-         breaks the procedure in two steps. 
+         breaks the procedure in two steps.
 
 
 Client-side configurations
@@ -239,16 +239,16 @@ Running ``pypi-server -h`` will print a detailed usage message::
         -P foo/htpasswd.txt  -a update,download
       To drop all authentications, use:
         -P .  -a .
-      Note that when uploads are not protected, the `register` command 
+      Note that when uploads are not protected, the `register` command
       is not necessary, but `~/.pypirc` still need username and password fields,
       even if bogus.
       By default, only 'update' is password-protected.
 
     -P, --passwords PASSWORD_FILE
-      use apache htpasswd file PASSWORD_FILE to set usernames & passwords when 
+      use apache htpasswd file PASSWORD_FILE to set usernames & passwords when
       authenticating certain actions (see -a option).
-      If you want to allow un-authorized access, set this option and -a 
-      explicitly to empty (either '.' or''). 
+      If you want to allow un-authorized access, set this option and -a
+      explicitly to empty (either '.' or'').
 
     --disable-fallback
       disable redirect to real PyPI index for packages not found in the
