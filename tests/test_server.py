@@ -25,7 +25,7 @@ def port():
     _port += 1
     return _port
 
-Srv = namedtuple('Srv', ('proc', 'port', 'pdir'))
+Srv = namedtuple('Srv', ('proc', 'port', 'package'))
 
 
 def _run_server(packdir, port, with_password, other_cli=''):
@@ -34,8 +34,8 @@ def _run_server(packdir, port, with_password, other_cli=''):
         False: "-P. -a."
     }
     pswd_opts = pswd_opt_choices[with_password]
-    cmd = ("python -m pypiserver.__main__ -v --overwrite"
-           " -p %s %s %s %s" % (port, pswd_opts, other_cli, packdir))
+    cmd = "%s -m pypiserver.__main__ -v --overwrite -p %s %s %s %s" % (
+        sys.executable, port, pswd_opts, other_cli, packdir)
     proc = subprocess.Popen(cmd.split(), bufsize=_BUFF_SIZE)
     time.sleep(1)
     assert proc.poll() is None
@@ -72,13 +72,17 @@ def chdir(d):
         os.chdir(old_d)
 
 
+def run_python(cmd):
+    ncmd = '%s %s' % (sys.executable, cmd)
+    return os.system(ncmd)
+
+
 @pytest.fixture(scope='module')
 def package(request):
     def fin():
         tmpdir.remove(True)
     tmpdir = path.local(tempfile.mkdtemp())
     request.addfinalizer(fin)
-    print(tmpdir)
     src_setup_py = path.local().join('tests', 'centodeps-setup.py')
     assert src_setup_py.check()
     projdir = tmpdir.join('centodeps')
@@ -88,10 +92,11 @@ def package(request):
     assert dst_setup_py.check()
 
     with chdir(projdir.strpath):
-        assert os.system('python setup.py bdist_wheel') == 0
+        cmd = 'setup.py bdist_wheel'
+        assert run_python(cmd) == 0
         pkgs = list(projdir.join('dist').visit('centodeps*.whl'))
         assert len(pkgs) == 1
-
+        print('PKGS: %s' % pkgs)
         pkg = path.local(pkgs[0])
         assert pkg.check()
 
@@ -125,15 +130,6 @@ def protected_server(packdir, request):
     request.addfinalizer(fin)
 
     return srv
-
-
-@pytest.fixture
-def pypirc(port):
-    return {
-        "repository": "http://localhost:%s" % port,
-        "username": 'a',
-        "password": 'a'
-    }
 
 
 @pytest.fixture
@@ -192,6 +188,20 @@ def test_pipInstall_protectedOk(protected_server, package, pipdir):
 
 
 @pytest.fixture
+def pypirc(port):
+    return {}
+
+
+def update_pypirc(pypirc, port, user='foo', pswd='bar'):
+    url = _build_url(port, None, None)
+    pypirc.update({
+        'repository': url,
+        'username': user,
+        'password': pswd,
+    })
+
+
+@pytest.fixture
 def uploader(pypirc, monkeypatch):
     from twine.commands import upload
     monkeypatch.setattr(upload.utils, 'get_repository_from_config',
@@ -209,11 +219,27 @@ def registerer(pypirc, monkeypatch):
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 2),
                     reason="urllib3 fails on twine (see https://travis-ci.org/ankostis/pypiserver/builds/81044993)")
-def test_upload(empty_packdir, port, package, uploader):
-    with new_server(empty_packdir, port) as srv:
+def test_twineUpload_open(empty_packdir, port, package, uploader, pypirc):
+    user, pswd = 'foo', 'bar'
+    update_pypirc(pypirc, port, user=user, pswd=pswd)
+    with new_server(empty_packdir, port):
         uploader.upload([str(package)], repository='test',
                         sign=None, identity=None,
-                        username='a', password='a',
+                        username=user, password=pswd,
+                        comment=None, sign_with=None,
+                        config_file=None, skip_existing=None)
+        time.sleep(1)
+
+
+@pytest.mark.skipif(sys.version_info[:2] == (3, 2),
+                    reason="urllib3 fails on twine (see https://travis-ci.org/ankostis/pypiserver/builds/81044993)")
+def test_twineUpload_protected(empty_packdir, port, package, uploader, pypirc):
+    user, pswd = 'a', 'a'
+    update_pypirc(pypirc, port, user=user, pswd=pswd)
+    with new_server(empty_packdir, port, with_password=False):
+        uploader.upload([str(package)], repository='test',
+                        sign=None, identity=None,
+                        username=user, password=pswd,
                         comment=None, sign_with=None,
                         config_file=None, skip_existing=None)
         time.sleep(1)
@@ -222,11 +248,22 @@ def test_upload(empty_packdir, port, package, uploader):
         package.basename).check(), (package.basename, empty_packdir.listdir())
 
 
-# def test_register_upload(protected_server, pypirc, package, pipdir):
-#     register(package, repository, username, password,
-#              comment=None, config_file=None)
-#
-#     with chdir('tests/centodeps'):
-#         url = _build_url(open_server.port, user='a', pswd='a')
-#         cmd = "python setup.py --no-user-cfg register sdist upload -r %s" % url
-#         assert subprocess.Popen(cmd.split(), bufsize=_BUFF_SIZE) == 0
+@pytest.mark.skipif(sys.version_info[:2] == (3, 2),
+                    reason="urllib3 fails on twine (see https://travis-ci.org/ankostis/pypiserver/builds/81044993)")
+def test_twineRegister_open(open_server, package, registerer, pypirc):
+    srv = open_server
+    update_pypirc(pypirc, srv.port)
+    registerer.register(package.strpath, repository='test',
+                        username='foo', password='bar',
+                        comment=None, config_file=None)
+
+
+@pytest.mark.skipif(sys.version_info[:2] == (3, 2),
+                    reason="urllib3 fails on twine (see https://travis-ci.org/ankostis/pypiserver/builds/81044993)")
+def test_twineRegister_protectedOk(protected_server, package, registerer, pypirc):
+    srv = protected_server
+    user, pswd = 'a', 'a'
+    update_pypirc(pypirc, srv.port, user=user, pswd=pswd)
+    registerer.register(package.strpath, repository='test',
+                        username=user, password=pswd,
+                        comment=None, config_file=None)
