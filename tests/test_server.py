@@ -1,4 +1,16 @@
 #! /usr/bin/env py.test
+"""
+Checks an actual pypi-server against various clients.
+
+The tests below are using 3 ways to startup pypi-servers:
+
+- "open": a per-module server instance without any authed operations, 
+  serving a single `wheel` package, on a fixed port.
+- "open": a per-module server instance with authed 'download/upload' operations, 
+  serving a single `wheel` package, on a fixed port.
+- "new_server": starting a new server with any configurations on each test.
+
+"""
 from __future__ import print_function
 
 from collections import namedtuple
@@ -8,6 +20,7 @@ import os
 import subprocess
 import sys
 import tempfile
+from textwrap import dedent
 import time
 
 import pip
@@ -28,12 +41,12 @@ def port():
 Srv = namedtuple('Srv', ('proc', 'port', 'package'))
 
 
-def _run_server(packdir, port, with_password, other_cli=''):
+def _run_server(packdir, port, authed, other_cli=''):
     pswd_opt_choices = {
         True: "-Ptests/htpasswd.a.a -a update,download",
         False: "-P. -a."
     }
-    pswd_opts = pswd_opt_choices[with_password]
+    pswd_opts = pswd_opt_choices[authed]
     cmd = "%s -m pypiserver.__main__ -v --overwrite -p %s %s %s %s" % (
         sys.executable, port, pswd_opts, other_cli, packdir)
     proc = subprocess.Popen(cmd.split(), bufsize=_BUFF_SIZE)
@@ -53,9 +66,9 @@ def _kill_server(srv):
 
 
 @contextlib.contextmanager
-def new_server(packdir, port, with_password=False, other_cli=''):
+def new_server(packdir, port, authed=False, other_cli=''):
     srv = _run_server(packdir, port,
-                      with_password=with_password, other_cli=other_cli)
+                      authed=authed, other_cli=other_cli)
     try:
         yield srv
     finally:
@@ -72,13 +85,13 @@ def chdir(d):
         os.chdir(old_d)
 
 
-def run_python(cmd):
+def _run_python(cmd):
     ncmd = '%s %s' % (sys.executable, cmd)
     return os.system(ncmd)
 
 
 @pytest.fixture(scope='module')
-def package(request):
+def project(request):
     def fin():
         tmpdir.remove(True)
     tmpdir = path.local(tempfile.mkdtemp())
@@ -91,12 +104,16 @@ def package(request):
     src_setup_py.copy(dst_setup_py)
     assert dst_setup_py.check()
 
-    with chdir(projdir.strpath):
+    return projdir
+
+
+@pytest.fixture(scope='module')
+def package(project, request):
+    with chdir(project.strpath):
         cmd = 'setup.py bdist_wheel'
-        assert run_python(cmd) == 0
-        pkgs = list(projdir.join('dist').visit('centodeps*.whl'))
+        assert _run_python(cmd) == 0
+        pkgs = list(project.join('dist').visit('centodeps*.whl'))
         assert len(pkgs) == 1
-        print('PKGS: %s' % pkgs)
         pkg = path.local(pkgs[0])
         assert pkg.check()
 
@@ -113,7 +130,7 @@ open_port = 8081
 
 @pytest.fixture(scope='module')
 def open_server(packdir, request):
-    srv = _run_server(packdir, open_port, with_password=False)
+    srv = _run_server(packdir, open_port, authed=False)
     fin = functools.partial(_kill_server, srv)
     request.addfinalizer(fin)
 
@@ -125,7 +142,7 @@ protected_port = 8082
 
 @pytest.fixture(scope='module')
 def protected_server(packdir, request):
-    srv = _run_server(packdir, protected_port, with_password=True)
+    srv = _run_server(packdir, protected_port, authed=True)
     fin = functools.partial(_kill_server, srv)
     request.addfinalizer(fin)
 
@@ -174,13 +191,13 @@ def test_pipInstall_openOk(open_server, package, pipdir):
     assert pipdir.join(package.basename).check()
 
 
-def test_pipInstall_protectedFails(protected_server, pipdir):
+def test_pipInstall_authedFails(protected_server, pipdir):
     cmd = "centodeps"
     assert _run_pip_install(cmd, protected_server.port, pipdir) != 0
     assert not pipdir.listdir()
 
 
-def test_pipInstall_protectedOk(protected_server, package, pipdir):
+def test_pipInstall_authedOk(protected_server, package, pipdir):
     cmd = "centodeps"
     assert _run_pip_install(cmd, protected_server.port, pipdir,
                             user='a', pswd='a') == 0
@@ -199,6 +216,50 @@ def update_pypirc(pypirc, port, user='foo', pswd='bar'):
         'username': user,
         'password': pswd,
     })
+
+
+@contextlib.contextmanager
+def pypirc_file(txt):
+    pypirc_path = path.local('~/.pypirc', expanduser=1)
+    old_pypirc = pypirc_path.read() if pypirc_path.check() else None
+    pypirc_path.write(txt)
+    try:
+        yield
+    finally:
+        if old_pypirc:
+            pypirc_path.write(old_pypirc)
+        else:
+            pypirc_path.remove()
+
+
+def test_setuptoolsUpload_open(empty_packdir, port, project, package):
+    with new_server(empty_packdir, port):
+        with chdir(project.strpath):
+            url = _build_url(port, None, None)
+            cmd = "setup.py sdist upload -r %s" % url
+            assert _run_python(cmd) == 0
+            time.sleep(1)
+    assert len(empty_packdir.listdir()) == 1
+
+
+def test_setuptoolsUpload_authed(empty_packdir, port, project, package,
+                                 monkeypatch):
+    url = _build_url(port)
+    with pypirc_file(dedent("""\
+            [distutils]
+            index-servers: test
+            
+            [test]
+            repository: %s
+            username: a
+            password: a
+        """ % url)):
+        with new_server(empty_packdir, port, authed=True):
+            with chdir(project.strpath):
+                cmd = "setup.py bdist register -r test upload -r test"
+                assert _run_python(cmd) == 0
+                time.sleep(1)
+    assert len(empty_packdir.listdir()) == 1
 
 
 @pytest.fixture
@@ -223,26 +284,28 @@ def test_twineUpload_open(empty_packdir, port, package, uploader, pypirc):
     user, pswd = 'foo', 'bar'
     update_pypirc(pypirc, port, user=user, pswd=pswd)
     with new_server(empty_packdir, port):
-        uploader.upload([str(package)], repository='test',
+        uploader.upload([package.strpath], repository='test',
                         sign=None, identity=None,
                         username=user, password=pswd,
                         comment=None, sign_with=None,
                         config_file=None, skip_existing=None)
         time.sleep(1)
+    assert len(empty_packdir.listdir()) == 1
 
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 2),
                     reason="urllib3 fails on twine (see https://travis-ci.org/ankostis/pypiserver/builds/81044993)")
-def test_twineUpload_protected(empty_packdir, port, package, uploader, pypirc):
+def test_twineUpload_authed(empty_packdir, port, package, uploader, pypirc):
     user, pswd = 'a', 'a'
     update_pypirc(pypirc, port, user=user, pswd=pswd)
-    with new_server(empty_packdir, port, with_password=False):
-        uploader.upload([str(package)], repository='test',
+    with new_server(empty_packdir, port, authed=False):
+        uploader.upload([package.strpath], repository='test',
                         sign=None, identity=None,
                         username=user, password=pswd,
                         comment=None, sign_with=None,
                         config_file=None, skip_existing=None)
         time.sleep(1)
+    assert len(empty_packdir.listdir()) == 1
 
     assert empty_packdir.join(
         package.basename).check(), (package.basename, empty_packdir.listdir())
@@ -260,7 +323,7 @@ def test_twineRegister_open(open_server, package, registerer, pypirc):
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 2),
                     reason="urllib3 fails on twine (see https://travis-ci.org/ankostis/pypiserver/builds/81044993)")
-def test_twineRegister_protectedOk(protected_server, package, registerer, pypirc):
+def test_twineRegister_authedOk(protected_server, package, registerer, pypirc):
     srv = protected_server
     user, pswd = 'a', 'a'
     update_pypirc(pypirc, srv.port, user=user, pswd=pswd)
