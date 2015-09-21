@@ -1,6 +1,21 @@
 Changelog
 =========
 
+1.1.9 (2015-09-XX)
+------------------
+"Ssss-elections" bug-fix & maintenance release.
+ 
+- Upgrade bottle 1.11.6-->1.13-dev.
+    - Fixes `MAX_PARAM` limiting dependencies(#82)
+- Rework main startup and standalone:
+    - New standalone generation based on ZIPed wheel archive.
+    - Replace all sys.module mechanics with relative imports.
+    - Fix gevent monkeypatching (#49).
+- Fix program's requirement (i.e. add passlib as extra-requirement):
+    - provide requirements files also for developers.
+- Test actual clients (ie `pip`, `Twine`, `setuptools`).
+    - Test spurious `setuptools` failures (#91).
+
 1.1.8 (2015-09-15)
 ------------------
 "Finikounda" release.
