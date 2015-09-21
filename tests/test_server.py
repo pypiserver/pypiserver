@@ -47,7 +47,7 @@ def _run_server(packdir, port, authed, other_cli=''):
         False: "-P. -a."
     }
     pswd_opts = pswd_opt_choices[authed]
-    cmd = "%s -m pypiserver.__main__ -v --overwrite -p %s %s %s %s" % (
+    cmd = "%s -m pypiserver.__main__ -vvv --overwrite -p %s %s %s %s" % (
         sys.executable, port, pswd_opts, other_cli, packdir)
     proc = subprocess.Popen(cmd.split(), bufsize=_BUFF_SIZE)
     time.sleep(1)
@@ -232,18 +232,23 @@ def pypirc_file(txt):
             pypirc_path.remove()
 
 
-def test_setuptoolsUpload_open(empty_packdir, port, project, package):
+@pytest.mark.parametrize("pkg_frmt", ['bdist', 'bdist_wheel'])
+def test_setuptoolsUpload_open(empty_packdir, port, project, package,
+                               pkg_frmt):
     with new_server(empty_packdir, port):
         with chdir(project.strpath):
             url = _build_url(port, None, None)
-            cmd = "setup.py sdist upload -r %s" % url
-            assert _run_python(cmd) == 0
+            cmd = "setup.py -vvv %s upload -r %s" % (pkg_frmt, url)
+            for i in range(5):
+                print('++Attempt #%s' % i)
+                assert _run_python(cmd) == 0
             time.sleep(1)
     assert len(empty_packdir.listdir()) == 1
 
 
+@pytest.mark.parametrize("pkg_frmt", ['bdist', 'bdist_wheel'])
 def test_setuptoolsUpload_authed(empty_packdir, port, project, package,
-                                 monkeypatch):
+                                 pkg_frmt, monkeypatch):
     url = _build_url(port)
     with pypirc_file(dedent("""\
             [distutils]
@@ -256,9 +261,10 @@ def test_setuptoolsUpload_authed(empty_packdir, port, project, package,
         """ % url)):
         with new_server(empty_packdir, port, authed=True):
             with chdir(project.strpath):
-                cmd = "setup.py bdist register -r test upload -r test"
-                assert _run_python(cmd) == 0
-                time.sleep(1)
+                cmd = "setup.py -vvv %s register -r test upload -r test" % pkg_frmt
+                for i in range(5):
+                    print('++Attempt #%s' % i)
+                    assert _run_python(cmd) == 0
     assert len(empty_packdir.listdir()) == 1
 
 
