@@ -265,6 +265,7 @@ def test_setuptoolsUpload_authed(empty_packdir, port, project, package,
                 for i in range(5):
                     print('++Attempt #%s' % i)
                     assert _run_python(cmd) == 0
+            time.sleep(1)
     assert len(empty_packdir.listdir()) == 1
 
 

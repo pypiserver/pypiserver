@@ -547,7 +547,7 @@ See the `LICENSE.txt` file.
     :target: https://pypi.python.org/pypi/pypiserver/
     :alt: Downloads
 
-.. |proj-license| image:: https://img.shields.io/badge/license-EUPL%201.1%2B-blue.svg
+.. |proj-license| image:: https://img.shields.io/badge/license-BSD%2Bzlib%2Flibpng-blue.svg
     :target: https://raw.githubusercontent.com/pypiserver/pypiserver/master/LICENSE.txt
     :alt: Project License
 
