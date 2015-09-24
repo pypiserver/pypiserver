@@ -34,7 +34,7 @@ with these versions.
 Run the following commands to get your PyPI server up and running::
 
   ## Installation.
-  pip install pypiserver
+  pip install pypiserver[passlib]
   mkdir ~/packages                      ## Copy packages into this directory.
 
   ## Start server.
