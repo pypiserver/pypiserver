@@ -358,3 +358,139 @@ def bad_url(prefix):
     p += "/simple/%s/" % prefix
 
     return redirect(p)
+
+###############################################################################
+####################              ADD by FAO               ####################
+###############################################################################
+import time
+try:
+    from pkginfo import SDist
+    PKGINFO = True
+except:
+    PKGINFO = False
+
+try:
+    from docutils import core
+    from docutils.writers.html4css1 import Writer,HTMLTranslator
+
+    class NoHeaderHTMLTranslator(HTMLTranslator):
+        def __init__(self, document):
+            HTMLTranslator.__init__(self, document)
+            self.head_prefix = ['','','','','']
+            self.body_prefix = []
+            self.body_suffix = []
+            self.stylesheet = []
+
+    _w = Writer()
+    _w.translator_class = NoHeaderHTMLTranslator
+    RESTIFY=True
+except:
+    RESTIFY = False
+
+import math
+
+class Size( long ):
+    """ define a size class to allow custom formatting
+        Implements a format specifier of S for the size class - which displays a human readable in b, kb, Mb etc
+    """
+    def __format__(self, fmt):
+        if fmt == "" or fmt[-1] != "S":
+            if fmt[-1].tolower() in ['b','c','d','o','x','n','e','f','g','%']:
+                # Numeric format.
+                return long(self).__format__(fmt)
+            else:
+                return str(self).__format__(fmt)
+
+        val, s = float(self), ["b ","Kb","Mb","Gb","Tb","Pb"]
+        if val<1:
+            # Can't take log(0) in any base.
+            i,v = 0,0
+        else:
+            i = int(math.log(val,1024))+1
+            v = val / math.pow(1024,i)
+            v,i = (v,i) if v > 0.5 else (v*1024,i-1)
+        return ("{0:{1}f}"+s[i]).format(v, fmt[:-1])
+
+class Dist(object):
+
+    def __init__(self, filename):
+        filename = os.path.split(filename)[1]
+        entries = find_packages(packages())
+        for x in entries:
+            f = x.relfn.replace("\\", "/")
+            if f == filename:
+                self.pkg = x
+                self.pkg.name = self.pkg.pkgname
+                self.pkg.ctime = time.strftime('%Y-%m-%d',  time.gmtime(os.path.getmtime(self.pkg.fn)))
+                self.pkg.size = "{0:.1S}".format(Size(os.path.getsize(self.pkg.fn)))
+        if PKGINFO:
+            self.pkginfo = SDist(self.pkg.fn)
+        else:
+            self.pkginfo = None
+
+    def __getattr__(self, name):
+        try:
+            return self.pkginfo.__dict__[name]
+        except:
+            pass
+        try:
+            return self.pkg.__dict__[name]
+        except:
+            pass
+        if name in ('classifiers', 'platforms'):
+            return []
+        if name == 'html':
+            if RESTIFY:
+                return core.publish_string(self.description,writer=_w)
+            return '<div class="document">%s</div>' % self.description.replace('\n','<br/>')
+        return ""
+
+from .bottle import TEMPLATE_PATH
+TEMPLATE_PATH.insert(0,os.path.join(os.path.dirname(__file__), 'template'))
+
+@app.route("/pypi")
+@auth("list")
+def simpleindex_redirect():
+    return redirect(request.fullpath + "/")
+
+
+@app.route("/pypi/")
+@auth("list")
+def pypiindex():
+    links = sorted(get_prefixes(packages()))
+    lst = []
+    for prefix in links:
+            files = [[x.relfn, x.fn] for x in sorted(find_packages(
+                packages(), prefix=prefix), key=lambda x: (x.parsed_version, x.relfn))]
+            dist = Dist(files[-1][1])
+            lst.append([prefix, files[-1][0], dist.summary, dist.ctime])
+    return template('pypiindex',
+                        links = lst,
+                        VERSION = __version__,
+                        CNTPKG = len(lst))
+
+@app.route("/pypi/:filename#.*#")
+@auth("list")
+def pypipkg(filename=""):
+    entries = find_packages(packages())
+    for x in entries:
+        f = x.relfn.replace("\\", "/")
+        if f == filename:
+            pkg = x
+            lstpkgs = [Dist(x.fn) for x in sorted(find_packages(
+                packages(), prefix=pkg.pkgname), key=lambda x: (x.parsed_version, x.relfn))]
+            lastpkg = lstpkgs[-1]
+    infopkg = Dist(pkg.fn)
+    return template('pypipkg',
+                    file = filename,
+                    lastfile = lastpkg,
+                    lstpkgs = lstpkgs,
+                    infopkg = infopkg)
+
+@app.route('/static/<path:path>')
+def callback(path):
+    return redirect("http://pypi.python.org/static/%s" % path)
+
+
+#TODO: manage local template and static for pypi
+#TODO: create as pypiweb as module
