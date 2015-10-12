@@ -388,7 +388,9 @@ except:
     RESTIFY = False
 
 import math
-
+if sys.version_info > (3,):
+    long = int
+    
 class Size( long ):
     """ define a size class to allow custom formatting
         Implements a format specifier of S for the size class - which displays a human readable in b, kb, Mb etc
