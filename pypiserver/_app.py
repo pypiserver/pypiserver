@@ -272,6 +272,7 @@ def simpleindex():
             <h1>Simple Index</h1>
             % for p in links:
                  <a href="{{p}}/">{{p}}</a><br>
+            % end
         </body>
     </html>
     """
@@ -305,6 +306,7 @@ def simple(prefix=""):
             <h1>Links for {{prefix}}</h1>
             % for file, href in links:
                  <a href="{{href}}">{{file}}</a><br>
+            % end
         </body>
     </html>
     """
@@ -334,6 +336,7 @@ def list_packages():
             <h1>Index of packages</h1>
             % for file, href in links:
                  <a href="{{href}}">{{file}}</a><br>
+            % end
         </body>
     </html>
     """
