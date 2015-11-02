@@ -1,0 +1,7 @@
+pypiserver:
+  image: pypiserver
+  volumes:
+    - /var/pypiserver:/data
+  command: -p 80 -P /data/.htaccess -a update,download,list /data/packages
+  ports:
+    - "8080:80"
