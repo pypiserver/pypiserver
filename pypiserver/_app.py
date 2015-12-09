@@ -33,6 +33,7 @@ class Configuration(object):
         self.htpasswdfile = None
         self.welcome_file = None
         self.welcome_msg = None
+        self.alt_auth = None
 
 config = Configuration()
 
@@ -56,8 +57,12 @@ class auth(object):
                 if not request.auth or request.auth[1] is None:
                     raise HTTPError(
                         401, header={"WWW-Authenticate": 'Basic realm="pypi"'})
-                if not validate_user(*request.auth):
-                    raise HTTPError(403)
+                if config.alt_auth is not None:
+                    if not config.alt_auth(*request.auth):
+                        raise HTTPError(403)
+                else:
+                    if not validate_user(*request.auth):
+                        raise HTTPError(403)
             return method(*args, **kwargs)
 
         return protector
@@ -74,6 +79,7 @@ def configure(root=None,
               log_err_frmt=None,
               welcome_file=None,
               cache_control=None,
+              alt_auth=None
               ):
     global packages
 
@@ -87,9 +93,11 @@ def configure(root=None,
                                   log_req_frmt=log_req_frmt,
                                   log_res_frmt=log_res_frmt,
                                   log_err_frmt=log_err_frmt,
-                                  cache_control=cache_control))
+                                  cache_control=cache_control,
+                                  alt_auth=alt_auth))
 
     config.authenticated = authenticated or []
+    config.alt_auth = alt_auth if type(alt_auth) is type(validate_user) else None
 
     if root is None:
         root = os.path.expanduser("~/packages")

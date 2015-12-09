@@ -19,6 +19,7 @@ def app(root=None,
         log_err_frmt=None,
         welcome_file=None,
         cache_control=None,
+        alt_auth=None
         ):
     import sys
     import os
@@ -35,8 +36,7 @@ def app(root=None,
     _app.configure(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url,
                    authenticated=authenticated or [], password_file=password_file, overwrite=overwrite,
                    log_req_frmt=log_req_frmt, log_res_frmt=log_res_frmt, log_err_frmt=log_err_frmt,
-                   welcome_file=welcome_file,
-                   cache_control=cache_control,
+                   welcome_file=welcome_file, cache_control=cache_control, alt_auth=alt_auth
                    )
     _app.app.module = _app
 
