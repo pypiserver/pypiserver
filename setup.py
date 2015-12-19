@@ -9,7 +9,7 @@ if sys.version_info >= (3, 0):
 else:
     exec("def do_exec(co, loc): exec co in loc\n")
 
-tests_require = ['pytest>=2.3', 'tox', 'twine', 'pip>=7', 'passlib']
+tests_require = ['pytest>=2.3', 'tox', 'twine', 'pip>=7', 'passlib', 'webtest']
 if sys.version_info <= (3, 2):
     tests_require.append('mock')
 
