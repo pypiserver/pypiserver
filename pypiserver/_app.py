@@ -7,6 +7,8 @@ import mimetypes
 import logging
 import pkg_resources
 
+from . import core
+
 try:
     from io import BytesIO
 except ImportError:
@@ -19,7 +21,6 @@ except ImportError:  # PY2
 
 from .bottle import static_file, redirect, request, response, HTTPError, Bottle, template
 from . import __version__
-from .core import listdir, find_packages, store, get_prefixes, exists
 
 log = logging.getLogger('pypiserver.http')
 packages = None
@@ -110,7 +111,7 @@ def configure(root=None,
             err = sys.exc_info()[1]
             sys.exit("Error: while trying to list %r: %s" % (r, err))
 
-    packages = lambda: itertools.chain(*[listdir(r) for r in roots])
+    packages = lambda: itertools.chain(*[core.listdir(r) for r in roots])
     packages.root = roots[0]
 
     config.redirect_to_fallback = redirect_to_fallback
@@ -218,7 +219,7 @@ def update():
         if not name or not version:
             raise HTTPError(400, "Name or version not specified")
         found = None
-        for pkg in find_packages(packages()):
+        for pkg in core.find_packages(packages()):
             if pkg.pkgname == name and pkg.version == version:
                 found = pkg
                 break
@@ -238,13 +239,13 @@ def update():
     if "/" in content.filename:
         raise HTTPError(400, output="bad filename")
 
-    if not config.overwrite and exists(packages.root, content.filename):
+    if not config.overwrite and core.exists(packages.root, content.filename):
         log.warn("Cannot upload package(%s) since it already exists! \n" +
                  "  You may use `--overwrite` option when starting server to disable this check. ",
                  content.filename)
         raise HTTPError(409, output="file already exists")
 
-    store(packages.root, content.filename, content.save)
+    core.store(packages.root, content.filename, content.save)
     return ""
 
 
@@ -257,7 +258,7 @@ def simpleindex_redirect():
 @app.route("/simple/")
 @auth("list")
 def simpleindex():
-    links = sorted(get_prefixes(packages()))
+    links = sorted(core.get_prefixes(packages()))
     tmpl = """\
     <html>
         <head>
@@ -281,7 +282,7 @@ def simple(prefix=""):
     if not fp.endswith("/"):
         fp += "/"
 
-    files = [x.relfn for x in sorted(find_packages(
+    files = [x.relfn for x in sorted(core.find_packages(
         packages(), prefix=prefix), key=lambda x: (x.parsed_version, x.relfn))]
     if not files:
         if config.redirect_to_fallback:
@@ -313,7 +314,7 @@ def list_packages():
     if not fp.endswith("/"):
         fp += "/"
 
-    files = [x.relfn for x in sorted(find_packages(packages()),
+    files = [x.relfn for x in sorted(core.find_packages(packages()),
                                      key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version))]
     links = [(f.replace("\\", "/"), urljoin(fp, f)) for f in files]
     tmpl = """\
@@ -334,7 +335,7 @@ def list_packages():
 @app.route('/packages/:filename#.*#')
 @auth("download")
 def server_static(filename):
-    entries = find_packages(packages())
+    entries = core.find_packages(packages())
     for x in entries:
         f = x.relfn.replace("\\", "/")
         if f == filename:
