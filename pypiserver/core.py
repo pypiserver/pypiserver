@@ -3,9 +3,11 @@
 
 import os
 import re
-import mimetypes
-import warnings
 import logging
+import warnings
+import mimetypes
+import hashlib
+
 
 warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
 mimetypes.add_type("application/octet-stream", ".egg")
@@ -107,6 +109,12 @@ class PkgFile(object):
             self.__class__.__name__,
             ", ".join(["%s=%r" % (k, v) for k, v in sorted(self.__dict__.items())]))
 
+    def relfn_unix(self):
+        return self.relfn.replace("\\", "/")
+
+    def hash(self, hash_algo='md5'):
+        return '%s=%.32s' % (hash_algo, digest_file(self.fn, hash_algo))
+
 
 def listdir(root):
     root = os.path.abspath(root)
@@ -169,3 +177,19 @@ def store(root, filename, save_method):
 
     log.info("Stored package: %s", filename)
     return True
+
+def digest_file(fpath, hash_algo):
+    """
+    Reads and digests a file according to specified hashing-algorith.
+
+    :param str sha256: any algo contained in :mod:`hashlib`
+    :return: <hash_algo>=<hex_digest>
+
+    From http://stackoverflow.com/a/21565932/548792
+    """
+    blocksize = 2**16
+    digester = getattr(hashlib, hash_algo)()
+    with open(fpath, 'rb') as f:
+        for block in iter(lambda: f.read(blocksize), b''):
+            digester.update(block)
+    return digester.hexdigest()[:32]

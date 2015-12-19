@@ -233,7 +233,7 @@ def test_nonroot_simple_index(root, testpriv):
         resp = testpriv.get(path)
         links = resp.html("a")
         assert len(links) == 1
-        assert links[0]["href"] == "/priv/packages/foobar-1.0.zip"
+        assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
 
 
 def test_nonroot_simple_packages(root, testpriv):
@@ -243,7 +243,7 @@ def test_nonroot_simple_packages(root, testpriv):
         resp = testpriv.get(path)
         links = resp.html("a")
         assert len(links) == 1
-        assert links[0]["href"] == "/priv/packages/foobar-1.0.zip"
+        assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
 
 
 def test_root_no_relative_paths(testpriv):

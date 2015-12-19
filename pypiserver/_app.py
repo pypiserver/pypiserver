@@ -282,15 +282,16 @@ def simple(prefix=""):
     if not fp.endswith("/"):
         fp += "/"
 
-    files = [x.relfn for x in sorted(core.find_packages(
-        packages(), prefix=prefix), key=lambda x: (x.parsed_version, x.relfn))]
+    files = sorted(core.find_packages(packages(), prefix=prefix),
+                   key=lambda x: (x.parsed_version, x.relfn))
     if not files:
         if config.redirect_to_fallback:
             return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
         return HTTPError(404)
 
-    links = [(os.path.basename(f), urljoin(fp, "../../packages/%s" %
-                                           f.replace("\\", "/"))) for f in files]
+    links = [(os.path.basename(f.relfn),
+              urljoin(fp, "../../packages/%s#%s" % (f.relfn_unix(), f.hash())))
+             for f in files]
     tmpl = """\
     <html>
         <head>
@@ -314,9 +315,12 @@ def list_packages():
     if not fp.endswith("/"):
         fp += "/"
 
-    files = [x.relfn for x in sorted(core.find_packages(packages()),
-                                     key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version))]
-    links = [(f.replace("\\", "/"), urljoin(fp, f)) for f in files]
+    files = sorted(core.find_packages(packages()),
+                      key=lambda x: (os.path.dirname(x.relfn),
+                                     x.pkgname,
+                                     x.parsed_version))
+    links = [(f.relfn_unix(), '%s#%s' % (urljoin(fp, f.relfn), f.hash()))
+             for f in files]
     tmpl = """\
     <html>
         <head>
@@ -337,7 +341,7 @@ def list_packages():
 def server_static(filename):
     entries = core.find_packages(packages())
     for x in entries:
-        f = x.relfn.replace("\\", "/")
+        f = x.relfn_unix()
         if f == filename:
             response = static_file(
                 filename, root=x.root, mimetype=mimetypes.guess_type(filename)[0])
