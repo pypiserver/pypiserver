@@ -8,6 +8,7 @@ import logging
 import pkg_resources
 
 from . import core
+from collections import OrderedDict
 
 try:
     from io import BytesIO
@@ -24,25 +25,25 @@ from . import __version__
 
 log = logging.getLogger('pypiserver.http')
 packages = None
-
+config = None
 
 class Configuration(object):
+    def __init__(self, **kwds):
+        vars(self).update(kwds)
 
-    def __init__(self):
-        self.fallback_url = "http://pypi.python.org/simple"
-        self.redirect_to_fallback = True
-        self.htpasswdfile = None
-        self.welcome_file = None
-        self.welcome_msg = None
-        self.alt_auth = None
+    def __repr__(self, *args, **kwargs):
+        return 'Configuration(**%s)' % vars(self)
 
-config = Configuration()
+    def __str__(self, *args, **kwargs):
+        return 'Configuration:\n%s' % '\n'.join('%16s = %s' % (k, v)
+                for k, v in sorted(vars(self).items()))
 
 
-def validate_user(username, password):
-    if config.htpasswdfile is not None:
-        config.htpasswdfile.load_if_changed()
-        return config.htpasswdfile.check_password(username, password)
+
+def auth_by_htpasswd_file(username, password):
+    if config.password_file is not None:
+        config.password_file.load_if_changed()
+        return config.password_file.check_password(username, password)
 
 
 class auth(object):
@@ -76,81 +77,104 @@ def configure(root=None,
               log_err_frmt=None,
               welcome_file=None,
               cache_control=None,
-              alt_auth=None
+              auther=None
               ):
-    global packages
+    """
+    :param callable auther:
+            An API-only options that if it evaluates to a callable,
+            it is invoked to allow access to protected operations
+            (instead of htpaswd mechanism) like that::
 
-    log.info("Starting(%s)", dict(root=root,
-                                  redirect_to_fallback=redirect_to_fallback,
-                                  fallback_url=fallback_url,
-                                  authenticated=authenticated,
-                                  password_file=password_file,
-                                  overwrite=overwrite,
-                                  welcome_file=welcome_file,
-                                  log_req_frmt=log_req_frmt,
-                                  log_res_frmt=log_res_frmt,
-                                  log_err_frmt=log_err_frmt,
-                                  cache_control=cache_control,
-                                  alt_auth=alt_auth))
+                auther(username, password): bool
 
-    config.authenticated = authenticated or []
-    config.auther = alt_auth if callable(alt_auth) else validate_user
+            When defined, `password_file` is ignored.
+
+    """
+    global packages, config
+
+    log.info("Invoked with: %s", Configuration(
+            root=root,
+            redirect_to_fallback=redirect_to_fallback,
+            fallback_url=fallback_url,
+            authenticated=authenticated,
+            password_file=password_file,
+            overwrite=overwrite,
+            welcome_file=welcome_file,
+            log_req_frmt=log_req_frmt,
+            log_res_frmt=log_res_frmt,
+            log_err_frmt=log_err_frmt,
+            cache_control=cache_control,
+            auther=auther
+    ))
+
 
     if root is None:
         root = os.path.expanduser("~/packages")
-
-    if fallback_url is None:
-        fallback_url = "http://pypi.python.org/simple"
-
-    if not isinstance(root, (list, tuple)):
-        roots = [root]
-    else:
-        roots = root
-
+    roots = root if isinstance(root, (list, tuple)) else [root]
     roots = [os.path.abspath(r) for r in roots]
     for r in roots:
         try:
             os.listdir(r)
         except OSError:
             err = sys.exc_info()[1]
-            sys.exit("Error: while trying to list %r: %s" % (r, err))
+            sys.exit("Error: while trying to list root(%s): %s" % (r, err))
 
     packages = lambda: itertools.chain(*[core.listdir(r) for r in roots])
     packages.root = roots[0]
 
-    config.redirect_to_fallback = redirect_to_fallback
-    config.fallback_url = fallback_url
-    config.cache_control = cache_control
-    if password_file and password_file != '.':
-        from passlib.apache import HtpasswdFile
-        config.htpasswdfile = HtpasswdFile(password_file)
-    config.overwrite = overwrite
+    authenticated = authenticated or []
+    if not callable(auther):
+        auther = auth_by_htpasswd_file
+        if password_file and password_file != '.':
+            from passlib.apache import HtpasswdFile
+            password_file = HtpasswdFile(password_file)
 
     # Read welcome-msg from external file,
     #     or failback to the embedded-msg (ie. in standalone mode).
     #
     try:
         if not welcome_file:
-            config.welcome_file = "welcome.html"
-            config.welcome_msg = pkg_resources.resource_string(  # @UndefinedVariable
+            welcome_file = "welcome.html"
+            welcome_msg = pkg_resources.resource_string(  # @UndefinedVariable
                 __name__, "welcome.html").decode("utf-8")  # @UndefinedVariable
         else:
-            config.welcome_file = welcome_file
+            welcome_file = welcome_file
             with io.open(welcome_file, 'r', encoding='utf-8') as fd:
-                config.welcome_msg = fd.read()
+                welcome_msg = fd.read()
     except Exception:
         log.warning(
             "Could not load welcome-file(%s)!", welcome_file, exc_info=1)
-    config.log_req_frmt = log_req_frmt
-    config.log_res_frmt = log_res_frmt
-    config.log_err_frmt = log_err_frmt
+
+    if fallback_url is None:
+        fallback_url = "http://pypi.python.org/simple"
+
+    log_req_frmt = log_req_frmt
+    log_res_frmt = log_res_frmt
+    log_err_frmt = log_err_frmt
+
+    config = Configuration(
+            root=root,
+            redirect_to_fallback=redirect_to_fallback,
+            fallback_url=fallback_url,
+            authenticated=authenticated,
+            password_file=password_file,
+            overwrite=overwrite,
+            welcome_file=welcome_file,
+            welcome_msg=welcome_msg,
+            log_req_frmt=log_req_frmt,
+            log_res_frmt=log_res_frmt,
+            log_err_frmt=log_err_frmt,
+            cache_control=cache_control,
+            auther=auther
+    )
+    log.info("Starting with: %s", config)
 
 app = Bottle()
 
 
 @app.hook('before_request')
 def log_request():
-    log.info(config.log_req_frmt, request.environ)
+    log.info(config.    log_req_frmt, request.environ)
 
 
 @app.hook('after_request')

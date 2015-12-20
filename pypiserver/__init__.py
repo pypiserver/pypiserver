@@ -8,46 +8,10 @@ __summary__ = "A minimal PyPI server for use with pip/easy_install."
 __uri__ = "https://github.com/pypiserver/pypiserver"
 
 
-def app(root=None,
-        redirect_to_fallback=True,
-        fallback_url=None,
-        authenticated=None,
-        password_file=None,
-        overwrite=None,
-        log_req_frmt=None,
-        log_res_frmt=None,
-        log_err_frmt=None,
-        welcome_file=None,
-        cache_control=None,
-        alt_auth=None
-        ):
-    """
-    :param callable alt_auth:
-            An API-only options that if it evaluates to a callable,
-            it is invoked for granting auth (instead of htpaswd mechanism)
-            like that::
+def app(**kwds):
+    from . import _app, bottle
 
-                alt_auth(*bottle.request.auth)
-
-    """
-
-    import sys
-    import os
-    from . import core, _app
-
-    from . import bottle
-
-    if root is None:
-        root = os.path.expanduser("~/packages")
-
-    if fallback_url is None:
-        fallback_url = "http://pypi.python.org/simple"
-
-    _app.configure(root=root, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url,
-                   authenticated=authenticated or [], password_file=password_file, overwrite=overwrite,
-                   log_req_frmt=log_req_frmt, log_res_frmt=log_res_frmt, log_err_frmt=log_err_frmt,
-                   welcome_file=welcome_file, cache_control=cache_control, alt_auth=alt_auth
-                   )
+    _app.configure(**kwds)
     _app.app.module = _app
 
     bottle.debug(True)

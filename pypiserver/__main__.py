@@ -1,4 +1,9 @@
 #! /usr/bin/env python
+"""
+.. NOTE:: To the developer:
+    This module is moved to the root of the standalone zip-archive,
+    to be used as its entry-point. Therefore DO NOT import relative.
+"""
 from __future__ import print_function
 
 import os
@@ -148,13 +153,13 @@ def main(argv=None):
     port = 8080
     server = DEFAULT_SERVER
     redirect_to_fallback = True
-    fallback_url = "http://pypi.python.org/simple"
+    fallback_url = None
     authed_ops_list = ['update']
     password_file = None
     overwrite = False
     verbosity = 1
     log_file = None
-    log_frmt = "g%(asctime)s|%(levelname)s|%(thread)d|%(message)s"
+    log_frmt = "%(asctime)s|%(levelname)s|%(thread)d|%(message)s"
     log_req_frmt = "%(bottle.request)s"
     log_res_frmt = "%(status)s"
     log_err_frmt = "%(body)s: %(exception)s \n%(traceback)s"
@@ -254,7 +259,7 @@ def main(argv=None):
             print(usage())
             sys.exit(0)
 
-    if (not authed_ops_list and password_file != '.' or 
+    if (not authed_ops_list and password_file != '.' or
             authed_ops_list and password_file == '.'):
         auth_err = "When auth-ops-list is empty (-a=.), password-file (-P=%r) must also be empty ('.')!"
         sys.exit(auth_err % password_file)
@@ -288,7 +293,7 @@ def main(argv=None):
             server, ", ".join(server_names.keys())))
 
     from pypiserver import __version__, app
-    a=app(
+    app = app(
         root=roots,
         redirect_to_fallback=redirect_to_fallback,
         authenticated=authed_ops_list,
@@ -301,7 +306,7 @@ def main(argv=None):
     )
     log.info("This is pypiserver %s serving %r on http://%s:%s\n\n",
              __version__, ", ".join(roots), host, port)
-    run(app=a, host=host, port=port, server=server)
+    run(app=app, host=host, port=port, server=server)
 
 
 if __name__ == "__main__":
