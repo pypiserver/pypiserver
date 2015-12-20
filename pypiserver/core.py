@@ -22,6 +22,7 @@ def configure(root=None,
               authenticated=None,
               password_file=None,
               overwrite=False,
+              hash_algo='md5',
               log_file=None,
               log_frmt=None,
               log_req_frmt=None,
@@ -73,29 +74,15 @@ def configure(root=None,
     :return: a 2-tuple (Configure, package-list)
 
     """
-    log.info("+++Pypiserver invoked with: %s", Configuration(
-            root=root,
-            redirect_to_fallback=redirect_to_fallback,
-            fallback_url=fallback_url,
-            authenticated=authenticated,
-            password_file=password_file,
-            overwrite=overwrite,
-            welcome_file=welcome_file,
-            log_file=log_file,
-            log_frmt=log_frmt,
-            log_req_frmt=log_req_frmt,
-            log_res_frmt=log_res_frmt,
-            log_err_frmt=log_err_frmt,
-            cache_control=cache_control,
-            auther=auther,
-            host=host, port=port, server=server,
-            verbosity=verbosity, VERSION=VERSION
-    ))
+    return _configure(**locals())
 
+def _configure(**kwds):
+    c = Configuration(**kwds)
+    log.info("+++Pypiserver invoked with: %s", c)
 
-    if root is None:
-        root = os.path.expanduser("~/packages")
-    roots = root if isinstance(root, (list, tuple)) else [root]
+    if c.root is None:
+        c. root = os.path.expanduser("~/packages")
+    roots = c.root if isinstance(c.root, (list, tuple)) else [c.root]
     roots = [os.path.abspath(r) for r in roots]
     for r in roots:
         try:
@@ -107,56 +94,46 @@ def configure(root=None,
     packages = lambda: itertools.chain(*[listdir(r) for r in roots])
     packages.root = roots[0]
 
-    authenticated = authenticated or []
-    if not callable(auther):
-        if password_file and password_file != '.':
+    if not c.authenticated:
+        c.authenticated = []
+    if not callable(c.auther):
+        if c.password_file and c.password_file != '.':
             from passlib.apache import HtpasswdFile
-            htPsswdFile = HtpasswdFile(password_file)
+            htPsswdFile = HtpasswdFile(c.password_file)
         else:
-            password_file = htPsswdFile = None
-        auther = functools.partial(auth_by_htpasswd_file, htPsswdFile)
+            c.password_file = htPsswdFile = None
+        c.auther = functools.partial(auth_by_htpasswd_file, htPsswdFile)
 
     # Read welcome-msg from external file,
     #     or failback to the embedded-msg (ie. in standalone mode).
     #
     try:
-        if not welcome_file:
-            welcome_file = "welcome.html"
-            welcome_msg = pkg_resources.resource_string(  # @UndefinedVariable
+        if not c.welcome_file:
+            c.welcome_file = "welcome.html"
+            c.welcome_msg = pkg_resources.resource_string(  # @UndefinedVariable
                 __name__, "welcome.html").decode("utf-8")  # @UndefinedVariable
         else:
-            welcome_file = welcome_file
-            with io.open(welcome_file, 'r', encoding='utf-8') as fd:
-                welcome_msg = fd.read()
+            with io.open(c.welcome_file, 'r', encoding='utf-8') as fd:
+                c.welcome_msg = fd.read()
     except Exception:
         log.warning(
-            "Could not load welcome-file(%s)!", welcome_file, exc_info=1)
+            "Could not load welcome-file(%s)!", c.welcome_file, exc_info=1)
 
-    if fallback_url is None:
-        fallback_url = "http://pypi.python.org/simple"
+    if c.fallback_url is None:
+        c.fallback_url = "http://pypi.python.org/simple"
 
-    log_req_frmt = log_req_frmt
-    log_res_frmt = log_res_frmt
-    log_err_frmt = log_err_frmt
+    if c.hash_algo:
+        try:
+            halgos = hashlib.algorithms_available
+        except AttributeError:
+             halgos = ['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512']
 
-    config = Configuration(
-            root=root,
-            redirect_to_fallback=redirect_to_fallback,
-            fallback_url=fallback_url,
-            authenticated=authenticated,
-            password_file=password_file,
-            overwrite=overwrite,
-            welcome_file=welcome_file,
-            welcome_msg=welcome_msg,
-            log_req_frmt=log_req_frmt,
-            log_res_frmt=log_res_frmt,
-            log_err_frmt=log_err_frmt,
-            cache_control=cache_control,
-            auther=auther
-    )
-    log.info("+++Pypiserver started with: %s", config)
+        if c.hash_algo not in halgos:
+            sys.exit('Hash-algorithm %s not one of: %s' % (c.hash_algo, halgos))
 
-    return config, packages
+    log.info("+++Pypiserver started with: %s", c)
+
+    return c, packages
 
 
 def auth_by_htpasswd_file(htPsswdFile, username, password):
@@ -268,7 +245,7 @@ class PkgFile(object):
     def relfn_unix(self):
         return self.relfn.replace("\\", "/")
 
-    def hash(self, hash_algo='md5'):
+    def hash(self, hash_algo):
         return '%s=%.32s' % (hash_algo, digest_file(self.fn, hash_algo))
 
 

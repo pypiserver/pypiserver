@@ -83,6 +83,10 @@ def usage():
     -o, --overwrite
       allow overwriting existing package files
 
+    --hash-algo ALGO
+      any `hashlib` available algo used as fragments on package links.
+      Set one of (0, no, off, false) to disabled it. (default: md5)
+
     --welcome HTML_FILE
       uses the ASCII contents of HTML_FILE as welcome message response.
 
@@ -167,6 +171,7 @@ def main(argv=None):
             "fallback-url=",
             "disable-fallback",
             "overwrite",
+            "hash-algo=",
             "log-file=",
             "log-frmt=",
             "log-req-frmt=",
@@ -226,6 +231,8 @@ def main(argv=None):
             c.password_file = v
         elif k in ("-o", "--overwrite"):
             c.overwrite = True
+        elif k in ("--hash-algo"):
+            c.hash_algo = None if not pypiserver.str2bool(v, c.hash_algo) else v
         elif k == "--log-file":
             c.log_file = v
         elif k == "--log-frmt":

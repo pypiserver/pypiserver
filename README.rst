@@ -270,6 +270,10 @@ Running ``pypi-server -h`` will print a detailed usage message::
     -o, --overwrite
       allow overwriting existing package files
 
+    --hash-algo ALGO
+      any `hashlib` available algo used as fragments on package links.
+      Set one of (0, no, off, false) to disabled it. (default: md5)
+
     --welcome HTML_FILE
       uses the ASCII contents of HTML_FILE as welcome message response.
 

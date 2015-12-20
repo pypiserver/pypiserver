@@ -89,11 +89,34 @@ def test_fallback_url_default(main):
     assert main.app.module.config.fallback_url == \
         "http://pypi.python.org/simple"
 
-@pytest.fixture
-def logfile(tmpdir):
-    return tmpdir.mkdir("logs").join('test.log')
 
-def test_logging(main, logfile):
+def test_hash_algo_default(main):
+    main([])
+    assert main.app.module.config.hash_algo == 'md5'
+
+def test_hash_algo(main):
+    main(['--hash-algo=sha256'])
+    assert main.app.module.config.hash_algo == 'sha256'
+
+def test_hash_algo_off(main):
+    main(['--hash-algo=off'])
+    assert main.app.module.config.hash_algo is None
+    main(['--hash-algo=0'])
+    assert main.app.module.config.hash_algo is None
+    main(['--hash-algo=no'])
+    assert main.app.module.config.hash_algo is None
+    main(['--hash-algo=false'])
+    assert main.app.module.config.hash_algo is None
+
+def test_hash_algo_BAD(main):
+    with pytest.raises(SystemExit) as excinfo:
+        main(['--hash-algo BAD'])
+    #assert excinfo.value.message == 'some info'     main(['--hash-algo BAD'])
+    print(excinfo)
+
+
+def test_logging(main, tmpdir):
+    logfile = tmpdir.mkdir("logs").join('test.log')
     main(["-v", "--log-file", logfile.strpath])
     assert logfile.check(), logfile
 
@@ -122,14 +145,14 @@ def test_password_without_auth_list(main, monkeypatch):
     with pytest.raises(ValueError) as ex:
         main(["-P", "pswd-file", "-a", ""])
     assert ex.value.args[0] == 'BINGO'
-    
+
     with pytest.raises(ValueError) as ex:
         main(["-a", "."])
     assert ex.value.args[0] == 'BINGO'
     with pytest.raises(ValueError) as ex:
         main(["-a", ""])
     assert ex.value.args[0] == 'BINGO'
-    
+
     with pytest.raises(ValueError) as ex:
         main(["-P", "."])
     assert ex.value.args[0] == 'BINGO'
@@ -143,6 +166,6 @@ def test_password_alone(main, monkeypatch):
 def test_dot_password_without_auth_list(main, monkeypatch):
     main(["-P", ".", "-a", ""])
     assert main.app.module.config.authenticated == []
-    
+
     main(["-P", ".", "-a", "."])
     assert main.app.module.config.authenticated == []

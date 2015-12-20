@@ -43,6 +43,7 @@ def default_config():
         authenticated = ['update'],
         password_file = None,
         overwrite = False,
+        hash_algo = 'md5',
         verbosity = 1,
         log_file = None,
         log_frmt = "%(asctime)s|%(levelname)s|%(thread)d|%(message)s",
@@ -70,15 +71,15 @@ def app(**kwds):
 
     return _app.app
 
+def str2bool(s, default):
+    if s is not None and s != '':
+        return s.lower() not in ("no", "off", "0", "false")
+        return default
 
 def paste_app_factory(global_config, **local_conf):
     import os
 
     def upd_bool_attr_from_dict_str_item(conf, attr, sdict):
-        def str2bool(s, default):
-            if s is not None and s != '':
-                return s.lower() not in ("no", "off", "0", "false")
-            return default
         setattr(conf, attr, str2bool(sdict.pop(attr, None), getattr(conf, attr)))
 
     def _make_root(root):
