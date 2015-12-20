@@ -12,18 +12,9 @@ import re
 import sys
 
 import pkg_resources
+from . import Configuration
 
-
-class Configuration(object):
-    def __init__(self, **kwds):
-        vars(self).update(kwds)
-
-    def __repr__(self, *args, **kwargs):
-        return 'Configuration(**%s)' % vars(self)
-
-    def __str__(self, *args, **kwargs):
-        return 'Configuration:\n%s' % '\n'.join('%16s = %s' % (k, v)
-                for k, v in sorted(vars(self).items()))
+log = logging.getLogger(__file__)
 
 def configure(root=None,
               redirect_to_fallback=True,
@@ -31,14 +22,31 @@ def configure(root=None,
               authenticated=None,
               password_file=None,
               overwrite=False,
+              log_file=None,
+              log_frmt=None,
               log_req_frmt=None,
               log_res_frmt=None,
               log_err_frmt=None,
               welcome_file=None,
               cache_control=None,
-              auther=None
+              auther=None,
+              host=None, port=None, server=None, verbosity=None, VERSION=None
               ):
     """
+    :param root:
+            A list of paths, derived from the packages specified on cmd-line.
+    :param redirect_to_fallback:
+            see :option:`--disable-fallback`
+    :param authenticated:
+            see :option:`--authenticate`
+    :param password_file:
+            see :option:`--passwords`
+    :param log_file:
+            see :option:`--log-file`
+            Not used, passed here for logging it.
+    :param log_frmt:
+            see :option:`--log-frmt`
+            Not used, passed here for logging it.
     :param callable auther:
             An API-only options that if it evaluates to a callable,
             it is invoked to allow access to protected operations
@@ -47,11 +55,25 @@ def configure(root=None,
                 auther(username, password): bool
 
             When defined, `password_file` is ignored.
+    :param host:
+            see :option:`--interface`
+            Not used, passed here for logging it.
+    :param port:
+            see :option:`--port`
+            Not used, passed here for logging it.
+    :param server:
+            see :option:`--server`
+            Not used, passed here for logging it.
+    :param verbosity:
+            see :option:`-v`
+            Not used, passed here for logging it.
+    :param VERSION:
+            Not used, passed here for logging it.
 
     :return: a 2-tuple (Configure, package-list)
 
     """
-    log.info("+++Invoked with: %s", Configuration(
+    log.info("+++Pypiserver invoked with: %s", Configuration(
             root=root,
             redirect_to_fallback=redirect_to_fallback,
             fallback_url=fallback_url,
@@ -59,11 +81,15 @@ def configure(root=None,
             password_file=password_file,
             overwrite=overwrite,
             welcome_file=welcome_file,
+            log_file=log_file,
+            log_frmt=log_frmt,
             log_req_frmt=log_req_frmt,
             log_res_frmt=log_res_frmt,
             log_err_frmt=log_err_frmt,
             cache_control=cache_control,
-            auther=auther
+            auther=auther,
+            host=host, port=port, server=server,
+            verbosity=verbosity, VERSION=VERSION
     ))
 
 
@@ -128,7 +154,7 @@ def configure(root=None,
             cache_control=cache_control,
             auther=auther
     )
-    log.info("+++Starting with: %s", config)
+    log.info("+++Pypiserver started with: %s", config)
 
     return config, packages
 
@@ -144,7 +170,6 @@ def auth_by_htpasswd_file(htPsswdFile, username, password):
 mimetypes.add_type("application/octet-stream", ".egg")
 mimetypes.add_type("application/octet-stream", ".whl")
 
-log = logging.getLogger('pypiserver.core')
 
 # --- the following two functions were copied from distribute's pkg_resources module
 component_re = re.compile(r'(\d+ | [a-z]+ | \.| -)', re.VERBOSE)

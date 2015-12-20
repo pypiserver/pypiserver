@@ -1,4 +1,5 @@
 import re as _re
+
 version = __version__ = "1.1.9-dev.3"
 __version_info__ = tuple(_re.split('[.-]', __version__))
 __updated__ = "2015-12-20"
@@ -8,7 +9,57 @@ __summary__ = "A minimal PyPI server for use with pip/easy_install."
 __uri__ = "https://github.com/pypiserver/pypiserver"
 
 
+class Configuration(object):
+    """
+    .. see:: config-options: :func:`pypiserver.configure()`
+    """
+
+    def __init__(self, **kwds):
+        vars(self).update(kwds)
+
+    def __repr__(self, *args, **kwargs):
+        return 'Configuration(**%s)' % vars(self)
+
+    def __str__(self, *args, **kwargs):
+        return 'Configuration:\n%s' % '\n'.join('%20s = %s' % (k, v)
+                for k, v in sorted(vars(self).items()))
+
+    def update(self, props):
+        d = props if isinstance(props, dict) else vars(props)
+        vars(self).update(props)
+
+
+DEFAULT_SERVER = "auto"
+
+def default_config():
+    c = Configuration(
+        VERSION=version,
+        root=None,
+        host = "0.0.0.0",
+        port = 8080,
+        server = DEFAULT_SERVER,
+        redirect_to_fallback = True,
+        fallback_url = None,
+        authenticated = ['update'],
+        password_file = None,
+        overwrite = False,
+        verbosity = 1,
+        log_file = None,
+        log_frmt = "%(asctime)s|%(levelname)s|%(thread)d|%(message)s",
+        log_req_frmt = "%(bottle.request)s",
+        log_res_frmt = "%(status)s",
+        log_err_frmt = "%(body)s: %(exception)s \n%(traceback)s",
+        welcome_file = None,
+        cache_control = None,
+    )
+
+    return c
+
 def app(**kwds):
+    """
+    :param dict kwds:
+            May use ``**vars(default_config())`.
+    """
     from . import core, _app, bottle
 
     bottle.debug(True)
@@ -23,26 +74,26 @@ def app(**kwds):
 def paste_app_factory(global_config, **local_conf):
     import os
 
+    def upd_bool_attr_from_dict_str_item(conf, attr, sdict):
+        def str2bool(s, default):
+            if s is not None and s != '':
+                return s.lower() not in ("no", "off", "0", "false")
+            return default
+        setattr(conf, attr, str2bool(sdict.pop(attr, None), getattr(conf, attr)))
+
     def _make_root(root):
         root = root.strip()
         if root.startswith("~"):
             return os.path.expanduser(root)
         return root
 
+    c = default_config()
+
     root = local_conf.get("root")
     if root:
-        roots = [_make_root(x) for x in root.split("\n") if x.strip()]
-    else:
-        roots = None
+        c.root = [_make_root(x) for x in root.split("\n") if x.strip()]
 
-    def str2bool(s, default):
-        if s is not None and s != '':
-            return s.lower() not in ("no", "off", "0", "false")
-        return default
+    upd_bool_attr_from_dict_str_item(c, 'redirect_to_fallback', local_conf)
+    upd_bool_attr_from_dict_str_item(c, 'overwrite', local_conf)
 
-    redirect_to_fallback = str2bool(
-            local_conf.pop('redirect_to_fallback', None), True)
-    overwrite = str2bool(local_conf.get('overwrite', None), False)
-    return app(root=roots,
-            redirect_to_fallback=redirect_to_fallback, overwrite=overwrite,
-            **local_conf)
+    return app(**vars(c))

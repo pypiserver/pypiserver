@@ -14,8 +14,6 @@ import logging
 import warnings
 import textwrap
 
-DEFAULT_SERVER = "auto"
-
 warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
 log = logging.getLogger('pypiserver.main')
 
@@ -145,32 +143,18 @@ def usage():
 
 
 def main(argv=None):
+    import pypiserver
+
     if argv is None:
         argv = sys.argv
 
-    global packages
-
     command = "serve"
-    host = "0.0.0.0"
-    port = 8080
-    server = DEFAULT_SERVER
-    redirect_to_fallback = True
-    fallback_url = None
-    authed_ops_list = ['update']
-    password_file = None
-    overwrite = False
-    verbosity = 1
-    log_file = None
-    log_frmt = "%(asctime)s|%(levelname)s|%(thread)d|%(message)s"
-    log_req_frmt = "%(bottle.request)s"
-    log_res_frmt = "%(status)s"
-    log_err_frmt = "%(body)s: %(exception)s \n%(traceback)s"
-    welcome_file = None
-    cache_control = None
 
-    update_dry_run = True
-    update_directory = None
-    update_stable_only = True
+    c = pypiserver.default_config()
+
+    update_dry_run = True,
+    update_directory = None,
+    update_stable_only = True,
 
     try:
         opts, roots = getopt.getopt(argv[1:], "i:p:a:r:d:P:Uuvxoh", [
@@ -200,36 +184,35 @@ def main(argv=None):
     for k, v in opts:
         if k in ("-p", "--port"):
             try:
-                port = int(v)
+                c.port = int(v)
             except Exception as ex:
                 sys.exit("Invalid port(%r)!" % v)
         elif k in ("-a", "--authenticate"):
-            authed_ops_list = [a.lower()
+            c.authenticated = [a.lower()
                                for a in re.split("[, ]+", v.strip(" ,"))
                                if a]
-            if authed_ops_list == ['.']:
-                authed_ops_list = []
+            if c.authenticated == ['.']:
+                c.authenticated = []
             else:
                 actions = ("list", "download", "update")
-                for a in authed_ops_list:
+                for a in c.authenticated:
                     if a not in actions:
                         errmsg = "Action '%s' for option `%s` not one of %s!"
                         sys.exit(errmsg % (a, k, actions))
         elif k in ("-i", "--interface"):
-            host = v
+            c.host = v
         elif k in ("-r", "--root"):
             roots.append(v)
         elif k == "--disable-fallback":
-            redirect_to_fallback = False
+            c.redirect_to_fallback = False
         elif k == "--fallback-url":
-            fallback_url = v
+            c.fallback_url = v
         elif k == "--server":
-            server = v
+            c.server = v
         elif k == "--welcome":
-            welcome_file = v
+            c.welcome_file = v
         elif k == "--version":
-            from pypiserver import __version__
-            print("pypiserver %s\n" % __version__)
+            print("pypiserver %s\n" % pypiserver.__version__)
             return
         elif k == "-U":
             command = "update"
@@ -240,75 +223,63 @@ def main(argv=None):
         elif k == "-d":
             update_directory = v
         elif k in ("-P", "--passwords"):
-            password_file = v
+            c.password_file = v
         elif k in ("-o", "--overwrite"):
-            overwrite = True
+            c.overwrite = True
         elif k == "--log-file":
-            log_file = v
+            c.log_file = v
         elif k == "--log-frmt":
-            log_frmt = v
+            c.log_frmt = v
         elif k == "--log-req-frmt":
-            log_req_frmt = v
+            c.log_req_frmt = v
         elif k == "--log-res-frmt":
-            log_res_frmt = v
+            c.log_res_frmt = v
         elif k == "--log-err-frmt":
-            log_err_frmt = v
+            c.log_err_frmt = v
         elif k == "--cache-control":
-            cache_control = v
+            c.cache_control = v
         elif k == "-v":
-            verbosity += 1
+            c.verbosity += 1
         elif k in ("-h", "--help"):
             print(usage())
             sys.exit(0)
 
-    if (not authed_ops_list and password_file != '.' or
-            authed_ops_list and password_file == '.'):
+    if (not c.authenticated and c.password_file != '.' or
+            c.authenticated and c.password_file == '.'):
         auth_err = "When auth-ops-list is empty (-a=.), password-file (-P=%r) must also be empty ('.')!"
-        sys.exit(auth_err % password_file)
+        sys.exit(auth_err % c.password_file)
 
     if len(roots) == 0:
         roots.append(os.path.expanduser("~/packages"))
 
     roots=[os.path.abspath(x) for x in roots]
+    c.root = roots
 
     verbose_levels=[
         logging.WARNING, logging.INFO, logging.DEBUG, logging.NOTSET]
-    log_level=list(zip(verbose_levels, range(verbosity)))[-1][0]
-    init_logging(level=log_level, filename=log_file, frmt=log_frmt)
+    log_level=list(zip(verbose_levels, range(c.verbosity)))[-1][0]
+    init_logging(level=log_level, filename=c.log_file, frmt=c.log_frmt)
 
     if command == "update":
         from pypiserver.manage import update_all_packages
-        update_all_packages(
-            roots, update_directory, update_dry_run, stable_only=update_stable_only)
+        update_all_packages(roots, update_directory,
+                dry_run=update_dry_run, stable_only=update_stable_only)
         return
 
     # Fixes #49:
     #    The gevent server adapter needs to patch some
     #    modules BEFORE importing bottle!
-    if server and server.startswith('gevent'):
+    if c.server and c.server.startswith('gevent'):
         import gevent.monkey  # @UnresolvedImport
         gevent.monkey.patch_all()
 
     from pypiserver.bottle import server_names, run
-    if server not in server_names:
+    if c.server not in server_names:
         sys.exit("unknown server %r. choose one of %s" % (
-            server, ", ".join(server_names.keys())))
+            c.server, ", ".join(server_names.keys())))
 
-    from pypiserver import __version__, app
-    app = app(
-        root=roots,
-        redirect_to_fallback=redirect_to_fallback,
-        authenticated=authed_ops_list,
-        password_file=password_file,
-        fallback_url=fallback_url,
-        overwrite=overwrite,
-        log_req_frmt=log_req_frmt, log_res_frmt=log_res_frmt, log_err_frmt=log_err_frmt,
-        welcome_file=welcome_file,
-        cache_control=cache_control,
-    )
-    log.info("This is pypiserver %s serving %r on http://%s:%s\n\n",
-             __version__, ", ".join(roots), host, port)
-    run(app=app, host=host, port=port, server=server)
+    app = pypiserver.app(**vars(c))
+    run(app=app, host=c.host, port=c.port, server=c.server)
 
 
 if __name__ == "__main__":
