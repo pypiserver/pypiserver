@@ -4,9 +4,9 @@ Checks an actual pypi-server against various clients.
 
 The tests below are using 3 ways to startup pypi-servers:
 
-- "open": a per-module server instance without any authed operations, 
+- "open": a per-module server instance without any authed operations,
   serving a single `wheel` package, on a fixed port.
-- "open": a per-module server instance with authed 'download/upload' operations, 
+- "open": a per-module server instance with authed 'download/upload' operations,
   serving a single `wheel` package, on a fixed port.
 - "new_server": starting a new server with any configurations on each test.
 
@@ -28,9 +28,9 @@ from py import path  # @UnresolvedImport
 import pytest
 
 
-_BUFF_SIZE = 4096
+_BUFF_SIZE = 2**16
 _port = 8090
-
+SLEEP_AFTER_SRV = 2#sec
 
 @pytest.fixture
 def port():
@@ -50,7 +50,7 @@ def _run_server(packdir, port, authed, other_cli=''):
     cmd = "%s -m pypiserver.__main__ -vvv --overwrite -p %s %s %s %s" % (
         sys.executable, port, pswd_opts, other_cli, packdir)
     proc = subprocess.Popen(cmd.split(), bufsize=_BUFF_SIZE)
-    time.sleep(1)
+    time.sleep(SLEEP_AFTER_SRV)
     assert proc.poll() is None
 
     return Srv(proc, int(port), packdir)
@@ -242,7 +242,7 @@ def test_setuptoolsUpload_open(empty_packdir, port, project, package,
             for i in range(5):
                 print('++Attempt #%s' % i)
                 assert _run_python(cmd) == 0
-            time.sleep(1)
+            time.sleep(SLEEP_AFTER_SRV)
     assert len(empty_packdir.listdir()) == 1
 
 
@@ -253,7 +253,7 @@ def test_setuptoolsUpload_authed(empty_packdir, port, project, package,
     with pypirc_file(dedent("""\
             [distutils]
             index-servers: test
-            
+
             [test]
             repository: %s
             username: a
@@ -265,7 +265,7 @@ def test_setuptoolsUpload_authed(empty_packdir, port, project, package,
                 for i in range(5):
                     print('++Attempt #%s' % i)
                     assert _run_python(cmd) == 0
-            time.sleep(1)
+            time.sleep(SLEEP_AFTER_SRV)
     assert len(empty_packdir.listdir()) == 1
 
 
@@ -296,7 +296,7 @@ def test_twineUpload_open(empty_packdir, port, package, uploader, pypirc):
                         username=user, password=pswd,
                         comment=None, sign_with=None,
                         config_file=None, skip_existing=None)
-        time.sleep(1)
+        time.sleep(SLEEP_AFTER_SRV)
     assert len(empty_packdir.listdir()) == 1
 
 
@@ -311,7 +311,7 @@ def test_twineUpload_authed(empty_packdir, port, package, uploader, pypirc):
                         username=user, password=pswd,
                         comment=None, sign_with=None,
                         config_file=None, skip_existing=None)
-        time.sleep(1)
+        time.sleep(SLEEP_AFTER_SRV)
     assert len(empty_packdir.listdir()) == 1
 
     assert empty_packdir.join(
