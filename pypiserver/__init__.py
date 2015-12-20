@@ -11,12 +11,12 @@ __uri__ = "https://github.com/pypiserver/pypiserver"
 def app(**kwds):
     from . import core, _app, bottle
 
+    bottle.debug(True)
     config, packages = core.configure(**kwds)
     _app.config = config
     _app.packages = packages
     _app.app.module = _app # HACK for testing.
 
-    bottle.debug(True)
     return _app.app
 
 
@@ -35,8 +35,14 @@ def paste_app_factory(global_config, **local_conf):
     else:
         roots = None
 
-    redirect_to_fallback = local_conf.get(
-        "redirect_to_fallback", "").lower() in ("yes", "on", "1")
-    fallback_url = local_conf.get("fallback_url")
-    password_file = local_conf.get("password_file")
-    return app(root=roots, redirect_to_fallback=redirect_to_fallback, fallback_url=fallback_url, password_file=password_file)
+    def str2bool(s, default):
+        if s is not None and s != '':
+            return s.lower() not in ("no", "off", "0", "false")
+        return default
+
+    redirect_to_fallback = str2bool(
+            local_conf.pop('redirect_to_fallback', None), True)
+    overwrite = str2bool(local_conf.get('overwrite', None), False)
+    return app(root=roots,
+            redirect_to_fallback=redirect_to_fallback, overwrite=overwrite,
+            **local_conf)
