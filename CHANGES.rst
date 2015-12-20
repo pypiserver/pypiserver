@@ -1,20 +1,27 @@
 Changelog
 =========
 
-1.1.9 (2015-09-XX)
+1.1.9 (2015-12-XX)
 ------------------
 "Ssss-elections" bug-fix & maintenance release.
- 
+
 - Upgrade bottle 1.11.6-->1.13-dev.
     - Fixes `MAX_PARAM` limiting dependencies(#82)
 - Rework main startup and standalone:
     - New standalone generation based on ZIPed wheel archive.
     - Replace all sys.module mechanics with relative imports.
     - Fix gevent monkeypatching (#49).
-- Fix program's requirement (i.e. add passlib as extra-requirement):
-    - provide requirements files also for developers.
-- Test actual clients (ie `pip`, `Twine`, `setuptools`).
-    - Test spurious `setuptools` failures (#91).
+- #53: Like PyPI, HREF-links contain package's md5-hashes in their fragment.
+- #91: Attempt to fix register http failures (thanks to @ Tythos and @petri).
+    - Test actual clients (ie `pip`, `Twine`, `setuptools`).
+    - Test spurious `setuptools` failures.
+    - NOT FIXED!  Still getting spurious failures.
+- Various fixes:
+
+    - #96: Fix program's requirement (i.e. add passlib as extra-requirement).
+      provide requirements files also for developers.
+    - #95: Add missing loop-teminators in bottle-templates (thanks to @bmflynn).
+
 
 1.1.8 (2015-09-15)
 ------------------
