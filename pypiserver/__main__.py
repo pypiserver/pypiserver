@@ -11,10 +11,12 @@ import sys
 import getopt
 import re
 import logging
-from textwrap import dedent
+import warnings
+import textwrap
 
 DEFAULT_SERVER = "auto"
 
+warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
 log = logging.getLogger('pypiserver.main')
 
 
@@ -27,7 +29,7 @@ def init_logging(level=None, frmt=None, filename=None):
 
 
 def usage():
-    return dedent("""\
+    return textwrap.dedent("""\
   pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
     start PyPI compatible package server serving packages from
     PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the

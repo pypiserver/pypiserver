@@ -9,10 +9,12 @@ __uri__ = "https://github.com/pypiserver/pypiserver"
 
 
 def app(**kwds):
-    from . import _app, bottle
+    from . import core, _app, bottle
 
-    _app.configure(**kwds)
-    _app.app.module = _app
+    config, packages = core.configure(**kwds)
+    _app.config = config
+    _app.packages = packages
+    _app.app.module = _app # HACK for testing.
 
     bottle.debug(True)
     return _app.app
