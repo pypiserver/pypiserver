@@ -26,14 +26,12 @@ class Configuration(object):
 
     def update(self, props):
         d = props if isinstance(props, dict) else vars(props)
-        vars(self).update(props)
+        vars(self).update(d)
 
 
 DEFAULT_SERVER = "auto"
 
-def default_config():
-    c = Configuration(
-        VERSION=version,
+def default_config(
         root=None,
         host = "0.0.0.0",
         port = 8080,
@@ -52,18 +50,76 @@ def default_config():
         log_err_frmt = "%(body)s: %(exception)s \n%(traceback)s",
         welcome_file = None,
         cache_control = None,
-    )
+        auther=None,
+        VERSION=__version__):
+    """
+    Fetch default-opts with overridden kwds, capable of starting-up pypiserver.
 
-    return c
+    Does not validate overridden options.
+    Example usage::
+
+        kwds = pypiserver.default_config(<override_kwds> ...)
+        ## More modifications on kwds.
+        pypiserver.app(**kwds)``.
+
+    Kwds correspond to same-named cmd-line opts, with '-' --> '_' substitution.
+    Non standard args are described below:
+
+    :param return_defaults_only:
+            When `True`, returns defaults, otherwise,
+            configures "runtime" attributes and returns also the "packages"
+            found in the roots.
+    :param root:
+            A list of paths, derived from the packages specified on cmd-line.
+    :param redirect_to_fallback:
+            see :option:`--disable-fallback`
+    :param authenticated:
+            see :option:`--authenticate`
+    :param password_file:
+            see :option:`--passwords`
+    :param log_file:
+            see :option:`--log-file`
+            Not used, passed here for logging it.
+    :param log_frmt:
+            see :option:`--log-frmt`
+            Not used, passed here for logging it.
+    :param callable auther:
+            An API-only options that if it evaluates to a callable,
+            it is invoked to allow access to protected operations
+            (instead of htpaswd mechanism) like that::
+
+                auther(username, password): bool
+
+            When defined, `password_file` is ignored.
+    :param host:
+            see :option:`--interface`
+            Not used, passed here for logging it.
+    :param port:
+            see :option:`--port`
+            Not used, passed here for logging it.
+    :param server:
+            see :option:`--server`
+            Not used, passed here for logging it.
+    :param verbosity:
+            see :option:`-v`
+            Not used, passed here for logging it.
+    :param VERSION:
+            Not used, passed here for logging it.
+
+    :return: a dict of defaults
+
+    """
+    return locals()
+
 
 def app(**kwds):
     """
     :param dict kwds:
-            May use ``**vars(default_config())`.
+            Any overrides for defaults, as fetched by :func:`default_config()`.
     """
-    from . import core, _app, bottle
+    from . import core, _app
 
-    bottle.debug(True)
+    kwds = default_config(**kwds)
     config, packages = core.configure(**kwds)
     _app.config = config
     _app.packages = packages

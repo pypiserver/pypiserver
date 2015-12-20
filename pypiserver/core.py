@@ -16,67 +16,11 @@ from . import Configuration
 
 log = logging.getLogger(__file__)
 
-def configure(root=None,
-              redirect_to_fallback=True,
-              fallback_url=None,
-              authenticated=None,
-              password_file=None,
-              overwrite=False,
-              hash_algo='md5',
-              log_file=None,
-              log_frmt=None,
-              log_req_frmt=None,
-              log_res_frmt=None,
-              log_err_frmt=None,
-              welcome_file=None,
-              cache_control=None,
-              auther=None,
-              host=None, port=None, server=None, verbosity=None, VERSION=None
-              ):
+
+def configure(**kwds):
     """
-    :param root:
-            A list of paths, derived from the packages specified on cmd-line.
-    :param redirect_to_fallback:
-            see :option:`--disable-fallback`
-    :param authenticated:
-            see :option:`--authenticate`
-    :param password_file:
-            see :option:`--passwords`
-    :param log_file:
-            see :option:`--log-file`
-            Not used, passed here for logging it.
-    :param log_frmt:
-            see :option:`--log-frmt`
-            Not used, passed here for logging it.
-    :param callable auther:
-            An API-only options that if it evaluates to a callable,
-            it is invoked to allow access to protected operations
-            (instead of htpaswd mechanism) like that::
-
-                auther(username, password): bool
-
-            When defined, `password_file` is ignored.
-    :param host:
-            see :option:`--interface`
-            Not used, passed here for logging it.
-    :param port:
-            see :option:`--port`
-            Not used, passed here for logging it.
-    :param server:
-            see :option:`--server`
-            Not used, passed here for logging it.
-    :param verbosity:
-            see :option:`-v`
-            Not used, passed here for logging it.
-    :param VERSION:
-            Not used, passed here for logging it.
-
     :return: a 2-tuple (Configure, package-list)
-
     """
-    return _configure(**locals())
-
-def _configure(**kwds):
     c = Configuration(**kwds)
     log.info("+++Pypiserver invoked with: %s", c)
 

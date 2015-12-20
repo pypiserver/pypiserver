@@ -25,7 +25,7 @@ def _app(app):
 @pytest.fixture
 def app(tmpdir):
     from pypiserver import app
-    return app(root=tmpdir.strpath)
+    return app(root=tmpdir.strpath, authenticated=[])
 
 
 @pytest.fixture

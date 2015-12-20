@@ -154,7 +154,7 @@ def main(argv=None):
 
     command = "serve"
 
-    c = pypiserver.default_config()
+    c = pypiserver.Configuration(**pypiserver.default_config())
 
     update_dry_run = True,
     update_directory = None,
@@ -191,7 +191,7 @@ def main(argv=None):
             try:
                 c.port = int(v)
             except Exception as ex:
-                sys.exit("Invalid port(%r)!" % v)
+                sys.exit("Invalid port(%r) due to: %s" % (v, ex))
         elif k in ("-a", "--authenticate"):
             c.authenticated = [a.lower()
                                for a in re.split("[, ]+", v.strip(" ,"))
@@ -280,13 +280,14 @@ def main(argv=None):
         import gevent.monkey  # @UnresolvedImport
         gevent.monkey.patch_all()
 
-    from pypiserver.bottle import server_names, run
-    if c.server not in server_names:
+    from pypiserver import bottle
+    if c.server not in bottle.server_names:
         sys.exit("unknown server %r. choose one of %s" % (
-            c.server, ", ".join(server_names.keys())))
+            c.server, ", ".join(bottle.server_names.keys())))
 
+    bottle.debug(True)
     app = pypiserver.app(**vars(c))
-    run(app=app, host=c.host, port=c.port, server=c.server)
+    bottle.run(app=app, host=c.host, port=c.port, server=c.server)
 
 
 if __name__ == "__main__":
