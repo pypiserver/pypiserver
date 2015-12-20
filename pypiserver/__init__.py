@@ -21,6 +21,16 @@ def app(root=None,
         cache_control=None,
         alt_auth=None
         ):
+    """
+    :param callable alt_auth:
+            An API-only options that if it evaluates to a callable,
+            it is invoked for granting auth (instead of htpaswd mechanism)
+            like that::
+
+                alt_auth(*bottle.request.auth)
+
+    """
+
     import sys
     import os
     from . import core, _app

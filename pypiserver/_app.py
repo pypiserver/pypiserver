@@ -58,12 +58,8 @@ class auth(object):
                 if not request.auth or request.auth[1] is None:
                     raise HTTPError(
                         401, headers={"WWW-Authenticate": 'Basic realm="pypi"'})
-                if config.alt_auth is not None:
-                    if not config.alt_auth(*request.auth):
-                        raise HTTPError(403)
-                else:
-                    if not validate_user(*request.auth):
-                        raise HTTPError(403)
+                if not config.auther(*request.auth):
+                    raise HTTPError(403)
             return method(*args, **kwargs)
 
         return protector
@@ -98,7 +94,7 @@ def configure(root=None,
                                   alt_auth=alt_auth))
 
     config.authenticated = authenticated or []
-    config.alt_auth = alt_auth if type(alt_auth) is type(validate_user) else None
+    config.auther = alt_auth if callable(alt_auth) else validate_user
 
     if root is None:
         root = os.path.expanduser("~/packages")
