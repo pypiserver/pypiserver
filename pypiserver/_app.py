@@ -24,6 +24,11 @@ from .core import listdir, find_packages, store, get_prefixes, exists
 log = logging.getLogger('pypiserver.http')
 packages = None
 
+# manage template
+from .bottle import TEMPLATE_PATH
+TEMPLATE_PATH.insert(0,os.path.join(os.path.dirname(__file__), 'template'))
+
+
 
 class Configuration(object):
 
@@ -31,8 +36,6 @@ class Configuration(object):
         self.fallback_url = "http://pypi.python.org/simple"
         self.redirect_to_fallback = True
         self.htpasswdfile = None
-        self.welcome_file = None
-        self.welcome_msg = None
 
 config = Configuration()
 
@@ -72,8 +75,8 @@ def configure(root=None,
               log_req_frmt=None,
               log_res_frmt=None,
               log_err_frmt=None,
-              welcome_file=None,
               cache_control=None,
+              add_template=""
               ):
     global packages
 
@@ -83,13 +86,15 @@ def configure(root=None,
                                   authenticated=authenticated,
                                   password_file=password_file,
                                   overwrite=overwrite,
-                                  welcome_file=welcome_file,
                                   log_req_frmt=log_req_frmt,
                                   log_res_frmt=log_res_frmt,
                                   log_err_frmt=log_err_frmt,
-                                  cache_control=cache_control))
+                                  cache_control=cache_control,
+                                  add_template=add_template))
 
     config.authenticated = authenticated or []
+    if add_template:
+        TEMPLATE_PATH.insert(0, add_template)
 
     if root is None:
         root = os.path.expanduser("~/packages")
@@ -120,22 +125,7 @@ def configure(root=None,
         from passlib.apache import HtpasswdFile
         config.htpasswdfile = HtpasswdFile(password_file)
     config.overwrite = overwrite
-
-    # Read welcome-msg from external file,
-    #     or failback to the embedded-msg (ie. in standalone mode).
-    #
-    try:
-        if not welcome_file:
-            config.welcome_file = "welcome.html"
-            config.welcome_msg = pkg_resources.resource_string(  # @UndefinedVariable
-                __name__, "welcome.html").decode("utf-8")  # @UndefinedVariable
-        else:
-            config.welcome_file = welcome_file
-            with io.open(welcome_file, 'r', encoding='utf-8') as fd:
-                config.welcome_msg = fd.read()
-    except Exception:
-        log.warning(
-            "Could not load welcome-file(%s)!", welcome_file, exc_info=1)
+    
     config.log_req_frmt = log_req_frmt
     config.log_res_frmt = log_res_frmt
     config.log_err_frmt = log_err_frmt
@@ -176,15 +166,14 @@ def root():
         numpkgs = len(list(packages()))
     except:
         numpkgs = 0
-
-    # Ensure template() does not consider `msg` as filename!
-    msg = config.welcome_msg + '\n'
-    return template(msg,
+    
+    return template('welcome,
                     URL=request.url,
                     VERSION=__version__,
                     NUMPKGS=numpkgs,
                     PACKAGES=urljoin(fp, "packages/"),
-                    SIMPLE=urljoin(fp, "simple/")
+                    SIMPLE=urljoin(fp, "simple/"),
+                    PYPI=urljoin(fp, "pypi/"),
                     )
 
 
@@ -258,19 +247,7 @@ def simpleindex_redirect():
 @auth("list")
 def simpleindex():
     links = sorted(get_prefixes(packages()))
-    tmpl = """\
-    <html>
-        <head>
-            <title>Simple Index</title>
-        </head>
-        <body>
-            <h1>Simple Index</h1>
-            % for p in links:
-                 <a href="{{p}}/">{{p}}</a><br>
-        </body>
-    </html>
-    """
-    return template(tmpl, links=links)
+    return template("simple", links=links)
 
 
 @app.route("/simple/:prefix")
@@ -290,19 +267,8 @@ def simple(prefix=""):
 
     links = [(os.path.basename(f), urljoin(fp, "../../packages/%s" %
                                            f.replace("\\", "/"))) for f in files]
-    tmpl = """\
-    <html>
-        <head>
-            <title>Links for {{prefix}}</title>
-        </head>
-        <body>
-            <h1>Links for {{prefix}}</h1>
-            % for file, href in links:
-                 <a href="{{href}}">{{file}}</a><br>
-        </body>
-    </html>
-    """
-    return template(tmpl, prefix=prefix, links=links)
+    return template('simpleprefix', prefix=prefix, links=links)
+
 
 
 @app.route('/packages')
@@ -316,19 +282,7 @@ def list_packages():
     files = [x.relfn for x in sorted(find_packages(packages()),
                                      key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version))]
     links = [(f.replace("\\", "/"), urljoin(fp, f)) for f in files]
-    tmpl = """\
-    <html>
-        <head>
-            <title>Index of packages</title>
-        </head>
-        <body>
-            <h1>Index of packages</h1>
-            % for file, href in links:
-                 <a href="{{href}}">{{file}}</a><br>
-        </body>
-    </html>
-    """
-    return template(tmpl, links=links)
+    return template('packages', links=links)
 
 
 @app.route('/packages/:filename#.*#')
@@ -359,9 +313,7 @@ def bad_url(prefix):
 
     return redirect(p)
 
-###############################################################################
-####################              ADD by FAO               ####################
-###############################################################################
+
 import time
 try:
     from pkginfo import SDist
@@ -447,8 +399,8 @@ class Dist(object):
             return '<div class="document">%s</div>' % self.description.replace('\n','<br/>')
         return ""
 
-from .bottle import TEMPLATE_PATH
-TEMPLATE_PATH.insert(0,os.path.join(os.path.dirname(__file__), 'template'))
+#from .bottle import TEMPLATE_PATH
+#TEMPLATE_PATH.insert(0,os.path.join(os.path.dirname(__file__), 'template'))
 
 @app.route("/pypi")
 @auth("list")
@@ -491,8 +443,9 @@ def pypipkg(filename=""):
 
 @app.route('/static/<path:path>')
 def callback(path):
+    s = [os.path.join(i,'static')  for i in TEMPLATE_PATH if os.path.isfile(os.path.join(i,'static',path))]
+    if s:
+        return static_file(path, root=s[0])
     return redirect("http://pypi.python.org/static/%s" % path)
 
 
-#TODO: manage local template and static for pypi
-#TODO: create as pypiweb as module

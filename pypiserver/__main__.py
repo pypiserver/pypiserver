@@ -78,9 +78,6 @@ def usage():
     -o, --overwrite
       allow overwriting existing package files
 
-    --welcome HTML_FILE
-      uses the ASCII contents of HTML_FILE as welcome message response.
-
     -v
       enable verbose logging;  repeat for more verbosity.
 
@@ -107,6 +104,8 @@ def usage():
       Add "Cache-Control: max-age=AGE, public" header to package downloads.
       Pip 6+ needs this for caching.
 
+    --add-template
+      directory of template
 
   pypi-server -h
   pypi-server --help
@@ -158,7 +157,7 @@ def main(argv=None):
     log_req_frmt = "%(bottle.request)s"
     log_res_frmt = "%(status)s"
     log_err_frmt = "%(body)s: %(exception)s \n%(traceback)s"
-    welcome_file = None
+    add_template = ""
     cache_control = None
 
     update_dry_run = True
@@ -181,10 +180,10 @@ def main(argv=None):
             "log-req-frmt=",
             "log-res-frmt=",
             "log-err-frmt=",
-            "welcome=",
             "cache-control=",
             "version",
-            "help"
+            "help",
+            "add-template="
         ])
     except getopt.GetoptError:
         err = sys.exc_info()[1]
@@ -218,8 +217,6 @@ def main(argv=None):
             fallback_url = v
         elif k == "--server":
             server = v
-        elif k == "--welcome":
-            welcome_file = v
         elif k == "--version":
             from pypiserver import __version__
             print("pypiserver %s\n" % __version__)
@@ -250,6 +247,8 @@ def main(argv=None):
             cache_control = v
         elif k == "-v":
             verbosity += 1
+        elif k == "--add-template":
+            add_template = v
         elif k in ("-h", "--help"):
             print(usage())
             sys.exit(0)
@@ -296,8 +295,8 @@ def main(argv=None):
         fallback_url=fallback_url,
         overwrite=overwrite,
         log_req_frmt=log_req_frmt, log_res_frmt=log_res_frmt, log_err_frmt=log_err_frmt,
-        welcome_file=welcome_file,
         cache_control=cache_control,
+        add_template=add_template,
     )
     log.info("This is pypiserver %s serving %r on http://%s:%s\n\n",
              __version__, ", ".join(roots), host, port)

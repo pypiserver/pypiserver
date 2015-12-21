@@ -97,7 +97,7 @@
                     <div id="credits">
                         <a href="http://python.org/pypi" title="Design inspired by http://python.org/pypi">Design inspired by http://python.org/pypi</a>
                     </div>
-                    <a href="http://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
+                    <a href="hhttp://pypi.python.org/pypi/pypiserver">pypiserver</a> software.</p>
                     <br/>
                 </div>
             </div>

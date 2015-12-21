@@ -20,3 +20,6 @@ twine>=1.6.1
 WebOb==0.9.6.1;         python_version == '2.5'
 BeautifulSoup==3.2.1;   python_version == '2.5'
 WebTest==1.4.3;         python_version == '2.5'
+
+pkginfo
+docutils
