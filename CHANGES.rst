@@ -15,7 +15,7 @@ Changelog
   - Replace all sys.module mechanics with relative imports.
   - Fix gevent monkeypatching (#49).
   - Simplify definition of config-options on startup.
-  - Move startup-options validations out of `main()` and into `pypiserver.core`
+  - TODO: Move startup-options validations out of `main()` and into `pypiserver.core`
     package, to validate also start-up from API-clients.
 
 - #97: Add `--auther` non cmd-line startup-option to allow for alternative
