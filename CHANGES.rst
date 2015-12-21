@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.1.9 (2015-12-XX)
+1.1.9 (2015-12-21)
 ------------------
 "Ssss-elections" bug-fix & maintenance release.
 
@@ -15,19 +15,20 @@ Changelog
   - Replace all sys.module mechanics with relative imports.
   - Fix gevent monkeypatching (#49).
   - Simplify definition of config-options on startup.
-  - TODO: Move startup-options validations out of `main()` and into `pypiserver.core`
+  - TODO: Move startup-options validations out of `main()` and
+    into `pypiserver.core`
     package, to validate also start-up from API-clients.
-
-- #97: Add `--auther` non cmd-line startup-option to allow for alternative
-  authentication methods (non HtPasswdFile-based one) to be defined by
-  API-clients (thanks @Tythos).
 
 - #53: Like PyPI, HREF-links now contain package's md5-hashes in their fragment.
   Add `--hash_algo` cmd-line option to turn-off or specify other *hashlib*
   message-digest algorithms (e.g. `sha256` is a safer choice, set it to `off`
   to avoid any performance penalty if hosting a lot of packages).
 
-- #91: Attempt to fix register http failures (thanks to @ Tythos and @petri).
+- #97: Add `--auther` non cmd-line startup-option to allow for alternative
+  authentication methods (non HtPasswdFile-based one) to be defined by
+  API-clients (thanks @Tythos).
+
+- #91: Attempt to fix register http failures (thanks to @Tythos and @petri).
 
   - Test actual clients (ie `pip`, `Twine`, `setuptools`).
   - Test spurious `setuptools` failures.
@@ -37,6 +38,7 @@ Changelog
 
   - #96: Fix program's requirement (i.e. add passlib as extra-requirement).
     provide requirements files also for developers.
+  - logging: Send also bottle `_stderr` to logger; fix logger names.
   - #95: Add missing loop-terminators in bottle-templates (thanks to @bmflynn).
 
 
