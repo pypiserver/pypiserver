@@ -44,7 +44,7 @@ def default_config(
         hash_algo = 'md5',
         verbosity = 1,
         log_file = None,
-        log_frmt = "%(asctime)s|%(levelname)s|%(thread)d|%(message)s",
+        log_frmt = "%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s",
         log_req_frmt = "%(bottle.request)s",
         log_res_frmt = "%(status)s",
         log_err_frmt = "%(body)s: %(exception)s \n%(traceback)s",
@@ -155,3 +155,12 @@ def paste_app_factory(global_config, **local_conf):
     upd_bool_attr_from_dict_str_item(c, 'overwrite', local_conf)
 
     return app(**vars(c))
+
+def _logwrite(logger, level, msg):
+    if msg:
+        line_endings = ['\r\n', '\n\r', '\n']
+        for le in line_endings:
+            if msg.endswith(le):
+                msg = msg[:-len(le)]
+        if msg:
+            logger.log(level, msg)

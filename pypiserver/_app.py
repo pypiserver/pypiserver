@@ -18,7 +18,7 @@ except ImportError:  # PY2
 from .bottle import static_file, redirect, request, response, HTTPError, Bottle, template
 from . import __version__
 
-log = logging.getLogger('pypiserver.http')
+log = logging.getLogger(__name__)
 packages = None
 config = None
 

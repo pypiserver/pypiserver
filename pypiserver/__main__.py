@@ -13,6 +13,7 @@ import re
 import logging
 import warnings
 import textwrap
+import functools as ft
 
 warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
 log = logging.getLogger('pypiserver.main')
@@ -98,7 +99,7 @@ def usage():
 
     --log-frmt <FILE>
       the logging format-string.  (see `logging.LogRecord` class from standard python library)
-      [Default: %(asctime)s|%(levelname)s|%(thread)d|%(message)s]
+      [Default: %(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s]
 
     --log-req-frmt FORMAT
       a format-string selecting Http-Request properties to log; set to  '%s' to see them all.
@@ -287,6 +288,8 @@ def main(argv=None):
             c.server, ", ".join(bottle.server_names.keys())))
 
     bottle.debug(True)
+    bottle._stderr = ft.partial(pypiserver._logwrite,
+            logging.getLogger(bottle.__name__), logging.INFO)
     app = pypiserver.app(**vars(c))
     bottle.run(app=app, host=c.host, port=c.port, server=c.server)
 

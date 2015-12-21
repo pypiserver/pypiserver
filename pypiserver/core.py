@@ -14,7 +14,7 @@ import sys
 import pkg_resources
 from . import Configuration
 
-log = logging.getLogger(__file__)
+log = logging.getLogger(__name__)
 
 
 def configure(**kwds):

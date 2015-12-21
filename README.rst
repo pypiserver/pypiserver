@@ -289,7 +289,7 @@ Running ``pypi-server -h`` will print a detailed usage message::
 
     --log-frmt <FILE>
       the logging format-string.  (see `logging.LogRecord` class from standard python library)
-      [Default: %(asctime)s|%(levelname)s|%(thread)d|%(message)s]
+      [Default: %(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s]
 
     --log-req-frmt FORMAT
       a format-string selecting Http-Request properties to log; set to  '%s' to see them all.
