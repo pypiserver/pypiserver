@@ -116,6 +116,7 @@ def app(**kwds):
     """
     :param dict kwds:
             Any overrides for defaults, as fetched by :func:`default_config()`.
+            Check the docstring of this function for supported kwds.
     """
     from . import core, _app
 

@@ -6,12 +6,12 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 |pypi-ver| |travis-status| |dependencies| |downloads-count| |python-ver| \
 |proj-license|
 
-:Maintainer: Kostis Anagnostopoulos <ankostis@gmail.com>
 :Version:   1.1.9-dev.4
 :Date:      2015-03-8
 :Source:    https://github.com/pypiserver/pypiserver
 :PyPI:      https://pypi.python.org/pypi/pypiserver
 :Travis:    https://travis-ci.org/pypiserver/pypiserver
+:Maintainer: Kostis Anagnostopoulos <ankostis@gmail.com>
 :License:   zlib/libpng + MIT
 
 .. contents:: Table of Contents
@@ -489,7 +489,7 @@ The following limitations are known:
 
 - It doesn't implement the XMLRPC json API interface: pip search
   will not work.
-- Command ``pypi -U`` that compaes uploaded packages with *pypi* to see if
+- Command ``pypi -U`` that compares uploaded packages with *pypi* to see if
   they are outdated does not respect a http-proxy environment variable
   (see https://github.com/pypiserver/pypiserver/issues/19).
 - It accepts documentation uploads but does not save them to
