@@ -33,7 +33,8 @@ def configure(**kwds):
             os.listdir(r)
         except OSError:
             err = sys.exc_info()[1]
-            sys.exit("Error: while trying to list root(%s): %s" % (r, err))
+            msg = "Error: while trying to list root(%s): %s"
+            sys.exit(msg % (r, err))
 
     packages = lambda: itertools.chain(*[listdir(r) for r in roots])
     packages.root = roots[0]
@@ -70,7 +71,7 @@ def configure(**kwds):
         try:
             halgos = hashlib.algorithms_available
         except AttributeError:
-             halgos = ['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512']
+            halgos = ['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512']
 
         if c.hash_algo not in halgos:
             sys.exit('Hash-algorithm %s not one of: %s' % (c.hash_algo, halgos))

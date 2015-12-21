@@ -190,8 +190,9 @@ def main(argv=None):
         if k in ("-p", "--port"):
             try:
                 c.port = int(v)
-            except Exception as ex:
-                sys.exit("Invalid port(%r) due to: %s" % (v, ex))
+            except Exception:
+                err = sys.exc_info()[1]
+                sys.exit("Invalid port(%r) due to: %s" % (v, err))
         elif k in ("-a", "--authenticate"):
             c.authenticated = [a.lower()
                                for a in re.split("[, ]+", v.strip(" ,"))
