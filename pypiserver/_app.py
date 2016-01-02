@@ -72,8 +72,6 @@ def favicon():
 
 @app.route('/')
 def root():
-    fp = request.fullpath
-
     try:
         numpkgs = len(list(packages()))
     except:
@@ -85,8 +83,8 @@ def root():
                     URL=request.url,
                     VERSION=__version__,
                     NUMPKGS=numpkgs,
-                    PACKAGES=urljoin(fp, "packages/"),
-                    SIMPLE=urljoin(fp, "simple/")
+                    PACKAGES=urljoin(request.url, "packages/"),
+                    SIMPLE=urljoin(request.url, "simple/")
                     )
 
 
