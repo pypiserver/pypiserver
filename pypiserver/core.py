@@ -133,6 +133,10 @@ wheel_file_re = re.compile(
     \.whl|\.dist-info)$""",
     re.VERBOSE)
 
+_pkgname_re = re.compile(r'-(?i)v?\d+[\.a-z]')
+_pkgname_parts_re = re.compile(r'[\.\-](?=(?i)cp\d|py\d|macosx|linux|sunos|'
+                                'solaris|irix|aix|cygwin|win)')
+
 
 def _guess_pkgname_and_version_wheel(basename):
     m = wheel_file_re.match(basename)
@@ -161,10 +165,9 @@ def guess_pkgname_and_version(path):
     elif '.' not in path:
         pkgname, version = path.rsplit('-', 1)
     else:
-        pkgname = re.split(r'-(?i)v?\d+[\.a-z]', path)[0]
+        pkgname = _pkgname_re.split(path)[0]
         ver_spec = path[len(pkgname) + 1:]
-        parts = re.split(r'[\.\-](?=(?i)cp\d|py\d|macosx|linux|sunos|'
-                         'solaris|irix|aix|cygwin|win)', ver_spec)
+        parts = _pkgname_parts_re.split(ver_spec)
         version = parts[0]
     return pkgname, version
 
