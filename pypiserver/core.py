@@ -182,22 +182,38 @@ def is_allowed_path(path_part):
 
 
 class PkgFile(object):
-    def __init__(self, **kw):
-        self.__dict__.update(kw)
+
+    __slots__ = ['fn', 'root', '_hash',
+                 'relfn', 'relfn_unix',
+                 'pkgname_norm',
+                 'pkgname',
+                 'version',
+                 'parsed_version',
+                 'replaces']
+
+    def __init__(self, pkgname, version, fn=None, root=None, relfn=None, replaces=None):
+        self.pkgname = pkgname
+        self.pkgname_norm = normalize_pkgname(pkgname)
+        self.version = version
+        self.parsed_version = parse_version(version)
+        self.fn = fn
+        self.root = root
+        self.relfn = relfn
+        self.relfn_unix = None if relfn is None else relfn.replace("\\", "/")
+        self.replaces = replaces
 
     def __repr__(self):
         return "%s(%s)" % (
             self.__class__.__name__,
-            ", ".join(["%s=%r" % (k, v) for k, v in sorted(self.__dict__.items())]))
-
-    def relfn_unix(self):
-        return self.relfn.replace("\\", "/")
+            ", ".join(["%s=%r" % (k, getattr(self, k, v)) for k in sorted(self.__slots__)]))
 
     def hash(self, hash_algo):
-        return '%s=%.32s' % (hash_algo, digest_file(self.fn, hash_algo))
+        if not hasattr(self, '_hash'):
+            self._hash = '%s=%.32s' % (hash_algo, digest_file(self.fn, hash_algo))
+        return self._hash
+    
 
-
-def listdir(root):
+def _listdir(root):
     root = os.path.abspath(root)
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [x for x in dirnames if is_allowed_path(x)]
@@ -211,22 +227,30 @@ def listdir(root):
                 continue
             pkgname, version = res
             if pkgname:
-                yield PkgFile(fn=fn, root=root, relfn=fn[len(root) + 1:],
-                              pkgname=pkgname,
+                yield PkgFile(pkgname=pkgname,
                               version=version,
-                              parsed_version=parse_version(version))
+                              fn=fn, root=root,
+                              relfn=fn[len(root) + 1:])
 
+try:
+    from .cache import listdir_cache
+
+    def listdir(root):
+        return listdir_cache.get(root, _listdir)
+except ImportError:
+    listdir = _listdir
 
 def find_packages(pkgs, prefix=""):
     prefix = normalize_pkgname(prefix)
     for x in pkgs:
-        if prefix and normalize_pkgname(x.pkgname) != prefix:
+        if prefix and x.pkgname_norm != prefix:
             continue
         yield x
 
 
 def get_prefixes(pkgs):
     pkgnames = set()
+    normalized_pkgnames = set()
     eggs = set()
 
     for x in pkgs:
@@ -235,11 +259,10 @@ def get_prefixes(pkgs):
                 eggs.add(x.pkgname)
             else:
                 pkgnames.add(x.pkgname)
-
-    normalized_pkgnames = set(map(normalize_pkgname, pkgnames))
+                normalized_pkgnames.add(x.pkgname_norm)
 
     for x in eggs:
-        if normalize_pkgname(x) not in normalized_pkgnames:
+        if x not in normalized_pkgnames:
             pkgnames.add(x)
 
     return pkgnames

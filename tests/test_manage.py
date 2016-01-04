@@ -13,8 +13,9 @@ def touch_files(root, files):
 
 def pkgfile_from_path(fn):
     pkgname, version = guess_pkgname_and_version(fn)
-    return PkgFile(root=py.path.local(fn).parts()[1].strpath,
-                   fn=fn, pkgname=pkgname, version=version, parsed_version=parse_version(version))
+    return PkgFile(pkgname=pkgname, version=version,
+                   root=py.path.local(fn).parts()[1].strpath,
+                   fn=fn)
 
 
 @pytest.mark.parametrize(
@@ -40,7 +41,8 @@ def test_build_releases():
                     version='0.3.0')
 
     res, = list(build_releases(p, ["0.3.0"]))
-    assert res.__dict__ == expected
+    for k, v in expected.items():
+        assert getattr(res, k) == v
 
 
 def test_filter_stable_releases():

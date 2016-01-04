@@ -84,9 +84,8 @@ def build_releases(pkg, versions):
     for x in versions:
         parsed_version = core.parse_version(x)
         if parsed_version > pkg.parsed_version:
-            yield core.PkgFile(version=x,
-                               parsed_version=parsed_version,
-                               pkgname=pkg.pkgname,
+            yield core.PkgFile(pkgname=pkg.pkgname,
+                               version=x,
                                replaces=pkg)
 
 

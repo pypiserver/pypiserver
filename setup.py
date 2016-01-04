@@ -36,7 +36,8 @@ setup(name="pypiserver",
           'wheel',
       ],
       extras_require={
-          'passlib': ['passlib']
+          'passlib': ['passlib'],
+          'cache': ['watchdog']
       },
       tests_require=tests_require,
       url="https://github.com/pypiserver/pypiserver",
