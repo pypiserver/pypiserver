@@ -368,6 +368,24 @@ Specifying an additional `-u` option will also allow alpha, beta and
 release candidates to be downloaded. Without this option these
 releases won't be considered.
 
+Serving thousands of packages
+-----------------------------
+
+By default, pypiserver scans the entire packages directory each time an
+incoming HTTP request occurs. This isn't a problem for a small number of
+packages, but causes noticeable slowdowns when serving thousands or tens
+of thousands of packages.
+
+If you run into this problem, significant speedups can be gained by enabling
+pypiserver's directory caching functionality. The only requirement is to
+install the ``watchdog`` package, or it can be installed by installing
+``pypiserver`` using the ``cache`` extras option::
+
+  pip install pypi-server[cache]
+
+If you are using a static webserver such as Apache or Nginx as a proxy for
+pypiserver, additional speedup can be gained by directly serving the
+packages directory.
 
 Using a different WSGI server
 -----------------------------
