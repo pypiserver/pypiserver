@@ -78,6 +78,10 @@ def usage():
       default is to use "auto" which chooses one of paste, cherrypy,
       twisted or wsgiref.
 
+    -f, --url-prefix PREFIX
+      in case of using nginx with custom path you have to use PREFIX to
+      override links
+
     -r, --root PACKAGES_DIRECTORY
       [deprecated] serve packages from PACKAGES_DIRECTORY
 
@@ -162,13 +166,14 @@ def main(argv=None):
     update_stable_only = True,
 
     try:
-        opts, roots = getopt.getopt(argv[1:], "i:p:a:r:d:P:Uuvxoh", [
+        opts, roots = getopt.getopt(argv[1:], "i:p:a:r:d:P:f:Uuvxoh", [
             "interface=",
             "passwords=",
             "authenticate=",
             "port=",
             "root=",
             "server=",
+            "url-prefix=",
             "fallback-url=",
             "disable-fallback",
             "overwrite",
@@ -216,6 +221,8 @@ def main(argv=None):
             c.fallback_url = v
         elif k == "--server":
             c.server = v
+        elif k in ("-f", "--url-prefix"):
+            c.url_prefix = v
         elif k == "--welcome":
             c.welcome_file = v
         elif k == "--version":

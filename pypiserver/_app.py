@@ -72,6 +72,12 @@ def favicon():
 
 @app.route('/')
 def root():
+    if config.url_prefix:
+        prefix = url = config.url_prefix
+    else:
+        prefix = request.fullpath
+        url = request.url
+
     try:
         numpkgs = len(list(packages()))
     except:
@@ -80,11 +86,11 @@ def root():
     # Ensure template() does not consider `msg` as filename!
     msg = config.welcome_msg + '\n'
     return template(msg,
-                    URL=request.url,
+                    URL=os.path.join(url, "simple/"),
                     VERSION=__version__,
                     NUMPKGS=numpkgs,
-                    PACKAGES=urljoin(request.url, "packages/"),
-                    SIMPLE=urljoin(request.url, "simple/")
+                    PACKAGES=os.path.join(prefix, "packages/"),
+                    SIMPLE=os.path.join(prefix, "simple/")
                     )
 
 
