@@ -538,6 +538,9 @@ among the most popular alternatives:
   a simple cmd-line tool that builds a PyPI-compatible local folder from pip requirements
   (version: 0.6.7, access date: 8/3/2015)
 
+- `flask-pypi-proxy <http://flask-pypi-proxy.readthedocs.org/>`_
+  A proxy for PyPI that also enables also uploading custom packages.
+
 - Check this SO question: ` How to roll my own pypi <http://stackoverflow.com/questions/1235331/how-to-roll-my-own-pypi>`_
 
 
