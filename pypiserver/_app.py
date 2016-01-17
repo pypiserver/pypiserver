@@ -137,16 +137,17 @@ def update():
     except KeyError:
         raise HTTPError(400, "content file field not found")
 
-    if "/" in content.filename:
+    if not core.is_valid_pkg_filename(content.raw_filename):
         raise HTTPError(400, "bad filename")
 
-    if not config.overwrite and core.exists(packages.root, content.filename):
+    if not config.overwrite and core.exists(packages.root, content.raw_filename):
         log.warn("Cannot upload package(%s) since it already exists! \n" +
                  "  You may use `--overwrite` option when starting server to disable this check. ",
-                 content.filename)
-        raise HTTPError(409, "file already exists")
+                 content.raw_filename)
+        msg = "Package already exists! Use `--overwrite` option on server."
+        raise HTTPError(409, msg)
 
-    core.store(packages.root, content.filename, content.save)
+    core.store(packages.root, content.raw_filename, content.save)
     return ""
 
 

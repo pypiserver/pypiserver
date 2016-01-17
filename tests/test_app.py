@@ -4,12 +4,13 @@ import contextlib
 import glob
 import logging
 import os
+from pypiserver import __main__, bottle
 import subprocess
 
 import pytest
 import webtest
 
-from pypiserver import __main__, bottle
+import test_core
 
 
 # Enable logging to detect any problems with it
@@ -305,3 +306,70 @@ def test_cache_control_set(root):
     resp = app_with_cache.get("/packages/foo_bar-1.0.tar.gz")
     assert "Cache-Control" in resp.headers
     assert resp.headers["Cache-Control"] == 'public, max-age=%s' % AGE
+
+def test_upload_noAction(root, testapp):
+    resp = testapp.post("/", expect_errors=1)
+    assert resp.status == '400 Bad Request'
+    assert ":action field not found" in resp.text
+
+def test_upload_badAction(root, testapp):
+    resp = testapp.post("/", params={':action': 'BAD'}, expect_errors=1)
+    assert resp.status == '400 Bad Request'
+    assert "action not supported: BAD" in resp.text
+
+@pytest.mark.parametrize(("package"), [f[0] for f in test_core.files if f[1]])
+def test_upload(package, root, testapp):
+    resp = testapp.post("/", params={':action': 'file_upload'},
+            upload_files=[('content', package, b'')])
+    assert resp.status_int == 200
+    uploaded_pkgs = [f.basename for f in root.listdir()]
+    assert len(uploaded_pkgs) == 1
+    assert uploaded_pkgs[0].lower() == package.lower()
+
+@pytest.mark.parametrize(("package"), [
+        f[0] for f in test_core.files
+        if f[1] is None])
+def test_upload_badFilename(package, root, testapp):
+    resp = testapp.post("/", params={':action': 'file_upload'},
+            upload_files=[('content', package, b'')],
+            expect_errors=1)
+    assert resp.status == '400 Bad Request'
+    assert "bad filename" in resp.text
+
+def test_remove_pkg_missingNaveVersion(root, testapp):
+    resp = testapp.post("/", expect_errors=1,
+            params={
+                    ':action': 'remove_pkg',
+                    'version': '',
+    })
+    assert resp.status == '400 Bad Request'
+    assert "Name or version not specified" in resp.text
+
+    resp = testapp.post("/", expect_errors=1,
+            params={
+                    ':action': 'remove_pkg',
+                    'name': '',
+    })
+    assert resp.status == '400 Bad Request'
+    assert "Name or version not specified" in resp.text
+
+    resp = testapp.post("/", expect_errors=1,
+            params={
+                    ':action': 'remove_pkg',
+    })
+    assert resp.status == '400 Bad Request'
+    assert "Name or version not specified" in resp.text
+
+def test_remove_pkg_notFound(root, testapp):
+    resp = testapp.post("/", expect_errors=1,
+            params={
+                    ':action': 'remove_pkg',
+                    'name': 'foo',
+                    'version': '123',
+    })
+    assert resp.status == '404 Not Found'
+    assert "foo (123) not found" in resp.text
+
+@pytest.mark.xfail()
+def test_remove_pkg(root, testapp):
+    assert 0

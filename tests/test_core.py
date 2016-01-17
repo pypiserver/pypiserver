@@ -1,4 +1,5 @@
 #! /usr/bin/env py.test
+# -*- coding: utf-8 -*-
 
 import pytest
 from pypiserver import __main__, core
@@ -13,6 +14,7 @@ files = [
     ("pytz-2012b.tar.bz2", "pytz", "2012b"),
     ("pytz-2012b.tgz", "pytz", "2012b"),
     ("pytz-2012b.ZIP", "pytz", "2012b"),
+    ("pytz-2012a.zip", "pytz", "2012a"),
     ("gevent-1.0b1.win32-py2.6.exe", "gevent", "1.0b1"),
     ("gevent-1.0b1.win32-py2.7.msi", "gevent", "1.0b1"),
     ("greenlet-0.3.4-py3.1-win-amd64.egg", "greenlet", "0.3.4"),
@@ -20,7 +22,6 @@ files = [
     ("greenlet-0.3.4-py3.2-win32.egg", "greenlet", "0.3.4"),
     ("greenlet-0.3.4-py2.7-linux-x86_64.egg", "greenlet", "0.3.4"),
     ("pep8-0.6.0.zip", "pep8", "0.6.0"),
-    ("pytz-2012b.zip", "pytz", "2012b"),
     ("ABC12-34_V1X-1.2.3.zip", "ABC12-34_V1X", "1.2.3"),
     ("A100-200-XYZ-1.2.3.zip", "A100-200-XYZ", "1.2.3"),
     ("flup-1.0.3.dev-20110405.tar.gz", "flup", "1.0.3.dev-20110405"),
@@ -43,12 +44,21 @@ files = [
     ("package-name-0.0.1.dev0.linux-x86_64.tar.gz", "package-name", "0.0.1.dev0"),
     ("package-name-0.0.1.dev0.macosx-10.10-intel.tar.gz", "package-name", "0.0.1.dev0"),
     ("package-name-0.0.1.alpha.1.win-amd64-py3.2.exe", "package-name", "0.0.1.alpha.1"),
+    ("pkg-3!1.0-0.1.tgz", 'pkg-3!1.0', '0.1'), # TO BE FIXED
+    ("pkg-3!1+.0-0.1.tgz", 'pkg-3!1+.0', '0.1'), # TO BE FIXED
+
+    ("a-γρεεκ-package-1.0", None, None),
+    ("some/pkg-1.0", None, None),
 ]
 
 
 @pytest.mark.parametrize(("filename", "pkgname", "version"), files)
 def test_guess_pkgname_and_version(filename, pkgname, version):
-    assert core.guess_pkgname_and_version(filename) == (pkgname, version)
+    if pkgname is None:
+        exp = None
+    else:
+        exp = (pkgname, version)
+    assert core.guess_pkgname_and_version(filename) == exp
 
 
 def test_listdir_bad_name(tmpdir):

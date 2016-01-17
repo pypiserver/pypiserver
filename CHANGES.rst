@@ -1,6 +1,17 @@
 Changelog
 =========
 
+1.X.X (2016-01-xx)
+------------------
+- Package-versions parsing:
+
+  - TODO: #104: Stopped parsing invalid package-versions prefixed with `v`; they are
+    invalid according to :pep-reference:`0440`.
+  - TODO: Support versions with epochs separated by `!` like `package-1!1.1.0`.
+  - #102: FIX regression on uploading packages with `+` char in their version
+    caused by recent bottle-upgrade.
+
+
 1.1.9 (2015-12-21)
 ------------------
 "Ssss-elections" bug-fix & maintenance release.

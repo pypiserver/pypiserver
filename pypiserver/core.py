@@ -180,6 +180,11 @@ def is_allowed_path(path_part):
     p = path_part.replace("\\", "/")
     return not (p.startswith(".") or "/." in p)
 
+_bottle_upload_filename_re = re.compile(r'^[a-z0-9_.!+-]+$', re.I)
+
+def is_valid_pkg_filename(fname):
+    return _bottle_upload_filename_re.match(fname) is not None
+
 
 class PkgFile(object):
 
@@ -211,7 +216,7 @@ class PkgFile(object):
         if not hasattr(self, '_hash'):
             self._hash = '%s=%.32s' % (hash_algo, digest_file(self.fn, hash_algo))
         return self._hash
-    
+
 
 def _listdir(root):
     root = os.path.abspath(root)
