@@ -6,8 +6,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 |pypi-ver| |travis-status| |dependencies| |downloads-count| |python-ver| \
 |proj-license|
 
-:Version:     1.1.9
-:Date:        2015-12-21
+:Version:     1.1.10.dev1
+:Date:        2016-01-18
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.python.org/pypi/pypiserver
 :Travis:      https://travis-ci.org/pypiserver/pypiserver
@@ -68,7 +68,7 @@ Currently only password-protected uploads are supported!
 #. Create the apache *htpasswd* file with at least one user/password pair
    with this command (you'll be prompted for a password)::
 
-     htpasswd -sc .htaccess <some_username>
+     htpasswd -sc htpasswd.txt <some_username>
 
    .. Tip::
      Read this SO question for running `htpasswd` cmd under *Windows*:
@@ -86,7 +86,7 @@ Currently only password-protected uploads are supported!
 #. You  need to restart the server with the `-P` option only once
    (but user/password pairs can later be added or updated on the fly)::
 
-     ./pypi-server -p 8080 -P .htaccess ~/packages &
+     ./pypi-server -p 8080 -P htpasswd.txt ~/packages &
 
 #. On client-side, edit or create a `~/.pypirc` file with a similar content::
 
@@ -368,10 +368,11 @@ Specifying an additional `-u` option will also allow alpha, beta and
 release candidates to be downloaded. Without this option these
 releases won't be considered.
 
+
 Serving thousands of packages
 -----------------------------
 
-By default, pypiserver scans the entire packages directory each time an
+By default, *pypiserver* scans the entire packages directory each time an
 incoming HTTP request occurs. This isn't a problem for a small number of
 packages, but causes noticeable slowdowns when serving thousands or tens
 of thousands of packages.
@@ -383,9 +384,10 @@ install the ``watchdog`` package, or it can be installed by installing
 
   pip install pypi-server[cache]
 
-If you are using a static webserver such as Apache or Nginx as a proxy for
-pypiserver, additional speedup can be gained by directly serving the
-packages directory.
+If you are using a static webserver such as *Apache* or *Nginx* as 
+a reverse-proxy for pypiserver, additional speedup can be gained by 
+directly serving the packages directory.
+
 
 Using a different WSGI server
 -----------------------------
