@@ -96,7 +96,7 @@ def update():
     try:
         action = request.forms[':action']
     except KeyError:
-        raise HTTPError(400, output=":action field not found")
+        raise HTTPError(400, ":action field not found")
 
     if action in ("verify", "submit"):
         return ""
@@ -105,13 +105,13 @@ def update():
         try:
             content = request.files['content']
         except KeyError:
-            raise HTTPError(400, output="content file field not found")
+            raise HTTPError(400, "content file field not found")
         zip_data = content.file.read()
         try:
             zf = zipfile.ZipFile(BytesIO(zip_data))
             zf.getinfo('index.html')
         except Exception:
-            raise HTTPError(400, output="not a zip file")
+            raise HTTPError(400, "not a zip file")
         return ""
 
     if action == "remove_pkg":
@@ -130,21 +130,21 @@ def update():
         return ""
 
     if action != "file_upload":
-        raise HTTPError(400, output="action not supported: %s" % action)
+        raise HTTPError(400, "action not supported: %s" % action)
 
     try:
         content = request.files['content']
     except KeyError:
-        raise HTTPError(400, output="content file field not found")
+        raise HTTPError(400, "content file field not found")
 
     if "/" in content.filename:
-        raise HTTPError(400, output="bad filename")
+        raise HTTPError(400, "bad filename")
 
     if not config.overwrite and core.exists(packages.root, content.filename):
         log.warn("Cannot upload package(%s) since it already exists! \n" +
                  "  You may use `--overwrite` option when starting server to disable this check. ",
                  content.filename)
-        raise HTTPError(409, output="file already exists")
+        raise HTTPError(409, "file already exists")
 
     core.store(packages.root, content.filename, content.save)
     return ""
