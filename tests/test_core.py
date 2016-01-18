@@ -54,6 +54,7 @@ files = [
     ("pkg.zip", 'pkg', ''),
     ("foo/pkg.zip", 'pkg', ''),
     ("foo/pkg-1b.zip", 'pkg', '1b'),
+    ("some_package-0.1.0-py2.py3-none-any.whl.asc", "some_package", "0.1.0")
 ]
 
 def _capitalize_ext(fpath):

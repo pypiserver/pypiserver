@@ -144,9 +144,17 @@ def update():
     except KeyError:
         raise HTTPError(400, "Missing 'content' file-field!")
 
-    if (not is_valid_pkg_filename(content.raw_filename) or 
+    if (not is_valid_pkg_filename(content.raw_filename) or
             core.guess_pkgname_and_version(content.raw_filename) is None):
         raise HTTPError(400, "Bad filename: %s" % content.raw_filename)
+
+    try:
+        gpg_signature = request.files['gpg_signature']
+    except KeyError:
+        gpg_signature = None
+
+    if "/" in content.filename:
+        raise HTTPError(400, output="bad filename")
 
     if not config.overwrite and core.exists(packages.root, content.raw_filename):
         log.warn("Cannot upload package(%s) since it already exists! \n" +
@@ -155,7 +163,8 @@ def update():
         msg = "Package already exists! Start server with `--overwrite` option?"
         raise HTTPError(409, msg)
 
-    core.store(packages.root, content.raw_filename, content.save)
+    core.store(packages.root, content.filename, content.save,
+               gpg_signature.filename, gpg_signature.save)
     return ""
 
 
