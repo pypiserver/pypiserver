@@ -151,7 +151,10 @@ def update():
     try:
         gpg_signature = request.files['gpg_signature']
     except KeyError:
-        gpg_signature = None
+        gpg_filename = gpg_save = None
+    else:
+        gpg_filename = gpg_signature.filename
+        gpg_save = gpg_signature.save
 
     if "/" in content.filename:
         raise HTTPError(400, output="bad filename")
@@ -164,7 +167,7 @@ def update():
         raise HTTPError(409, msg)
 
     core.store(packages.root, content.filename, content.save,
-               gpg_signature.filename, gpg_signature.save)
+               gpg_filename, gpg_save)
     return ""
 
 
