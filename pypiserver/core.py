@@ -286,7 +286,6 @@ def store(root, filename, save_method,
     dest_fn = os.path.join(root, filename)
     save_method(dest_fn, overwrite=True) # Overwite check elsewhere.
     if gpg_filename is not None:
-        assert gpg_save_method is not None
         gpg_dest_fn = os.path.join(root, gpg_filename)
         save_method(gpg_dest_fn, overwrite=True)
     log.info("Stored package: %s", filename)
