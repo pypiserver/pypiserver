@@ -54,6 +54,11 @@ files = [
     ("pkg.zip", 'pkg', ''),
     ("foo/pkg.zip", 'pkg', ''),
     ("foo/pkg-1b.zip", 'pkg', '1b'),
+    ("package-name-0.0.1.alpha.1.win-amd64-py3.2.exe", "package-name", "0.0.1.alpha.1"),
+    ("some_package-0.1.0-py2.py3-none-any.whl", "some_package", "0.1.0"),
+    ("some_package-0.1.0-py2.py3-none-any.whl.asc", "some_package", "0.1.0"),
+    ("some_package-0.1.0.tar.gz.asc", "some_package", "0.1.0"),
+    ("some_package-0.1.0.tar.gz", "some_package", "0.1.0")
 ]
 
 def _capitalize_ext(fpath):
