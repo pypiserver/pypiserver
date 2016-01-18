@@ -156,6 +156,8 @@ def _guess_pkgname_and_version_wheel(basename):
 
 def guess_pkgname_and_version(path):
     path = os.path.basename(path)
+    if path.endswith(".asc"):
+        path = path.rstrip(".asc")
     if path.endswith(".whl"):
         return _guess_pkgname_and_version_wheel(path)
     if not _archive_suffix_rx.search(path):
