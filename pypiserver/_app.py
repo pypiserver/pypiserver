@@ -94,12 +94,71 @@ def root():
                     )
 
 _bottle_upload_filename_re = re.compile(r'^[a-z0-9_.!+-]+$', re.I)
+
+
 def is_valid_pkg_filename(fname):
     """See https://github.com/pypiserver/pypiserver/issues/102"""
     return _bottle_upload_filename_re.match(fname) is not None
 
 
+def doc_upload():
+    try:
+        content = request.files['content']
+    except KeyError:
+        raise HTTPError(400, "Missing 'content' file-field!")
+    zip_data = content.file.read()
+    try:
+        zf = zipfile.ZipFile(BytesIO(zip_data))
+        zf.getinfo('index.html')
+    except Exception:
+        raise HTTPError(400, "not a zip file")
+
+
+def remove_pkg():
+    name = request.forms.get("name")
+    version = request.forms.get("version")
+    if not name or not version:
+        msg = "Missing 'name'/'version' fields: name=%s, version=%s"
+        raise HTTPError(400, msg % (name, version))
+    found = None
+    for pkg in core.find_packages(packages()):
+        if pkg.pkgname == name and pkg.version == version:
+            found = pkg
+            break
+    if found is None:
+        raise HTTPError(404, "%s (%s) not found" % (name, version))
+    os.unlink(found.fn)
+
+
 Upload = namedtuple('Upload', 'pkg sig')
+
+
+def file_upload():
+    ufiles = Upload._make(
+        request.files.get(f, None) for f in ('content', 'gpg_signature'))
+    if not ufiles.pkg:
+        raise HTTPError(400, "Missing 'content' file-field!")
+    if (ufiles.sig and
+            '%s.asc' % ufiles.pkg.raw_filename != ufiles.sig.raw_filename):
+        raise HTTPError(400, "Unrelated signature %r for package %r!",
+                        ufiles.sig, ufiles.pkg)
+
+    for uf in ufiles:
+        if not uf:
+            continue
+        if (not is_valid_pkg_filename(uf.raw_filename) or
+                core.guess_pkgname_and_version(uf.raw_filename) is None):
+            raise HTTPError(400, "Bad filename: %s" % uf.raw_filename)
+
+        if not config.overwrite and core.exists(packages.root, uf.raw_filename):
+            log.warn("Cannot upload %r since it already exists! \n"
+                     "  You may start server with `--overwrite` option. ",
+                     uf.raw_filename)
+            HTTPError(409, "Package %r already exists!\n"
+                      "  You may start server with `--overwrite` option.",
+                      uf.raw_filename)
+
+        core.store(packages.root, uf.raw_filename, uf.save)
 
 
 @app.post('/')
@@ -113,56 +172,11 @@ def update():
     if action in ("verify", "submit"):
         log.warning("Ignored ':action': %s", action)
     elif action == "doc_upload":
-        try:
-            content = request.files['content']
-        except KeyError:
-            raise HTTPError(400, "Missing 'content' file-field!")
-        zip_data = content.file.read()
-        try:
-            zf = zipfile.ZipFile(BytesIO(zip_data))
-            zf.getinfo('index.html')
-        except Exception:
-            raise HTTPError(400, "not a zip file")
+        doc_upload()
     elif action == "remove_pkg":
-        name = request.forms.get("name")
-        version = request.forms.get("version")
-        if not name or not version:
-            msg = "Missing 'name'/'version' fields: name=%s, version=%s"
-            raise HTTPError(400, msg % (name, version))
-        found = None
-        for pkg in core.find_packages(packages()):
-            if pkg.pkgname == name and pkg.version == version:
-                found = pkg
-                break
-        if found is None:
-            raise HTTPError(404, "%s (%s) not found" % (name, version))
-        os.unlink(found.fn)
+        remove_pkg()
     elif action == "file_upload":
-        ufiles = Upload._make(
-            request.files.get(f, None) for f in ('content', 'gpg_signature'))
-        if not ufiles.pkg:
-            raise HTTPError(400, "Missing 'content' file-field!")
-        if (ufiles.sig and
-                '%s.asc' % ufiles.pkg.raw_filename != ufiles.sig.raw_filename):
-            raise HTTPError(400, "Unrelated signature %r for package %r!",
-                            ufiles.sig, ufiles.pkg)
-
-        for uf in ufiles:
-            if not uf:
-                continue
-            if (not is_valid_pkg_filename(uf.raw_filename) or
-                    core.guess_pkgname_and_version(uf.raw_filename) is None):
-                raise HTTPError(400, "Bad filename: %s" % uf.raw_filename)
-
-            if not config.overwrite and core.exists(packages.root, uf.raw_filename):
-                log.warn("Cannot upload %r since it already exists! \n"
-                         "  You may start server with `--overwrite` option. ",
-                         uf.raw_filename)
-                HTTPError(409, "Package %r already exists!\n"
-                          "  You may start server with `--overwrite` option.",
-                          uf.raw_filename)
-
-            core.store(packages.root, uf.raw_filename, uf.save)
+        file_upload()
     else:
         raise HTTPError(400, "Unsupported ':action' field: %s" % action)
 
@@ -213,7 +227,7 @@ def simple(prefix=""):
     links = [(os.path.basename(f.relfn),
               urljoin(fp, "../../packages/%s#%s" % (f.relfn_unix,
 
-                                         f.hash(config.hash_algo))))
+                                                    f.hash(config.hash_algo))))
              for f in files]
     tmpl = """\
     <html>
@@ -240,11 +254,11 @@ def list_packages():
         fp += "/"
 
     files = sorted(core.find_packages(packages()),
-                      key=lambda x: (os.path.dirname(x.relfn),
-                                     x.pkgname,
-                                     x.parsed_version))
+                   key=lambda x: (os.path.dirname(x.relfn),
+                                  x.pkgname,
+                                  x.parsed_version))
     links = [(f.relfn_unix, '%s#%s' % (urljoin(fp, f.relfn),
-                                         f.hash(config.hash_algo)))
+                                       f.hash(config.hash_algo)))
              for f in files]
     tmpl = """\
     <html>
