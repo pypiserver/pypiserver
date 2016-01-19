@@ -166,7 +166,6 @@ def update():
         raise HTTPError(400, "Bad gpg signature name: %s" %
                         gpg_signature.raw_filename)
 
-
     if not config.overwrite and core.exists(packages.root,
                                             gpg_signature.filename):
         log.warn("Cannot upload package(%s) because its signature already "
