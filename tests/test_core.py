@@ -55,10 +55,6 @@ files = [
     ("foo/pkg.zip", 'pkg', ''),
     ("foo/pkg-1b.zip", 'pkg', '1b'),
     ("package-name-0.0.1.alpha.1.win-amd64-py3.2.exe", "package-name", "0.0.1.alpha.1"),
-    ("some_package-0.1.0-py2.py3-none-any.whl", "some_package", "0.1.0"),
-    ("some_package-0.1.0-py2.py3-none-any.whl.asc", "some_package", "0.1.0"),
-    ("some_package-0.1.0.tar.gz.asc", "some_package", "0.1.0"),
-    ("some_package-0.1.0.tar.gz", "some_package", "0.1.0")
 ]
 
 def _capitalize_ext(fpath):
@@ -72,6 +68,12 @@ def test_guess_pkgname_and_version(filename, pkgname, version):
     exp = (pkgname, version)
     assert core.guess_pkgname_and_version(filename) == exp
     assert core.guess_pkgname_and_version(_capitalize_ext(filename)) == exp
+
+@pytest.mark.parametrize(("filename", "pkgname", "version"), files)
+def test_guess_pkgname_and_version_asc(filename, pkgname, version):
+    exp = (pkgname, version)
+    filename = '%s.asc' % filename
+    assert core.guess_pkgname_and_version(filename) == exp
 
 
 def test_listdir_bad_name(tmpdir):
