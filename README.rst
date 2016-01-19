@@ -6,7 +6,7 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 |pypi-ver| |travis-status| |dependencies| |downloads-count| |python-ver| \
 |proj-license|
 
-:Version:     1.1.10.dev1
+:Version:     1.1.10
 :Date:        2016-01-18
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.python.org/pypi/pypiserver
@@ -118,6 +118,12 @@ Currently only password-protected uploads are supported!
        - Use `twine <https://pypi.python.org/pypi/twine>`_ library which
          breaks the procedure in two steps.
 
+         Furthermore, it allows you to pre-sign your files with PGP-Signatures
+         and upload also the generated `.asc` files to *pypiserver*:: 
+
+            twine upload -r local --sign -identity user_name ./foo-1.zip
+
+
 
 Client-side configurations
 --------------------------
@@ -144,6 +150,7 @@ or by adding the following lines to `~/.pip/pip.conf`::
     the `--trusted-host` option.  You can also include this option permanently
     in your configuration-files or environment variables.
 
+
 `easy_install`
 ~~~~~~~~~~~~~~
 For *easy_install* it can be configured with the following setting in
@@ -151,7 +158,6 @@ For *easy_install* it can be configured with the following setting in
 
   [easy_install]
   index_url = http://localhost:8080/simple/
-
 
 
 Alternative Installation methods
@@ -500,27 +506,28 @@ inside the copy to receive any later changes.
 
 
 
-Bugs
-====
+Known Limitations
+=================
 *pypiserver* does not implement the full API as seen on PyPI_. It
 implements just enough to make ``easy_install`` and ``pip install`` to work.
 
 The following limitations are known:
 
 - It doesn't implement the XMLRPC json API interface: pip search
-  will not work.
+  will not work (a patch has been suggested: 
+  issue https://github.com/pypiserver/pypiserver/issues/80).
 - Command ``pypi -U`` that compares uploaded packages with *pypi* to see if
   they are outdated does not respect a http-proxy environment variable
   (see https://github.com/pypiserver/pypiserver/issues/19).
 - It accepts documentation uploads but does not save them to
   disk (see https://github.com/pypiserver/pypiserver/issues/47 for a
   discussion)
-- It does not handle misspelled packages as pypi-repo does,
+- It does not handle misspelled packages as *pypi-repo* does,
   therefore it is suggested to use it with `--extra-index-url` instead
   of `--index-url` (see https://github.com/pypiserver/pypiserver/issues/38)
 
 Please use github's `bugtracker <https://github.com/pypiserver/pypiserver/issues>`_
-if you find any other bugs.
+for other bugs you find.
 
 
 

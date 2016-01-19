@@ -1,15 +1,18 @@
 Changelog
 =========
 
-1.X.X (2016-01-xx)
+1.1.10 (2016-01-19)
 ------------------
-- Package-versions parsing:
+- #106: Support uploading PGP-signatures (thanks @mplanchard).
+- Package-versions parsing modifications:
 
   - #104: Stopped parsing invalid package-versions prefixed with `v`; they are
-    invalid according to :pep-reference:`0440`.
+    invalid according to :pep-reference:`0440` (thanks @virtuald & 
+    @stevejefferiesIDBS).
   - Support versions with epochs separated by `!` like `package-1!1.1.0`.
   - #102: FIX regression on uploading packages with `+` char in their version
     caused by recent bottle-upgrade.
+- #103: Minor doc fixes (thanks @MichaelSchneeberger).
 
 
 1.1.9 (2015-12-21)
