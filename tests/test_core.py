@@ -47,7 +47,7 @@ files = [
     ("pkg-3!1.0-0.1.tgz", 'pkg-3!1.0', '0.1'), # TO BE FIXED
     ("pkg-3!1+.0-0.1.tgz", 'pkg-3!1+.0', '0.1'), # TO BE FIXED
 
-    ("a-γρεεκ-package-1.0", None, None),
+    ("a-%-package-1.0", None, None),
     ("some/pkg-1.0", None, None),
 ]
 

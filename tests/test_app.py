@@ -12,10 +12,16 @@ import webtest
 
 import test_core
 
+try:
+    from html.parser import HTMLParser
+except ImportError:
+    from HTMLParser import HTMLParser
+
 
 # Enable logging to detect any problems with it
 ##
 __main__.init_logging(level=logging.NOTSET)
+hp = HTMLParser()
 
 
 @pytest.fixture()
@@ -310,12 +316,12 @@ def test_cache_control_set(root):
 def test_upload_noAction(root, testapp):
     resp = testapp.post("/", expect_errors=1)
     assert resp.status == '400 Bad Request'
-    assert ":action field not found" in resp.text
+    assert "Missing ':action' field!" in hp.unescape(resp.text)
 
 def test_upload_badAction(root, testapp):
     resp = testapp.post("/", params={':action': 'BAD'}, expect_errors=1)
     assert resp.status == '400 Bad Request'
-    assert "action not supported: BAD" in resp.text
+    assert "Unsupported ':action' field: BAD" in hp.unescape(resp.text)
 
 @pytest.mark.parametrize(("package"), [f[0] for f in test_core.files if f[1]])
 def test_upload(package, root, testapp):
@@ -334,31 +340,26 @@ def test_upload_badFilename(package, root, testapp):
             upload_files=[('content', package, b'')],
             expect_errors=1)
     assert resp.status == '400 Bad Request'
-    assert "bad filename" in resp.text
+    assert "Bad filename: %s" % package in resp.text
 
-def test_remove_pkg_missingNaveVersion(root, testapp):
-    resp = testapp.post("/", expect_errors=1,
-            params={
-                    ':action': 'remove_pkg',
-                    'version': '',
-    })
-    assert resp.status == '400 Bad Request'
-    assert "Name or version not specified" in resp.text
 
-    resp = testapp.post("/", expect_errors=1,
-            params={
-                    ':action': 'remove_pkg',
-                    'name': '',
-    })
+@pytest.mark.parametrize(("name", "version"), [
+        (None, None),
+        (None, ''),
+        ('', None),
+        (None, '1'),
+        ('pkg', None),
+        ('', '1'),
+        ('pkg', ''),
+])
+def test_remove_pkg_missingNaveVersion(name, version, root, testapp):
+    msg = "Missing 'name'/'version' fields: name=%s, version=%s"
+    params = {':action': 'remove_pkg', 'name': name, 'version': version}
+    params = dict((k, v) for k,v in params.items() if v is not None)
+    resp = testapp.post("/", expect_errors=1, params=params)
+    
     assert resp.status == '400 Bad Request'
-    assert "Name or version not specified" in resp.text
-
-    resp = testapp.post("/", expect_errors=1,
-            params={
-                    ':action': 'remove_pkg',
-    })
-    assert resp.status == '400 Bad Request'
-    assert "Name or version not specified" in resp.text
+    assert msg %(name, version) in hp.unescape(resp.text)
 
 def test_remove_pkg_notFound(root, testapp):
     resp = testapp.post("/", expect_errors=1,
@@ -368,7 +369,7 @@ def test_remove_pkg_notFound(root, testapp):
                     'version': '123',
     })
     assert resp.status == '404 Not Found'
-    assert "foo (123) not found" in resp.text
+    assert "foo (123) not found" in hp.unescape(resp.text)
 
 @pytest.mark.xfail()
 def test_remove_pkg(root, testapp):
