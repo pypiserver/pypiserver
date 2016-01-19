@@ -1,6 +1,7 @@
 #! /bin/sh
 ##
 ## Create an executable zip file.
+## Invoked by `commit-standalone.sh`.
 
 set -o errexit
 

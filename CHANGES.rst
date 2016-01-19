@@ -3,6 +3,11 @@ Changelog
 
 1.1.10 (2016-01-19)
 ------------------
+Serve 1000s of packages, PGP-Sigs, skip versions starting with 'v'.
+
++ #101: Speed-up server by (optionally) using the `watchdog` package 
+  to cache results, serve packages directly from proxying-server (*Apache* , 
+  *nginx*), and pre-compile regexes (thanks @virtuald). 
 - #106: Support uploading PGP-signatures (thanks @mplanchard).
 - Package-versions parsing modifications:
 

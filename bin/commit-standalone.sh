@@ -2,6 +2,7 @@
 ##
 ## Create an executable file and add it into `standalone` branch
 ##
+## Invoke it directly on the commmit "tagged" for a release.
 ## Invoke it with any arg to avoid committing into `standalone` branch.
 
 my_dir="$(dirname "$0")"

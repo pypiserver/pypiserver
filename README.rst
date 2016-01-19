@@ -390,9 +390,16 @@ install the ``watchdog`` package, or it can be installed by installing
 
   pip install pypi-server[cache]
 
-If you are using a static webserver such as *Apache* or *Nginx* as 
+If you are using a static webserver such as *Apache* or *nginx* as 
 a reverse-proxy for pypiserver, additional speedup can be gained by 
-directly serving the packages directory.
+directly serving the packages directory:
+
+For instance, in *nginx* you may adding the following config to serve 
+packages-directly directly (take care not to expose "sensitive" files)::
+
+    location /packages/ {
+      root /path/to/packages/parentdir;
+    }
 
 
 Using a different WSGI server
