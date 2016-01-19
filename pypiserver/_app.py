@@ -140,33 +140,33 @@ def update():
         raise HTTPError(400, "Unsupported ':action' field: %s" % action)
 
     try:
-        content = request.files['content']
+        req_pkg = request.files['content']
     except KeyError:
         raise HTTPError(400, "Missing 'content' file-field!")
 
-    if (not is_valid_pkg_filename(content.raw_filename) or
-            core.guess_pkgname_and_version(content.raw_filename) is None):
-        raise HTTPError(400, "Bad filename: %s" % content.raw_filename)
+    if (not is_valid_pkg_filename(req_pkg.raw_filename) or
+            core.guess_pkgname_and_version(req_pkg.raw_filename) is None):
+        raise HTTPError(400, "Bad filename: %s" % req_pkg.raw_filename)
 
-    if not config.overwrite and core.exists(packages.root, content.raw_filename):
+    if not config.overwrite and core.exists(packages.root, req_pkg.raw_filename):
         log.warn("Cannot upload package(%s) since it already exists! \n" +
                  "  You may use `--overwrite` option when starting server to disable this check. ",
-                 content.raw_filename)
+                 req_pkg.raw_filename)
         msg = "Package already exists! Start server with `--overwrite` option?"
         raise HTTPError(409, msg)
 
     try:
-        gpg_sig = request.files['gpg_signature']
+        req_sig = request.files['gpg_signature']
     except KeyError:
-        gpg_sig = None
+        req_sig = None
     else:
-        if (not is_valid_pkg_filename(gpg_sig.raw_filename) or
-            core.guess_pkgname_and_version(gpg_sig.raw_filename) is None):
+        if (not is_valid_pkg_filename(req_sig.raw_filename) or
+            core.guess_pkgname_and_version(req_sig.raw_filename) is None):
             raise HTTPError(400, "Bad gpg signature name: %s" %
-                            gpg_sig.raw_filename)
+                            req_sig.raw_filename)
 
         if not config.overwrite and core.exists(packages.root,
-                                                gpg_sig.raw_filename):
+                                                req_sig.raw_filename):
             log.warn("Cannot upload package(%s) because its signature already "
                      "exists! \n  You may use the `--overwrite` option when"
                      "starting the server to disable this check.")
@@ -174,11 +174,11 @@ def update():
                    "`--overwrite` option?")
             raise HTTPError(409, msg)
 
-    if gpg_sig is None:
-        core.store(packages.root, content.raw_filename, content.save)
+    if req_sig is None:
+        core.store(packages.root, req_pkg.raw_filename, req_pkg.save)
     else:
-        core.store(packages.root, content.raw_filename, content.save,
-                   gpg_sig.raw_filename, gpg_sig.save)
+        core.store(packages.root, req_pkg.raw_filename, req_pkg.save,
+                   req_sig.raw_filename, req_sig.save)
 
     return ""
 
