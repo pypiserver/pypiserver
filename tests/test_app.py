@@ -323,7 +323,9 @@ def test_upload_badAction(root, testapp):
     assert resp.status == '400 Bad Request'
     assert "Unsupported ':action' field: BAD" in hp.unescape(resp.text)
 
-@pytest.mark.parametrize(("package"), [f[0] for f in test_core.files if f[1]])
+@pytest.mark.parametrize(("package"), [f[0] 
+        for f in test_core.files 
+        if f[1] and '/' not in f[0]])
 def test_upload(package, root, testapp):
     resp = testapp.post("/", params={':action': 'file_upload'},
             upload_files=[('content', package, b'')])

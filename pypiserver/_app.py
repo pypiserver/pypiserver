@@ -2,6 +2,7 @@ import os
 import zipfile
 import mimetypes
 import logging
+import re
 
 from . import core
 
@@ -89,6 +90,11 @@ def root():
                     SIMPLE=urljoin(fp, "simple/")
                     )
 
+_bottle_upload_filename_re = re.compile(r'^[a-z0-9_.!+-]+$', re.I)
+def is_valid_pkg_filename(fname):
+    """See https://github.com/pypiserver/pypiserver/issues/102"""
+    return _bottle_upload_filename_re.match(fname) is not None
+
 
 @app.post('/')
 @auth("update")
@@ -138,7 +144,8 @@ def update():
     except KeyError:
         raise HTTPError(400, "Missing 'content' file-field!")
 
-    if not core.is_valid_pkg_filename(content.raw_filename):
+    if (not is_valid_pkg_filename(content.raw_filename) or 
+            core.guess_pkgname_and_version(content.raw_filename) is None):
         raise HTTPError(400, "Bad filename: %s" % content.raw_filename)
 
     if not config.overwrite and core.exists(packages.root, content.raw_filename):

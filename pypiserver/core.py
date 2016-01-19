@@ -93,8 +93,9 @@ mimetypes.add_type("application/octet-stream", ".egg")
 mimetypes.add_type("application/octet-stream", ".whl")
 
 
-# --- the following two functions were copied from distribute's pkg_resources module
-component_re = re.compile(r'(\d+ | [a-z]+ | \.| -)', re.VERBOSE)
+#### Next 2 functions adapted from :mod:`distribute.pkg_resources`.
+#
+component_re = re.compile(r'(\d+ | [a-z]+ | \.| -)', re.I | re.VERBOSE)
 replace = {'pre': 'c', 'preview': 'c', '-': 'final-', 'rc': 'c', 'dev': '@'}.get
 
 
@@ -120,22 +121,23 @@ def parse_version(s):
                 parts.pop()
         parts.append(part)
     return tuple(parts)
+#
+#### -- End of distribute's code.
 
-# -- end of distribute's code
 
 _archive_suffix_rx = re.compile(
-    r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$",
-    re.IGNORECASE)
-
+    r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|"
+    "\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$",
+    re.I)
 wheel_file_re = re.compile(
     r"""^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))
     ((-(?P<build>\d.*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)
     \.whl|\.dist-info)$""",
     re.VERBOSE)
-
-_pkgname_re = re.compile(r'-(?i)v?\d+[\.a-z]')
-_pkgname_parts_re = re.compile(r'[\.\-](?=(?i)cp\d|py\d|macosx|linux|sunos|'
-                                'solaris|irix|aix|cygwin|win)')
+_pkgname_re = re.compile(r'-\d+[a-z_.!+]', re.I)
+_pkgname_parts_re = re.compile(
+    r"[\.\-](?=cp\d|py\d|macosx|linux|sunos|solaris|irix|aix|cygwin|win)", 
+    re.I)
 
 
 def _guess_pkgname_and_version_wheel(basename):
@@ -180,11 +182,6 @@ def is_allowed_path(path_part):
     p = path_part.replace("\\", "/")
     return not (p.startswith(".") or "/." in p)
 
-_bottle_upload_filename_re = re.compile(r'^[a-z0-9_.!+-]+$', re.I)
-
-def is_valid_pkg_filename(fname):
-    return _bottle_upload_filename_re.match(fname) is not None
-
 
 class PkgFile(object):
 
@@ -210,7 +207,8 @@ class PkgFile(object):
     def __repr__(self):
         return "%s(%s)" % (
             self.__class__.__name__,
-            ", ".join(["%s=%r" % (k, getattr(self, k, v)) for k in sorted(self.__slots__)]))
+            ", ".join(["%s=%r" % (k, getattr(self, k)) 
+                                  for k in sorted(self.__slots__)]))
 
     def hash(self, hash_algo):
         if not hasattr(self, '_hash'):
