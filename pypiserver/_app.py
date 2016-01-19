@@ -151,23 +151,34 @@ def update():
     try:
         gpg_signature = request.files['gpg_signature']
     except KeyError:
-        gpg_filename = gpg_save = None
-    else:
-        gpg_filename = gpg_signature.filename
-        gpg_save = gpg_signature.save
+        gpg_signature = None
 
     if "/" in content.filename:
         raise HTTPError(400, output="bad filename")
 
-    if not config.overwrite and core.exists(packages.root, content.raw_filename):
+    if gpg_signature is not None and "/" in gpg_signature.filename:
+        raise HTTPError(400, output="bad filename")
+
+    if not config.overwrite and core.exists(packages.root, content.filename):
         log.warn("Cannot upload package(%s) since it already exists! \n" +
                  "  You may use `--overwrite` option when starting server to disable this check. ",
                  content.raw_filename)
         msg = "Package already exists! Start server with `--overwrite` option?"
         raise HTTPError(409, msg)
 
-    core.store(packages.root, content.filename, content.save,
-               gpg_filename, gpg_save)
+    if not config.overwrite and core.exists(packages.root,
+                                            gpg_signature.filename):
+        log.warn("Cannot upload package(%s) because its signature already "
+                 "exists! \n  You may use the `--overwrite` option when"
+                 "starting the server to disable this check.")
+        raise HTTPError(409, outut="signature file already exists")
+
+    if gpg_signature is None:
+        core.store(packages.root, content.filename, content.save)
+    else:
+        core.store(packages.root, content.filename, content.save,
+                   gpg_signature.filename, gpg_signature.save)
+
     return ""
 
 
