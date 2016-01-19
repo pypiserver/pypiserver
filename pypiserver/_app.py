@@ -1,10 +1,15 @@
-import os
-import zipfile
-import mimetypes
+from collections import namedtuple
 import logging
+import mimetypes
+import os
 import re
+import sys
+import zipfile
 
+from . import __version__
 from . import core
+from .bottle import static_file, redirect, request, response, HTTPError, Bottle, template
+
 
 try:
     from io import BytesIO
@@ -16,8 +21,6 @@ try:  # PY3
 except ImportError:  # PY2
     from urlparse import urljoin
 
-from .bottle import static_file, redirect, request, response, HTTPError, Bottle, template
-from . import __version__
 
 log = logging.getLogger(__name__)
 packages = None
@@ -96,6 +99,9 @@ def is_valid_pkg_filename(fname):
     return _bottle_upload_filename_re.match(fname) is not None
 
 
+Upload = namedtuple('Upload', 'pkg sig')
+
+
 @app.post('/')
 @auth("update")
 def update():
@@ -105,9 +111,8 @@ def update():
         raise HTTPError(400, "Missing ':action' field!")
 
     if action in ("verify", "submit"):
-        return ""
-
-    if action == "doc_upload":
+        log.warning("Ignored ':action': %s", action)
+    elif action == "doc_upload":
         try:
             content = request.files['content']
         except KeyError:
@@ -118,9 +123,7 @@ def update():
             zf.getinfo('index.html')
         except Exception:
             raise HTTPError(400, "not a zip file")
-        return ""
-
-    if action == "remove_pkg":
+    elif action == "remove_pkg":
         name = request.forms.get("name")
         version = request.forms.get("version")
         if not name or not version:
@@ -134,51 +137,34 @@ def update():
         if found is None:
             raise HTTPError(404, "%s (%s) not found" % (name, version))
         os.unlink(found.fn)
-        return ""
+    elif action == "file_upload":
+        ufiles = Upload._make(
+            request.files.get(f, None) for f in ('content', 'gpg_signature'))
+        if not ufiles.pkg:
+            raise HTTPError(400, "Missing 'content' file-field!")
+        if (ufiles.sig and
+                '%s.asc' % ufiles.pkg.raw_filename != ufiles.sig.raw_filename):
+            raise HTTPError(400, "Unrelated signature %r for package %r!",
+                            ufiles.sig, ufiles.pkg)
 
-    if action != "file_upload":
+        for uf in ufiles:
+            if not uf:
+                continue
+            if (not is_valid_pkg_filename(uf.raw_filename) or
+                    core.guess_pkgname_and_version(uf.raw_filename) is None):
+                raise HTTPError(400, "Bad filename: %s" % uf.raw_filename)
+
+            if not config.overwrite and core.exists(packages.root, uf.raw_filename):
+                log.warn("Cannot upload %r since it already exists! \n"
+                         "  You may start server with `--overwrite` option. ",
+                         uf.raw_filename)
+                HTTPError(409, "Package %r already exists!\n"
+                          "  You may start server with `--overwrite` option.",
+                          uf.raw_filename)
+
+            core.store(packages.root, uf.raw_filename, uf.save)
+    else:
         raise HTTPError(400, "Unsupported ':action' field: %s" % action)
-
-    try:
-        req_pkg = request.files['content']
-    except KeyError:
-        raise HTTPError(400, "Missing 'content' file-field!")
-
-    if (not is_valid_pkg_filename(req_pkg.raw_filename) or
-            core.guess_pkgname_and_version(req_pkg.raw_filename) is None):
-        raise HTTPError(400, "Bad filename: %s" % req_pkg.raw_filename)
-
-    if not config.overwrite and core.exists(packages.root, req_pkg.raw_filename):
-        log.warn("Cannot upload package(%s) since it already exists! \n" +
-                 "  You may use `--overwrite` option when starting server to disable this check. ",
-                 req_pkg.raw_filename)
-        msg = "Package already exists! Start server with `--overwrite` option?"
-        raise HTTPError(409, msg)
-
-    try:
-        req_sig = request.files['gpg_signature']
-    except KeyError:
-        req_sig = None
-    else:
-        if (not is_valid_pkg_filename(req_sig.raw_filename) or
-            core.guess_pkgname_and_version(req_sig.raw_filename) is None):
-            raise HTTPError(400, "Bad gpg signature name: %s" %
-                            req_sig.raw_filename)
-
-        if not config.overwrite and core.exists(packages.root,
-                                                req_sig.raw_filename):
-            log.warn("Cannot upload package(%s) because its signature already "
-                     "exists! \n  You may use the `--overwrite` option when"
-                     "starting the server to disable this check.")
-            msg = ("Signature file already exists! Start server with "
-                   "`--overwrite` option?")
-            raise HTTPError(409, msg)
-
-    if req_sig is None:
-        core.store(packages.root, req_pkg.raw_filename, req_pkg.save)
-    else:
-        core.store(packages.root, req_pkg.raw_filename, req_pkg.save,
-                   req_sig.raw_filename, req_sig.save)
 
     return ""
 

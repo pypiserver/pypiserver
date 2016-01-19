@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
+from collections import namedtuple
+import functools
 import hashlib
 import io
 import itertools
-import functools
 import logging
 import mimetypes
 import os
@@ -12,7 +13,9 @@ import re
 import sys
 
 import pkg_resources
+
 from . import Configuration
+
 
 log = logging.getLogger(__name__)
 
@@ -130,7 +133,6 @@ _archive_suffix_rx = re.compile(
     r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|"
     "\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$",
     re.I)
-
 wheel_file_re = re.compile(
     r"""^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))
     ((-(?P<build>\d.*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)
@@ -281,16 +283,12 @@ def exists(root, filename):
     return os.path.exists(dest_fn)
 
 
-def store(root, filename, save_method,
-          gpg_filename=None, gpg_save_method=None):
+def store(root, filename, save_method):
     assert "/" not in filename
     dest_fn = os.path.join(root, filename)
-    save_method(dest_fn, overwrite=True) # Overwite check elsewhere.
-    if gpg_filename is not None:
-        gpg_dest_fn = os.path.join(root, gpg_filename)
-        save_method(gpg_dest_fn, overwrite=True)
-    log.info("Stored package: %s", filename)
-    return True
+    save_method(dest_fn, overwrite=True) # Overwite check earlier.
+    log.info("Stored %r.", filename)
+
 
 def digest_file(fpath, hash_algo):
     """
