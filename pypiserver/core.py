@@ -91,6 +91,7 @@ def auth_by_htpasswd_file(htPsswdFile, username, password):
 
 mimetypes.add_type("application/octet-stream", ".egg")
 mimetypes.add_type("application/octet-stream", ".whl")
+mimetypes.add_type("text/plain", ".asc")
 
 
 #### Next 2 functions adapted from :mod:`distribute.pkg_resources`.
