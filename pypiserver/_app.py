@@ -145,19 +145,8 @@ def update():
         raise HTTPError(400, "Missing 'content' file-field!")
 
     if (not is_valid_pkg_filename(content.raw_filename) or
-            core.guess_pkgname_and_version(content.raw_filename) is None):
+                core.guess_pkgname_and_version(content.raw_filename) is None):
         raise HTTPError(400, "Bad filename: %s" % content.raw_filename)
-
-    try:
-        gpg_signature = request.files['gpg_signature']
-    except KeyError:
-        gpg_signature = None
-
-    if "/" in content.filename:
-        raise HTTPError(400, output="bad filename")
-
-    if gpg_signature is not None and "/" in gpg_signature.filename:
-        raise HTTPError(400, output="bad filename")
 
     if not config.overwrite and core.exists(packages.root, content.filename):
         log.warn("Cannot upload package(%s) since it already exists! \n" +
@@ -166,12 +155,26 @@ def update():
         msg = "Package already exists! Start server with `--overwrite` option?"
         raise HTTPError(409, msg)
 
+    try:
+        gpg_signature = request.files['gpg_signature']
+    except KeyError:
+        gpg_signature = None
+
+    if (gpg_signature is not None and
+            (not is_valid_pkg_filename(gpg_signature.raw_filename)
+             or core.guess_pkgname_and_version(content.raw_filename) is None)):
+        raise HTTPError(400, "Bad gpg signature name: %s" %
+                        gpg_signature.raw_filename)
+
+
     if not config.overwrite and core.exists(packages.root,
                                             gpg_signature.filename):
         log.warn("Cannot upload package(%s) because its signature already "
                  "exists! \n  You may use the `--overwrite` option when"
                  "starting the server to disable this check.")
-        raise HTTPError(409, outut="signature file already exists")
+        msg = ("Signature file already exists! Start server with "
+               "`--overwrite` option?")
+        raise HTTPError(409, msg)
 
     if gpg_signature is None:
         core.store(packages.root, content.filename, content.save)
