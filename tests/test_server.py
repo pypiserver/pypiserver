@@ -30,7 +30,7 @@ import pytest
 
 _BUFF_SIZE = 2**16
 _port = 8090
-SLEEP_AFTER_SRV = 2#sec
+SLEEP_AFTER_SRV = 3#sec
 
 @pytest.fixture
 def port():
