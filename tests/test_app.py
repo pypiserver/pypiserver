@@ -334,6 +334,20 @@ def test_upload(package, root, testapp):
     assert len(uploaded_pkgs) == 1
     assert uploaded_pkgs[0].lower() == package.lower()
 
+@pytest.mark.parametrize(("package"), [f[0] 
+        for f in test_core.files 
+        if f[1] and '/' not in f[0]])
+def test_upload_with_signature(package, root, testapp):
+    resp = testapp.post("/", params={':action': 'file_upload'},
+            upload_files=[
+                    ('content', package, b''), 
+                    ('gpg_signature', '%s.asc' % package, b'')])
+    assert resp.status_int == 200
+    uploaded_pkgs = [f.basename for f in root.listdir()]
+    assert len(uploaded_pkgs) == 2
+    assert uploaded_pkgs[0].lower() == package.lower()
+    assert uploaded_pkgs[1].lower() == '%s.asc' % package.lower()
+
 @pytest.mark.parametrize(("package"), [
         f[0] for f in test_core.files
         if f[1] is None])

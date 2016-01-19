@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
+from collections import namedtuple
+import functools
 import hashlib
 import io
 import itertools
-import functools
 import logging
 import mimetypes
 import os
@@ -12,7 +13,9 @@ import re
 import sys
 
 import pkg_resources
+
 from . import Configuration
+
 
 log = logging.getLogger(__name__)
 
@@ -91,6 +94,7 @@ def auth_by_htpasswd_file(htPsswdFile, username, password):
 
 mimetypes.add_type("application/octet-stream", ".egg")
 mimetypes.add_type("application/octet-stream", ".whl")
+mimetypes.add_type("text/plain", ".asc")
 
 
 #### Next 2 functions adapted from :mod:`distribute.pkg_resources`.
@@ -155,6 +159,8 @@ def _guess_pkgname_and_version_wheel(basename):
 
 def guess_pkgname_and_version(path):
     path = os.path.basename(path)
+    if path.endswith(".asc"):
+        path = path.rstrip(".asc")
     if path.endswith(".whl"):
         return _guess_pkgname_and_version_wheel(path)
     if not _archive_suffix_rx.search(path):
@@ -280,10 +286,9 @@ def exists(root, filename):
 def store(root, filename, save_method):
     assert "/" not in filename
     dest_fn = os.path.join(root, filename)
-    save_method(dest_fn, overwrite=True) # Overwite check elsewhere.
+    save_method(dest_fn, overwrite=True) # Overwite check earlier.
+    log.info("Stored %r.", filename)
 
-    log.info("Stored package: %s", filename)
-    return True
 
 def digest_file(fpath, hash_algo):
     """
