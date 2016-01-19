@@ -91,6 +91,7 @@ def auth_by_htpasswd_file(htPsswdFile, username, password):
 
 mimetypes.add_type("application/octet-stream", ".egg")
 mimetypes.add_type("application/octet-stream", ".whl")
+mimetypes.add_type("text/plain", ".asc")
 
 
 #### Next 2 functions adapted from :mod:`distribute.pkg_resources`.
@@ -129,6 +130,7 @@ _archive_suffix_rx = re.compile(
     r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|"
     "\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$",
     re.I)
+
 wheel_file_re = re.compile(
     r"""^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))
     ((-(?P<build>\d.*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)
@@ -155,6 +157,8 @@ def _guess_pkgname_and_version_wheel(basename):
 
 def guess_pkgname_and_version(path):
     path = os.path.basename(path)
+    if path.endswith(".asc"):
+        path = path.rstrip(".asc")
     if path.endswith(".whl"):
         return _guess_pkgname_and_version_wheel(path)
     if not _archive_suffix_rx.search(path):
@@ -277,11 +281,14 @@ def exists(root, filename):
     return os.path.exists(dest_fn)
 
 
-def store(root, filename, save_method):
+def store(root, filename, save_method,
+          gpg_filename=None, gpg_save_method=None):
     assert "/" not in filename
     dest_fn = os.path.join(root, filename)
     save_method(dest_fn, overwrite=True) # Overwite check elsewhere.
-
+    if gpg_filename is not None:
+        gpg_dest_fn = os.path.join(root, gpg_filename)
+        save_method(gpg_dest_fn, overwrite=True)
     log.info("Stored package: %s", filename)
     return True
 
