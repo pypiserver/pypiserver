@@ -145,10 +145,10 @@ def update():
         raise HTTPError(400, "Missing 'content' file-field!")
 
     if (not is_valid_pkg_filename(content.raw_filename) or
-                core.guess_pkgname_and_version(content.raw_filename) is None):
+            core.guess_pkgname_and_version(content.raw_filename) is None):
         raise HTTPError(400, "Bad filename: %s" % content.raw_filename)
 
-    if not config.overwrite and core.exists(packages.root, content.filename):
+    if not config.overwrite and core.exists(packages.root, content.raw_filename):
         log.warn("Cannot upload package(%s) since it already exists! \n" +
                  "  You may use `--overwrite` option when starting server to disable this check. ",
                  content.raw_filename)
@@ -156,31 +156,29 @@ def update():
         raise HTTPError(409, msg)
 
     try:
-        gpg_signature = request.files['gpg_signature']
+        gpg_sig = request.files['gpg_signature']
     except KeyError:
-        gpg_signature = None
-
-    if (gpg_signature is not None and
-            (not is_valid_pkg_filename(gpg_signature.raw_filename)
-             or core.guess_pkgname_and_version(content.raw_filename) is None)):
-        raise HTTPError(400, "Bad gpg signature name: %s" %
-                        gpg_signature.raw_filename)
-
-
-    if not config.overwrite and core.exists(packages.root,
-                                            gpg_signature.filename):
-        log.warn("Cannot upload package(%s) because its signature already "
-                 "exists! \n  You may use the `--overwrite` option when"
-                 "starting the server to disable this check.")
-        msg = ("Signature file already exists! Start server with "
-               "`--overwrite` option?")
-        raise HTTPError(409, msg)
-
-    if gpg_signature is None:
-        core.store(packages.root, content.filename, content.save)
+        gpg_sig = None
     else:
-        core.store(packages.root, content.filename, content.save,
-                   gpg_signature.filename, gpg_signature.save)
+        if (not is_valid_pkg_filename(gpg_sig.raw_filename) or
+            core.guess_pkgname_and_version(gpg_sig.raw_filename) is None):
+            raise HTTPError(400, "Bad gpg signature name: %s" %
+                            gpg_sig.raw_filename)
+
+        if not config.overwrite and core.exists(packages.root,
+                                                gpg_sig.raw_filename):
+            log.warn("Cannot upload package(%s) because its signature already "
+                     "exists! \n  You may use the `--overwrite` option when"
+                     "starting the server to disable this check.")
+            msg = ("Signature file already exists! Start server with "
+                   "`--overwrite` option?")
+            raise HTTPError(409, msg)
+
+    if gpg_sig is None:
+        core.store(packages.root, content.raw_filename, content.save)
+    else:
+        core.store(packages.root, content.raw_filename, content.save,
+                   gpg_sig.raw_filename, gpg_sig.save)
 
     return ""
 
