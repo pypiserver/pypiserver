@@ -1,6 +1,13 @@
 Changelog
 =========
 
+1.2.0 (2016-XX-XX)
+------------------
+"New Day"
+
+- Stop supporting `python-2 < 2.7` and `python-3 < 3.3`.
+
+
 1.1.10 (2016-01-19)
 ------------------
 Serve 1000s of packages, PGP-Sigs, skip versions starting with 'v'.

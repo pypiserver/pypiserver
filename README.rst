@@ -6,8 +6,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 |pypi-ver| |travis-status| |dependencies| |downloads-count| |python-ver| \
 |proj-license|
 
-:Version:     1.1.10
-:Date:        2016-01-18
+:Version:     1.2.0.dev1
+:Date:        2016-XX-XX
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.python.org/pypi/pypiserver
 :Travis:      https://travis-ci.org/pypiserver/pypiserver
@@ -18,23 +18,24 @@ pypiserver - minimal PyPI server for use with pip/easy_install
   :backlinks: top
 
 
-*pypiserver* is a minimal PyPI_ compatible server.
-It can be used to upload and serve packages, wheels and eggs
-to *pip* or *easy_install*.
+*pypiserver* is a minimal PyPI_ compatible server based on bottle_.
+It can be used to upload and serve packages, wheels, eggs and PGP-signatures
+with *pip* or *easy_install*.
 The packages are stored in regular directories.
 
 
 
 Quickstart: Installation and Usage
 ==================================
-*pypiserver* will work with python 2.5 --> 2.7 and 3.2 --> 3.5.
-Python 3.0 and 3.1 may also work, but pypiserver is not being tested
+*pypiserver* `> 1.2.x` works with python `2.7` and `3.3 --> 3.5` or *pypy*.
+Python `3.0 --> 3.2` may also work, but it is not being tested
 with these versions.
+For older python-2 versions, use *pypiserver* `1.1.x` series.
 
 Run the following commands to get your PyPI server up and running::
 
   ## Installation.
-  pip install pypiserver[passlib]
+  pip install pypiserver                ## or : pypiserver[passlib,watchdog]
   mkdir ~/packages                      ## Copy packages into this directory.
 
   ## Start server.
@@ -119,7 +120,7 @@ Currently only password-protected uploads are supported!
          breaks the procedure in two steps.
 
          Furthermore, it allows you to pre-sign your files with PGP-Signatures
-         and upload also the generated `.asc` files to *pypiserver*:: 
+         and upload also the generated `.asc` files to *pypiserver*::
 
             twine upload -r local --sign -identity user_name ./foo-1.zip
 
@@ -390,11 +391,11 @@ install the ``watchdog`` package, or it can be installed by installing
 
   pip install pypi-server[cache]
 
-If you are using a static webserver such as *Apache* or *nginx* as 
-a reverse-proxy for pypiserver, additional speedup can be gained by 
+If you are using a static webserver such as *Apache* or *nginx* as
+a reverse-proxy for pypiserver, additional speedup can be gained by
 directly serving the packages directory:
 
-For instance, in *nginx* you may adding the following config to serve 
+For instance, in *nginx* you may adding the following config to serve
 packages-directly directly (take care not to expose "sensitive" files)::
 
     location /packages/ {
@@ -521,7 +522,7 @@ implements just enough to make ``easy_install`` and ``pip install`` to work.
 The following limitations are known:
 
 - It doesn't implement the XMLRPC json API interface: pip search
-  will not work (a patch has been suggested: 
+  will not work (a patch has been suggested:
   issue https://github.com/pypiserver/pypiserver/issues/80).
 - Command ``pypi -U`` that compares uploaded packages with *pypi* to see if
   they are outdated does not respect a http-proxy environment variable

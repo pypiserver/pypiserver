@@ -47,7 +47,7 @@ def test_default_pkgdir(main):
 
 
 def test_noargs(main):
-    assert main([]) == dict(host="0.0.0.0", port=8080, server="auto")
+    assert main([]) == {'host': "0.0.0.0", 'port': 8080, 'server': "auto"}
 
 
 def test_port(main):
