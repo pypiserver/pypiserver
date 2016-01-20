@@ -27,7 +27,7 @@ The packages are stored in regular directories.
 
 Quickstart: Installation and Usage
 ==================================
-*pypiserver* will work with python 2.5 --> 2.7 and 3.2 --> 3.4.
+*pypiserver* will work with python 2.5 --> 2.7 and 3.2 --> 3.5.
 Python 3.0 and 3.1 may also work, but pypiserver is not being tested
 with these versions.
 
