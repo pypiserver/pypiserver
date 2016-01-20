@@ -13,6 +13,12 @@ tests_require = ['pytest>=2.3', 'tox', 'twine', 'pip>=7', 'passlib', 'webtest']
 if sys.version_info <= (3, 2):
     tests_require.append('mock')
 
+setup_requires = ['setuptools', 'setuptools-git >= 0.3']
+if sys.version_info >= (3,5):
+    setup_requires.append('wheel >= 0.25.0')  # earlier wheels fail in 3.5
+else:
+    setup_requires.append('wheel')
+
 
 def get_version():
     d = {}
@@ -29,12 +35,7 @@ setup(name="pypiserver",
       version=get_version(),
       packages=["pypiserver"],
       package_data={'pypiserver': ['welcome.html']},
-      setup_requires=[
-          'setuptools',
-          # Gather package-data from all files in git.
-          'setuptools-git >= 0.3',
-          'wheel',
-      ],
+      setup_requires=setup_requires,
       extras_require={
           'passlib': ['passlib'],
           'cache': ['watchdog']

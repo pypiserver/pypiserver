@@ -30,7 +30,7 @@ Quickstart: Installation and Usage
 *pypiserver* `> 1.2.x` works with python `2.7` and `3.3 --> 3.5` or *pypy*.
 Python `3.0 --> 3.2` may also work, but it is not being tested
 with these versions.
-For older python-2 version, use version `1.1.x` series.
+For older python-2 versions, use *pypiserver* `1.1.x` series.
 
 Run the following commands to get your PyPI server up and running::
 
@@ -120,7 +120,7 @@ Currently only password-protected uploads are supported!
          breaks the procedure in two steps.
 
          Furthermore, it allows you to pre-sign your files with PGP-Signatures
-         and upload also the generated `.asc` files to *pypiserver*:: 
+         and upload also the generated `.asc` files to *pypiserver*::
 
             twine upload -r local --sign -identity user_name ./foo-1.zip
 
@@ -391,11 +391,11 @@ install the ``watchdog`` package, or it can be installed by installing
 
   pip install pypi-server[cache]
 
-If you are using a static webserver such as *Apache* or *nginx* as 
-a reverse-proxy for pypiserver, additional speedup can be gained by 
+If you are using a static webserver such as *Apache* or *nginx* as
+a reverse-proxy for pypiserver, additional speedup can be gained by
 directly serving the packages directory:
 
-For instance, in *nginx* you may adding the following config to serve 
+For instance, in *nginx* you may adding the following config to serve
 packages-directly directly (take care not to expose "sensitive" files)::
 
     location /packages/ {
@@ -522,7 +522,7 @@ implements just enough to make ``easy_install`` and ``pip install`` to work.
 The following limitations are known:
 
 - It doesn't implement the XMLRPC json API interface: pip search
-  will not work (a patch has been suggested: 
+  will not work (a patch has been suggested:
   issue https://github.com/pypiserver/pypiserver/issues/80).
 - Command ``pypi -U`` that compares uploaded packages with *pypi* to see if
   they are outdated does not respect a http-proxy environment variable
