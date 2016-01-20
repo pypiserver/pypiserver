@@ -56,12 +56,11 @@ def log_request():
 
 @app.hook('after_request')
 def log_response():
-    log.info(config.log_res_frmt,  # vars(response))  ## DOES NOT WORK!
-             dict(
-                 response=response,
-                 status=response.status, headers=response.headers,
-                 body=response.body, cookies=response._cookies,
-             ))
+    log.info(config.log_res_frmt, {  # vars(response))  ## DOES NOT WORK!
+        'response': response,
+        'status': response.status, 'headers': response.headers,
+        'body': response.body, 'cookies': response._cookies,
+    })
 
 
 @app.error
