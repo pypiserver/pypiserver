@@ -1,5 +1,9 @@
 .. -*- mode: rst; coding: utf-8 -*-
 
+.. image:: pypiserver_logo.png
+   :width: 300 px
+   :align: center
+
 ==============================================================================
 pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
@@ -14,32 +18,33 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 :Maintainer:  Kostis Anagnostopoulos <ankostis@gmail.com>
 :License:     zlib/libpng + MIT
 
+*pypiserver* is a minimal PyPI_ compatible server for *pip* or *easy_install*.
+It is based on bottle_ and serves packages from regular directories.  
+Wheels, bdists, eggs and accompanying PGP-signatures can be uploaded 
+either with *pip*, *setuptools*, *twine* or simply copied with *scp*.
+
+
 .. contents:: Table of Contents
   :backlinks: top
-
-
-*pypiserver* is a minimal PyPI_ compatible server based on bottle_.
-It can be used to upload and serve packages, wheels, eggs and PGP-signatures
-with *pip* or *easy_install*.
-The packages are stored in regular directories.
-
 
 
 Quickstart: Installation and Usage
 ==================================
 *pypiserver* `> 1.2.x` works with python `2.7` and `3.3 --> 3.5` or *pypy*.
-Python `3.0 --> 3.2` may also work, but it is not being tested
-with these versions.
-For older python-2 versions, use *pypiserver* `1.1.x` series.
+Python `3.0 --> 3.2` may also work, but it is not being tested for these 
+versions.
+For legacy python versions, use `pypiserver-1.1.x` series.
 
 Run the following commands to get your PyPI server up and running::
 
   ## Installation.
-  pip install pypiserver                ## or : pypiserver[passlib,watchdog]
+  pip install pypiserver                ## Or: pypiserver[passlib,watchdog]
   mkdir ~/packages                      ## Copy packages into this directory.
 
   ## Start server.
   pypi-server -p 8080 ~/packages &      ## Will listen to all IPs.
+
+From the client computer, type this::
 
   ## Download and Install hosted packages.
   pip install  --extra-index-url http://localhost:8080/simple/ ...
