@@ -75,7 +75,11 @@ def favicon():
 
 @app.route('/')
 def root():
-    fp = request.fullpath
+    if config.url_prefix:
+        prefix = url = config.url_prefix
+    else:
+        prefix = request.fullpath
+        url = request.url
 
     try:
         numpkgs = len(list(packages()))
@@ -85,11 +89,11 @@ def root():
     # Ensure template() does not consider `msg` as filename!
     msg = config.welcome_msg + '\n'
     return template(msg,
-                    URL=request.url,
+                    URL=os.path.join(url, "simple/"),
                     VERSION=__version__,
                     NUMPKGS=numpkgs,
-                    PACKAGES=urljoin(fp, "packages/"),
-                    SIMPLE=urljoin(fp, "simple/")
+                    PACKAGES=os.path.join(prefix, "packages/"),
+                    SIMPLE=os.path.join(prefix, "simple/")
                     )
 
 _bottle_upload_filename_re = re.compile(r'^[a-z0-9_.!+-]+$', re.I)
