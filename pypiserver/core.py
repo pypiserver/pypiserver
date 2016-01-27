@@ -287,7 +287,6 @@ def store(root, filename, save_method):
     assert "/" not in filename
     dest_fn = os.path.join(root, filename)
     save_method(dest_fn, overwrite=True) # Overwite check earlier.
-    log.info("Stored %r.", filename)
 
 
 def digest_file(fpath, hash_algo):
