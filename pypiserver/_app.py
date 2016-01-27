@@ -158,6 +158,11 @@ def file_upload():
                       uf.raw_filename)
 
         core.store(packages.root, uf.raw_filename, uf.save)
+        if request.auth:
+            user = request.auth[0]
+        else:
+            user = 'anon'
+        log.info('{} stored {}'.format(user, uf.raw_filename))
 
 
 @app.post('/')
