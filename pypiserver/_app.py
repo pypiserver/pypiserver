@@ -153,7 +153,7 @@ def file_upload():
             log.warn("Cannot upload %r since it already exists! \n"
                      "  You may start server with `--overwrite` option. ",
                      uf.raw_filename)
-            HTTPError(409, "Package %r already exists!\n"
+            raise HTTPError(409, "Package %r already exists!\n"
                       "  You may start server with `--overwrite` option.",
                       uf.raw_filename)
 
