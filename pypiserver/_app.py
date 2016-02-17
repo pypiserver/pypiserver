@@ -213,8 +213,9 @@ def handle_rpc():
         ordering = 0
         for p in packages():
             if p.pkgname.count(value) > 0:
+                # We do not presently have any description/summary, returning version instead
                 d = {'_pypi_ordering': ordering, 'version': p.version,
-                     'name': p.pkgname, 'summary': p.fn}
+                     'name': p.pkgname, 'summary': p.version}
                 response.append(d)
             ordering += 1
         call_string = xmlrpclib.dumps( (response,), 'search', methodresponse=True)
