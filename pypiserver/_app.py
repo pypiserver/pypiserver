@@ -223,6 +223,7 @@ def handle_rpc():
 
 
 @app.route("/simple/")
+@auth("list")
 def simpleindex():
     links = sorted(core.get_prefixes(packages()))
     tmpl = """\
