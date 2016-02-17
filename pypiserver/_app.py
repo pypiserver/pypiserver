@@ -11,6 +11,10 @@ from . import __version__
 from . import core
 from .bottle import static_file, redirect, request, response, HTTPError, Bottle, template
 
+try:
+    import xmlrpc.client as xmlrpclib # py3
+except ImportError:
+    import xmlrpclib # py2
 
 try:
     from io import BytesIO
@@ -21,48 +25,6 @@ try:  # PY3
     from urllib.parse import urljoin
 except ImportError:  # PY2
     from urlparse import urljoin
-
-XMLRPC_RESPONSE_SKELETON = '''
-
-
-
-
-%(objects)s
-
-
-
-'''
-
-
-def from_obj_to_xmlrpc(obj_):
-    res = ""
-    if isinstance(obj_, int):
-        res += "%s" % obj_
-        return res
-    elif isinstance(obj_, str):
-        res += "%s" % obj_
-        return res
-    elif isinstance(obj_,dict):
-        res += ""
-        for k, v in obj_.iteritems():
-            member = {}
-            member["name"] = k
-            member["value"] = from_obj_to_xmlrpc(v)
-            res_1 = ""
-            res_1 += "%(name)s"
-            res_1 += "%(value)s"
-            res_1 += ""
-            res += res_1 % member
-        res += ""
-        return res
-    elif isinstance(obj_, list):
-        res += ""
-        for i in obj_:
-            res += "%s" % from_obj_to_xmlrpc(i)
-        res += ""
-        return res
-    else:
-        raise Exception("No valid object")
 
 
 log = logging.getLogger(__name__)
@@ -236,30 +198,28 @@ def simpleindex_redirect():
     return redirect(request.fullpath + "/")
 
 
-@app.post('/search')
-@app.post('/search/')
+@app.post('/RPC2')
 @auth("list")
-def search():
+def handle_rpc():
     value = ""
-    try:
-        parser = xml.dom.minidom.parse(request.body)
-        member = parser.getElementsByTagName("member")[0]
+    parser = xml.dom.minidom.parse(request.body)
+    methodname = parser.getElementsByTagName("methodName")[0].childNodes[0].wholeText.strip()
+    log.info("Processing RPC2 request for '%s'", methodname)
+    if methodname == 'search':
         value = parser.getElementsByTagName(
             "string")[0].childNodes[0].wholeText.strip()
-    except Exception as e:
-        value = ""
 
-    response = []
-    ordering = 0
-    for p in packages():
-        if p.pkgname.count(value) > 0:
-            d = {'_pypi_ordering': ordering, 'version': p.version,
-                 'name': p.pkgname, 'summary': p.fn}
-            response.append(d)
-        ordering += 1
-    res = XMLRPC_RESPONSE_SKELETON \
-        % {"objects":from_obj_to_xmlrpc(response)}
-    return res
+        response = []
+        ordering = 0
+        for p in packages():
+            if p.pkgname.count(value) > 0:
+                d = {'_pypi_ordering': ordering, 'version': p.version,
+                     'name': p.pkgname, 'summary': p.fn}
+                response.append(d)
+            ordering += 1
+        call_string = xmlrpclib.dumps( (response,), 'search', methodresponse=True)
+        return call_string
+
 
 @app.route("/simple/")
 def simpleindex():
@@ -374,3 +334,4 @@ def bad_url(prefix):
     p += "/simple/%s/" % prefix
 
     return redirect(p)
+
