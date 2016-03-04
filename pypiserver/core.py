@@ -241,14 +241,6 @@ def _listdir(root):
                               fn=fn, root=root,
                               relfn=fn[len(root) + 1:])
 
-try:
-    from .cache import listdir_cache
-
-    def listdir(root):
-        return listdir_cache.get(root, _listdir)
-except ImportError:
-    listdir = _listdir
-
 def find_packages(pkgs, prefix=""):
     prefix = normalize_pkgname(prefix)
     for x in pkgs:
@@ -289,7 +281,7 @@ def store(root, filename, save_method):
     save_method(dest_fn, overwrite=True) # Overwite check earlier.
 
 
-def digest_file(fpath, hash_algo):
+def _digest_file(fpath, hash_algo):
     """
     Reads and digests a file according to specified hashing-algorith.
 
@@ -304,3 +296,19 @@ def digest_file(fpath, hash_algo):
         for block in iter(lambda: f.read(blocksize), b''):
             digester.update(block)
     return digester.hexdigest()[:32]
+
+
+try:
+    from .cache import cache_manager
+
+    def listdir(root):
+        # root must be absolute path
+        return cache_manager.listdir(root, _listdir)
+
+    def digest_file(fpath, hash_algo):
+        # fpath must be absolute path
+        return cache_manager.digest_file(fpath, hash_algo, _digest_file)
+
+except ImportError:
+    listdir = _listdir
+    digest_file = _digest_file
