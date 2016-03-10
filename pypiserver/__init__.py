@@ -112,15 +112,18 @@ def default_config(
     return locals()
 
 
-def app(**kwds):
+def app(root=None, **kwds):
     """
+    :param root:
+            Here for ease of use and backwards compatibility.
+            A list of paths, derived from the packages specified on cmd-line.
     :param dict kwds:
             Any overrides for defaults, as fetched by :func:`default_config()`.
             Check the docstring of this function for supported kwds.
     """
     from . import core, _app
 
-    kwds = default_config(**kwds)
+    kwds = default_config(root=root, **kwds)
     config, packages = core.configure(**kwds)
     _app.config = config
     _app.packages = packages
