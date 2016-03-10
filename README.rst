@@ -436,11 +436,11 @@ gunicorn
 
 The following command uses *gunicorn* to start *pypiserver*::
 
-  gunicorn -w4 'pypiserver:app("/home/ralf/packages")'
+  gunicorn -w4 'pypiserver:app(root="/home/ralf/packages")'
 
 or when using multiple roots::
 
-  gunicorn -w4 'pypiserver:app(["/home/ralf/packages", "/home/ralf/experimental"])'
+  gunicorn -w4 'pypiserver:app(root=["/home/ralf/packages", "/home/ralf/experimental"])'
 
 
 apache/mod_wsgi
