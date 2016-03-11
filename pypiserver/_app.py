@@ -245,7 +245,7 @@ def search():
         parser = xml.dom.minidom.parse(request.body)
         member = parser.getElementsByTagName("member")[0]
         value  = parser.getElementsByTagName("string")[0].childNodes[0].wholeText.strip()
-    except Exception, e:
+    except Exception:
         value = ""
 
     response = []
