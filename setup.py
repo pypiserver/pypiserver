@@ -9,12 +9,13 @@ if sys.version_info >= (3, 0):
 else:
     exec("def do_exec(co, loc): exec co in loc\n")
 
-tests_require = ['pytest>=2.3', 'tox', 'twine', 'pip>=7', 'passlib', 'webtest']
+tests_require = ['pytest>=2.3', 'tox', 'twine', 'pip>=7',
+                 'passlib>=1.6', 'webtest']
 if sys.version_info <= (3, 2):
     tests_require.append('mock')
 
 setup_requires = ['setuptools', 'setuptools-git >= 0.3']
-if sys.version_info >= (3,5):
+if sys.version_info >= (3, 5):
     setup_requires.append('wheel >= 0.25.0')  # earlier wheels fail in 3.5
 else:
     setup_requires.append('wheel')
@@ -37,7 +38,7 @@ setup(name="pypiserver",
       package_data={'pypiserver': ['welcome.html']},
       setup_requires=setup_requires,
       extras_require={
-          'passlib': ['passlib'],
+          'passlib': ['passlib>=1.6'],
           'cache': ['watchdog']
       },
       tests_require=tests_require,

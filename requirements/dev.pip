@@ -8,7 +8,7 @@
 pip>=7
 setuptools
 setuptools-git>=0.3
-passlib
+passlib>=1.6
 tox
 wheel>=0.25.0
 pytest>=2.3
