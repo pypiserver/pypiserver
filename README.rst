@@ -460,7 +460,7 @@ In case you're using *apache2* with *mod_wsgi*, the following config-file
   PACKAGES = "/srv/yoursite/packages"
   HTPASSWD = "/srv/yoursite/htpasswd"
   import pypiserver
-  application = pypiserver.app(PACKAGES, redirect_to_fallback=True, password_file=HTPASSWD)
+  application = pypiserver.app(root=PACKAGES, redirect_to_fallback=True, password_file=HTPASSWD)
 
 
 paste/pastedeploy
