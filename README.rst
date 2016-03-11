@@ -65,9 +65,10 @@ Instead of copying packages directly to the server's folder,
 you may also upload them remotely with a ``python setup.py upload`` command.
 Currently only password-protected uploads are supported!
 
-#. First make sure you have the *passlib* module installed,
-   which is needed for parsing the apache *htpasswd* file specified by
-   the `-P`, `--passwords` option (see next steps)::
+#. First make sure you have the *passlib* module installed (note that
+   `passlib>=1.6` is required), which is needed for parsing the apache
+   *htpasswd* file specified by the `-P`, `--passwords` option
+   (see next steps)::
 
      pip install passlib
 
