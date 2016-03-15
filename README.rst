@@ -407,6 +407,9 @@ packages-directly directly (take care not to expose "sensitive" files)::
       root /path/to/packages/parentdir;
     }
 
+If you have packages that are very large, you may find it helpful to
+disable hashing of files (set `--hash-algo=off`, or `hash_algo=None` when
+using wsgi).
 
 Using a different WSGI server
 -----------------------------

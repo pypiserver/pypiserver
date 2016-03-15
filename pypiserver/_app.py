@@ -229,9 +229,7 @@ def simple(prefix=""):
         return HTTPError(404)
 
     links = [(os.path.basename(f.relfn),
-              urljoin(fp, "../../packages/%s#%s" % (f.relfn_unix,
-
-                                                    f.hash(config.hash_algo))))
+              urljoin(fp, "../../packages/%s" % f.fname_and_hash(config.hash_algo)))
              for f in files]
     tmpl = """\
     <html>
@@ -261,8 +259,7 @@ def list_packages():
                    key=lambda x: (os.path.dirname(x.relfn),
                                   x.pkgname,
                                   x.parsed_version))
-    links = [(f.relfn_unix, '%s#%s' % (urljoin(fp, f.relfn),
-                                       f.hash(config.hash_algo)))
+    links = [(f.relfn_unix, urljoin(fp, f.fname_and_hash(config.hash_algo)))
              for f in files]
     tmpl = """\
     <html>
