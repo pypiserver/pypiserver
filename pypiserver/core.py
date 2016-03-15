@@ -192,7 +192,7 @@ def is_allowed_path(path_part):
 
 class PkgFile(object):
 
-    __slots__ = ['fn', 'root', '_hash',
+    __slots__ = ['fn', 'root', '_fname_and_hash',
                  'relfn', 'relfn_unix',
                  'pkgname_norm',
                  'pkgname',
@@ -217,10 +217,14 @@ class PkgFile(object):
             ", ".join(["%s=%r" % (k, getattr(self, k)) 
                                   for k in sorted(self.__slots__)]))
 
-    def hash(self, hash_algo):
-        if not hasattr(self, '_hash'):
-            self._hash = '%s=%.32s' % (hash_algo, digest_file(self.fn, hash_algo))
-        return self._hash
+    def fname_and_hash(self, hash_algo):
+        if not hasattr(self, '_fname_and_hash'):
+            if hash_algo:
+                self._fname_and_hash = '%s#%s=%.32s' % (self.relfn_unix, hash_algo,
+                                                        digest_file(self.fn, hash_algo))
+            else:
+                self._fname_and_hash = self.relfn_unix
+        return self._fname_and_hash
 
 
 def _listdir(root):
