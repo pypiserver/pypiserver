@@ -149,7 +149,7 @@ def paste_app_factory(global_config, **local_conf):
 
     root = local_conf.get("root")
     if root:
-        c.root = [_make_root(x) for x in root.split("\n") if x.strip()]
+        c['root'] = [_make_root(x) for x in root.split("\n") if x.strip()]
 
     upd_bool_attr_from_dict_str_item(c, 'redirect_to_fallback', local_conf)
     upd_bool_attr_from_dict_str_item(c, 'overwrite', local_conf)
