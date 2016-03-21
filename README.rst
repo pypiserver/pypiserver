@@ -395,7 +395,7 @@ pypiserver's directory caching functionality. The only requirement is to
 install the ``watchdog`` package, or it can be installed by installing
 ``pypiserver`` using the ``cache`` extras option::
 
-  pip install pypi-server[cache]
+  pip install pypiserver[cache]
 
 If you are using a static webserver such as *Apache* or *nginx* as
 a reverse-proxy for pypiserver, additional speedup can be gained by
