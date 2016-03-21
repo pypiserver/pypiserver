@@ -131,13 +131,13 @@ def app(**kwds):
 def str2bool(s, default):
     if s is not None and s != '':
         return s.lower() not in ("no", "off", "0", "false")
-        return default
+    return default
 
 def paste_app_factory(global_config, **local_conf):
     import os
 
-    def upd_bool_attr_from_dict_str_item(conf, attr, sdict):
-        setattr(conf, attr, str2bool(sdict.pop(attr, None), getattr(conf, attr)))
+    def upd_conf_with_bool_item(conf, attr, sdict):
+        conf[attr] = str2bool(sdict.pop(attr, None), conf[attr])
 
     def _make_root(root):
         root = root.strip()
@@ -151,8 +151,8 @@ def paste_app_factory(global_config, **local_conf):
     if root:
         c['root'] = [_make_root(x) for x in root.split("\n") if x.strip()]
 
-    upd_bool_attr_from_dict_str_item(c, 'redirect_to_fallback', local_conf)
-    upd_bool_attr_from_dict_str_item(c, 'overwrite', local_conf)
+    upd_conf_with_bool_item(c, 'redirect_to_fallback', local_conf)
+    upd_conf_with_bool_item(c, 'overwrite', local_conf)
 
     return app(**vars(c))
 
