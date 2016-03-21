@@ -154,7 +154,7 @@ def paste_app_factory(global_config, **local_conf):
     upd_conf_with_bool_item(c, 'redirect_to_fallback', local_conf)
     upd_conf_with_bool_item(c, 'overwrite', local_conf)
 
-    return app(**vars(c))
+    return app(**c)
 
 def _logwrite(logger, level, msg):
     if msg:
