@@ -31,25 +31,26 @@ class Configuration(object):
 
 DEFAULT_SERVER = "auto"
 
+
 def default_config(
         root=None,
-        host = "0.0.0.0",
-        port = 8080,
-        server = DEFAULT_SERVER,
-        redirect_to_fallback = True,
-        fallback_url = None,
-        authenticated = ['update'],
-        password_file = None,
-        overwrite = False,
-        hash_algo = 'md5',
-        verbosity = 1,
-        log_file = None,
-        log_frmt = "%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s",
-        log_req_frmt = "%(bottle.request)s",
-        log_res_frmt = "%(status)s",
-        log_err_frmt = "%(body)s: %(exception)s \n%(traceback)s",
-        welcome_file = None,
-        cache_control = None,
+        host="0.0.0.0",
+        port=8080,
+        server=DEFAULT_SERVER,
+        redirect_to_fallback=True,
+        fallback_url=None,
+        authenticated=['update'],
+        password_file=None,
+        overwrite=False,
+        hash_algo='md5',
+        verbosity=1,
+        log_file=None,
+        log_frmt="%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s",
+        log_req_frmt="%(bottle.request)s",
+        log_res_frmt="%(status)s",
+        log_err_frmt="%(body)s: %(exception)s \n%(traceback)s",
+        welcome_file=None,
+        cache_control=None,
         auther=None,
         VERSION=__version__):
     """
@@ -114,9 +115,9 @@ def default_config(
 
 def app(**kwds):
     """
-    :param dict kwds:
-            Any overrides for defaults, as fetched by :func:`default_config()`.
-            Check the docstring of this function for supported kwds.
+    :param dict kwds: Any overrides for defaults, as fetched by
+        :func:`default_config()`. Check the docstring of this function
+        for supported kwds.
     """
     from . import core, _app
 
@@ -128,10 +129,12 @@ def app(**kwds):
 
     return _app.app
 
+
 def str2bool(s, default):
     if s is not None and s != '':
         return s.lower() not in ("no", "off", "0", "false")
     return default
+
 
 def paste_app_factory(global_config, **local_conf):
     import os
@@ -155,6 +158,7 @@ def paste_app_factory(global_config, **local_conf):
     upd_conf_with_bool_item(c, 'overwrite', local_conf)
 
     return app(**c)
+
 
 def _logwrite(logger, level, msg):
     if msg:
