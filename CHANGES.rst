@@ -108,7 +108,7 @@ Serve 1000s of packages, PGP-Sigs, skip versions starting with 'v'.
 
 
 1.1.7 (2015-03-8)
-------------------
+-----------------
 1st release under cooperative ownership:
 
 - #65, #66: Improve Auth for private repos by supporting i
