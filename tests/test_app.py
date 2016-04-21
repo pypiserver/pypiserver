@@ -343,10 +343,10 @@ def test_upload_with_signature(package, root, testapp):
                     ('content', package, b''), 
                     ('gpg_signature', '%s.asc' % package, b'')])
     assert resp.status_int == 200
-    uploaded_pkgs = [f.basename for f in root.listdir()]
+    uploaded_pkgs = [f.basename.lower() for f in root.listdir()]
     assert len(uploaded_pkgs) == 2
-    assert uploaded_pkgs[0].lower() == package.lower()
-    assert uploaded_pkgs[1].lower() == '%s.asc' % package.lower()
+    assert package.lower() in uploaded_pkgs
+    assert '%s.asc' % package.lower() in uploaded_pkgs
 
 @pytest.mark.parametrize(("package"), [
         f[0] for f in test_core.files
