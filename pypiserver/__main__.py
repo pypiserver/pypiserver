@@ -197,17 +197,33 @@ def main(argv=None):
                 err = sys.exc_info()[1]
                 sys.exit("Invalid port(%r) due to: %s" % (v, err))
         elif k in ("-a", "--authenticate"):
-            c.authenticated = [a.lower()
-                               for a in re.split("[, ]+", v.strip(" ,"))
-                               if a]
-            if c.authenticated == ['.']:
-                c.authenticated = []
+            if '{' in v:
+                import ast
+                v = ast.literal_eval(v)
+            if isinstance(v, dict):
+                c.authenticated = {}
+                for user in v:
+                    c.authenticated[user] = [a.lower() for a in v[user] if a]
+                    if c.authenticated[user] == ['.']:
+                        c.authenticated[user] = []
+                    else:
+                        actions = ("list", "download", "update")
+                        for a in c.authenticated[user]:
+                            if a not in actions:
+                                errmsg = "Action '%s' for option `%s` not one of %s!"
+                                sys.exit(errmsg % (a, k, actions))
             else:
-                actions = ("list", "download", "update")
-                for a in c.authenticated:
-                    if a not in actions:
-                        errmsg = "Action '%s' for option `%s` not one of %s!"
-                        sys.exit(errmsg % (a, k, actions))
+                c.authenticated = [a.lower()
+                                   for a in re.split("[, ]+", v.strip(" ,"))
+                                   if a]
+                if c.authenticated == ['.']:
+                    c.authenticated = []
+                else:
+                    actions = ("list", "download", "update")
+                    for a in c.authenticated:
+                        if a not in actions:
+                            errmsg = "Action '%s' for option `%s` not one of %s!"
+                            sys.exit(errmsg % (a, k, actions))
         elif k in ("-i", "--interface"):
             c.host = v
         elif k in ("-r", "--root"):

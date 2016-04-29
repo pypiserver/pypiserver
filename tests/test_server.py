@@ -43,7 +43,7 @@ Srv = namedtuple('Srv', ('proc', 'port', 'package'))
 
 def _run_server(packdir, port, authed, other_cli=''):
     pswd_opt_choices = {
-        True: "-Ptests/htpasswd.a.a -a update,download",
+        True: "-Ptests/htpasswd.a.a -a update,download,list",
         False: "-P. -a."
     }
     pswd_opts = pswd_opt_choices[authed]

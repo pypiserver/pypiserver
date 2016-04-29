@@ -169,3 +169,21 @@ def test_dot_password_without_auth_list(main, monkeypatch):
 
     main(["-P", ".", "-a", "."])
     assert main.app.module.config.authenticated == []
+
+def test_password_with_auth_list(main, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'passlib', mock.MagicMock())
+    monkeypatch.setitem(sys.modules, 'passlib.apache', mock.MagicMock())
+    main(["-P", "pswd-file", "-a", "update, download"])
+    assert main.app.module.config.authenticated == ['update', 'download']
+
+def test_password_with_auth_list_with_no_spaces(main, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'passlib', mock.MagicMock())
+    monkeypatch.setitem(sys.modules, 'passlib.apache', mock.MagicMock())
+    main(["-P", "pswd-file", "-a", "update,download"])
+    assert main.app.module.config.authenticated == ['update', 'download']
+
+def test_matrix_auth_list(main, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'passlib', mock.MagicMock())
+    monkeypatch.setitem(sys.modules, 'passlib.apache', mock.MagicMock())
+    main(["-P", "pswd-file", "-a", "{'a': ['update', 'list'], 'b': ['download']}"])
+    assert main.app.module.config.authenticated == {'a': ['update', 'list'], 'b': ['download']}
