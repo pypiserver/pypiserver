@@ -12,6 +12,7 @@ if sys.version_info >= (3, 0):
         return Server(url)
 else:
     from xmlrpclib import Transport  # @UnresolvedImport
+    from xmlrpclib import ServerProxy
     import httplib  # @UnresolvedImport
     import urllib
 
@@ -45,7 +46,7 @@ else:
             transport.set_proxy(http_proxy_spec)
         else:
             transport = None
-        return Server(url, transport=transport)
+        return ServerProxy(url, transport=transport)
 
 
 def is_stable_version(pversion):
