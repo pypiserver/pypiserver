@@ -157,9 +157,9 @@ def main(argv=None):
 
     c = pypiserver.Configuration(**pypiserver.default_config())
 
-    update_dry_run = True,
-    update_directory = None,
-    update_stable_only = True,
+    update_dry_run = True
+    update_directory = None
+    update_stable_only = True
 
     try:
         opts, roots = getopt.getopt(argv[1:], "i:p:a:r:d:P:Uuvxoh", [
