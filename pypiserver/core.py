@@ -181,7 +181,8 @@ def guess_pkgname_and_version(path):
 
 
 def normalize_pkgname(name):
-    return name.lower().replace("-", "_")
+    """Perform PEP 503 normalization"""
+    return re.sub(r"[-_.]+", "-", name).lower()
 
 
 def is_allowed_path(path_part):
@@ -258,23 +259,11 @@ def find_packages(pkgs, prefix=""):
 
 
 def get_prefixes(pkgs):
-    pkgnames = set()
     normalized_pkgnames = set()
-    eggs = set()
-
     for x in pkgs:
         if x.pkgname:
-            if x.relfn.endswith(".egg"):
-                eggs.add(x.pkgname)
-            else:
-                pkgnames.add(x.pkgname)
-                normalized_pkgnames.add(x.pkgname_norm)
-
-    for x in eggs:
-        if x not in normalized_pkgnames:
-            pkgnames.add(x)
-
-    return pkgnames
+            normalized_pkgnames.add(x.pkgname_norm)
+    return normalized_pkgnames
 
 
 def exists(root, filename):

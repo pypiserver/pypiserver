@@ -133,8 +133,15 @@ def test_root_remove_not_found_msg_antiXSS(testapp):
     resp.mustcontain("alert", "somehost.org", no="<alert>")
 
 
-def test_packages_empty(testapp):
+def test_packages_redirect(testapp):
     resp = testapp.get("/packages")
+    assert resp.status_code >= 300
+    assert resp.status_code < 400
+    assert resp.location.endswith('/packages/')
+
+
+def test_packages_empty(testapp):
+    resp = testapp.get("/packages/")
     assert len(resp.html("a")) == 0
 
 
@@ -163,6 +170,13 @@ def test_packages_list_no_dotfiles(root, testapp):
     root.join(".foo-1.0.zip").write("secret")
     resp = testapp.get("/packages/")
     assert "foo" not in resp
+
+
+def test_simple_redirect(testapp):
+    resp = testapp.get("/simple")
+    assert resp.status_code >= 300
+    assert resp.status_code < 400
+    assert resp.location.endswith('/simple/')
 
 
 def test_simple_list_no_dotfiles(root, testapp):
@@ -200,13 +214,34 @@ def test_simple_list_no_dotdir2(root, testapp):
     assert resp.html("a") == []
 
 
+def test_simple_name_redirect(testapp):
+    resp = testapp.get("/simple/foobar")
+    assert resp.status_code >= 300
+    assert resp.status_code < 400
+    assert resp.location.endswith('/simple/foobar/')
+
+
+@pytest.mark.parametrize('package,normalized', [
+    ('FooBar', 'foobar'),
+    ('Foo.Bar', 'foo-bar'),
+    ('foo_bar', 'foo-bar'),
+    ('Foo-Bar', 'foo-bar'),
+    ('foo--_.bar', 'foo-bar'),
+])
+def test_simple_normalized_name_redirect(testapp, package, normalized):
+    resp = testapp.get("/simple/{0}/".format(package))
+    assert resp.status_code >= 300
+    assert resp.status_code < 400
+    assert resp.location.endswith('/simple/{0}/'.format(normalized))
+
+
 def test_simple_index(root, testapp):
     root.join("foobar-1.0.zip").write("")
     root.join("foobar-1.1.zip").write("")
     root.join("foobarbaz-1.1.zip").write("")
     root.join("foobar.baz-1.1.zip").write("")
 
-    resp = testapp.get("/simple/foobar")
+    resp = testapp.get("/simple/foobar/")
     assert len(resp.html("a")) == 2
 
 
@@ -223,7 +258,7 @@ def test_simple_index_list(root, testapp):
 def test_simple_index_case(root, testapp):
     root.join("FooBar-1.0.zip").write("")
     root.join("FooBar-1.1.zip").write("")
-    resp = testapp.get("/simple/foobar")
+    resp = testapp.get("/simple/foobar/")
     assert len(resp.html("a")) == 2
 
 
@@ -234,23 +269,18 @@ def test_nonroot_root(testpriv):
 
 def test_nonroot_simple_index(root, testpriv):
     root.join("foobar-1.0.zip").write("")
-
-    for path in ["/priv/simple/foobar",
-                 "/priv/simple/foobar/"]:
-        resp = testpriv.get(path)
-        links = resp.html("a")
-        assert len(links) == 1
-        assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
+    resp = testpriv.get("/priv/simple/foobar/")
+    links = resp.html("a")
+    assert len(links) == 1
+    assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
 
 
 def test_nonroot_simple_packages(root, testpriv):
     root.join("foobar-1.0.zip").write("123")
-    for path in ["/priv/packages",
-                 "/priv/packages/"]:
-        resp = testpriv.get(path)
-        links = resp.html("a")
-        assert len(links) == 1
-        assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
+    resp = testpriv.get("/priv/packages/")
+    links = resp.html("a")
+    assert len(links) == 1
+    assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
 
 
 def test_root_no_relative_paths(testpriv):
@@ -276,14 +306,14 @@ def test_simple_index_list_name_with_underscore(root, testapp):
     resp = testapp.get("/simple/")
     assert len(resp.html("a")) == 1
     hrefs = [x["href"] for x in resp.html("a")]
-    assert hrefs == ["foo_bar/"]
+    assert hrefs == ["foo-bar/"]
 
 
 def test_simple_index_egg_and_tarball(root, testapp):
     root.join("foo-bar-1.0.tar.gz").write("")
     root.join("foo_bar-1.0-py2.7.egg").write("")
 
-    resp = testapp.get("/simple/foo-bar")
+    resp = testapp.get("/simple/foo-bar/")
     assert len(resp.html("a")) == 2
 
 
@@ -292,9 +322,9 @@ def test_simple_index_list_name_with_underscore_no_egg(root, testapp):
     root.join("foo-bar-1.1.tar.gz").write("")
 
     resp = testapp.get("/simple/")
-    assert len(resp.html("a")) == 2
+    assert len(resp.html("a")) == 1
     hrefs = set([x["href"] for x in resp.html("a")])
-    assert hrefs == set(["foo_bar/", "foo-bar/"])
+    assert hrefs == set(["foo-bar/"])
 
 
 def test_no_cache_control_set(root, _app, testapp):

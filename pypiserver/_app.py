@@ -185,9 +185,11 @@ def update():
 
 
 @app.route("/simple")
+@app.route("/simple/:prefix")
+@app.route('/packages')
 @auth("list")
-def simpleindex_redirect():
-    return redirect(request.fullpath + "/")
+def pep_503_redirects(prefix=None):
+    return redirect(request.fullpath + "/", 301)
 
 
 @app.route("/simple/")
@@ -210,13 +212,13 @@ def simpleindex():
     return template(tmpl, links=links)
 
 
-@app.route("/simple/:prefix")
 @app.route("/simple/:prefix/")
 @auth("list")
 def simple(prefix=""):
-    fp = request.fullpath
-    if not fp.endswith("/"):
-        fp += "/"
+    # PEP 503: require normalized prefix
+    normalized = core.normalize_pkgname(prefix)
+    if prefix != normalized:
+        return redirect('/simple/{0}/'.format(normalized), 301)
 
     files = sorted(core.find_packages(packages(), prefix=prefix),
                    key=lambda x: (x.parsed_version, x.relfn))
@@ -225,6 +227,7 @@ def simple(prefix=""):
             return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
         return HTTPError(404)
 
+    fp = request.fullpath
     links = [(os.path.basename(f.relfn),
               urljoin(fp, "../../packages/%s#%s" % (f.relfn_unix,
 
@@ -246,14 +249,10 @@ def simple(prefix=""):
     return template(tmpl, prefix=prefix, links=links)
 
 
-@app.route('/packages')
 @app.route('/packages/')
 @auth("list")
 def list_packages():
     fp = request.fullpath
-    if not fp.endswith("/"):
-        fp += "/"
-
     files = sorted(core.find_packages(packages()),
                    key=lambda x: (os.path.dirname(x.relfn),
                                   x.pkgname,
