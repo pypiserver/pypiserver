@@ -235,14 +235,23 @@ def pypirc_file(txt):
 @pytest.mark.parametrize("pkg_frmt", ['bdist', 'bdist_wheel'])
 def test_setuptoolsUpload_open(empty_packdir, port, project, package,
                                pkg_frmt):
-    with new_server(empty_packdir, port):
-        with chdir(project.strpath):
-            url = _build_url(port, None, None)
-            cmd = "setup.py -vvv %s upload -r %s" % (pkg_frmt, url)
-            for i in range(5):
-                print('++Attempt #%s' % i)
-                assert _run_python(cmd) == 0
-            time.sleep(SLEEP_AFTER_SRV)
+    url = _build_url(port, None, None)
+    with pypirc_file(dedent("""\
+            [distutils]
+            index-servers: test
+
+            [test]
+            repository: %s
+            username: ''
+            password: ''
+        """ % url)):
+        with new_server(empty_packdir, port):
+            with chdir(project.strpath):
+                cmd = "setup.py -vvv %s upload -r %s" % (pkg_frmt, url)
+                for i in range(5):
+                    print('++Attempt #%s' % i)
+                    assert _run_python(cmd) == 0
+                time.sleep(SLEEP_AFTER_SRV)
     assert len(empty_packdir.listdir()) == 1
 
 
