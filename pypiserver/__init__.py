@@ -2,7 +2,7 @@ import re as _re
 
 version = __version__ = "1.2.0.dev1"
 __version_info__ = tuple(_re.split('[.-]', __version__))
-__updated__ = "2016-XX-XX"
+__updated__ = "2016-06-17"
 
 __title__ = "pypiserver"
 __summary__ = "A minimal PyPI server for use with pip/easy_install."

@@ -11,7 +11,7 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 |proj-license|
 
 :Version:     1.2.0.dev1
-:Date:        2016-XX-XX
+:Date:        2016-06-17
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.python.org/pypi/pypiserver
 :Travis:      https://travis-ci.org/pypiserver/pypiserver
@@ -19,8 +19,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 :License:     zlib/libpng + MIT
 
 *pypiserver* is a minimal PyPI_ compatible server for *pip* or *easy_install*.
-It is based on bottle_ and serves packages from regular directories.  
-Wheels, bdists, eggs and accompanying PGP-signatures can be uploaded 
+It is based on bottle_ and serves packages from regular directories.
+Wheels, bdists, eggs and accompanying PGP-signatures can be uploaded
 either with *pip*, *setuptools*, *twine* or simply copied with *scp*.
 
 
@@ -31,7 +31,7 @@ either with *pip*, *setuptools*, *twine* or simply copied with *scp*.
 Quickstart: Installation and Usage
 ==================================
 *pypiserver* `> 1.2.x` works with python `2.7` and `3.3 --> 3.5` or *pypy*.
-Python `3.0 --> 3.2` may also work, but it is not being tested for these 
+Python `3.0 --> 3.2` may also work, but it is not being tested for these
 versions.
 For legacy python versions, use `pypiserver-1.1.x` series.
 
