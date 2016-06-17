@@ -3,23 +3,50 @@ Changelog
 
 1.2.0 (2016-XX-XX)
 ------------------
-"New Day"
+"New Day", with less rigorous support for `python-2 < 2.7` and `python-3 < 3.3`.
 
-- Stop supporting `python-2 < 2.7` and `python-3 < 3.3`.
+- #38, #139, #140: Package normalizations and :pep:`503` updates
+  (thanks to @dpkp):
+  - URLs are redirected unless they end in `'/'` (expect packages themselves).
+  - Package names are normalized: lower-case with all runs of the characters,
+    and `[-_]` replaced with a single `'-'` character.
+  - The simple index only lists normalized package names.
+  - Any request for a non-normalized package name is redirected to
+    the normalized name.
+
+- #117, #122, #124/#127/#128: FIX startup regressions introduced by
+  previous `v1.1.10` (thanks to @virtuald, @Oneplus, @michaelkuty, @harcher81,
+  @8u1a).
+- #113: FIX over-writing of packages even when without `--overwrite` flag
+  (thanks to @blade2005).
+- #107, #108, #110: Test against *python-3.5*.
+- #112, #118, #119: Fixes for *paste*, *gunicorn* and other *WSGI* servers
+  (thanks to @corywright, @virtuald, @montefra).
+- #120/#121, #129, #141/#142: Updates and fixes needed due to changes
+  in dependent libraries (thanks @dpkp).
+- #116: Add cache for speeding up GPG signatures (thanks to @virtuald).
+- Provide sample ``systemd`` *unit-file* (thanks to @ssbarnea).
+- Add usage instructions for related project ``pypi-uploader`` and mention also
+  project
+  (thanks @ssbarnea & @bibby).
+- #129, #131: Other minor fixes and improvements (thanks to @bibby, @Oneplus,
+  @8u1a).
+- Detailed changes recorded in `Github's milestone 1.2.0
+  <https://github.com/pypiserver/pypiserver/milestones/M1.2.0>`_.
 
 
 1.1.10 (2016-01-19)
-------------------
+-------------------
 Serve 1000s of packages, PGP-Sigs, skip versions starting with 'v'.
 
-+ #101: Speed-up server by (optionally) using the `watchdog` package 
-  to cache results, serve packages directly from proxying-server (*Apache* , 
-  *nginx*), and pre-compile regexes (thanks @virtuald). 
++ #101: Speed-up server by (optionally) using the `watchdog` package
+  to cache results, serve packages directly from proxying-server (*Apache* ,
+  *nginx*), and pre-compile regexes (thanks @virtuald).
 - #106: Support uploading PGP-signatures (thanks @mplanchard).
 - Package-versions parsing modifications:
 
   - #104: Stopped parsing invalid package-versions prefixed with `v`; they are
-    invalid according to :pep-reference:`0440` (thanks @virtuald & 
+    invalid according to :pep-reference:`0440` (thanks @virtuald &
     @stevejefferiesIDBS).
   - Support versions with epochs separated by `!` like `package-1!1.1.0`.
   - #102: FIX regression on uploading packages with `+` char in their version
