@@ -98,6 +98,22 @@ Currently only password-protected uploads are supported!
 
      ./pypi-server -p 8080 -P htpasswd.txt ~/packages &
 
+#. Alternate Authentication using PAM:
+     'auther' is only avaliable through the api not command line flags.
+     Example Script:
+     ```
+    from pypiserver import bottle
+    import pypiserver
+    from pypiserver.core import auth_by_pam
+
+    kwds = pypiserver.default_config(auther=auth_by_pam, root='/packages')
+    config = pypiserver.Configuration(**kwds)
+    app = pypiserver.app(**kwds)
+    bottle.run(app=app, host=config.host, port=config.port, server=config.server)
+    ```
+.. Note::
+     If you are getting authentication even with incorrect credentials please check your PAM configuration.
+
 #. On client-side, edit or create a `~/.pypirc` file with a similar content::
 
      [distutils]
