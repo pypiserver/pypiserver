@@ -3,22 +3,22 @@ Changelog
 
 1.2.0 (2016-XX-XX)
 ------------------
-"New Day", with less rigorous support for `python-2 < 2.7` and `python-3 < 3.3`.
+"New Day": less rigorous support for ``python-2 < 2.7`` and ``python-3 < 3.3``.
 
 - #38, #139, #140: Package normalizations and :pep:`503` updates
   (thanks to @dpkp):
-  - URLs are redirected unless they end in `'/'` (expect packages themselves).
-  - Package names are normalized: lower-case with all runs of the characters,
-    and `[-_]` replaced with a single `'-'` character.
+  - Package names are normalized: convert all characters to lower-case
+    and replace any of ``[-_.]`` with a dash(``'-'``).
   - The simple index only lists normalized package names.
   - Any request for a non-normalized package name is redirected to
     the normalized name.
+  - URLs are redirected unless they end in ``'/'`` (expect packages themselves).
 
-- #114: Added `pip search` support (thanks to @blade2005)
+- #80, #114: Added ``pip search`` support (thanks to @blade2005)
 - #117, #122, #124/#127/#128: FIX startup regressions introduced by
-  previous `v1.1.10` (thanks to @virtuald, @Oneplus, @michaelkuty, @harcher81,
+  previous ``v1.1.10`` (thanks to @virtuald, @Oneplus, @michaelkuty, @harcher81,
   @8u1a).
-- #113: FIX over-writing of packages even when without `--overwrite` flag
+- #113: FIX over-writing of packages even when without ``--overwrite`` flag
   (thanks to @blade2005).
 - #107, #108, #110: Test against *python-3.5*.
 - #112, #118, #119: Fixes for *paste*, *gunicorn* and other *WSGI* servers
@@ -27,9 +27,8 @@ Changelog
   in dependent libraries (thanks @dpkp).
 - #116: Add cache for speeding up GPG signatures (thanks to @virtuald).
 - Provide sample ``systemd`` *unit-file* (thanks to @ssbarnea).
-- Add usage instructions for related project ``pypi-uploader`` and mention also
-  project
-  (thanks @ssbarnea & @bibby).
+- Add usage instructions for related project ``pypi-uploader``
+  (thanks to @ssbarnea & @bibby).
 - #129, #131: Other minor fixes and improvements (thanks to @bibby, @Oneplus,
   @8u1a).
 - Detailed changes recorded in `Github's milestone 1.2.0
