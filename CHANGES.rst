@@ -14,6 +14,7 @@ Changelog
   - Any request for a non-normalized package name is redirected to
     the normalized name.
 
+- #114: Added `pip search` support (thanks to @blade2005)
 - #117, #122, #124/#127/#128: FIX startup regressions introduced by
   previous `v1.1.10` (thanks to @virtuald, @Oneplus, @michaelkuty, @harcher81,
   @8u1a).
