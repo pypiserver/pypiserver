@@ -414,6 +414,68 @@ If you have packages that are very large, you may find it helpful to
 disable hashing of files (set `--hash-algo=off`, or `hash_algo=None` when
 using wsgi).
 
+
+Managing Automated Startup
+--------------------------
+
+There are a variety of options for handling the automated starting of
+pypiserver upon system startup. Two of the most common are ``systemd`` and
+``supervisor``.
+
+systemd
+~~~~~~~
+
+``systemd`` is installed by default on most modern Linux systems and as such is an
+excellent option for managing the pypiserver process. An example config file
+for ``systemd`` can be seen below::
+
+    [Unit]
+    Description=pypi-server
+    After=network.target
+
+    [Service]
+    Type=simple
+    # systemd requires absolute path here too.
+    PIDFile=/var/run/pypi-server.pid
+    User=www-data
+    Group=www-data
+
+    ExecStart=/usr/local/bin/pypi-server -p 8080 -a update,download --log-file /var/log/pypi-server.log --P /etc/nginx/.htpasswd /var/www/pypi
+    ExecStop=/bin/kill -TERM $MAINPID
+    ExecReload=/bin/kill -HUP $MAINPID
+    Restart=always
+
+    WorkingDirectory=/var/www/pypi
+
+    TimeoutStartSec=3
+    RestartSec=5
+
+    [Install]
+    WantedBy=multi-user.target
+
+Adjusting the paths and adding this file as ``pypi-server.service`` into your
+``systemd/system`` directory will allow management of the pypiserver process with
+``systemctl``, e.g. ``systemctl start pypi-server``.
+
+supervisor
+~~~~~~~~~~
+
+``supervisor`` has the benefit of being a pure python package and as such
+provides excellent cross-platform support for process management. An example
+config file for ``supervisor`` is below::
+
+    [program:pypi]
+    command=/home/pypi/pypi-venv/bin/pypi-server -p 7001 -P /home/pypi/.htaccess /home/pypi/packages
+    directory=/home/pypi
+    user=pypi
+    autostart=true
+    autorestart=true
+    stderr_logfile=/var/log/pypi-server.err.log
+    stdout_logfile=/var/log/pypi-server.out.log
+
+From there, the process can be managed via ``supervisord`` using ``supervisorctl``.
+
+
 Using a different WSGI server
 -----------------------------
 - *pypiserver* ships with it's own copy of bottle.
