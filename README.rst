@@ -133,6 +133,16 @@ Currently only password-protected uploads are supported!
             twine upload -r local --sign -identity user_name ./foo-1.zip
 
 
+.. Tip::
+    You can also upload packages using `pypi-uploader`_, which
+    obviates the need to download packages locally prior to uploading them to
+    pypiserver. You can install it with ``pip install pypi-uploader``, and use
+    it like so, assuming you have a ``pypi_local`` source set up in your
+    ``~/.pypirc``::
+
+        pypiupload packages mock==1.0.1 requests==2.2.1 -i pypi_local
+        pypiupload requirements requirements.txt -i pypi_local
+
 
 Client-side configurations
 --------------------------
@@ -227,7 +237,7 @@ service providers.
 
 
 Detailed Usage
-=================================
+==============
 Running ``pypi-server -h`` will print a detailed usage message::
 
   pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
@@ -631,6 +641,10 @@ among the most popular alternatives:
 - `flask-pypi-proxy <http://flask-pypi-proxy.readthedocs.org/>`_
   A proxy for PyPI that also enables also uploading custom packages.
 
+- `pypi-uploader`_:
+  Provides an easy way to upload packages to your pypiserver from pypi without
+  having to store them locally first.
+
 - Check this SO question: ` How to roll my own pypi <http://stackoverflow.com/questions/1235331/how-to-roll-my-own-pypi>`_
 
 
@@ -645,6 +659,7 @@ See the `LICENSE.txt` file.
 
 .. _bottle: http://bottlepy.org
 .. _PyPI: http://pypi.python.org
+.. _pypi-uploader: https://pypi.python.org/pypi/pypi-uploader
 .. |travis-status| image:: https://travis-ci.org/pypiserver/pypiserver.svg
     :alt: Travis build status
     :scale: 100%
