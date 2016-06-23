@@ -419,15 +419,15 @@ Managing Automated Startup
 --------------------------
 
 There are a variety of options for handling the automated starting of
-pypiserver upon system startup. Two of the most common are `systemd` and
-`supervisor`.
+pypiserver upon system startup. Two of the most common are ``systemd`` and
+``supervisor``.
 
 systemd
 ~~~~~~~
 
-`systemd` is installed by default on most modern Linux systems and as such is an
+``systemd`` is installed by default on most modern Linux systems and as such is an
 excellent option for managing the pypiserver process. An example config file
-for `systemd` can be seen below::
+for ``systemd`` can be seen below::
 
     [Unit]
     Description=pypi-server
@@ -453,16 +453,16 @@ for `systemd` can be seen below::
     [Install]
     WantedBy=multi-user.target
 
-Adjusting the paths and adding this file as `pypi-server.service` into your
-`systemd/system` directory will allow management of the pypiserver process with
-`systemctl`, e.g. `systemctl start pypi-server`.
+Adjusting the paths and adding this file as ``pypi-server.service`` into your
+``systemd/system`` directory will allow management of the pypiserver process with
+``systemctl``, e.g. ``systemctl start pypi-server``.
 
 supervisor
 ~~~~~~~~~~
 
-`supervisor` has the benefit of being a pure python package and as such
+``supervisor`` has the benefit of being a pure python package and as such
 provides excellent cross-platform support for process management. An example
-config file for `supervisor` is below::
+config file for ``supervisor`` is below::
 
     [program:pypi]
     command=/home/pypi/pypi-venv/bin/pypi-server -p 7001 -P /home/pypi/.htaccess /home/pypi/packages
@@ -473,7 +473,7 @@ config file for `supervisor` is below::
     stderr_logfile=/var/log/pypi-server.err.log
     stdout_logfile=/var/log/pypi-server.out.log
 
-From there, the process can be managed via `supervisord` using `supervisorctl`.
+From there, the process can be managed via ``supervisord`` using ``supervisorctl``.
 
 
 Using a different WSGI server
