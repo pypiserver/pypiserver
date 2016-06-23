@@ -1,21 +1,26 @@
 #! /usr/bin/env py.test
 
-import contextlib
-import glob
+# Builtin imports
 import logging
-import os
-from pypiserver import __main__, bottle
-import subprocess
-
-import pytest
-import webtest
-
-import test_core
 
 try:
     from html.parser import HTMLParser
 except ImportError:
     from HTMLParser import HTMLParser
+
+try:
+    import xmlrpc.client as xmlrpclib
+except ImportError:
+    import xmlrpclib  # legacy Python
+
+# Third party imports
+import pytest
+import webtest
+
+
+# Local Imports
+from pypiserver import __main__, bottle
+import tests.test_core as test_core
 
 
 # Enable logging to detect any problems with it
@@ -37,11 +42,13 @@ def app(tmpdir):
 
 @pytest.fixture
 def testapp(app):
+    """Return a webtest TestApp initiated with pypiserver app"""
     return webtest.TestApp(app)
 
 
 @pytest.fixture
 def root(tmpdir):
+    """Return a pytest temporary directory"""
     return tmpdir
 
 
@@ -57,11 +64,24 @@ def testpriv(priv):
     return webtest.TestApp(priv)
 
 
-@pytest.fixture(params=["  ",  # Mustcontain test below fails when string is empty.
-                        "Hey there!",
-                        "<html><body>Hey there!</body></html>",
-                        ])
+@pytest.fixture
+def search_xml():
+    """Return an xml dom suitable for passing to search"""
+    xml = '<xml><methodName>search</methodName><string>test</string></xml>'
+    return xml
+
+
+@pytest.fixture(params=[
+    "  ",  # Mustcontain test below fails when string is empty.
+    "Hey there!",
+    "<html><body>Hey there!</body></html>",
+])
 def welcome_file_no_vars(request, root):
+    """Welcome file fixture
+
+    :param request: pytest builtin fixture
+    :param root: root temporary directory
+    """
     wfile = root.join("testwelcome.html")
     wfile.write(request.param)
 
@@ -84,6 +104,11 @@ def welcome_file_all_vars(request, root):
 
 
 def test_root_count(root, testapp):
+    """Test that the welcome page count updates with added packages
+
+    :param root: root temporary directory fixture
+    :param testapp: webtest TestApp
+    """
     resp = testapp.get("/")
     resp.mustcontain("PyPI compatible package index serving 0 packages")
     root.join("Twisted-11.0.0.tar.bz2").write("")
@@ -343,15 +368,18 @@ def test_cache_control_set(root):
     assert "Cache-Control" in resp.headers
     assert resp.headers["Cache-Control"] == 'public, max-age=%s' % AGE
 
+
 def test_upload_noAction(root, testapp):
     resp = testapp.post("/", expect_errors=1)
     assert resp.status == '400 Bad Request'
     assert "Missing ':action' field!" in hp.unescape(resp.text)
 
+
 def test_upload_badAction(root, testapp):
     resp = testapp.post("/", params={':action': 'BAD'}, expect_errors=1)
     assert resp.status == '400 Bad Request'
     assert "Unsupported ':action' field: BAD" in hp.unescape(resp.text)
+
 
 @pytest.mark.parametrize(("package"), [f[0] 
         for f in test_core.files 
@@ -363,6 +391,7 @@ def test_upload(package, root, testapp):
     uploaded_pkgs = [f.basename for f in root.listdir()]
     assert len(uploaded_pkgs) == 1
     assert uploaded_pkgs[0].lower() == package.lower()
+
 
 @pytest.mark.parametrize(("package"), [f[0] 
         for f in test_core.files 
@@ -377,6 +406,7 @@ def test_upload_with_signature(package, root, testapp):
     assert len(uploaded_pkgs) == 2
     assert package.lower() in uploaded_pkgs
     assert '%s.asc' % package.lower() in uploaded_pkgs
+
 
 @pytest.mark.parametrize(("package"), [
         f[0] for f in test_core.files
@@ -407,6 +437,7 @@ def test_remove_pkg_missingNaveVersion(name, version, root, testapp):
     assert resp.status == '400 Bad Request'
     assert msg %(name, version) in hp.unescape(resp.text)
 
+
 def test_remove_pkg_notFound(root, testapp):
     resp = testapp.post("/", expect_errors=1,
             params={
@@ -416,6 +447,62 @@ def test_remove_pkg_notFound(root, testapp):
     })
     assert resp.status == '404 Not Found'
     assert "foo (123) not found" in hp.unescape(resp.text)
+
+
+@pytest.mark.parametrize('pkgs,matches', [
+    ([], []),
+    (['test-1.0.tar.gz'], [('test', '1.0')]),
+    (['test-1.0.tar.gz', 'test-test-2.0.1.tar.gz'],
+     [('test', '1.0'), ('test-test', '2.0.1')]),
+    (['test-1.0.tar.gz', 'other-2.0.tar.gz'], [('test', '1.0')]),
+    (['test-2.0-py2.py3-none-any.whl'], [('test', '2.0')]),
+    (['other-2.0.tar.gz'], [])
+])
+def test_search(root, testapp, search_xml, pkgs, matches):
+    """Test the search functionality at the RPC2 endpoint
+
+    Calls the handle_rpc function by posting to the WebTest server with
+    the string returned by the ``search_xml`` fixture as the request
+    body. The result is parsed for convenience by the xmlrpc.client
+    (xmlrpclib in Python 2.x). The parsed result is a 2-tuple. The
+    second item is the method called, in this case always "search". The
+    first item is a 1-tuple which contains a list of match information
+    as dicts, e.g:
+
+    ``(([{'version': '2.0', '_pypi_ordering': 0,
+    'name': 'test', 'summary': '2.0'}],), 'search')``
+
+    The pkgs parameter is a list of items to write to the packages
+    directory, which should then be available for the subsequent
+    search. The matches parameter is a list of 2-tuples of the form
+    (``name``, ``version``), where ``name`` and ``version`` are the
+    expected name and version matches for a search for the "test"
+    package as specified by the search_xml fixture.
+
+    :param root: root temporry directory fixture; used as packages dir
+        for testapp
+    :param testapp: webtest TestApp
+    :param str search_xml: XML string roughly equivalent to a pip search
+        for "test"
+    :param pkgs: package file names to be written into packages
+        directory
+    :param matches: a list of 2-tuples containing expected (name,
+        version) matches for the "test" query
+    """
+    for pkg in pkgs:
+        root.join(pkg).write('')
+    resp = testapp.post('/RPC2', search_xml)
+    parsed = xmlrpclib.loads(resp.text)
+    assert len(parsed) == 2 and parsed[1] == 'search'
+    if not matches:
+        assert len(parsed[0]) == 1 and not parsed[0][0]
+    else:
+        assert len(parsed[0][0]) == len(matches) and parsed[0][0]
+        for returned in parsed[0][0]:
+            print(returned)
+            assert returned['name'] in [match[0] for match in matches]
+            assert returned['version'] in [match[1] for match in matches]
+
 
 @pytest.mark.xfail()
 def test_remove_pkg(root, testapp):

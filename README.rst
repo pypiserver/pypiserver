@@ -48,6 +48,8 @@ From the client computer, type this::
 
   ## Download and Install hosted packages.
   pip install  --extra-index-url http://localhost:8080/simple/ ...
+  ## Search hosted packages
+  pip search --index http://localhost:8080/simple/ ...
 
 See also `Client-side configurations`_ for avoiding tedious typing.
 

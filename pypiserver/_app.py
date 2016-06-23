@@ -3,13 +3,17 @@ import logging
 import mimetypes
 import os
 import re
-import sys
 import zipfile
+import xml.dom.minidom
 
 from . import __version__
 from . import core
 from .bottle import static_file, redirect, request, response, HTTPError, Bottle, template
 
+try:
+    import xmlrpc.client as xmlrpclib # py3
+except ImportError:
+    import xmlrpclib # py2
 
 try:
     from io import BytesIO
@@ -195,6 +199,32 @@ def pep_503_redirects(prefix=None):
     return redirect(request.fullpath + "/", 301)
 
 
+@app.post('/RPC2')
+@auth("list")
+def handle_rpc():
+    """Handle pip-style RPC2 search requests"""
+    parser = xml.dom.minidom.parse(request.body)
+    methodname = parser.getElementsByTagName(
+        "methodName")[0].childNodes[0].wholeText.strip()
+    log.info("Processing RPC2 request for '%s'", methodname)
+    if methodname == 'search':
+        value = parser.getElementsByTagName(
+            "string")[0].childNodes[0].wholeText.strip()
+        response = []
+        ordering = 0
+        for p in packages():
+            if p.pkgname.count(value) > 0:
+                # We do not presently have any description/summary, returning
+                # version instead
+                d = {'_pypi_ordering': ordering, 'version': p.version,
+                     'name': p.pkgname, 'summary': p.version}
+                response.append(d)
+            ordering += 1
+        call_string = xmlrpclib.dumps((response,), 'search',
+                                      methodresponse=True)
+        return call_string
+
+
 @app.route("/simple/")
 @auth("list")
 def simpleindex():
@@ -303,3 +333,4 @@ def bad_url(prefix):
     p += "/simple/%s/" % prefix
 
     return redirect(p)
+
