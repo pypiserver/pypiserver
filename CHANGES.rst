@@ -14,6 +14,7 @@ Changelog
   - Any request for a non-normalized package name is redirected to
     the normalized name.
 
+- #114: Added `pip search` support (thanks to @blade2005)
 - #117, #122, #124/#127/#128: FIX startup regressions introduced by
   previous `v1.1.10` (thanks to @virtuald, @Oneplus, @michaelkuty, @harcher81,
   @8u1a).
@@ -108,7 +109,7 @@ Serve 1000s of packages, PGP-Sigs, skip versions starting with 'v'.
 
 
 1.1.7 (2015-03-8)
-------------------
+-----------------
 1st release under cooperative ownership:
 
 - #65, #66: Improve Auth for private repos by supporting i
