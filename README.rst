@@ -96,11 +96,13 @@ Currently only password-protected uploads are supported!
    .. Tip:: When accessing pypiserver via the api, alternate authentication
       methods are available via the ``auther`` config flag. Any callable
       returning a boolean can be passed through to the pypiserver config in
-      order to provide custom authentication. For example, to authenticate
-      using the `pam module`_::
+      order to provide custom authentication. For example, to configure
+      pypiserver to authenticate using the `python-pam`_::
 
         import pam
         pypiserver.default_config(auther=pam.authenticate)
+
+      Please see `Running via the API`_ for more information.
 
 #. You  need to restart the server with the ``-P`` option only once
    (but user/password pairs can later be added or updated on the fly)::
@@ -500,6 +502,29 @@ management. An example configuration file for ``supervisor`` is given below::
 From there, the process can be managed via ``supervisord`` using ``supervisorctl``.
 
 
+Running via the API
+~~~~~~~~~~~~~~~~~~~
+
+Pypiserver can also be run via the API. The only additional feature that this
+enables is the use of alternative authentication mechanisms. The ``auther``
+keyword can be passed to the pypiserver app with any callable as a value. The
+associated callable should return a boolean when passed the username and
+password for a given request. Below is an example of starting the pypiserver
+from the Python shell, using ``/etc/passwd`` authentication via `python-pam`_::
+
+    >>> import pypiserver
+    >>> from pypiserver import bottle
+    >>> import pam
+    >>> app = pypiserver.app(port=80, auther=p.authenticate, root='/home/pypi/packages'
+    >>> bottle.run(app=app, host='0.0.0.0', port=80, server='auto')
+
+Bear in mind that whatever your authentication mechanism, the instance of
+Python running pypiserver must be able to access the appropriate resources in
+order for it to work. For example, the `python-pam`_ module, which enables
+authentication based on ``/etc/passwd``, seems to require root access in
+order to properly authenticate.
+
+
 Using a different WSGI server
 -----------------------------
 - *pypiserver* ships with it's own copy of bottle.
@@ -673,7 +698,7 @@ See the ``LICENSE.txt`` file.
 .. _PyPI: http://pypi.python.org
 .. _twine: https://pypi.python.org/pypi/twine
 .. _pypi-uploader: https://pypi.python.org/pypi/pypi-uploader
-.. _pam module: https://pypi.python.org/pypi/pam
+.. _python-pam: https://pypi.python.org/pypi/python-pam/
 .. |travis-status| image:: https://travis-ci.org/pypiserver/pypiserver.svg
     :alt: Travis build status
     :scale: 100%
