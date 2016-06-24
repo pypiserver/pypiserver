@@ -503,41 +503,54 @@ From there, the process can be managed via ``supervisord`` using ``supervisorctl
 
 
 Running via the API
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 Pypiserver can also be run via the API. The only additional feature that this
 enables is the use of alternative authentication mechanisms. The ``auther``
 keyword can be passed to the pypiserver app with any callable as a value. The
-associated callable should return a boolean when passed the username and
-password for a given request. Below is an example of starting the pypiserver
-from the Python shell, using ``/etc/passwd`` authentication via `python-pam`_::
+associated callable should return a boolean when passed the username and the
+password for a given request.
 
-    >>> import pypiserver
-    >>> from pypiserver import bottle
-    >>> import pam
-    >>> app = pypiserver.app(port=80, auther=p.authenticate, root='/home/pypi/packages'
-    >>> bottle.run(app=app, host='0.0.0.0', port=80, server='auto')
+For example, to authenticate users based on the ``/etc/passwd`` file under Unix,
+you may delegate such decisions to the `python-pam`_ by following these steps.
 
-Bear in mind that whatever your authentication mechanism, the instance of
-Python running pypiserver must be able to access the appropriate resources in
-order for it to work. For example, the `python-pam`_ module, which enables
-authentication based on ``/etc/passwd``, seems to require root access in
-order to properly authenticate.
+1. Ensure ``python-pam`` module is installed::
+
+    pip install python-pam
+
+2. Create a python-script along these lines::
+
+    $ cat > pypiserver-start.py
+    import pypiserver
+    from pypiserver import bottle
+    import pam
+    pypiserver.app(root='./packages', auther=pam.authenticate)
+    bottle.run(app=app, host='0.0.0.0', port=80, server='auto')
+
+    [Ctrl+ D]
+
+3. Invoke the python-script to start-up *pypiserver*::
+
+    $ python pypiserver-start.py
+
+
+.. Note::
+   The `python-pam`_ module, requires *read* access to ``/etc/shadow`` file;
+   you may add the user under which *pypiserver* runs into the *shadow*
+   group, with a command like this: ``sudo usermod -a -G shadow pypy-user``.
 
 
 Using a different WSGI server
 -----------------------------
-- *pypiserver* ships with it's own copy of bottle.
+- *pypiserver* ships with it's own copy of *bottle*.
   It's possible to use bottle with different WSGI servers.
 
-- *pypiserver* chooses any of the
-  following *paste*, *cherrypy*, *twisted*, *wsgiref* (part of python) if
-  available.
+- *bottle* may use any of *paste*, *cherrypy*, *twisted* and *wsgiref* 
+  (part of python) if available, using the ``--server`` flag.
 
-- If none of the above servers matches your needs, pypiserver also
-  exposes an API to get the internal WSGI app, which you can then run
-  under any WSGI server you like. ``pypiserver.app`` has the following
-  interface::
+- If none of the above servers matches your needs, use the API to get
+  the internal WSGI app, which you can then run under any WSGI server you like.
+  ``pypiserver.app`` has the following interface::
 
     def app(root=None,
         redirect_to_fallback=True,
