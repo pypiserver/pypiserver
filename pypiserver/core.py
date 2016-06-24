@@ -91,21 +91,12 @@ def auth_by_htpasswd_file(htPsswdFile, username, password):
         return htPsswdFile.check_password(username, password)
 
 
-def auth_by_pam(username, password):
-    try:
-        import pam
-        return pam.authenticate(username, password)
-    except ImportError as error:
-        log.error('PAM module not found. Please install pam module')
-        return False
-
-
 mimetypes.add_type("application/octet-stream", ".egg")
 mimetypes.add_type("application/octet-stream", ".whl")
 mimetypes.add_type("text/plain", ".asc")
 
 
-#### Next 2 functions adapted from :mod:`distribute.pkg_resources`.
+# ### Next 2 functions adapted from :mod:`distribute.pkg_resources`.
 #
 component_re = re.compile(r'(\d+ | [a-z]+ | \.| -)', re.I | re.VERBOSE)
 replace = {'pre': 'c', 'preview': 'c', '-': 'final-', 'rc': 'c', 'dev': '@'}.get
