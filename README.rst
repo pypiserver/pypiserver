@@ -10,8 +10,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 |pypi-ver| |travis-status| |dependencies| |downloads-count| |python-ver| \
 |proj-license|
 
-:Version:     1.2.0b0
-:Date:        2016-06-23
+:Version:     1.2.0b1
+:Date:        2016-06-24
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.python.org/pypi/pypiserver
 :Travis:      https://travis-ci.org/pypiserver/pypiserver
