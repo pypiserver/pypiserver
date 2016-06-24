@@ -111,7 +111,8 @@ Currently only password-protected uploads are supported!
      bottle.run(app=app, host=config.host, port=config.port, server=config.server)
 
     .. Note::
-     If you are getting authentication even with incorrect credentials please check your PAM configuration.
+     - If you are getting authentication even with incorrect credentials please check your PAM configuration.
+     - This requires installing pam module `pip install pam`
 
 #. On client-side, edit or create a `~/.pypirc` file with a similar content::
 
