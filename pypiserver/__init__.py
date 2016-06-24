@@ -1,6 +1,6 @@
 import re as _re
 
-version = __version__ = "1.2.0b1"
+version = __version__ = "1.2.0b2"
 __version_info__ = tuple(_re.split('[.-]', __version__))
 __updated__ = "2016-06-24"
 
