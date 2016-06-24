@@ -45,7 +45,8 @@ class auth(object):
             if self.action in config.authenticated:
                 if not request.auth or request.auth[1] is None:
                     raise HTTPError(
-                        401, headers={"WWW-Authenticate": 'Basic realm="pypi"'})
+                        401, headers={"WWW-Authenticate": 'Basic realm="pypi"'}
+                    )
                 if not config.auther(*request.auth):
                     raise HTTPError(403)
             return method(*args, **kwargs)
