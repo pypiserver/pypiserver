@@ -92,12 +92,9 @@ def auth_by_htpasswd_file(htPsswdFile, username, password):
 
 
 def auth_by_pam(username, password):
-    try:
-        import pam
-        return pam.authenticate(username, password)
-    except ImportError as error:
-        log.error('PAM module not found. Please install pam module')
-        return False
+    """Attempt to perform PAM auth. API access only for now."""
+    import pam
+    return pam.authenticate(username, password)
 
 
 mimetypes.add_type("application/octet-stream", ".egg")
