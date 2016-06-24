@@ -250,14 +250,6 @@ def _listdir(root):
                               fn=fn, root=root,
                               relfn=fn[len(root) + 1:])
 
-try:
-    from .cache import listdir_cache
-
-    def listdir(root):
-        return listdir_cache.get(root, _listdir)
-except ImportError:
-    listdir = _listdir
-
 
 def find_packages(pkgs, prefix=""):
     prefix = normalize_pkgname(prefix)
