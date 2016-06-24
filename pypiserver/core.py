@@ -91,6 +91,10 @@ def auth_by_htpasswd_file(htPsswdFile, username, password):
         return htPsswdFile.check_password(username, password)
 
 
+def auth_by_pam(username, password):
+    import pam
+    return pam.authenticate(username, password)
+
 
 mimetypes.add_type("application/octet-stream", ".egg")
 mimetypes.add_type("application/octet-stream", ".whl")
@@ -140,7 +144,7 @@ wheel_file_re = re.compile(
     re.VERBOSE)
 _pkgname_re = re.compile(r'-\d+[a-z_.!+]', re.I)
 _pkgname_parts_re = re.compile(
-    r"[\.\-](?=cp\d|py\d|macosx|linux|sunos|solaris|irix|aix|cygwin|win)", 
+    r"[\.\-](?=cp\d|py\d|macosx|linux|sunos|solaris|irix|aix|cygwin|win)",
     re.I)
 
 
@@ -214,7 +218,7 @@ class PkgFile(object):
     def __repr__(self):
         return "%s(%s)" % (
             self.__class__.__name__,
-            ", ".join(["%s=%r" % (k, getattr(self, k)) 
+            ", ".join(["%s=%r" % (k, getattr(self, k))
                                   for k in sorted(self.__slots__)]))
 
     def fname_and_hash(self, hash_algo):
@@ -246,6 +250,7 @@ def _listdir(root):
                               fn=fn, root=root,
                               relfn=fn[len(root) + 1:])
 
+
 def find_packages(pkgs, prefix=""):
     prefix = normalize_pkgname(prefix)
     for x in pkgs:
@@ -271,7 +276,7 @@ def exists(root, filename):
 def store(root, filename, save_method):
     assert "/" not in filename
     dest_fn = os.path.join(root, filename)
-    save_method(dest_fn, overwrite=True) # Overwite check earlier.
+    save_method(dest_fn, overwrite=True)  # Overwite check earlier.
 
 
 def _digest_file(fpath, hash_algo):
