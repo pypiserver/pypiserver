@@ -1,8 +1,8 @@
 import re as _re
 
-version = __version__ = "1.2.0b0"
+version = __version__ = "1.2.0b1"
 __version_info__ = tuple(_re.split('[.-]', __version__))
-__updated__ = "2016-06-23"
+__updated__ = "2016-06-24"
 
 __title__ = "pypiserver"
 __summary__ = "A minimal PyPI server for use with pip/easy_install."
