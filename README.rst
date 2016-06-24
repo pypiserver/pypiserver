@@ -10,7 +10,7 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 |pypi-ver| |travis-status| |dependencies| |downloads-count| |python-ver| \
 |proj-license|
 
-:Version:     1.2.0b1
+:Version:     1.2.0b2
 :Date:        2016-06-24
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.python.org/pypi/pypiserver
@@ -68,8 +68,8 @@ you may also upload them remotely with a ``python setup.py upload`` command.
 Currently only password-protected uploads are supported!
 
 #. First make sure you have the *passlib* module installed (note that
-   `passlib>=1.6` is required), which is needed for parsing the Apache
-   *htpasswd* file specified by the `-P`, `--passwords` option
+   ``passlib>=1.6`` is required), which is needed for parsing the Apache
+   *htpasswd* file specified by the ``-P``, ``--passwords`` option
    (see next steps)::
 
      pip install passlib
@@ -93,14 +93,15 @@ Currently only password-protected uploads are supported!
      It is also possible to disable authentication even for uploads.
      To avoid lazy security decisions, read help for ``-P`` and ``-a`` options.
 
-#. You  need to restart the server with the `-P` option only once
+#. You  need to restart the server with the ``-P`` option only once
    (but user/password pairs can later be added or updated on the fly)::
 
      ./pypi-server -p 8080 -P htpasswd.txt ~/packages &
 
-#. Alternate Authentication using PAM:
-    'auther' is only avaliable through the api not command line flags.
-    Example Script::
+#. Alternate authentication is available using PAM. Keep in mind, though, that
+   'auther' is only avaliable through the api not command line flags. See the
+   following example for usage::
+
      from pypiserver import bottle
      import pypiserver
      from pypiserver.core import auth_by_pam
@@ -110,11 +111,12 @@ Currently only password-protected uploads are supported!
      app = pypiserver.app(**kwds)
      bottle.run(app=app, host=config.host, port=config.port, server=config.server)
 
-    .. Note::
-     - If you are getting authentication even with incorrect credentials please check your PAM configuration.
-     - This requires installing pam module `pip install pam`
+   .. Note::
+     - If you are getting authentication even with incorrect credentials
+       please check your PAM configuration.
+     - This requires installing the pam module: ``pip install pam``
 
-#. On client-side, edit or create a `~/.pypirc` file with a similar content::
+#. On client-side, edit or create a ``~/.pypirc`` file with a similar content::
 
      [distutils]
      index-servers =
