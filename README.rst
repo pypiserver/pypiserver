@@ -68,8 +68,8 @@ you may also upload them remotely with a ``python setup.py upload`` command.
 Currently only password-protected uploads are supported!
 
 #. First make sure you have the *passlib* module installed (note that
-   `passlib>=1.6` is required), which is needed for parsing the Apache
-   *htpasswd* file specified by the `-P`, `--passwords` option
+   ``passlib>=1.6`` is required), which is needed for parsing the Apache
+   *htpasswd* file specified by the ``-P``, ``--passwords`` option
    (see next steps)::
 
      pip install passlib
@@ -93,28 +93,21 @@ Currently only password-protected uploads are supported!
      It is also possible to disable authentication even for uploads.
      To avoid lazy security decisions, read help for ``-P`` and ``-a`` options.
 
-#. You  need to restart the server with the `-P` option only once
+   .. Tip:: When accessing pypiserver via the api, alternate authentication
+      methods are available via the ``auther`` config flag. Any callable
+      returning a boolean can be passed through to the pypiserver config in
+      order to provide custom authentication. For example, to authenticate
+      using the `pam module`_::
+
+        import pam
+        pypiserver.default_config(auther=pam.authenticate)
+
+#. You  need to restart the server with the ``-P`` option only once
    (but user/password pairs can later be added or updated on the fly)::
 
      ./pypi-server -p 8080 -P htpasswd.txt ~/packages &
 
-#. Alternate Authentication using PAM:
-    'auther' is only avaliable through the api not command line flags.
-    Example Script::
-     from pypiserver import bottle
-     import pypiserver
-     from pypiserver.core import auth_by_pam
-
-     kwds = pypiserver.default_config(auther=auth_by_pam, root='/packages')
-     config = pypiserver.Configuration(**kwds)
-     app = pypiserver.app(**kwds)
-     bottle.run(app=app, host=config.host, port=config.port, server=config.server)
-
-    .. Note::
-     - If you are getting authentication even with incorrect credentials please check your PAM configuration.
-     - This requires installing pam module `pip install pam`
-
-#. On client-side, edit or create a `~/.pypirc` file with a similar content::
+#. On client-side, edit or create a ``~/.pypirc`` file with a similar content::
 
      [distutils]
      index-servers =
@@ -680,6 +673,7 @@ See the ``LICENSE.txt`` file.
 .. _PyPI: http://pypi.python.org
 .. _twine: https://pypi.python.org/pypi/twine
 .. _pypi-uploader: https://pypi.python.org/pypi/pypi-uploader
+.. _pam module: https://pypi.python.org/pypi/pam
 .. |travis-status| image:: https://travis-ci.org/pypiserver/pypiserver.svg
     :alt: Travis build status
     :scale: 100%
