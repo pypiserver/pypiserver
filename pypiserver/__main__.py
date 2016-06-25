@@ -6,14 +6,16 @@
 """
 from __future__ import print_function
 
-import os
-import sys
 import getopt
-import re
 import logging
-import warnings
+import os
+import re
+import sys
 import textwrap
+import warnings
+
 import functools as ft
+
 
 warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
 log = logging.getLogger('pypiserver.main')
@@ -287,7 +289,7 @@ def main(argv=None):
         sys.exit("unknown server %r. choose one of %s" % (
             c.server, ", ".join(bottle.server_names.keys())))
 
-    bottle.debug(True)
+    bottle.debug(c.verbosity > 1)
     bottle._stderr = ft.partial(pypiserver._logwrite,
             logging.getLogger(bottle.__name__), logging.INFO)
     app = pypiserver.app(**vars(c))
