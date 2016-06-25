@@ -31,6 +31,9 @@ Changelog
   (thanks to @ssbarnea & @bibby).
 - #129, #131: Other minor fixes and improvements (thanks to @bibby, @Oneplus,
   @8u1a).
+- #149, #151-#153: Provide sample-code to authenticate using ``/etc/passwds`` file via *pam*
+  modules in Unix (thanks to @blade2005).
+- Improved API usage instructions.
 - Detailed changes recorded in `Github's milestone 1.2.0
   <https://github.com/pypiserver/pypiserver/milestones/M1.2.0>`_.
 
