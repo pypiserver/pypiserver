@@ -1,41 +1,58 @@
 Changelog
 =========
 
-1.2.0 (2016-XX-XX)
+1.2.0 (2016-06-25)
 ------------------
 "New Day": less rigorous support for ``python-2 < 2.7`` and ``python-3 < 3.3``.
 
-- #38, #139, #140: Package normalizations and :pep:`503` updates
-  (thanks to @dpkp):
+- Package normalizations and :pep:`503` updates:
   - Package names are normalized: convert all characters to lower-case
     and replace any of ``[-_.]`` with a dash(``'-'``).
   - The simple index only lists normalized package names.
   - Any request for a non-normalized package name is redirected to
     the normalized name.
   - URLs are redirected unless they end in ``'/'`` (expect packages themselves).
+  - (thanks to @dpkp, #38, #139, #140)
 
-- #80, #114: Added ``pip search`` support (thanks to @blade2005)
-- #117, #122, #124/#127/#128: FIX startup regressions introduced by
-  previous ``v1.1.10`` (thanks to @virtuald, @Oneplus, @michaelkuty, @harcher81,
-  @8u1a).
-- #113: FIX over-writing of packages even when without ``--overwrite`` flag
-  (thanks to @blade2005).
-- #107, #108, #110: Test against *python-3.5*.
-- #112, #118, #119: Fixes for *paste*, *gunicorn* and other *WSGI* servers
-  (thanks to @corywright, @virtuald, @montefra).
-- #120/#121, #129, #141/#142: Updates and fixes needed due to changes
-  in dependent libraries (thanks @dpkp).
-- #116: Add cache for speeding up GPG signatures (thanks to @virtuald).
-- Provide sample ``systemd`` *unit-file* (thanks to @ssbarnea).
-- Add usage instructions for related project ``pypi-uploader``
-  (thanks to @ssbarnea & @bibby).
-- #129, #131: Other minor fixes and improvements (thanks to @bibby, @Oneplus,
-  @8u1a).
-- #149, #151-#153: Provide sample-code to authenticate using ``/etc/passwds`` file via *pam*
-  modules in Unix (thanks to @blade2005).
-- Improved API usage instructions.
-- Detailed changes recorded in `Github's milestone 1.2.0
-  <https://github.com/pypiserver/pypiserver/milestones/M1.2.0>`_.
+- Added ``pip search`` support.
+  - (thanks to @blade2005, #80, #114)
+
+- FIX startup regressions for other WSGI-servers, introduced by previous ``v1.1.10``.
+  - (thanks to @virtuald, @Oneplus, @michaelkuty, @harcher81, @8u1a,
+    #117, #122, #124/#127/#128)
+
+- FIX over-writing of packages even when without ``--overwrite`` flag.
+  - (thanks to @blade2005, #113)
+
+- Fixes for *paste*, *gunicorn* and other *WSGI* servers.
+  - (thanks to @corywright, @virtuald, @montefra, #112, #118, #119)
+
+- Updates and fixes needed due to changes in dependent libraries.
+  - (thanks @dpkp, #120/#121, #129, #141/#142)
+
+- Add cache for speeding up GPG signatures.
+  - sthanks to @virtuald, #116)
+
+- Other minor fixes and improvements.
+  - (thanks to @bibby, @Oneplus, @8u1a, #129, #131)
+
+- TravisCI-test against *python-3.5*.
+  - (#107, #108, #110)
+
+- docs:
+  - Provide samples for *Automated Startup* (``systemd`` & ``hypervisor``).
+    (thanks to @ssbarnea, #137, #146)
+
+  - Add usage instructions for related project ``pypi-uploader``.
+    (thanks to @ssbarnea & @bibby, #147)
+
+  - doc: Provide sample-code to authenticate using ``/etc/passwds`` file
+    via *pam* modules in Unix.
+    - (thanks to @blade2005, #149, #151-#153)
+
+  - Improved API usage instructions.
+  - Detailed changes recorded in `Github's milestone 1.2.0
+    <https://github.com/pypiserver/pypiserver/milestones/M1.2.0>`_.
 
 
 1.1.10 (2016-01-19)
