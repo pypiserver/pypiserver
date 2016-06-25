@@ -502,63 +502,44 @@ management. An example configuration file for ``supervisor`` is given below::
 From there, the process can be managed via ``supervisord`` using ``supervisorctl``.
 
 
-Running via the API
--------------------
+Utilizing the API
+=================
+In order to enable ad-hoc authentication-providers or to use WSGI-servers
+not supported by *bottle* out-of-the-box, you needed to launch *pypiserver*
+via its API.
 
-Pypiserver can also be run via the API. The only additional feature that this
-enables is the use of alternative authentication mechanisms. The ``auther``
-keyword can be passed to the pypiserver app with any callable as a value. The
-associated callable should return a boolean when passed the username and the
-password for a given request.
-
-For example, to authenticate users based on the ``/etc/passwd`` file under Unix,
-you may delegate such decisions to the `python-pam`_ by following these steps.
-
-1. Ensure ``python-pam`` module is installed::
-
-    pip install python-pam
-
-2. Create a python-script along these lines::
-
-    $ cat > pypiserver-start.py
-    import pypiserver
-    from pypiserver import bottle
-    import pam
-    pypiserver.app(root='./packages', auther=pam.authenticate)
-    bottle.run(app=app, host='0.0.0.0', port=80, server='auto')
-
-    [Ctrl+ D]
-
-3. Invoke the python-script to start-up *pypiserver*::
-
-    $ python pypiserver-start.py
+- The main entry-point for configuring *pypiserver* is the `pypiserver:app()
+  <https://github.com/pypiserver/pypiserver/blob/master/pypiserver/__init__.py#L116>`_
+  function.  This function returns the internal WSGI-app that you my then
+  send to any WSGI-server you like.
 
 
-.. Note::
-   The `python-pam`_ module, requires *read* access to ``/etc/shadow`` file;
-   you may add the user under which *pypiserver* runs into the *shadow*
-   group, with a command like this: ``sudo usermod -a -G shadow pypy-user``.
+- To get all ``pypiserver:app()`` keywords and their explanations, read the
+  function `pypiserver:default_config()
+  <https://github.com/pypiserver/pypiserver/blob/master/pypiserver/__init__.py#L35>`_.
 
+- Finally, to fire-up a WSGI-server with the configured app, invoke
+  the ``bottle:run(app, host, port, server)`` function.
+  Note that *pypiserver* ships with it's own copy of *bottle*; to use it,
+  import it like that: ``from pypiserver import bottle``
 
-Using a different WSGI server
+Using a different WSGI-server
 -----------------------------
-- *pypiserver* ships with it's own copy of *bottle*.
-  It's possible to use bottle with different WSGI servers.
+- The *bottle* web-server which supports many WSGI-servers, among others,
+  *paste*, *cherrypy*, *twisted* and *wsgiref* (part of python); you select
+  them using the ``--server`` flag.
 
-- *bottle* may use any of *paste*, *cherrypy*, *twisted* and *wsgiref* 
-  (part of python) if available, using the ``--server`` flag.
+- You may view all supported WSGI servers using the following interactive code::
 
-- If none of the above servers matches your needs, use the API to get
-  the internal WSGI app, which you can then run under any WSGI server you like.
-  ``pypiserver.app`` has the following interface::
+    >>> from pypiserver import bottle
+    >>> list(bottle.server_names.keys())
+    ['cgi', 'gunicorn', 'cherrypy', 'eventlet', 'tornado', 'geventSocketIO',
+    'rocket', 'diesel', 'twisted', 'wsgiref', 'fapws3', 'bjoern', 'gevent',
+    'meinheld', 'auto', 'aiohttp', 'flup', 'gae', 'paste', 'waitress']
 
-    def app(root=None,
-        redirect_to_fallback=True,
-        fallback_url="http://pypi.python.org/simple")
-
-  and returns the WSGI application. `root` is the package directory,
-  `redirect_to_fallback` specifies whether to redirect to `fallback_url` when
-  a package is missing.
+- If none of the above servers matches your needs, invoke just the
+  ``pypiserver:app()`` method which returns the internal WSGI-app WITHOUT
+  starting-up a server - you may then send it to any WSGI-server you like.
 
 
 gunicorn
@@ -631,6 +612,41 @@ unstable packages on different paths::
    The server can then start with::
 
         gunicorn_paster paste.ini
+
+Using Ad-hoc authentication providers
+-------------------------------------
+The ``auther`` keyword of ``pypiserver:app()`` function maybe set only using
+the API. This can be any callable that returns a boolean when passed
+the *username* and the *password* for a given request.
+
+For example, to authenticate users based on the ``/etc/passwd`` file under Unix,
+you may delegate such decisions to the `python-pam`_ library by following
+these steps:
+
+1. Ensure ``python-pam`` module is installed::
+
+    pip install python-pam
+
+2. Create a python-script along these lines::
+
+    $ cat > pypiserver-start.py
+    import pypiserver
+    from pypiserver import bottle
+    import pam
+    pypiserver.app(root='./packages', auther=pam.authenticate)
+    bottle.run(app=app, host='0.0.0.0', port=80, server='auto')
+
+    [Ctrl+ D]
+
+3. Invoke the python-script to start-up *pypiserver*::
+
+    $ python pypiserver-start.py
+
+
+.. Note::
+   The `python-pam`_ module, requires *read* access to ``/etc/shadow`` file;
+   you may add the user under which *pypiserver* runs into the *shadow*
+   group, with a command like this: ``sudo usermod -a -G shadow pypy-user``.
 
 
 

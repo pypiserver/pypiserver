@@ -72,6 +72,7 @@ def default_config(
             found in the roots.
     :param root:
             A list of paths, derived from the packages specified on cmd-line.
+            If `None`, defaults to '~/packages'.
     :param redirect_to_fallback:
             see :option:`--disable-fallback`
     :param authenticated:
