@@ -3,8 +3,9 @@ Changelog
 
 1.2.0 (2016-06-25)
 ------------------
-"New Day": less rigorous support for ``python-2 < 2.7`` and ``python-3 < 3.3``.
+"Brexit": Normalize and stop legacy support. 
 
+- Less rigorous support for ``python-2 < 2.7`` and ``python-3 < 3.3``.
 - Package normalizations and :pep:`503` updates:
   - Package names are normalized: convert all characters to lower-case
     and replace any of ``[-_.]`` with a dash(``'-'``).
@@ -40,6 +41,7 @@ Changelog
   - (#107, #108, #110)
 
 - docs:
+
   - Provide samples for *Automated Startup* (``systemd`` & ``hypervisor``).
     (thanks to @ssbarnea, #137, #146)
 
