@@ -80,7 +80,6 @@ def favicon():
 
 @app.route('/')
 def root():
-    fp = request.fullpath
 
     try:
         numpkgs = len(list(packages()))
@@ -93,8 +92,6 @@ def root():
                     URL=request.url,
                     VERSION=__version__,
                     NUMPKGS=numpkgs,
-                    PACKAGES=urljoin(fp, "packages/"),
-                    SIMPLE=urljoin(fp, "simple/")
                     )
 
 _bottle_upload_filename_re = re.compile(r'^[a-z0-9_.!+-]+$', re.I)
