@@ -102,7 +102,7 @@ Currently only password-protected uploads are supported!
         import pam
         pypiserver.default_config(auther=pam.authenticate)
 
-      Please see `Running via the API`_ for more information.
+      Please see `Using Ad-hoc authentication providers`_ for more information.
 
 #. You  need to restart the server with the ``-P`` option only once
    (but user/password pairs can later be added or updated on the fly)::
