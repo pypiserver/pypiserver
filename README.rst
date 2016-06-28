@@ -752,4 +752,5 @@ See the ``LICENSE.txt`` file.
     :alt: Project License
 
 .. |dependencies| image:: https://img.shields.io/requires/github/pypiserver/pypiserver.svg
+    :target: https://requires.io/github/pypiserver/pypiserver/requirements/
     :alt: Dependencies up-to-date?
