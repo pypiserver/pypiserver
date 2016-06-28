@@ -43,7 +43,8 @@ setup(name="pypiserver",
       },
       tests_require=tests_require,
       url="https://github.com/pypiserver/pypiserver",
-      maintainer="Kostis Anagnostopoulos",
+      maintainer=("Kostis Anagnostopoulos <ankostis@gmail.com>"
+              "Matthew Planchard <mplanchard@gmail.com>"),
       maintainer_email="ankostis@gmail.com",
       classifiers=[
           "Development Status :: 5 - Production/Stable",

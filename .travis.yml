@@ -9,9 +9,8 @@ env:
   - TOX_ENV=pypy
 
 script:
-  - python -m pip install setuptools pip sphinx -U
   - ./bin/test_standalone.sh
-  - pip install tox
+  - python -m pip install setuptools pip sphinx tox -U
   - tox -e $TOX_ENV
   - ./bin/check_readme.sh
 
