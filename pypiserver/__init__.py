@@ -143,6 +143,21 @@ def paste_app_factory(global_config, **local_conf):
     def upd_conf_with_bool_item(conf, attr, sdict):
         conf[attr] = str2bool(sdict.pop(attr, None), conf[attr])
 
+    def upd_conf_with_str_item(conf, attr, sdict):
+        value = sdict.pop(attr, None)
+        if value is not None:
+            conf[attr] = value
+
+    def upd_conf_with_int_item(conf, attr, sdict):
+        value = sdict.pop(attr, None)
+        if value is not None:
+            conf[attr] = int(value)
+
+    def upd_conf_with_list_item(conf, attr, sdict, sep=' ', parse=str.strip):
+        values = sdict.pop(attr, None)
+        if values:
+            conf[attr] = list(filter(None, map(parse, values.split(sep))))
+
     def _make_root(root):
         root = root.strip()
         if root.startswith("~"):
@@ -151,12 +166,23 @@ def paste_app_factory(global_config, **local_conf):
 
     c = default_config()
 
-    root = local_conf.get("root")
-    if root:
-        c['root'] = [_make_root(x) for x in root.split("\n") if x.strip()]
-
+    upd_conf_with_list_item(c, 'root', local_conf, sep='\n', parse=_make_root)
     upd_conf_with_bool_item(c, 'redirect_to_fallback', local_conf)
+    upd_conf_with_str_item(c, 'fallback_url', local_conf)
+    upd_conf_with_list_item(c, 'authenticated', local_conf, sep=' ')
+    upd_conf_with_str_item(c, 'password_file', local_conf)
     upd_conf_with_bool_item(c, 'overwrite', local_conf)
+    upd_conf_with_str_item(c, 'hash_algo', local_conf)
+    upd_conf_with_int_item(c, 'verbosity', local_conf)
+    upd_conf_with_str_item(c, 'log_file', local_conf)
+    upd_conf_with_str_item(c, 'log_frmt', local_conf)
+    upd_conf_with_str_item(c, 'log_req_frmt', local_conf)
+    upd_conf_with_str_item(c, 'log_res_frmt', local_conf)
+    upd_conf_with_str_item(c, 'log_err_frmt', local_conf)
+    upd_conf_with_str_item(c, 'welcome_file', local_conf)
+    # cache_control is undocumented; don't know what type is expected:
+    # upd_conf_with_str_item(c, 'cache_control', local_conf)
+    print(c)
 
     return app(**c)
 
