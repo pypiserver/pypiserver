@@ -139,6 +139,8 @@ def str2bool(s, default):
 
 def paste_app_factory(global_config, **local_conf):
     import os
+    # let's get unicode.strip in Python 2 or str.strip in Python 3:
+    str_strip = type(u"").strip
 
     def upd_conf_with_bool_item(conf, attr, sdict):
         conf[attr] = str2bool(sdict.pop(attr, None), conf[attr])
@@ -153,7 +155,7 @@ def paste_app_factory(global_config, **local_conf):
         if value is not None:
             conf[attr] = int(value)
 
-    def upd_conf_with_list_item(conf, attr, sdict, sep=' ', parse=str.strip):
+    def upd_conf_with_list_item(conf, attr, sdict, sep=' ', parse=str_strip):
         values = sdict.pop(attr, None)
         if values:
             conf[attr] = list(filter(None, map(parse, values.split(sep))))
