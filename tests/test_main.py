@@ -187,3 +187,9 @@ def test_matrix_auth_list(main, monkeypatch):
     monkeypatch.setitem(sys.modules, 'passlib.apache', mock.MagicMock())
     main(["-P", "pswd-file", "-a", "{'a': ['update', 'list'], 'b': ['download']}"])
     assert main.app.module.config.authenticated == {'a': ['update', 'list'], 'b': ['download']}
+
+def test_matrix_auth_list_multiple_actions(main, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'passlib', mock.MagicMock())
+    monkeypatch.setitem(sys.modules, 'passlib.apache', mock.MagicMock())
+    main(["-P", "pswd-file", "-a", "{'a': ['update', 'list'], 'b': ['download', 'update']}"])
+    assert main.app.module.config.authenticated == {'a': ['update', 'list'], 'b': ['download', 'update']}
