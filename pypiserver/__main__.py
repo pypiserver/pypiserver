@@ -59,6 +59,9 @@ def usage():
       is not necessary, but `~/.pypirc` still need username and password fields,
       even if bogus.
       By default, only 'update' is password-protected.
+      Multiple users can be given multiple actions. Use a dictionary of lists to define
+      the actions allowed for each user.
+        -P foo/htpasswd.txt -a {'user1': ['update'], 'user2': ['download', 'list']}
 
     -P, --passwords PASSWORD_FILE
       use apache htpasswd file PASSWORD_FILE to set usernames & passwords when
