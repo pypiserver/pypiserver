@@ -33,27 +33,29 @@ with *scp*.
 Quickstart: Installation and Usage
 ==================================
 *pypiserver* ``> 1.2.x`` works with python ``2.7`` and ``3.3+`` or *pypy*.
-Python ``3.0 --> 3.2`` may also work, but it is not being tested for these
-versions.
+Older python-versions may still work, but they are not tested.
 For legacy python versions, use ``pypiserver-1.1.x`` series.
 
-Run the following commands to get your *pypiserver* up and running::
+1. Install *pypiserver* with this command::
 
-  ## Installation.
-  pip install pypiserver                ## Or: pypiserver[passlib,watchdog]
-  mkdir ~/packages                      ## Copy packages into this directory.
+    pip install pypiserver                ## Or: pypiserver[passlib,watchdog]
+    mkdir ~/packages                      ## Copy packages into this directory.
 
-  ## Start server.
-  pypi-server -p 8080 ~/packages &      ## Will listen to all IPs.
+   See also `Alternative Installation methods`_.
 
-From the client computer, type this::
+2. Copy some packages into your ``~/packages`` folder and then
+   get your *pypiserver* up and running::
 
-  ## Download and Install hosted packages.
-  pip install  --extra-index-url http://localhost:8080/simple/ ...
-  ## Search hosted packages
-  pip search --index http://localhost:8080/simple/ ...
+    pypi-server -p 8080 ~/packages &      ## Will listen to all IPs.
 
-See also `Client-side configurations`_ for avoiding tedious typing.
+1. From the client computer, type this::
+
+    ## Download and Install hosted packages.
+    pip install  --extra-index-url http://localhost:8080/simple/ ...
+    ## Search hosted packages
+    pip search --index http://localhost:8080/simple/ ...
+
+   See also `Client-side configurations`_ for avoiding tedious typing.
 
 .. Note::
    The above commands work on a unix-like operating system with a posix shell.
@@ -63,12 +65,57 @@ See also `Client-side configurations`_ for avoiding tedious typing.
    The same is true for the rest of this documentation.
 
 
-Uploading packages from sources, remotely
------------------------------------------
-Instead of copying packages directly to the server's folder,
-you may also upload them remotely with a ``python setup.py upload`` command.
-Currently only password-protected uploads are supported!
+Client-side Configurations
+==========================
+Always specifying the the pypi url on the command line is a bit
+cumbersome. Since *pypiserver* redirects ``pip/easy_install`` to the
+``pypi.python.org`` index if it doesn't have a requested package, it's a
+good idea to configure them to always use your local pypi index.
 
+Configuring *pip*
+-----------------
+For ``pip`` command this can be done by setting the environment variable
+``PIP_EXTRA_INDEX_URL`` in your ``.bashr/.profile/.zshrc``::
+
+  export PIP_EXTRA_INDEX_URL=http://localhost:8080/simple/
+
+or by adding the following lines to ``~/.pip/pip.conf``::
+
+  [global]
+  extra-index-url = http://localhost:8080/simple/
+
+.. Note::
+   If you have installed *pypiserver* on a remote url without *https*
+   you wil receive an "untrusted" warning from *pip*, urging you to append
+   the ``--trusted-host`` option.  You can also include this option permanently
+   in your configuration-files or environment variables.
+
+
+Configuring *easy_install*
+--------------------------
+For ``easy_install`` command you may set the following configuration in
+``~/.pydistutils.cfg``::
+
+  [easy_install]
+  index_url = http://localhost:8080/simple/
+
+
+Uploading Packages Remotely
+===========================
+Instead of copying packages directly to the server's folder (i.e. with ``scp``),
+you may use python tools for the task, e.g. ``python setup.py upload``.
+In that case, *pypiserver* is responsible for authenticating the upload-requests.
+
+
+.. Note::
+  We strongly advise to password-protected your uploads!
+
+  It is possible to disable authentication for uploads (e.g. in intranets).
+  To avoid lazy security decisions, read help for ``-P`` and ``-a`` options.
+
+
+*Apache*-like authentication (``htpasswd``)
+-------------------------------------------
 #. First make sure you have the *passlib* module installed (note that
    ``passlib>=1.6`` is required), which is needed for parsing the Apache
    *htpasswd* file specified by the ``-P``, ``--passwords`` option
@@ -92,9 +139,6 @@ Currently only password-protected uploads are supported!
 
          http://www.htaccesstools.com/htpasswd-generator/
 
-     It is also possible to disable authentication even for uploads.
-     To avoid lazy security decisions, read help for ``-P`` and ``-a`` options.
-
    .. Tip:: When accessing pypiserver via the api, alternate authentication
       methods are available via the ``auther`` config flag. Any callable
       returning a boolean can be passed through to the pypiserver config in
@@ -111,6 +155,8 @@ Currently only password-protected uploads are supported!
 
      ./pypi-server -p 8080 -P htpasswd.txt ~/packages &
 
+Upload with *setuptools*
+------------------------
 #. On client-side, edit or create a ``~/.pypirc`` file with a similar content::
 
      [distutils]
@@ -132,66 +178,34 @@ Currently only password-protected uploads are supported!
 
      python setup.py sdist upload -r local
 
-.. Tip::
-   To avoid storing you passwords on disk, in clear text, you may either:
 
-   - use the ``register`` *setuptools*'s command with the ``-r`` option,
-     like that::
+Upload with `twine`_
+--------------------
+To avoid storing you passwords on disk, in clear text, you may either:
 
-        python setup.py sdist register -r local upload -r local
+- use the ``register`` *setuptools*'s command with the ``-r`` option,
+  like that::
 
-   - use `twine`_ library, which
-     breaks the procedure in two steps.  In addition, it supports signing
-     your files with PGP-Signatures and uploading the generated `.asc` files
-     to *pypiserver*::
+     python setup.py sdist register -r local upload -r local
 
-        twine upload -r local --sign -identity user_name ./foo-1.zip
+- use `twine`_ library, which
+  breaks the procedure in two steps.  In addition, it supports signing
+  your files with PGP-Signatures and uploading the generated `.asc` files
+  to *pypiserver*::
 
-
-.. Tip::
-    You can also upload packages using `pypi-uploader`_, which
-    obviates the need to download packages locally prior to uploading them to
-    pypiserver. You can install it with ``pip install pypi-uploader``, and
-    assuming you have a ``pypi_local`` source set up in your ``~/.pypirc``,
-    use it like this::
-
-        pypiupload packages mock==1.0.1 requests==2.2.1 -i pypi_local
-        pypiupload requirements requirements.txt -i pypi_local
+     twine upload -r local --sign -identity user_name ./foo-1.zip
 
 
-Client-side configurations
---------------------------
-Always specifying the the pypi url on the command line is a bit
-cumbersome. Since *pypiserver* redirects ``pip/easy_install`` to the
-``pypi.python.org`` index if it doesn't have a requested package, it's a
-good idea to configure them to always use your local pypi index.
+Upload with `pypi-uploader`_
+----------------------------
+You can also upload packages using `pypi-uploader`_, which
+obviates the need to download packages locally prior to uploading them to
+pypiserver. You can install it with ``pip install pypi-uploader``, and
+assuming you have a ``pypi_local`` source set up in your ``~/.pypirc``,
+use it like this::
 
-Configuring *pip*
-~~~~~~~~~~~~~~~~~
-For ``pip`` command this can be done by setting the environment variable
-``PIP_EXTRA_INDEX_URL`` in your ``.bashr/.profile/.zshrc``::
-
-  export PIP_EXTRA_INDEX_URL=http://localhost:8080/simple/
-
-or by adding the following lines to ``~/.pip/pip.conf``::
-
-  [global]
-  extra-index-url = http://localhost:8080/simple/
-
-.. Note::
-   If you have installed *pypiserver* on a remote url without *https*
-   you wil receive an "untrusted" warning from *pip*, urging you to append
-   the ``--trusted-host`` option.  You can also include this option permanently
-   in your configuration-files or environment variables.
-
-
-Configuring *easy_install*
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-For ``easy_install`` command you may set the following configuration in
-``~/.pydistutils.cfg``::
-
-  [easy_install]
-  index_url = http://localhost:8080/simple/
+    pypiupload packages mock==1.0.1 requests==2.2.1 -i pypi_local
+    pypiupload requirements requirements.txt -i pypi_local
 
 
 Alternative Installation methods
@@ -251,8 +265,8 @@ service providers.
 
 
 
-Detailed Usage
-==============
+Detailed Usage & Recipies
+=========================
 Enter ``pypi-server -h`` in the cmd-line to print a detailed usage message::
 
   pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
@@ -414,13 +428,12 @@ Serving thousands of packages
 
 By default, *pypiserver* scans the entire packages directory each time an
 incoming HTTP request occurs. This isn't a problem for a small number of
-packages, but causes noticeable slowdowns when serving thousands or tens
-of thousands of packages.
+packages, but causes noticeable slow-downs when serving thousands of packages.
 
 If you run into this problem, significant speedups can be gained by enabling
 pypiserver's directory caching functionality. The only requirement is to
-install the ``watchdog`` package, or it can be installed by installing
-``pypiserver`` using the ``cache`` extras option::
+install the ``watchdog`` package, or it can be installed during ``pypiserver``
+installation, by specifying the ``cache`` extras option::
 
     pip install pypiserver[cache]
 
@@ -515,7 +528,6 @@ via its API.
   function.  This function returns the internal WSGI-app that you my then
   send to any WSGI-server you like.
 
-
 - To get all ``pypiserver:app()`` keywords and their explanations, read the
   function `pypiserver:default_config()
   <https://github.com/pypiserver/pypiserver/blob/master/pypiserver/__init__.py#L35>`_.
@@ -543,6 +555,8 @@ Using a different WSGI-server
   ``pypiserver:app()`` method which returns the internal WSGI-app WITHOUT
   starting-up a server - you may then send it to any WSGI-server you like.
 
+- Some examples are given below - you may find more details in `bottle's
+  documentation <http://bottlepy.org/docs/dev/deployment.html#switching-the-server-backend>`_.
 
 gunicorn
 ~~~~~~~~
@@ -615,7 +629,7 @@ unstable packages on different paths::
 
         gunicorn_paster paste.ini
 
-Using Ad-hoc authentication providers
+Using ad-hoc authentication providers
 -------------------------------------
 The ``auther`` keyword of ``pypiserver:app()`` function maybe set only using
 the API. This can be any callable that returns a boolean when passed
