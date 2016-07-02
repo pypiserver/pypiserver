@@ -537,8 +537,64 @@ Using a different WSGI-server
   starting-up a server - you may then send it to any WSGI-server you like.
   Read also the `Utilizing the API`_ section.
 
-- Some examples are given below - you may find more details in `bottle's
-  documentation <http://bottlepy.org/docs/dev/deployment.html#switching-the-server-backend>`_.
+- Some examples are given below - you may find more details in `bottle
+  site <http://bottlepy.org/docs/dev/deployment.html#switching-the-server-backend>`_.
+
+Apache (*mod_wsgi*)
+~~~~~~~~~~~~~~~~~~~~~
+To use your *Apache2* with *pypiserver*, prefer to utilize *mod_wsgi* as
+explained in `bottle's documentation <http://bottlepy.org/docs/dev/deployment.html#apache-mod-wsgi>`_.
+
+.. Note::
+   If you choose instead to go with *mod_proxy*, mind that you may bump into problems
+   with the prefix-path (see `#155 <https://github.com/pypiserver/pypiserver/issues/155>`_).
+
+1. Adapt and place the following *Apache* configuration either into top-level scope,
+   or inside some ``<VirtualHost>`` (contributed by Thomas Waldmann)::
+
+        WSGIScriptAlias   /     /yoursite/wsgi/pypiserver-wsgi.py
+        WSGIDaemonProcess       pypisrv user=pypisrv group=pypisrv umask=0007 \
+                                processes=1 threads=5 maximum-requests=500 \
+                                display-name=wsgi-pypisrv inactivity-timeout=300
+        WSGIProcessGroup        pypisrv
+        WSGIPassAuthorization On    ## (Optional) Use also apache's authentication.
+
+        <Directory /yoursite/wsgi >
+            Require all granted
+        </Directort>
+
+   or if using older ``Apache < 2.4``, substitute the last part with this::
+
+        <Directory /yoursite/wsgi >
+            Order deny,allow
+            Allow from all
+        </Directort>
+
+2. Then create the ``/yoursite/cfg/pypiserver.wsgi`` file and make sure that
+   the ``user`` and ``group`` of the ``WSGIDaemonProcess`` directive
+   (``pypisrv:pypisrv`` in the example) have the read permission on it::
+
+        import pypiserver
+
+        conf = pypiserver.default_config(
+            root =          "/yoursite/packages",
+            password_file = "/yoursite/htpasswd", )
+        application = pypiserver.app(**conf)
+
+
+   .. Tip::
+      If you have installed *pypiserver* in a virtualenv, follow ``mod_wsgi``'s
+      `instructions <http://modwsgi.readthedocs.io/en/develop/user-guides/virtual-environments.html>`_
+      and prepend the python code above with the following::
+
+            import site
+
+            site.addsitedir('/yoursite/venv/lib/pythonX.X/site-packages')
+
+.. Note::
+   For security reasons, notice that the ``Directory`` directive grants access
+   to a directory holding the *wsgi* start-up script, alone; nothing else.
+
 
 gunicorn
 ~~~~~~~~
@@ -550,28 +606,6 @@ The following command uses *gunicorn* to start *pypiserver*::
 or when using multiple roots::
 
   gunicorn -w4 'pypiserver:app(root=["/home/ralf/packages", "/home/ralf/experimental"])'
-
-
-apache/mod_wsgi
-~~~~~~~~~~~~~~~
-In case you're using *apache2* with *mod_wsgi*, you may adapt the following
-Apache-configuration (contributed by Thomas Waldmann)::
-
-    ## Apache virtualhost configuration for mod_wsgi daemon mode.
-    Alias /robots.txt /srv/yoursite/htdocs/robots.txt
-    WSGIPassAuthorization On
-    WSGIScriptAlias /     /srv/yoursite/cfg/pypiserver.wsgi
-    WSGIDaemonProcess     pypisrv user=pypisrv group=pypisrv processes=1 threads=5 maximum-requests=500 umask=0007 display-name=wsgi-pypisrv inactivity-timeout=300
-    WSGIProcessGroup      pypisrv
-
-And create a ``/srv/yoursite/cfg/pypiserver.wsgi`` file like this::
-
-    import pypiserver
-
-    conf = pypiserver.default_config(
-        root =          "/srv/yoursite/packages",
-        password_file = "/srv/yoursite/htpasswd")
-    application = pypiserver.app(**conf)
 
 
 paste/pastedeploy
@@ -691,13 +725,15 @@ The following limitations are known:
 
 - Command ``pypi -U`` that compares uploaded packages with *pypi* to see if
   they are outdated, does not respect a http-proxy environment variable
-  (see https://github.com/pypiserver/pypiserver/issues/19).
+  (see `#19 <https://github.com/pypiserver/pypiserver/issues/19>`_).
 - It accepts documentation uploads but does not save them to
-  disk (see https://github.com/pypiserver/pypiserver/issues/47 for a
+  disk (see `#47 <https://github.com/pypiserver/pypiserver/issues/47>`_ for a
   discussion)
 - It does not handle misspelled packages as *pypi-repo* does,
   therefore it is suggested to use it with ``--extra-index-url`` instead
-  of ``--index-url`` (see https://github.com/pypiserver/pypiserver/issues/38).
+  of ``--index-url`` (see `#38 <https://github.com/pypiserver/pypiserver/issues/38>`_).
+- It does not support changing the *prefix* of the path of the url
+  (see `#155 <https://github.com/pypiserver/pypiserver/issues/155>`_ for workarounds).
 
 Please use Github's `bugtracker <https://github.com/pypiserver/pypiserver/issues>`_
 for other bugs you find.
