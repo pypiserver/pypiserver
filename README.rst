@@ -36,6 +36,14 @@ Quickstart: Installation and Usage
 Older python-versions may still work, but they are not tested.
 For legacy python versions, use ``pypiserver-1.1.x`` series.
 
+.. Tip::
+   The commands below work on a unix-like operating system with a posix shell.
+   The ``'~'`` character expands to user's home directory.
+
+   If you're using Windows, you'll have to use their "Windows counterparts".
+   The same is true for the rest of this documentation.
+
+
 1. Install *pypiserver* with this command::
 
     pip install pypiserver                ## Or: pypiserver[passlib,watchdog]
@@ -48,7 +56,7 @@ For legacy python versions, use ``pypiserver-1.1.x`` series.
 
     pypi-server -p 8080 ~/packages &      ## Will listen to all IPs.
 
-1. From the client computer, type this::
+3. From the client computer, type this::
 
     ## Download and Install hosted packages.
     pip install  --extra-index-url http://localhost:8080/simple/ ...
@@ -57,12 +65,123 @@ For legacy python versions, use ``pypiserver-1.1.x`` series.
 
    See also `Client-side configurations`_ for avoiding tedious typing.
 
-.. Note::
-   The above commands work on a unix-like operating system with a posix shell.
-   The ``'~'`` character expands to user's home directory.
+4. Enter ``pypi-server -h`` in the cmd-line to print a detailed usage message::
 
-   If you're using Windows, you'll have to use their "Windows counterparts".
-   The same is true for the rest of this documentation.
+    pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
+      start PyPI compatible package server serving packages from
+      PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
+      command line, it uses the default ~/packages.  pypiserver scans this
+      directory recursively for packages. It skips packages and
+      directories starting with a dot. Multiple package directories can be
+      specified.
+
+    pypi-server understands the following options:
+
+      -p, --port PORT
+        listen on port PORT (default: 8080)
+
+      -i, --interface INTERFACE
+        listen on interface INTERFACE (default: 0.0.0.0, any interface)
+
+      -a, --authenticate (UPDATE|download|list), ...
+        comma-separated list of (case-insensitive) actions to authenticate
+        Use '.' or '' for empty. Requires to have set the password (-P option).
+        For example to password-protect package downloads (in addition to uploads)
+        while leaving listings public, give:
+          -P foo/htpasswd.txt  -a update,download
+        To drop all authentications, use:
+          -P .  -a .
+        Note that when uploads are not protected, the `register` command
+        is not necessary, but `~/.pypirc` still need username and password fields,
+        even if bogus.
+        By default, only 'update' is password-protected.
+
+      -P, --passwords PASSWORD_FILE
+        use apache htpasswd file PASSWORD_FILE to set usernames & passwords when
+        authenticating certain actions (see -a option).
+        If you want to allow un-authorized access, set this option and -a
+        explicitly to empty (either '.' or'').
+
+      --disable-fallback
+        disable redirect to real PyPI index for packages not found in the
+        local index
+
+      --fallback-url FALLBACK_URL
+        for packages not found in the local index, this URL will be used to
+        redirect to (default: http://pypi.python.org/simple)
+
+      --server METHOD
+        use METHOD to run the server. Valid values include paste,
+        cherrypy, twisted, gunicorn, gevent, wsgiref, auto. The
+        default is to use "auto" which chooses one of paste, cherrypy,
+        twisted or wsgiref.
+
+      -r, --root PACKAGES_DIRECTORY
+        [deprecated] serve packages from PACKAGES_DIRECTORY
+
+      -o, --overwrite
+        allow overwriting existing package files
+
+      --hash-algo ALGO
+        any `hashlib` available algo used as fragments on package links.
+        Set one of (0, no, off, false) to disabled it. (default: md5)
+
+      --welcome HTML_FILE
+        uses the ASCII contents of HTML_FILE as welcome message response.
+
+      -v
+        enable INFO logging;  repeat for more verbosity.
+
+      --log-conf <FILE>
+        read logging configuration from FILE.
+        By default, configuration is read from `log.conf` if found in server's dir.
+
+      --log-file <FILE>
+        write logging info into this FILE.
+
+      --log-frmt <FILE>
+        the logging format-string.  (see `logging.LogRecord` class from standard python library)
+        [Default: %(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s]
+
+      --log-req-frmt FORMAT
+        a format-string selecting Http-Request properties to log; set to  '%s' to see them all.
+        [Default: %(bottle.request)s]
+
+      --log-res-frmt FORMAT
+        a format-string selecting Http-Response properties to log; set to  '%s' to see them all.
+        [Default: %(status)s]
+
+      --log-err-frmt FORMAT
+        a format-string selecting Http-Error properties to log; set to  '%s' to see them all.
+        [Default: %(body)s: %(exception)s \n%(traceback)s]
+
+    pypi-server -h
+    pypi-server --help
+      show this help message
+
+    pypi-server --version
+      show pypi-server's version
+
+    pypi-server -U [OPTIONS] [PACKAGES_DIRECTORY...]
+      update packages in PACKAGES_DIRECTORY. This command searches
+      pypi.python.org for updates and shows a pip command line which
+      updates the package.
+
+    The following additional options can be specified with -U:
+
+      -x
+        execute the pip commands instead of only showing them
+
+      -d DOWNLOAD_DIRECTORY
+        download package updates to this directory. The default is to use
+        the directory which contains the latest version of the package to
+        be updated.
+
+      -u
+        allow updating to unstable version (alpha, beta, rc, dev versions)
+
+    Visit https://github.com/pypiserver/pypiserver for more information.
+
 
 
 Client-side Configurations
@@ -229,7 +348,7 @@ with `--ignore-installed`::
   pip install pypiserver --pre -I
 
 You can even install the latest *pypiserver* directly from *github* with the
-following command, assuming you have *git* installed on your `$PATH`::
+following command, assuming you have *git* installed on your ``PATH``::
 
   pip install git+git://github.com/pypiserver/pypiserver.git
 
@@ -265,126 +384,8 @@ service providers.
 
 
 
-Detailed Usage & Recipies
-=========================
-Enter ``pypi-server -h`` in the cmd-line to print a detailed usage message::
-
-  pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
-    start PyPI compatible package server serving packages from
-    PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
-    command line, it uses the default ~/packages.  pypiserver scans this
-    directory recursively for packages. It skips packages and
-    directories starting with a dot. Multiple package directories can be
-    specified.
-
-  pypi-server understands the following options:
-
-    -p, --port PORT
-      listen on port PORT (default: 8080)
-
-    -i, --interface INTERFACE
-      listen on interface INTERFACE (default: 0.0.0.0, any interface)
-
-    -a, --authenticate (UPDATE|download|list), ...
-      comma-separated list of (case-insensitive) actions to authenticate
-      Use '.' or '' for empty. Requires to have set the password (-P option).
-      For example to password-protect package downloads (in addition to uploads)
-      while leaving listings public, give:
-        -P foo/htpasswd.txt  -a update,download
-      To drop all authentications, use:
-        -P .  -a .
-      Note that when uploads are not protected, the `register` command
-      is not necessary, but `~/.pypirc` still need username and password fields,
-      even if bogus.
-      By default, only 'update' is password-protected.
-
-    -P, --passwords PASSWORD_FILE
-      use apache htpasswd file PASSWORD_FILE to set usernames & passwords when
-      authenticating certain actions (see -a option).
-      If you want to allow un-authorized access, set this option and -a
-      explicitly to empty (either '.' or'').
-
-    --disable-fallback
-      disable redirect to real PyPI index for packages not found in the
-      local index
-
-    --fallback-url FALLBACK_URL
-      for packages not found in the local index, this URL will be used to
-      redirect to (default: http://pypi.python.org/simple)
-
-    --server METHOD
-      use METHOD to run the server. Valid values include paste,
-      cherrypy, twisted, gunicorn, gevent, wsgiref, auto. The
-      default is to use "auto" which chooses one of paste, cherrypy,
-      twisted or wsgiref.
-
-    -r, --root PACKAGES_DIRECTORY
-      [deprecated] serve packages from PACKAGES_DIRECTORY
-
-    -o, --overwrite
-      allow overwriting existing package files
-
-    --hash-algo ALGO
-      any `hashlib` available algo used as fragments on package links.
-      Set one of (0, no, off, false) to disabled it. (default: md5)
-
-    --welcome HTML_FILE
-      uses the ASCII contents of HTML_FILE as welcome message response.
-
-    -v
-      enable INFO logging;  repeat for more verbosity.
-
-    --log-conf <FILE>
-      read logging configuration from FILE.
-      By default, configuration is read from `log.conf` if found in server's dir.
-
-    --log-file <FILE>
-      write logging info into this FILE.
-
-    --log-frmt <FILE>
-      the logging format-string.  (see `logging.LogRecord` class from standard python library)
-      [Default: %(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s]
-
-    --log-req-frmt FORMAT
-      a format-string selecting Http-Request properties to log; set to  '%s' to see them all.
-      [Default: %(bottle.request)s]
-
-    --log-res-frmt FORMAT
-      a format-string selecting Http-Response properties to log; set to  '%s' to see them all.
-      [Default: %(status)s]
-
-    --log-err-frmt FORMAT
-      a format-string selecting Http-Error properties to log; set to  '%s' to see them all.
-      [Default: %(body)s: %(exception)s \n%(traceback)s]
-
-  pypi-server -h
-  pypi-server --help
-    show this help message
-
-  pypi-server --version
-    show pypi-server's version
-
-  pypi-server -U [OPTIONS] [PACKAGES_DIRECTORY...]
-    update packages in PACKAGES_DIRECTORY. This command searches
-    pypi.python.org for updates and shows a pip command line which
-    updates the package.
-
-  The following additional options can be specified with -U:
-
-    -x
-      execute the pip commands instead of only showing them
-
-    -d DOWNLOAD_DIRECTORY
-      download package updates to this directory. The default is to use
-      the directory which contains the latest version of the package to
-      be updated.
-
-    -u
-      allow updating to unstable version (alpha, beta, rc, dev versions)
-
-  Visit https://github.com/pypiserver/pypiserver for more information.
-
-
+Recipes
+=======
 
 Managing the package directory
 ------------------------------
@@ -517,26 +518,6 @@ management. An example configuration file for ``supervisor`` is given below::
 From there, the process can be managed via ``supervisord`` using ``supervisorctl``.
 
 
-Utilizing the API
-=================
-In order to enable ad-hoc authentication-providers or to use WSGI-servers
-not supported by *bottle* out-of-the-box, you needed to launch *pypiserver*
-via its API.
-
-- The main entry-point for configuring *pypiserver* is the `pypiserver:app()
-  <https://github.com/pypiserver/pypiserver/blob/master/pypiserver/__init__.py#L116>`_
-  function.  This function returns the internal WSGI-app that you my then
-  send to any WSGI-server you like.
-
-- To get all ``pypiserver:app()`` keywords and their explanations, read the
-  function `pypiserver:default_config()
-  <https://github.com/pypiserver/pypiserver/blob/master/pypiserver/__init__.py#L35>`_.
-
-- Finally, to fire-up a WSGI-server with the configured app, invoke
-  the ``bottle:run(app, host, port, server)`` function.
-  Note that *pypiserver* ships with it's own copy of *bottle*; to use it,
-  import it like that: ``from pypiserver import bottle``
-
 Using a different WSGI-server
 -----------------------------
 - The *bottle* web-server which supports many WSGI-servers, among others,
@@ -554,6 +535,7 @@ Using a different WSGI-server
 - If none of the above servers matches your needs, invoke just the
   ``pypiserver:app()`` method which returns the internal WSGI-app WITHOUT
   starting-up a server - you may then send it to any WSGI-server you like.
+  Read also the `Utilizing the API`_ section.
 
 - Some examples are given below - you may find more details in `bottle's
   documentation <http://bottlepy.org/docs/dev/deployment.html#switching-the-server-backend>`_.
@@ -572,22 +554,24 @@ or when using multiple roots::
 
 apache/mod_wsgi
 ~~~~~~~~~~~~~~~
-In case you're using *apache2* with *mod_wsgi*, the following config-file
-(contributed by Thomas Waldmann) can be used::
+In case you're using *apache2* with *mod_wsgi*, you may adapt the following
+Apache-configuration (contributed by Thomas Waldmann)::
 
-  # An example pypiserver.wsgi for use with apache2 and mod_wsgi, edit as necessary.
-  #
-  # apache virtualhost configuration for mod_wsgi daemon mode:
-  #    Alias /robots.txt /srv/yoursite/htdocs/robots.txt
-  #    WSGIPassAuthorization On
-  #    WSGIScriptAlias /     /srv/yoursite/cfg/pypiserver.wsgi
-  #    WSGIDaemonProcess     pypisrv user=pypisrv group=pypisrv processes=1 threads=5 maximum-requests=500 umask=0007 display-name=wsgi-pypisrv inactivity-timeout=300
-  #    WSGIProcessGroup      pypisrv
+    ## Apache virtualhost configuration for mod_wsgi daemon mode.
+    Alias /robots.txt /srv/yoursite/htdocs/robots.txt
+    WSGIPassAuthorization On
+    WSGIScriptAlias /     /srv/yoursite/cfg/pypiserver.wsgi
+    WSGIDaemonProcess     pypisrv user=pypisrv group=pypisrv processes=1 threads=5 maximum-requests=500 umask=0007 display-name=wsgi-pypisrv inactivity-timeout=300
+    WSGIProcessGroup      pypisrv
 
-  PACKAGES = "/srv/yoursite/packages"
-  HTPASSWD = "/srv/yoursite/htpasswd"
-  import pypiserver
-  application = pypiserver.app(root=PACKAGES, redirect_to_fallback=True, password_file=HTPASSWD)
+And create a ``/srv/yoursite/cfg/pypiserver.wsgi`` file like this::
+
+    import pypiserver
+
+    conf = pypiserver.default_config(
+        root =          "/srv/yoursite/packages",
+        password_file = "/srv/yoursite/htpasswd")
+    application = pypiserver.app(**conf)
 
 
 paste/pastedeploy
@@ -629,8 +613,29 @@ unstable packages on different paths::
 
         gunicorn_paster paste.ini
 
+
+Utilizing the API
+-----------------
+In order to enable ad-hoc authentication-providers or to use WSGI-servers
+not supported by *bottle* out-of-the-box, you needed to launch *pypiserver*
+via its API.
+
+- The main entry-point for configuring *pypiserver* is the `pypiserver:app()
+  <https://github.com/pypiserver/pypiserver/blob/master/pypiserver/__init__.py#L116>`_
+  function.  This function returns the internal WSGI-app that you my then
+  send to any WSGI-server you like.
+
+- To get all ``pypiserver:app()`` keywords and their explanations, read the
+  function `pypiserver:default_config()
+  <https://github.com/pypiserver/pypiserver/blob/master/pypiserver/__init__.py#L35>`_.
+
+- Finally, to fire-up a WSGI-server with the configured app, invoke
+  the ``bottle:run(app, host, port, server)`` function.
+  Note that *pypiserver* ships with it's own copy of *bottle*; to use it,
+  import it like that: ``from pypiserver import bottle``
+
 Using ad-hoc authentication providers
--------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``auther`` keyword of ``pypiserver:app()`` function maybe set only using
 the API. This can be any callable that returns a boolean when passed
 the *username* and the *password* for a given request.
@@ -663,7 +668,6 @@ these steps:
    The `python-pam`_ module, requires *read* access to ``/etc/shadow`` file;
    you may add the user under which *pypiserver* runs into the *shadow*
    group, with a command like this: ``sudo usermod -a -G shadow pypy-user``.
-
 
 
 Sources
@@ -731,8 +735,8 @@ among the most popular alternatives:
 
 
 
-License
-=======
+Licensing
+=========
 *pypiserver* contains a copy of bottle_ which is available under the
 *MIT* license, and the remaining part is distributed under the *zlib/libpng* license.
 See the ``LICENSE.txt`` file.
