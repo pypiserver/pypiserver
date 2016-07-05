@@ -15,6 +15,7 @@ import textwrap
 import warnings
 
 import functools as ft
+import ast
 
 
 warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
@@ -201,8 +202,16 @@ def main(argv=None):
                 sys.exit("Invalid port(%r) due to: %s" % (v, err))
         elif k in ("-a", "--authenticate"):
             if '{' in v:
-                import ast
-                v = ast.literal_eval(v)
+                try:
+                    v = ast.literal_eval(v)
+                except SyntaxError:
+                    message = 'Could not parse auth string %s! Please ensure string is correctly formatted.' % v
+                    print(message)
+                    sys.exit(message)
+                if (not isinstance(v, dict) or not all([isinstance(i, list) for i in v.values()])):
+                    message = 'Matrix auth string must be a dict of lists. Please see the README for details.'
+                    print(message)
+                    sys.exit(message)
             if isinstance(v, dict):
                 c.authenticated = {}
                 for user in v:

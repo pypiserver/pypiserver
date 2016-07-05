@@ -193,3 +193,19 @@ def test_matrix_auth_list_multiple_actions(main, monkeypatch):
     monkeypatch.setitem(sys.modules, 'passlib.apache', mock.MagicMock())
     main(["-P", "pswd-file", "-a", "{'a': ['update', 'list'], 'b': ['download', 'update']}"])
     assert main.app.module.config.authenticated == {'a': ['update', 'list'], 'b': ['download', 'update']}
+
+def test_matrix_auth_action_list_incorrect_format(capsys, main, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'passlib', mock.MagicMock())
+    monkeypatch.setitem(sys.modules, 'passlib.apache', mock.MagicMock())
+    with pytest.raises(SystemExit):
+        main(["-P", "pswd-file", "-a", "{'a': ['update', 'list'], 'b': 'download'}"])
+    out, err = capsys.readouterr()
+    assert out.split('\n')[1] == 'Matrix auth string must be a dict of lists. Please see the README for details.'
+
+def test_matrix_auth_string_is_not_parsable(capsys, main, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'passlib', mock.MagicMock())
+    monkeypatch.setitem(sys.modules, 'passlib.apache', mock.MagicMock())
+    with pytest.raises(SystemExit):
+        main(["-P", "pswd-file", "-a", "{'a': ['update', 'list', 'b': 'download'}"])
+    out, err = capsys.readouterr()
+    assert out.split('\n')[1] == 'Could not parse auth string {\'a\': [\'update\', \'list\', \'b\': \'download\'}! Please ensure string is correctly formatted.'
