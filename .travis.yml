@@ -8,9 +8,11 @@ env:
   - TOX_ENV=py35
   - TOX_ENV=pypy
 
+install:
+  - pip install -U setuptools pip sphinx tox
+
 script:
   - ./bin/test_standalone.sh
-  - python -m pip install setuptools pip sphinx tox -U
   - tox -e $TOX_ENV
   - ./bin/check_readme.sh
 
