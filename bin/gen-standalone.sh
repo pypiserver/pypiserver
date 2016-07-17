@@ -18,6 +18,7 @@ wheel="./dist/pypiserver-*.whl"
 # Ensure we have up-to-date certificates
 if [ -e ./cacert.pem ]; then
     rm -f ./cacert.pem
+fi
 
 wget http://curl.haxx.se/ca/cacert.pem
 
