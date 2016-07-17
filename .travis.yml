@@ -1,4 +1,4 @@
-sudo: true
+sudo: false
 language: python
 python: 3.5
 env:
@@ -12,7 +12,6 @@ install:
   - pip install -U setuptools pip sphinx tox
 
 script:
-  - sudo update-ca-certificates
   - ./bin/test_standalone.sh
   - tox -e $TOX_ENV
   - ./bin/check_readme.sh
