@@ -22,10 +22,11 @@ wheel="./dist/pypiserver-*.whl"
 #   prepend it with a python-flashbang + some header-comments >= 10-lines
 #   so that ``head pypiserver*.py``behaves politely.
 #
+sudo update-ca-certificates
 unzip -jo $wheel pypiserver/__main__.py -d ./dist
 zip -d $wheel pypiserver/__main__.py
 zip -mj $wheel ./dist/__main__.py
-wget --no-check-certificate https://pypi.python.org/packages/2.7/p/passlib/passlib-1.6.5-py2.py3-none-any.whl#md5=03de8f28697eaa67835758a60386c9fa \
+wget https://pypi.python.org/packages/2.7/p/passlib/passlib-1.6.5-py2.py3-none-any.whl#md5=03de8f28697eaa67835758a60386c9fa \
         -O ./dist/passlib-1.6.5-py2.py3-none-any.whl
 zip -mj $wheel ./dist/passlib-*.whl
 gitversion=$(git describe --tags)
