@@ -2,6 +2,8 @@
 ## Test standalone generation & execution.
 ##
 
+set -x
+
 my_dir="$(dirname "$0")"
 cd $my_dir/..
 

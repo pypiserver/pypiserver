@@ -3,6 +3,8 @@
 ## Create an executable zip file.
 ## Invoked by `commit-standalone.sh`.
 
+sex -x
+
 set -o errexit
 
 exec_zip="./pypi-server-standalone.py"

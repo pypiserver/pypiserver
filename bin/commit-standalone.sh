@@ -5,6 +5,8 @@
 ## Invoke it directly on the commmit "tagged" for a release.
 ## Invoke it with any arg to avoid committing into `standalone` branch.
 
+set -x
+
 my_dir="$(dirname "$0")"
 cd $my_dir/..
 
