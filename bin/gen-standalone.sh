@@ -15,6 +15,12 @@ python setup.py bdist_wheel
 wheel="./dist/pypiserver-*.whl"
 
 
+# Ensure we have up-to-date certificates
+if [ -e ./cacert.pem ]; then
+    rm -f ./cacert.pem
+
+wget http://curl.haxx.se/ca/cacert.pem
+
 ## Modify `wheel` archive with `__main__.py` at root,
 #   add dependencies, and
 #   prepend it with a python-flashbang + some header-comments >= 10-lines
@@ -23,8 +29,9 @@ wheel="./dist/pypiserver-*.whl"
 unzip -jo $wheel pypiserver/__main__.py -d ./dist
 zip -d $wheel pypiserver/__main__.py
 zip -mj $wheel ./dist/__main__.py
-wget https://pypi.python.org/packages/2.7/p/passlib/passlib-1.6.5-py2.py3-none-any.whl#md5=03de8f28697eaa67835758a60386c9fa \
-            -O ./dist/passlib-1.6.5-py2.py3-none-any.whl
+wget --ca-certificate ./cacert.pem \
+    https://pypi.python.org/packages/2.7/p/passlib/passlib-1.6.5-py2.py3-none-any.whl#md5=03de8f28697eaa67835758a60386c9fa \
+    -O ./dist/passlib-1.6.5-py2.py3-none-any.whl
 zip -mj $wheel ./dist/passlib-*.whl
 gitversion=$(git describe --tags)
 cat  - $wheel > "$exec_zip" << EOF
