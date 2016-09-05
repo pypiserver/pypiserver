@@ -280,14 +280,18 @@ def test_setuptoolsUpload_authed(empty_packdir, port, project, package,
 
 @pytest.fixture
 def uploader(pypirc, monkeypatch):
+    """Return an uploader module with appropriate utils methods mocked"""
     from twine.commands import upload
     monkeypatch.setattr(upload.utils, 'get_repository_from_config',
                         lambda *x: pypirc)
+    monkeypatch.setattr(upload.utils, 'get_cacert', lambda *x: None)
+    monkeypatch.setattr(upload.utils, 'get_clientcert', lambda *x: None)
     return upload
 
 
 @pytest.fixture
 def registerer(pypirc, monkeypatch):
+    """Return register module with appropriate utils methods mocked"""
     from twine.commands import register
     monkeypatch.setattr(register.utils, 'get_repository_from_config',
                         lambda *x: pypirc)
@@ -295,8 +299,10 @@ def registerer(pypirc, monkeypatch):
 
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 2),
-                    reason="urllib3 fails on twine (see https://travis-ci.org/ankostis/pypiserver/builds/81044993)")
+                    reason="urllib3 fails on twine (see https://travis-ci"
+                           ".org/ankostis/pypiserver/builds/81044993)")
 def test_twineUpload_open(empty_packdir, port, package, uploader, pypirc):
+    """Test twine upload with no authentication"""
     user, pswd = 'foo', 'bar'
     update_pypirc(pypirc, port, user=user, pswd=pswd)
     with new_server(empty_packdir, port):
@@ -304,14 +310,17 @@ def test_twineUpload_open(empty_packdir, port, package, uploader, pypirc):
                         sign=None, identity=None,
                         username=user, password=pswd,
                         comment=None, sign_with=None,
-                        config_file=None, skip_existing=None)
+                        config_file=None, skip_existing=None,
+                        cert=None, client_cert=None)
         time.sleep(SLEEP_AFTER_SRV)
     assert len(empty_packdir.listdir()) == 1
 
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 2),
-                    reason="urllib3 fails on twine (see https://travis-ci.org/ankostis/pypiserver/builds/81044993)")
+                    reason="urllib3 fails on twine (see https://travis-ci"
+                           ".org/ankostis/pypiserver/builds/81044993)")
 def test_twineUpload_authed(empty_packdir, port, package, uploader, pypirc):
+    """Test authenticated twine upload"""
     user, pswd = 'a', 'a'
     update_pypirc(pypirc, port, user=user, pswd=pswd)
     with new_server(empty_packdir, port, authed=False):
@@ -319,7 +328,8 @@ def test_twineUpload_authed(empty_packdir, port, package, uploader, pypirc):
                         sign=None, identity=None,
                         username=user, password=pswd,
                         comment=None, sign_with=None,
-                        config_file=None, skip_existing=None)
+                        config_file=None, skip_existing=None,
+                        cert=None, client_cert=None)
         time.sleep(SLEEP_AFTER_SRV)
     assert len(empty_packdir.listdir()) == 1
 
@@ -328,21 +338,27 @@ def test_twineUpload_authed(empty_packdir, port, package, uploader, pypirc):
 
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 2),
-                    reason="urllib3 fails on twine (see https://travis-ci.org/ankostis/pypiserver/builds/81044993)")
+                    reason="urllib3 fails on twine (see https://travis-ci"
+                           ".org/ankostis/pypiserver/builds/81044993)")
 def test_twineRegister_open(open_server, package, registerer, pypirc):
+    """Test unauthenticated twine registration"""
     srv = open_server
     update_pypirc(pypirc, srv.port)
     registerer.register(package.strpath, repository='test',
                         username='foo', password='bar',
-                        comment=None, config_file=None)
+                        comment=None, config_file=None,
+                        cert=None, client_cert=None)
 
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 2),
-                    reason="urllib3 fails on twine (see https://travis-ci.org/ankostis/pypiserver/builds/81044993)")
+                    reason="urllib3 fails on twine (see https://travis-ci"
+                           ".org/ankostis/pypiserver/builds/81044993)")
 def test_twineRegister_authedOk(protected_server, package, registerer, pypirc):
+    """Test authenticated twine registration"""
     srv = protected_server
     user, pswd = 'a', 'a'
     update_pypirc(pypirc, srv.port, user=user, pswd=pswd)
     registerer.register(package.strpath, repository='test',
                         username=user, password=pswd,
-                        comment=None, config_file=None)
+                        comment=None, config_file=None,
+                        cert=None, client_cert=None)
