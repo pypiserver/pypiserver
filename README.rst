@@ -648,6 +648,29 @@ unstable packages on different paths::
         gunicorn_paster paste.ini
 
 
+Behind a reverse proxy
+----------------------
+You can run *pypiserver* behind a reverse proxy aswell.
+
+Nginx
+~~~~~
+Extend your nginx configuration::
+
+    upstream pypi {
+      server              pypiserver.example.com:12345 fail_timeout=0;
+    }
+
+    server {
+       server_name         myproxy.example.com;
+
+      location / {
+        proxy_set_header  Host $host:$server_port;
+        proxy_set_header  X-Real-IP $remote_addr;
+        proxy_pass        http://pypi;
+      }
+    }
+
+
 Utilizing the API
 -----------------
 In order to enable ad-hoc authentication-providers or to use WSGI-servers
