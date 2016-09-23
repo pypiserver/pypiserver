@@ -688,7 +688,7 @@ these steps:
     import pypiserver
     from pypiserver import bottle
     import pam
-    pypiserver.app(root='./packages', auther=pam.authenticate)
+    app = pypiserver.app(root='./packages', auther=pam.authenticate)
     bottle.run(app=app, host='0.0.0.0', port=80, server='auto')
 
     [Ctrl+ D]
