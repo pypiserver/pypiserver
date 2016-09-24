@@ -1,9 +1,16 @@
 Changelog
 =========
 
+X.X.X (2016-06-25)
+------------------
+
+- FIX cmdline parsing of stray comparison consuming many flags (e.g. ``--help``),
+  and docs about ``auther``
+  - (thanks to @sakurai-youhei, #162).
+
 1.2.0 (2016-06-25)
 ------------------
-"Brexit": Normalize and stop legacy support. 
+"Brexit": Normalize and stop legacy support.
 
 - Less rigorous support for ``python-2 < 2.7`` and ``python-3 < 3.3``.
 - Package normalizations and :pep:`503` updates:
