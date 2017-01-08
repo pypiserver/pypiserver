@@ -478,7 +478,7 @@ config file for ``systemd`` can be seen below::
     User=www-data
     Group=www-data
 
-    ExecStart=/usr/local/bin/pypi-server -p 8080 -a update,download --log-file /var/log/pypiserver.log --P /etc/nginx/.htpasswd /var/www/pypi
+    ExecStart=/usr/local/bin/pypi-server -p 8080 -a update,download --log-file /var/log/pypiserver.log -P /etc/nginx/.htpasswd /var/www/pypi
     ExecStop=/bin/kill -TERM $MAINPID
     ExecReload=/bin/kill -HUP $MAINPID
     Restart=always
