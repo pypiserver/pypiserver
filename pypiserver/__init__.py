@@ -139,9 +139,26 @@ def str2bool(s, default):
 
 def paste_app_factory(global_config, **local_conf):
     import os
+    # let's get unicode.strip in Python 2 or str.strip in Python 3:
+    str_strip = type(u"").strip
 
     def upd_conf_with_bool_item(conf, attr, sdict):
         conf[attr] = str2bool(sdict.pop(attr, None), conf[attr])
+
+    def upd_conf_with_str_item(conf, attr, sdict):
+        value = sdict.pop(attr, None)
+        if value is not None:
+            conf[attr] = value
+
+    def upd_conf_with_int_item(conf, attr, sdict):
+        value = sdict.pop(attr, None)
+        if value is not None:
+            conf[attr] = int(value)
+
+    def upd_conf_with_list_item(conf, attr, sdict, sep=' ', parse=str_strip):
+        values = sdict.pop(attr, None)
+        if values:
+            conf[attr] = list(filter(None, map(parse, values.split(sep))))
 
     def _make_root(root):
         root = root.strip()
@@ -151,12 +168,26 @@ def paste_app_factory(global_config, **local_conf):
 
     c = default_config()
 
-    root = local_conf.get("root")
-    if root:
-        c['root'] = [_make_root(x) for x in root.split("\n") if x.strip()]
-
-    upd_conf_with_bool_item(c, 'redirect_to_fallback', local_conf)
     upd_conf_with_bool_item(c, 'overwrite', local_conf)
+    upd_conf_with_bool_item(c, 'redirect_to_fallback', local_conf)
+    upd_conf_with_list_item(c, 'authenticated', local_conf, sep=' ')
+    upd_conf_with_list_item(c, 'root', local_conf, sep='\n', parse=_make_root)
+    upd_conf_with_int_item(c, 'verbosity', local_conf)
+    str_items = [
+        'fallback_url',
+        'hash_algo',
+        'log_err_frmt',
+        'log_file',
+        'log_frmt',
+        'log_req_frmt',
+        'log_res_frmt',
+        'password_file',
+        'welcome_file'
+    ]
+    for str_item in str_items:
+        upd_conf_with_str_item(c, str_item, local_conf)
+    # cache_control is undocumented; don't know what type is expected:
+    # upd_conf_with_str_item(c, 'cache_control', local_conf)
 
     return app(**c)
 
