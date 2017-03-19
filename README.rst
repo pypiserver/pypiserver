@@ -60,8 +60,14 @@ For legacy python versions, use ``pypiserver-1.1.x`` series.
 
     ## Download and Install hosted packages.
     pip install  --extra-index-url http://localhost:8080/simple/ ...
+
+    # or
+    pip install --extra-index-url http://localhost:8080
+
     ## Search hosted packages
-    pip search --index http://localhost:8080/simple/ ...
+    pip search --index http://localhost:8080 ...
+
+    # Note that pip search does not currently work with the /simple endpoint
 
    See also `Client-side configurations`_ for avoiding tedious typing.
 
@@ -743,7 +749,8 @@ To receive any later changes, in the above folder use::
 Known Limitations
 =================
 *pypiserver* does not implement the full API as seen on PyPI_. It
-implements just enough to make ``easy_install`` and ``pip install`` to work.
+implements just enough to make ``easy_install``, ``pip install``, and
+``search`` work.
 
 The following limitations are known:
 
