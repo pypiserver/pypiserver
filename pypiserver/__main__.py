@@ -15,6 +15,7 @@ import textwrap
 import warnings
 
 import functools as ft
+import ast
 
 
 warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
@@ -59,6 +60,9 @@ def usage():
       is not necessary, but `~/.pypirc` still need username and password fields,
       even if bogus.
       By default, only 'update' is password-protected.
+      Multiple users can be given multiple actions. Use a dictionary of lists to define
+      the actions allowed for each user.
+        -P foo/htpasswd.txt -a {'user1': ['update'], 'user2': ['download', 'list']}
 
     -P, --passwords PASSWORD_FILE
       use apache htpasswd file PASSWORD_FILE to set usernames & passwords when
@@ -197,17 +201,41 @@ def main(argv=None):
                 err = sys.exc_info()[1]
                 sys.exit("Invalid port(%r) due to: %s" % (v, err))
         elif k in ("-a", "--authenticate"):
-            c.authenticated = [a.lower()
-                               for a in re.split("[, ]+", v.strip(" ,"))
-                               if a]
-            if c.authenticated == ['.']:
-                c.authenticated = []
+            if '{' in v:
+                try:
+                    v = ast.literal_eval(v)
+                except SyntaxError:
+                    message = 'Could not parse auth string %s! Please ensure string is correctly formatted.' % v
+                    print(message)
+                    sys.exit(message)
+                if (not isinstance(v, dict) or not all([isinstance(i, list) for i in v.values()])):
+                    message = 'Matrix auth string must be a dict of lists. Please see the README for details.'
+                    print(message)
+                    sys.exit(message)
+            if isinstance(v, dict):
+                c.authenticated = {}
+                for user in v:
+                    c.authenticated[user] = [a.lower() for a in v[user] if a]
+                    if c.authenticated[user] == ['.']:
+                        c.authenticated[user] = []
+                    else:
+                        actions = ("list", "download", "update")
+                        for a in c.authenticated[user]:
+                            if a not in actions:
+                                errmsg = "Action '%s' for option `%s` not one of %s!"
+                                sys.exit(errmsg % (a, k, actions))
             else:
-                actions = ("list", "download", "update")
-                for a in c.authenticated:
-                    if a not in actions:
-                        errmsg = "Action '%s' for option `%s` not one of %s!"
-                        sys.exit(errmsg % (a, k, actions))
+                c.authenticated = [a.lower()
+                                   for a in re.split("[, ]+", v.strip(" ,"))
+                                   if a]
+                if c.authenticated == ['.']:
+                    c.authenticated = []
+                else:
+                    actions = ("list", "download", "update")
+                    for a in c.authenticated:
+                        if a not in actions:
+                            errmsg = "Action '%s' for option `%s` not one of %s!"
+                            sys.exit(errmsg % (a, k, actions))
         elif k in ("-i", "--interface"):
             c.host = v
         elif k in ("-r", "--root"):

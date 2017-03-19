@@ -42,16 +42,24 @@ class auth(object):
     def __call__(self, method):
 
         def protector(*args, **kwargs):
-            if self.action in config.authenticated:
-                if not request.auth or request.auth[1] is None:
+            auth = request.auth
+            if config.authenticated:
+                if not auth or auth[1] is None:
                     raise HTTPError(
-                        401, headers={"WWW-Authenticate": 'Basic realm="pypi"'}
-                    )
-                if not config.auther(*request.auth):
+                        401, headers={"WWW-Authenticate": 'Basic realm="pypi"'})
+                if not config.auther(*auth):
+                    raise HTTPError(403)
+                if self.authorized(auth):
+                    return method(*args, **kwargs)
+                else:
                     raise HTTPError(403)
             return method(*args, **kwargs)
-
         return protector
+
+    def authorized(self, auth):
+        if isinstance(config.authenticated, dict):
+            return auth[0] in config.authenticated and self.action in config.authenticated[auth[0]]
+        return self.action in config.authenticated
 
 
 @app.hook('before_request')
