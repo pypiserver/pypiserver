@@ -114,6 +114,9 @@ def test_hash_algo_BAD(main):
     #assert excinfo.value.message == 'some info'     main(['--hash-algo BAD'])
     print(excinfo)
 
+def test_auther(main):
+    main(['--auther=os.path.join'])
+    assert callable(main.app.module.config.auther)
 
 def test_logging(main, tmpdir):
     logfile = tmpdir.mkdir("logs").join('test.log')

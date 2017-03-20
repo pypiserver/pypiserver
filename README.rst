@@ -267,11 +267,11 @@ In that case, *pypiserver* is responsible for authenticating the upload-requests
 
          http://www.htaccesstools.com/htpasswd-generator/
 
-   .. Tip:: When accessing pypiserver via the api, alternate authentication
-      methods are available via the ``auther`` config flag. Any callable
-      returning a boolean can be passed through to the pypiserver config in
-      order to provide custom authentication. For example, to configure
-      pypiserver to authenticate using the `python-pam`_::
+   .. Tip:: Alternate authentication methods are available via the ``auther``
+      config flag of ``pypiserver.api`` or via the ``--auther`` command line
+      option. Any callable returning a boolean can be passed through to the
+      pypiserver config in order to provide custom authentication. For example,
+      to configure pypiserver to authenticate using the `python-pam`_::
 
         import pam
         pypiserver.default_config(auther=pam.authenticate)

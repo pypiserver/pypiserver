@@ -7,6 +7,7 @@
 from __future__ import print_function
 
 import getopt
+import importlib
 import logging
 import os
 import re
@@ -123,6 +124,12 @@ def usage():
       Add "Cache-Control: max-age=AGE, public" header to package downloads.
       Pip 6+ needs this for caching.
 
+    --auther AUTHER
+      ad-hoc authentication provider to delegate authentication upon Python
+      callable object such as pam.authenticate provided by python-pam. As
+      pypi-server passes username and password, the callable shall return bool
+      value as an authentication result.
+
 
   pypi-server -h
   pypi-server --help
@@ -186,6 +193,7 @@ def main(argv=None):
             "log-err-frmt=",
             "welcome=",
             "cache-control=",
+            "auther=",
             "version",
             "help"
         ])
@@ -263,7 +271,7 @@ def main(argv=None):
             c.password_file = v
         elif k in ("-o", "--overwrite"):
             c.overwrite = True
-        elif k in ("--hash-algo"):
+        elif k == "--hash-algo":
             c.hash_algo = None if not pypiserver.str2bool(v, c.hash_algo) else v
         elif k == "--log-file":
             c.log_file = v
@@ -277,6 +285,19 @@ def main(argv=None):
             c.log_err_frmt = v
         elif k == "--cache-control":
             c.cache_control = v
+        elif k == "--auther":
+            try:
+                mod, _, func = v.rpartition(".")
+                if mod:
+                    c.auther = getattr(importlib.import_module(mod), func)
+                else:
+                    c.auther = globals()[func]
+            except ImportError:
+                err = sys.exc_info()[1]
+                sys.exit("Module(%r) is not available: %s" % (mod, err))
+            except (KeyError, AttributeError):
+                err = sys.exc_info()[1]
+                sys.exit("Callable(%r) is not available: %s" % (func, err))
         elif k == "-v":
             c.verbosity += 1
         elif k in ("-h", "--help"):
