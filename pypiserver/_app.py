@@ -25,6 +25,48 @@ try:  # PY3
 except ImportError:  # PY2
     from urlparse import urljoin
 
+XMLRPC_RESPONSE_SKELETON='''
+
+
+
+
+%(objects)s
+
+
+
+'''
+
+def from_obj_to_xmlrpc(obj_):
+    res = ""
+    if isinstance(obj_,int):
+        res += "%s" % obj_
+        return res
+    elif isinstance(obj_,str):
+        res += "%s" % obj_
+        return res
+    elif isinstance(obj_,dict):
+        res += ""
+        for k,v in obj_.iteritems():
+            member = {}
+            member["name"]=k
+            member["value"]=from_obj_to_xmlrpc(v)
+            res_1 = ""
+            res_1 += "%(name)s"
+            res_1 += "%(value)s"
+            res_1 += ""
+            res += res_1 % member
+        res += ""
+        return res
+    elif isinstance(obj_,list):
+        res += ""
+        for i in obj_:
+            res += "%s" % from_obj_to_xmlrpc(i)
+        res += ""
+        return res
+    else:
+       raise Exception("No valid object")
+
+
 
 log = logging.getLogger(__name__)
 packages = None
@@ -234,8 +276,32 @@ def handle_rpc():
         return call_string
 
 
-@app.route("/simple/")
+@app.post('/search')
+@app.post('/search/')
 @auth("list")
+def search():
+    value = ""
+    try:
+        parser = xml.dom.minidom.parse(request.body)
+        member = parser.getElementsByTagName("member")[0]
+        value  = parser.getElementsByTagName("string")[0].childNodes[0].wholeText.strip()
+    except Exception:
+        value = ""
+
+    response = []
+    ordering = 0
+    for p in packages():
+        if p.pkgname.count(value) > 0:
+            d = {'_pypi_ordering': ordering, 'version': p.version,
+                 'name': p.pkgname, 'summary': p.fn}
+            response.append(d)
+        ordering += 1
+    res = XMLRPC_RESPONSE_SKELETON \
+        % {"objects":from_obj_to_xmlrpc(response)}
+    return res
+
+
+@app.route("/simple/")
 def simpleindex():
     links = sorted(core.get_prefixes(packages()))
     tmpl = """\
