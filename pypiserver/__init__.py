@@ -1,4 +1,5 @@
 import re as _re
+import sys
 
 version = __version__ = "1.2.1.dev0"
 __version_info__ = tuple(_re.split('[.-]', __version__))
@@ -120,7 +121,10 @@ def app(**kwds):
         :func:`default_config()`. Check the docstring of this function
         for supported kwds.
     """
-    from . import core, _app
+    from . import core
+
+    _app = __import__("_app", globals(), locals(), ["."], 1)
+    sys.modules.pop('pypiserver._app', None)
 
     kwds = default_config(**kwds)
     config, packages = core.configure(**kwds)
