@@ -35,5 +35,7 @@ def test_paste_app_factory(conf_options, monkeypatch):
                         lambda **x: (x, [x.keys()]))
     pypiserver.paste_app_factory({}, **conf_options)
 
-
-
+def test_app_factory(monkeypatch):
+    monkeypatch.setattr('pypiserver.core.configure',
+                        lambda **x: (x, [x.keys()]))
+    assert pypiserver.app() is not pypiserver.app()
