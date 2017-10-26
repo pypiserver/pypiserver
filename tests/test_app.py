@@ -178,7 +178,7 @@ def test_fallback(root, _app, testapp):
     assert _app.config.redirect_to_fallback
     resp = testapp.get("/simple/pypiserver/", status=302)
     assert resp.headers[
-        "Location"] == "http://pypi.python.org/simple/pypiserver/"
+        "Location"] == "https://pypi.python.org/simple/pypiserver/"
 
 
 def test_no_fallback(root, _app, testapp):
