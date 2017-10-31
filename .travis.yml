@@ -1,19 +1,20 @@
-sudo: travis
+sudo: false
 language: python
-python: 3.5
-env:
-  - TOX_ENV=py27
-  - TOX_ENV=py33
-  - TOX_ENV=py34
-  - TOX_ENV=py35
-  - TOX_ENV=pypy
+python:
+  - 2.7
+  - 3.3
+  - 3.4
+  - 3.5
+  - 3.6
+  - pypy
+  - pypy3
 
 install:
-  - pip install -U setuptools pip sphinx tox
+  - pip install -U setuptools pip sphinx tox tox-travis
 
 script:
   - ./bin/test_standalone.sh
-  - tox -e $TOX_ENV
+  - tox
   - ./bin/check_readme.sh
 
 branches:

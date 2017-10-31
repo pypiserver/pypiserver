@@ -22,7 +22,7 @@ wheel="./dist/pypiserver-*.whl"
 #   prepend it with a python-flashbang + some header-comments >= 10-lines
 #   so that ``head pypiserver*.py``behaves politely.
 #
-sudo update-ca-certificates
+sudo update-ca-certificates || echo "Failed updating certs (run on travis container?)"
 unzip -jo $wheel pypiserver/__main__.py -d ./dist
 zip -d $wheel pypiserver/__main__.py
 zip -mj $wheel ./dist/__main__.py
