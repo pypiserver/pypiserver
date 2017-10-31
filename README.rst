@@ -117,7 +117,7 @@ For legacy python versions, use ``pypiserver-1.1.x`` series.
 
       --fallback-url FALLBACK_URL
         for packages not found in the local index, this URL will be used to
-        redirect to (default: http://pypi.python.org/simple)
+        redirect to (default: https://pypi.python.org/simple)
 
       --server METHOD
         use METHOD to run the server. Valid values include paste,
@@ -413,10 +413,10 @@ looks like::
     no releases found on pypi for PyXML, Pymacs, mercurial, setuptools
 
     # update raven from 1.4.3 to 1.4.4
-    pip -q install --no-deps  --extra-index-url http://pypi.python.org/simple -d /home/ralf/packages/mirror raven==1.4.4
+    pip -q install --no-deps  --extra-index-url https://pypi.python.org/simple -d /home/ralf/packages/mirror raven==1.4.4
 
     # update greenlet from 0.3.3 to 0.3.4
-    pip -q install --no-deps  --extra-index-url http://pypi.python.org/simple -d /home/ralf/packages/mirror greenlet==0.3.4
+    pip -q install --no-deps  --extra-index-url https://pypi.python.org/simple -d /home/ralf/packages/mirror greenlet==0.3.4
 
 It first prints for each package a single character after checking the
 available versions on pypi. A dot(`.`) means the package is up-to-date, ``'u'``
@@ -811,7 +811,7 @@ See the ``LICENSE.txt`` file.
 
 
 .. _bottle: http://bottlepy.org
-.. _PyPI: http://pypi.python.org
+.. _PyPI: https://pypi.python.org
 .. _twine: https://pypi.python.org/pypi/twine
 .. _pypi-uploader: https://pypi.python.org/pypi/pypi-uploader
 .. _python-pam: https://pypi.python.org/pypi/python-pam/

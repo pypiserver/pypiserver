@@ -178,7 +178,7 @@ def test_fallback(root, _app, testapp):
     assert _app.config.redirect_to_fallback
     resp = testapp.get("/simple/pypiserver/", status=302)
     assert resp.headers[
-        "Location"] == "http://pypi.python.org/simple/pypiserver/"
+        "Location"] == "https://pypi.python.org/simple/pypiserver/"
 
 
 def test_no_fallback(root, _app, testapp):
@@ -313,7 +313,7 @@ def test_root_no_relative_paths(testpriv):
     resp = testpriv.get("/priv/")
     hrefs = [x["href"] for x in resp.html("a")]
     assert hrefs == ['/priv/packages/', '/priv/simple/',
-                     'http://pypi.python.org/pypi/pypiserver']
+                     'https://pypi.python.org/pypi/pypiserver']
 
 
 def test_simple_index_list_no_duplicates(root, testapp):

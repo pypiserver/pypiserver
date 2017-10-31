@@ -68,7 +68,7 @@ def configure(**kwds):
             "Could not load welcome-file(%s)!", c.welcome_file, exc_info=1)
 
     if c.fallback_url is None:
-        c.fallback_url = "http://pypi.python.org/simple"
+        c.fallback_url = "https://pypi.python.org/simple"
 
     if c.hash_algo:
         try:
