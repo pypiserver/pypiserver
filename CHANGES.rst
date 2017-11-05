@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.3.0 (2017-XX-XX)
+1.2.1 (2017-11-05)
 ------------------
 
 - Matrix-based authorization, allowing users to have multiple actions
