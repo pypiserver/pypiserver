@@ -1,12 +1,28 @@
 Changelog
 =========
 
-X.X.X (2016-06-25)
+1.2.1 (2017-11-05)
 ------------------
+
+- Matrix-based authorization, allowing users to have multiple actions
+  (thanks @khornberg, #132)
+
+- FIX propagation of certain ``pypiserver`` settings via a ``paste.ini`` config
+  file (thanks @luismsgomes, #156)
+
+- FIX update default fallback URL to be https for compliance with PyPI
+  (thanks @uSpike, #182)
+
+- FIX resolved a regression preventing spinning up multiple pypiservers
+  via a paste config (thanks @bertjwregeer, #173)
 
 - FIX cmdline parsing of stray comparison consuming many flags (e.g. ``--help``),
   and docs about ``auther``
   - (thanks to @sakurai-youhei, #162).
+
+- Travis CI testing for Python 3.6 and pypy3 (#183)
+
+- Several documentation improvements (thanks @tescalada, #166, #161, #172)
 
 1.2.0 (2016-06-25)
 ------------------
