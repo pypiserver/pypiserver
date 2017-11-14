@@ -362,7 +362,7 @@ def test_no_cache_control_set(root, _app, testapp):
 def test_cache_control_set(root):
     from pypiserver import app
     AGE = 86400
-    app_with_cache = webtest.TestApp(app(root=root.strpath, cache_control=AGE, authenticated=[]))
+    app_with_cache = webtest.TestApp(app(root=root.strpath, cache_control=AGE))
     root.join("foo_bar-1.0.tar.gz").write("")
     resp = app_with_cache.get("/packages/foo_bar-1.0.tar.gz")
     assert "Cache-Control" in resp.headers
@@ -381,8 +381,8 @@ def test_upload_badAction(root, testapp):
     assert "Unsupported ':action' field: BAD" in hp.unescape(resp.text)
 
 
-@pytest.mark.parametrize(("package"), [f[0]
-        for f in test_core.files
+@pytest.mark.parametrize(("package"), [f[0] 
+        for f in test_core.files 
         if f[1] and '/' not in f[0]])
 def test_upload(package, root, testapp):
     resp = testapp.post("/", params={':action': 'file_upload'},
@@ -393,13 +393,13 @@ def test_upload(package, root, testapp):
     assert uploaded_pkgs[0].lower() == package.lower()
 
 
-@pytest.mark.parametrize(("package"), [f[0]
-        for f in test_core.files
+@pytest.mark.parametrize(("package"), [f[0] 
+        for f in test_core.files 
         if f[1] and '/' not in f[0]])
 def test_upload_with_signature(package, root, testapp):
     resp = testapp.post("/", params={':action': 'file_upload'},
             upload_files=[
-                    ('content', package, b''),
+                    ('content', package, b''), 
                     ('gpg_signature', '%s.asc' % package, b'')])
     assert resp.status_int == 200
     uploaded_pkgs = [f.basename.lower() for f in root.listdir()]
@@ -433,7 +433,7 @@ def test_remove_pkg_missingNaveVersion(name, version, root, testapp):
     params = {':action': 'remove_pkg', 'name': name, 'version': version}
     params = dict((k, v) for k,v in params.items() if v is not None)
     resp = testapp.post("/", expect_errors=1, params=params)
-
+    
     assert resp.status == '400 Bad Request'
     assert msg %(name, version) in hp.unescape(resp.text)
 
