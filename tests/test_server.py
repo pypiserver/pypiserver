@@ -20,8 +20,12 @@ import os
 import subprocess
 import sys
 import tempfile
-from textwrap import dedent
 import time
+from textwrap import dedent
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib import urlopen
 
 import pip
 from py import path  # @UnresolvedImport
@@ -30,7 +34,7 @@ import pytest
 
 _BUFF_SIZE = 2**16
 _port = 8090
-SLEEP_AFTER_SRV = 3#sec
+SLEEP_AFTER_SRV = 3  # sec
 
 @pytest.fixture
 def port():
@@ -42,9 +46,11 @@ Srv = namedtuple('Srv', ('proc', 'port', 'package'))
 
 
 def _run_server(packdir, port, authed, other_cli=''):
+    """Run a server, optionally with partial auth enabled."""
     pswd_opt_choices = {
-        True: "-Ptests/htpasswd.a.a -a update,download,list",
-        False: "-P. -a."
+        True: "-Ptests/htpasswd.a.a -a update,download",
+        False: "-P. -a.",
+        'partial': "-Ptests/htpasswd.a.a -a update",
     }
     pswd_opts = pswd_opt_choices[authed]
     cmd = "%s -m pypiserver.__main__ -vvv --overwrite -p %s %s %s %s" % (
@@ -278,6 +284,39 @@ def test_setuptoolsUpload_authed(empty_packdir, port, project, package,
     assert len(empty_packdir.listdir()) == 1
 
 
+@pytest.mark.parametrize("pkg_frmt", ['bdist', 'bdist_wheel'])
+def test_setuptools_upload_partial_authed(empty_packdir, port, project,
+                                          pkg_frmt):
+    """Test uploading a package with setuptools with partial auth."""
+    url = _build_url(port)
+    with pypirc_file(dedent("""\
+            [distutils]
+            index-servers: test
+
+            [test]
+            repository: %s
+            username: a
+            password: a
+        """ % url)):
+        with new_server(empty_packdir, port, authed='partial'):
+            with chdir(project.strpath):
+                cmd = ("setup.py -vvv %s register -r test upload -r test" %
+                       pkg_frmt)
+                for i in range(5):
+                    print('++Attempt #%s' % i)
+                    assert _run_python(cmd) == 0
+            time.sleep(SLEEP_AFTER_SRV)
+    assert len(empty_packdir.listdir()) == 1
+
+
+def test_partial_authed_open_download(empty_packdir, port):
+    """Validate that partial auth still allows downloads."""
+    url = _build_url(port) + '/simple'
+    with new_server(empty_packdir, port, authed='partial'):
+        resp = urlopen(url)
+        assert resp.getcode() == 200
+
+
 @pytest.fixture
 def uploader(pypirc, monkeypatch):
     """Return an uploader module with appropriate utils methods mocked"""
@@ -286,6 +325,12 @@ def uploader(pypirc, monkeypatch):
                         lambda *x: pypirc)
     monkeypatch.setattr(upload.utils, 'get_cacert', lambda *x: None)
     monkeypatch.setattr(upload.utils, 'get_clientcert', lambda *x: None)
+    upload_func = upload.upload
+    if 'repository_url' in upload_func.__code__.co_varnames:
+        # Twine added a required "repository_url" kwarg in August 2016.
+        # See https://github.com/pypa/twine/pull/203#event-744483850
+        upload_func = functools.partial(upload_func, repository_url=None)
+        monkeypatch.setattr(upload, 'upload', upload_func)
     return upload
 
 
@@ -295,6 +340,12 @@ def registerer(pypirc, monkeypatch):
     from twine.commands import register
     monkeypatch.setattr(register.utils, 'get_repository_from_config',
                         lambda *x: pypirc)
+    reg_func = register.register
+    if 'repository_url' in reg_func.__code__.co_varnames:
+        # Twine added a required "repository_url" kwarg in August 2016.
+        # See https://github.com/pypa/twine/pull/203#event-744483850
+        reg_func = functools.partial(reg_func, repository_url=None)
+        monkeypatch.setattr(register, 'register', reg_func)
     return register
 
 
@@ -335,6 +386,25 @@ def test_twineUpload_authed(empty_packdir, port, package, uploader, pypirc):
 
     assert empty_packdir.join(
         package.basename).check(), (package.basename, empty_packdir.listdir())
+
+
+@pytest.mark.skipif(sys.version_info[:2] == (3, 2),
+                    reason="urllib3 fails on twine (see https://travis-ci"
+                           ".org/ankostis/pypiserver/builds/81044993)")
+def test_twine_upload_partial_authed(empty_packdir, port, package, uploader,
+                                     pypirc):
+    """Test partially authenticated twine upload"""
+    user, pswd = 'a', 'a'
+    update_pypirc(pypirc, port, user=user, pswd=pswd)
+    with new_server(empty_packdir, port, authed='partial'):
+        uploader.upload([package.strpath], repository='test',
+                        sign=None, identity=None,
+                        username=user, password=pswd,
+                        comment=None, sign_with=None,
+                        config_file=None, skip_existing=None,
+                        cert=None, client_cert=None)
+        time.sleep(SLEEP_AFTER_SRV)
+    assert len(empty_packdir.listdir()) == 1
 
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 2),
