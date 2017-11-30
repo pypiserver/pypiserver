@@ -4,9 +4,6 @@ Changelog
 1.2.1 (2017-11-29)
 ------------------
 
-- Matrix-based authorization, allowing users to have multiple actions
-  (thanks @khornberg, #132)
-
 - FIX propagation of certain ``pypiserver`` settings via a ``paste.ini`` config
   file (thanks @luismsgomes, #156)
 
