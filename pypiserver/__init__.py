@@ -3,7 +3,7 @@ import sys
 
 version = __version__ = "1.2.1"
 __version_info__ = tuple(_re.split('[.-]', __version__))
-__updated__ = "2017-11-29 18:47:30"
+__updated__ = "2017-11-29 19:10:17"
 
 __title__ = "pypiserver"
 __summary__ = "A minimal PyPI server for use with pip/easy_install."
