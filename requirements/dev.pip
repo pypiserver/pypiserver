@@ -11,7 +11,8 @@ setuptools-git>=0.3
 passlib>=1.6
 tox
 wheel>=0.25.0
-pytest>=2.3
+pytest>=2.3;        python_version != '3.3'
+pytest>=2.3,<3.3;   python_version == '3.3'
 webtest;        python_version != '2.5'
 mock;           python_version <= '3.2'
 gevent>=1.1b4;  python_version >= '3'
