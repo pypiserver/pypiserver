@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.2.1 (2017-11-05)
+1.2.1 (2017-11-29)
 ------------------
 
 - Matrix-based authorization, allowing users to have multiple actions
@@ -22,7 +22,8 @@ Changelog
 
 - Travis CI testing for Python 3.6 and pypy3 (#183)
 
-- Several documentation improvements (thanks @tescalada, #166, #161, #172)
+- Several documentation improvements (thanks @tescalada, #166, #161, #172 and
+  @axnsan12, #190)
 
 1.2.0 (2016-06-25)
 ------------------
