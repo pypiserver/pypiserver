@@ -259,7 +259,7 @@ def simple(prefix=""):
     if not files:
         if config.redirect_to_fallback:
             return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
-        return HTTPError(404)
+        return HTTPError(404, 'Not Found (%s does not exist)\n\n' % normalized)
 
     fp = request.fullpath
     links = [(os.path.basename(f.relfn),
@@ -321,7 +321,7 @@ def server_static(filename):
                     "Cache-Control", "public, max-age=%s" % config.cache_control)
             return response
 
-    return HTTPError(404)
+    return HTTPError(404, 'Not Found (%s does not exist)\n\n' % filename)
 
 
 @app.route('/:prefix')
