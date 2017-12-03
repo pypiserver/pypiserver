@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.3.0 (XXX-YY-ZZ)
+------------------
+- chore(bumpver): extract version-infos from a separate ``_version.py`` file
+
+
 1.2.1 (2017-11-29)
 ------------------
 
