@@ -1,6 +1,8 @@
 import os
 import re as _re
 import sys
+from _ast import Import
+import logging
 
 __title__ = "pypiserver"
 
@@ -209,4 +211,12 @@ def _logwrite(logger, level, msg):
         if msg:
             logger.log(level, msg)
 
-plugin._init_plugins()
+try:
+    from . import plugin
+except ImportError as ex:
+    logging.getLogger(__name__).warning(
+        "Plugins skipped due to: %s!\n"
+        "  Probably `setuptools` are not installed." % ex)
+else:
+    logging.getLogger(__name__).warning("importing plugin")
+    plugin._init_plugins()

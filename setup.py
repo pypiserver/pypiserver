@@ -39,7 +39,8 @@ setup(name="pypiserver",
       setup_requires=setup_requires,
       extras_require={
           'passlib': ['passlib>=1.6'],
-          'cache': ['watchdog']
+          'cache': ['watchdog'],
+          'plugin': ['setuptools'],
       },
       tests_require=tests_require,
       url="https://github.com/pypiserver/pypiserver",
