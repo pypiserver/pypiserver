@@ -27,7 +27,9 @@ import pypiserver
     {},
     {'root': '~/stable_packages'},
     {'root': '~/unstable_packages', 'authenticated': 'upload',
-     'passwords': '~/htpasswd'}
+     'passwords': '~/htpasswd'},
+    # Verify that the strip parser works properly.
+    {'authenticated': str('upload')},
 ])
 def test_paste_app_factory(conf_options, monkeypatch):
     """Test the paste_app_factory method"""
