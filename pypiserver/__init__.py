@@ -208,3 +208,5 @@ def _logwrite(logger, level, msg):
                 msg = msg[:-len(le)]
         if msg:
             logger.log(level, msg)
+
+plugin._init_plugins()
