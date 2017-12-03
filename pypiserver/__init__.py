@@ -2,11 +2,11 @@ import os
 import re as _re
 import sys
 
-version = __version__ = "1.3.0.dev0"
-__version_info__ = tuple(_re.split('[.-]', __version__))
-__updated__ = "2017-12-03 11:47:16"
-
 __title__ = "pypiserver"
+
+from ._version import version, __version__, __updated__
+__version_info__ = tuple(_re.split('[.-]', __version__))
+
 __summary__ = "A minimal PyPI server for use with pip/easy_install."
 __uri__ = "https://github.com/pypiserver/pypiserver"
 
