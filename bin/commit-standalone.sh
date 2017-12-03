@@ -28,7 +28,7 @@ gitversion=$(git describe --tags)
 rm -rf .standalone
 if nwd_dump=$( "$git_wdir" . .standalone standalone 2>&1 ); then
      ./bin/gen-standalone.sh
-    mkdir .standalone
+    mkdir -p .standalone
     cp -p pypi-server-standalone.py .standalone
     cd .standalone
     if [ $# -lt 1 ]; then
