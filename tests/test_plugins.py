@@ -1,10 +1,11 @@
 import logging
 import os
+import sys
 import tempfile
 
 import pip
+import pkg_resources
 import pytest
-import subprocess as sbp
 
 from py.path import local as Path  # @UnresolvedImport
 
@@ -20,31 +21,14 @@ packages_map = {
 }
 
 
-def build_wheel(package_dir):
-    "build (if not there) and return wheel Path"
-    def get_wheels():
-        return dist_dir.listdir(lambda f: f.fnmatch('*.whl'))
-
-    setup_script = package_dir / 'setup.py'
-    dist_dir = package_dir / 'dist'
-    if not dist_dir.check(dir=1) or len(get_wheels()) != 1:
-        os.chdir(package_dir)
-        if dist_dir.check(dir=1):
-            dist_dir.remove(ignore_errors=True)
-        sbp.check_output('python setup.py bdist_wheel'.split())
-
-    wheels = get_wheels()
-    assert len(wheels) == 1
-
-    return wheels[0]
-
-
 def install_package(package):
     "Return the full dist-Path installed."
     package_dir = packages_map[package]
-    package_path = build_wheel(package_dir)
-    pip.main(['install', str(package_path)])
-    return package_path
+    package_dir.chdir()
+    pip.main('install -e .'.split())
+    pkg_resources.working_set.add_entry(str(package_dir))
+
+    return package_dir
 
 
 def uninstall_package(package):

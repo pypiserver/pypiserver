@@ -16,10 +16,10 @@ matrix:
   - python: 3.3
 
 install:
-  - pip install -U setuptools pip sphinx tox tox-travis
+  - pip install -Ur requirements/dev.pip
 
 script:
-  - tox
+  - pytest
   - ./bin/check_readme.sh
   - ./bin/test_standalone.sh
 
