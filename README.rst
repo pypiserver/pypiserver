@@ -10,8 +10,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 |pypi-ver| |travis-status| |dependencies| |downloads-count| |python-ver| \
 |proj-license|
 
-:Version:     1.2.2dev0
-:Date:        2017-11-29 11:49:30
+:Version:     1.3.0.dev0
+:Date:        2017-12-03 11:47:16
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.python.org/pypi/pypiserver
 :Travis:      https://travis-ci.org/pypiserver/pypiserver
@@ -732,6 +732,48 @@ these steps:
    The `python-pam`_ module, requires *read* access to ``/etc/shadow`` file;
    you may add the user under which *pypiserver* runs into the *shadow*
    group, with a command like this: ``sudo usermod -a -G shadow pypy-user``.
+
+Plugins
+=======
+You may extend this application using `setuptools entry-point
+<https://setuptools.readthedocs.io/en/latest/setuptools.html#dynamic-discovery-of-services-and-plugins>`_
+plugins.
+
+`setup.py` configurations
+-------------------------
+To implement a new plugin, you have to package your code as a regular
+python distribution and add the following declaration inside its
+file(``setup.py``)::
+
+    setup(
+        # ...
+        entry_points = {
+            'pypiserver.plugins': [
+                'plugin_1 = <foo.plugin.module>:<plugin-install-func>', ## Load & install.
+                'plugin_2 = <bar.plugin.module>   [dep1, dep2]',        ## Load only.
+            ]
+        }
+    )
+
+
+Implementing a plugin
+---------------------
+The plugins are initialized alphabetically in a 2-stage procedure
+during *import time* by func(``pypiserver.plugin.init_plugins()``):
+
+- A plugin is *loaded* and
+- optionally *installed* if the configuration in `setup.py ` specifies
+  a no-args ``<plugin-install-func>``.
+
+Any collected ``<plugin-install-func>`` callables are invoked AFTER all
+plugin-modules have finished loading.
+
+.. Warning::
+   When appending into "hook" lists during installation, remember to avoid
+   re-inserting duplicate items.  In general try to well-behave even when
+   **plugins are initialized multiple times**!
+
+
 
 
 Sources

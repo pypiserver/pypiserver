@@ -24,7 +24,7 @@ else:
 def get_version():
     d = {}
     try:
-        do_exec(open("pypiserver/__init__.py").read(), d)  # @UndefinedVariable
+        do_exec(open("pypiserver/_version.py").read(), d)  # @UndefinedVariable
     except (ImportError, RuntimeError):
         pass
     return d["__version__"]
@@ -39,7 +39,8 @@ setup(name="pypiserver",
       setup_requires=setup_requires,
       extras_require={
           'passlib': ['passlib>=1.6'],
-          'cache': ['watchdog']
+          'cache': ['watchdog'],
+          'plugin': ['setuptools'],
       },
       tests_require=tests_require,
       url="https://github.com/pypiserver/pypiserver",

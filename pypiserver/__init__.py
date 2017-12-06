@@ -1,12 +1,14 @@
 import os
 import re as _re
 import sys
-
-version = __version__ = "1.2.2dev0"
-__version_info__ = tuple(_re.split('[.-]', __version__))
-__updated__ = "2017-11-29 19:23:21"
+from _ast import Import
+import logging
 
 __title__ = "pypiserver"
+
+from ._version import version, __version__, __updated__
+__version_info__ = tuple(_re.split('[.-]', __version__))
+
 __summary__ = "A minimal PyPI server for use with pip/easy_install."
 __uri__ = "https://github.com/pypiserver/pypiserver"
 
@@ -208,3 +210,13 @@ def _logwrite(logger, level, msg):
                 msg = msg[:-len(le)]
         if msg:
             logger.log(level, msg)
+
+try:
+    from . import plugin
+except ImportError as ex:
+    logging.getLogger(__name__).warning(
+        "Plugins skipped due to: %s!\n"
+        "  Probably `setuptools` are not installed." % ex)
+else:
+    logging.getLogger(__name__).warning("importing plugin")
+    plugin._init_plugins()

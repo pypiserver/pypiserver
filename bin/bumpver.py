@@ -45,7 +45,7 @@ import docopt
 
 my_dir = osp.dirname(__file__)
 
-VFILE = osp.join(my_dir, '..', 'pypiserver', '__init__.py')
+VFILE = osp.join(my_dir, '..', 'pypiserver', '_version.py')
 VFILE_regex_v = re.compile(r'version *= *__version__ *= *"([^"]+)"')
 VFILE_regex_d = re.compile(r'__updated__ *= *"([^"]+)"')
 

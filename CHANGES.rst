@@ -1,6 +1,15 @@
 Changelog
 =========
 
+1.3.0 (XXX-YY-ZZ)
+------------------
+- feat(plugin): provide extension entry-point based on `setup-tools machinery
+  <https://setuptools.readthedocs.io/en/latest/setuptools.html#dynamic-discovery-of-services-and-plugins>`_.
+  (#163, #197)
+
+- chore(bumpver): extract version-infos from a separate ``_version.py`` file
+
+
 1.2.1 (2017-11-29)
 ------------------
 
@@ -21,6 +30,7 @@ Changelog
 
 - Several documentation improvements (thanks @tescalada, #166, #161, #172 and
   @axnsan12, #190)
+
 
 1.2.0 (2016-06-25)
 ------------------

@@ -1,5 +1,6 @@
 sudo: false
 language: python
+cache: pip
 python:
   - 2.7
   - 3.3
@@ -8,14 +9,19 @@ python:
   - 3.6
   - pypy
   - pypy3
+matrix:
+  allow_failures:
+  ## Spurious `test_server` failurs often in this platform
+  #  (see also #192).
+  - python: 3.3
 
 install:
-  - pip install -U setuptools pip sphinx tox tox-travis
+  - pip install -Ur requirements/dev.pip
 
 script:
-  - ./bin/test_standalone.sh
-  - tox
+  - pytest
   - ./bin/check_readme.sh
+  - ./bin/test_standalone.sh
 
 branches:
   except:
