@@ -7,14 +7,13 @@
 
 docopt  # For `/bin/bumpver.py`.
 gevent>=1.1b4; python_version >= '3'
-mock; python_version <= '3.2'
+mock; python_version == '2.7'
 pip>=7
 passlib>=1.6
-pytest>=2.3; python_version != '3.3'
-pytest>=2.3,<3.3; python_version == '3.3'
+pytest>=2.3
 setuptools
 setuptools-git>=0.3
 tox
 twine>=1.7
-webtest; python_version != '2.5'
+webtest
 wheel>=0.25.0

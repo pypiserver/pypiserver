@@ -89,17 +89,15 @@ except ImportError:  # pragma: no cover
 
             def json_dumps(data):
                 raise ImportError(
-                    "JSON support requires Python 2.6 or simplejson.")
+                    "JSON support requires simplejson.")
 
             json_lds = json_dumps
 
-# We now try to fix 2.5/2.6/3.1/3.2 incompatibilities.
+# We now try to fix 2.x/3.x incompatibilities.
 # It ain't pretty but it works... Sorry for the mess.
 
 py = sys.version_info
 py3k = py >= (3, 0, 0)
-py25 = py <  (2, 6, 0)
-py31 = (3, 1, 0) <= py < (3, 2, 0)
 
 # Workaround for the missing "as" keyword in py3k.
 def _e():
@@ -144,17 +142,7 @@ else:  # 2.x
     from StringIO import StringIO as BytesIO
     from ConfigParser import SafeConfigParser as ConfigParser, \
                              Error as ConfigParserError
-    if py25:
-        msg = "Python 2.5 support may be dropped in future versions of Bottle."
-        warnings.warn(msg, DeprecationWarning)
-        from UserDict import DictMixin
-
-        def next(it):
-            return it.next()
-
-        bytes = str
-    else:  # 2.6, 2.7
-        from collections import MutableMapping as DictMixin
+    from collections import MutableMapping as DictMixin
     unicode = unicode
     json_loads = json_lds
     eval(compile('def _raise(*a): raise a[0], a[1], a[2]', '<py3fix>', 'exec'))
@@ -173,15 +161,6 @@ def touni(s, enc='utf8', err='strict'):
 
 
 tonat = touni if py3k else tob
-
-# 3.2 fixes cgi.FieldStorage to accept bytes (which makes a lot of sense).
-# 3.1 needs a workaround.
-if py31:
-    from io import TextIOWrapper
-
-    class NCTextIOWrapper(TextIOWrapper):
-        def close(self):
-            pass  # Keep wrapped buffer open.
 
 
 # A bug in functools causes it to break if the wrapper is an instance method
@@ -1295,11 +1274,7 @@ class BaseRequest(object):
         for key in ('REQUEST_METHOD', 'CONTENT_TYPE', 'CONTENT_LENGTH'):
             if key in self.environ: safe_env[key] = self.environ[key]
         args = dict(fp=self.body, environ=safe_env, keep_blank_values=True)
-        if py31:
-            args['fp'] = NCTextIOWrapper(args['fp'],
-                                         encoding='utf8',
-                                         newline='\n')
-        elif py3k:
+        if py3k:
             args['encoding'] = 'utf8'
         data = cgi.FieldStorage(**args)
         self['_cgi.FieldStorage'] = data  #http://bugs.python.org/issue18394
@@ -1696,7 +1671,7 @@ class BaseResponse(object):
             :param path: limits the cookie to a given path (default: current path)
             :param secure: limit the cookie to HTTPS connections (default: off).
             :param httponly: prevents client-side javascript to read this cookie
-              (default: off, requires Python 2.6 or newer).
+              (default: off).
 
             If neither `expires` nor `max_age` is set (default), the cookie will
             expire at the end of the browser session (as soon as the browser

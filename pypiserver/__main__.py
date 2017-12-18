@@ -17,7 +17,6 @@ import warnings
 import functools as ft
 
 
-warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
 log = logging.getLogger('pypiserver.main')
 
 
