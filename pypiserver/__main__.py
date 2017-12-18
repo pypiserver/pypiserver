@@ -12,7 +12,6 @@ import os
 import re
 import sys
 import textwrap
-import warnings
 
 import functools as ft
 
