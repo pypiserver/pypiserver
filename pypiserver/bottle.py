@@ -1380,7 +1380,7 @@ class BaseRequest(object):
         basic = parse_auth(self.environ.get('HTTP_AUTHORIZATION', ''))
         if basic: return basic
         ruser = self.environ.get('REMOTE_USER')
-        if ruser: return (ruser, None)
+        if ruser: return ruser, None
         return None
 
     @property
