@@ -1503,10 +1503,10 @@ class BaseResponse(object):
     # Header blacklist for specific response codes
     # (rfc2616 section 10.2.3 and 10.3.5)
     bad_headers = {
-        204: set(('Content-Type', )),
-        304: set(('Allow', 'Content-Encoding', 'Content-Language',
-                  'Content-Length', 'Content-Range', 'Content-Type',
-                  'Content-Md5', 'Last-Modified'))
+        204: {'Content-Type'},
+        304: {'Allow', 'Content-Encoding', 'Content-Language',
+              'Content-Length', 'Content-Range', 'Content-Type', 'Content-Md5',
+              'Last-Modified'}
     }
 
     def __init__(self, body='', status=None, headers=None, **more_headers):

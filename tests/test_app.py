@@ -349,7 +349,7 @@ def test_simple_index_list_name_with_underscore_no_egg(root, testapp):
     resp = testapp.get("/simple/")
     assert len(resp.html("a")) == 1
     hrefs = set([x["href"] for x in resp.html("a")])
-    assert hrefs == set(["foo-bar/"])
+    assert hrefs == {"foo-bar/"}
 
 
 def test_no_cache_control_set(root, _app, testapp):
