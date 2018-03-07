@@ -5,20 +5,16 @@
 
 -r exe.pip
 
+docopt  # For `/bin/bumpver.py`.
+gevent>=1.1b4; python_version >= '3'
+mock; python_version <= '3.2'
 pip>=7
+passlib>=1.6
+pytest>=2.3; python_version != '3.3'
+pytest>=2.3,<3.3; python_version == '3.3'
 setuptools
 setuptools-git>=0.3
-passlib>=1.6
 tox
-wheel>=0.25.0
-pytest>=2.3;        python_version != '3.3'
-pytest>=2.3,<3.3;   python_version == '3.3'
-webtest;        python_version != '2.5'
-mock;           python_version <= '3.2'
-gevent>=1.1b4;  python_version >= '3'
 twine>=1.7
-
-WebOb==0.9.6.1;         python_version == '2.5'
-BeautifulSoup==3.2.1;   python_version == '2.5'
-WebTest==1.4.3;         python_version == '2.5'
-docopt                  # For `/bin/bumpver.py`.
+webtest; python_version != '2.5'
+wheel>=0.25.0
