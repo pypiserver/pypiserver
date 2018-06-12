@@ -177,8 +177,7 @@ def test_favicon(testapp):
 def test_fallback(root, _app, testapp):
     assert _app.config.redirect_to_fallback
     resp = testapp.get("/simple/pypiserver/", status=302)
-    assert resp.headers[
-        "Location"] == "https://pypi.python.org/simple/pypiserver/"
+    assert resp.headers["Location"] == "https://pypi.org/simple/pypiserver/"
 
 
 def test_no_fallback(root, _app, testapp):
@@ -313,7 +312,7 @@ def test_root_no_relative_paths(testpriv):
     resp = testpriv.get("/priv/")
     hrefs = [x["href"] for x in resp.html("a")]
     assert hrefs == ['/priv/packages/', '/priv/simple/',
-                     'https://pypi.python.org/pypi/pypiserver']
+                     'https://pypi.org/project/pypiserver/']
 
 
 def test_simple_index_list_no_duplicates(root, testapp):
@@ -381,8 +380,8 @@ def test_upload_badAction(root, testapp):
     assert "Unsupported ':action' field: BAD" in hp.unescape(resp.text)
 
 
-@pytest.mark.parametrize(("package"), [f[0] 
-        for f in test_core.files 
+@pytest.mark.parametrize(("package"), [f[0]
+        for f in test_core.files
         if f[1] and '/' not in f[0]])
 def test_upload(package, root, testapp):
     resp = testapp.post("/", params={':action': 'file_upload'},
@@ -393,13 +392,13 @@ def test_upload(package, root, testapp):
     assert uploaded_pkgs[0].lower() == package.lower()
 
 
-@pytest.mark.parametrize(("package"), [f[0] 
-        for f in test_core.files 
+@pytest.mark.parametrize(("package"), [f[0]
+        for f in test_core.files
         if f[1] and '/' not in f[0]])
 def test_upload_with_signature(package, root, testapp):
     resp = testapp.post("/", params={':action': 'file_upload'},
             upload_files=[
-                    ('content', package, b''), 
+                    ('content', package, b''),
                     ('gpg_signature', '%s.asc' % package, b'')])
     assert resp.status_int == 200
     uploaded_pkgs = [f.basename.lower() for f in root.listdir()]
@@ -433,7 +432,7 @@ def test_remove_pkg_missingNaveVersion(name, version, root, testapp):
     params = {':action': 'remove_pkg', 'name': name, 'version': version}
     params = dict((k, v) for k,v in params.items() if v is not None)
     resp = testapp.post("/", expect_errors=1, params=params)
-    
+
     assert resp.status == '400 Bad Request'
     assert msg %(name, version) in hp.unescape(resp.text)
 

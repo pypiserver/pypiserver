@@ -86,8 +86,7 @@ def test_fallback_url(main):
 
 def test_fallback_url_default(main):
     main([])
-    assert main.app.module.config.fallback_url == \
-        "https://pypi.python.org/simple"
+    assert main.app.module.config.fallback_url == "https://pypi.org/simple"
 
 
 def test_hash_algo_default(main):
