@@ -104,7 +104,7 @@ def find_updates(pkgset, stable_only=True):
         "checking %s packages for newer version\n" % len(latest_pkgs),)
     need_update = set()
 
-    pypi = make_pypi_client("https://pypi.python.org/pypi/")
+    pypi = make_pypi_client("https://pypi.org/pypi/")
 
     for count, pkg in enumerate(latest_pkgs):
         if count % 40 == 0:
@@ -140,7 +140,7 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
         sys.stdout.write("# update %s from %s to %s\n" %
                          (pkg.pkgname, pkg.replaces.version, pkg.version))
 
-        cmd = ["pip", "-q", "install", "--no-deps", "-i", "https://pypi.python.org/simple",
+        cmd = ["pip", "-q", "install", "--no-deps", "-i", "https://pypi.org/simple",
                "-d", destdir or os.path.dirname(pkg.replaces.fn),
                "%s==%s" % (pkg.pkgname, pkg.version)]
 

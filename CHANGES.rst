@@ -1,6 +1,15 @@
 Changelog
 =========
 
+1.2.2 (2018-06-xx)
+------------------
+
+- FIX: update fallback URL to https://pypi.org/simple since pypi.python.org
+  has shut down
+- FIX: updated tests to use ``Popen`` rather than ``pip.main()`` given its
+  removal in pip version 10.0
+- DOC: scrubbed docs of links to pypi.python.org
+
 1.2.1 (2017-11-29)
 ------------------
 
