@@ -51,7 +51,7 @@ parser.add_option("-c", "--config-file",
                    help=("Specify the path to the buildout configuration "
                          "file to be used."))
 parser.add_option("-f", "--find-links",
-                   help=("Specify a URL to search for buildout releases"))
+                  help="Specify a URL to search for buildout releases")
 
 
 options, args = parser.parse_args()

@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
-from collections import namedtuple
 import functools
 import hashlib
 import io

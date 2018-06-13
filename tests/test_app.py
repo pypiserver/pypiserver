@@ -348,7 +348,7 @@ def test_simple_index_list_name_with_underscore_no_egg(root, testapp):
     resp = testapp.get("/simple/")
     assert len(resp.html("a")) == 1
     hrefs = set([x["href"] for x in resp.html("a")])
-    assert hrefs == set(["foo-bar/"])
+    assert hrefs == {"foo-bar/"}
 
 
 def test_no_cache_control_set(root, _app, testapp):
@@ -380,9 +380,9 @@ def test_upload_badAction(root, testapp):
     assert "Unsupported ':action' field: BAD" in hp.unescape(resp.text)
 
 
-@pytest.mark.parametrize(("package"), [f[0]
-        for f in test_core.files
-        if f[1] and '/' not in f[0]])
+@pytest.mark.parametrize("package", [f[0]
+                                     for f in test_core.files
+                                     if f[1] and '/' not in f[0]])
 def test_upload(package, root, testapp):
     resp = testapp.post("/", params={':action': 'file_upload'},
             upload_files=[('content', package, b'')])
@@ -392,9 +392,9 @@ def test_upload(package, root, testapp):
     assert uploaded_pkgs[0].lower() == package.lower()
 
 
-@pytest.mark.parametrize(("package"), [f[0]
-        for f in test_core.files
-        if f[1] and '/' not in f[0]])
+@pytest.mark.parametrize("package", [f[0]
+                                     for f in test_core.files
+                                     if f[1] and '/' not in f[0]])
 def test_upload_with_signature(package, root, testapp):
     resp = testapp.post("/", params={':action': 'file_upload'},
             upload_files=[
@@ -407,7 +407,7 @@ def test_upload_with_signature(package, root, testapp):
     assert '%s.asc' % package.lower() in uploaded_pkgs
 
 
-@pytest.mark.parametrize(("package"), [
+@pytest.mark.parametrize("package", [
         f[0] for f in test_core.files
         if f[1] is None])
 def test_upload_badFilename(package, root, testapp):
