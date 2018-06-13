@@ -32,9 +32,9 @@ with *scp*.
 
 Quickstart: Installation and Usage
 ==================================
-*pypiserver* ``> 1.2.x`` works with python ``2.7`` and ``3.3+`` or *pypy*.
-Older python-versions may still work, but they are not tested.
-For legacy python versions, use ``pypiserver-1.1.x`` series.
+*pypiserver* ``> 1.2.x`` works with Python ``2.7`` and ``3.4+`` or *pypy*.
+Older Python versions may still work, but they are not tested.
+For legacy Python versions, use ``pypiserver-1.1.x`` series.
 
 .. Tip::
    The commands below work on a unix-like operating system with a posix shell.

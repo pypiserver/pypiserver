@@ -5,7 +5,7 @@ Test module for . . .
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 import logging
-from os.path import abspath, dirname, join, realpath, relpath
+from os.path import abspath, dirname, join, realpath
 from sys import path
 
 # Third party imports

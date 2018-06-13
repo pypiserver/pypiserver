@@ -12,12 +12,10 @@ import os
 import re
 import sys
 import textwrap
-import warnings
 
 import functools as ft
 
 
-warnings.filterwarnings("ignore", "Python 2.5 support may be dropped in future versions of Bottle")
 log = logging.getLogger('pypiserver.main')
 
 
@@ -235,7 +233,7 @@ def main(argv=None):
             c.password_file = v
         elif k in ("-o", "--overwrite"):
             c.overwrite = True
-        elif k in ("--hash-algo"):
+        elif k in "--hash-algo":
             c.hash_algo = None if not pypiserver.str2bool(v, c.hash_algo) else v
         elif k == "--log-file":
             c.log_file = v
