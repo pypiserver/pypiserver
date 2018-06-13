@@ -19,7 +19,7 @@ OPTIONS:
   -t, --tag=<msg>   Adds a signed tag with the given message (commit implied).
 
 
-- Pre-releases: when working on some verion
+- Pre-releases: when working on some version
     X.YbN               # Beta release
     X.YrcN  or  X.YcN   # Release Candidate
     X.Y                 # Final release

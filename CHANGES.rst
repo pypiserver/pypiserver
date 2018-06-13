@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.2.2 (2018-06-xx)
+1.2.2 (2018-06-12)
 ------------------
 
 - FIX: update fallback URL to https://pypi.org/simple since pypi.python.org
