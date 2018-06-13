@@ -25,13 +25,13 @@ Release check-list:
    Use ``--help``.
    Read `PEP-440 <https://www.python.org/dev/peps/pep-0440/`_ to decide the version.
 
-4. Push it in GitHub with ``--tag``.
+4. Push it in GitHub with ``--follow-tags``.
 
 5. Generate package *wheel* with ``/bin/package.sh``.
 
-6. Upload to PyPi with ``twine upload -su <gpg-user> dist/*``:
+6. Upload to PyPi with ``twine upload -s -i <gpg-user> dist/*``:
 
-7. Run ``commit-standalone.sh``.
+7. Run ``bin/commit-standalone.sh``.
 
 8. Copy release notes from ``/CHANGES.rst`` in GitHub as new *"release"* page
    on the new tag.  Check syntactic differences between ``.md`` and ``.rst`` files.

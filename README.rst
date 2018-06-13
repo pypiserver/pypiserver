@@ -10,10 +10,10 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 |pypi-ver| |travis-status| |dependencies| |downloads-count| |python-ver| \
 |proj-license|
 
-:Version:     1.2.2dev0
-:Date:        2017-11-29 11:49:30
+:Version:     1.2.2
+:Date:        2018-06-12 11:49:30
 :Source:      https://github.com/pypiserver/pypiserver
-:PyPI:        https://pypi.python.org/pypi/pypiserver
+:PyPI:        https://pypi.org/project/pypiserver/
 :Travis:      https://travis-ci.org/pypiserver/pypiserver
 :Maintainers: Kostis Anagnostopoulos <ankostis@gmail.com>,
               Matthew Planchard <mplanchard@gmail.com>
@@ -114,7 +114,7 @@ For legacy Python versions, use ``pypiserver-1.1.x`` series.
 
       --fallback-url FALLBACK_URL
         for packages not found in the local index, this URL will be used to
-        redirect to (default: https://pypi.python.org/simple)
+        redirect to (default: https://pypi.org/simple)
 
       --server METHOD
         use METHOD to run the server. Valid values include paste,
@@ -170,7 +170,7 @@ For legacy Python versions, use ``pypiserver-1.1.x`` series.
 
     pypi-server -U [OPTIONS] [PACKAGES_DIRECTORY...]
       update packages in PACKAGES_DIRECTORY. This command searches
-      pypi.python.org for updates and shows a pip command line which
+      pypi.org for updates and shows a pip command line which
       updates the package.
 
     The following additional options can be specified with -U:
@@ -194,7 +194,7 @@ Client-side Configurations
 ==========================
 Always specifying the the pypi url on the command line is a bit
 cumbersome. Since *pypiserver* redirects ``pip/easy_install`` to the
-``pypi.python.org`` index if it doesn't have a requested package, it's a
+``pypi.org`` index if it doesn't have a requested package, it's a
 good idea to configure them to always use your local pypi index.
 
 Configuring *pip*
@@ -397,7 +397,7 @@ Managing the package directory
 ------------------------------
 The ``pypi-server`` command has the ``-U`` option that searches for updates of
 available packages. It scans the package directory for available
-packages and searches on pypi.python.org for updates. Without further
+packages and searches on pypi.org for updates. Without further
 options ``pypi-server -U`` will just print a list of commands which must
 be run in order to get the latest version of each package. Output
 looks like::
@@ -412,10 +412,10 @@ looks like::
     no releases found on pypi for PyXML, Pymacs, mercurial, setuptools
 
     # update raven from 1.4.3 to 1.4.4
-    pip -q install --no-deps  --extra-index-url https://pypi.python.org/simple -d /home/ralf/packages/mirror raven==1.4.4
+    pip -q install --no-deps  --extra-index-url https://pypi.org/simple -d /home/ralf/packages/mirror raven==1.4.4
 
     # update greenlet from 0.3.3 to 0.3.4
-    pip -q install --no-deps  --extra-index-url https://pypi.python.org/simple -d /home/ralf/packages/mirror greenlet==0.3.4
+    pip -q install --no-deps  --extra-index-url https://pypi.org/simple -d /home/ralf/packages/mirror greenlet==0.3.4
 
 It first prints for each package a single character after checking the
 available versions on pypi. A dot(`.`) means the package is up-to-date, ``'u'``
@@ -777,10 +777,10 @@ There are lots of other projects, which allow you to run your own
 PyPI server. If *pypiserver* doesn't work for you, the following are
 among the most popular alternatives:
 
-- `devpi-server <https://pypi.python.org/pypi/devpi-server>`_:
-  a reliable fast pypi.python.org caching server, part of
+- `devpi-server <https://pypi.org/project/devpi/>`_:
+  a reliable fast pypi.org caching server, part of
   the comprehensive `github-style pypi index server and packaging meta tool
-  <https://pypi.python.org/pypi/devpi>`_.
+  <https://pypi.org/project/devpi/>`_.
   (version: 2.1.4, access date: 8/3/2015)
 
 - `pip2pi <https://github.com/wolever/pip2pi>`_
@@ -811,25 +811,25 @@ See the ``LICENSE.txt`` file.
 
 
 .. _bottle: http://bottlepy.org
-.. _PyPI: https://pypi.python.org
-.. _twine: https://pypi.python.org/pypi/twine
-.. _pypi-uploader: https://pypi.python.org/pypi/pypi-uploader
-.. _python-pam: https://pypi.python.org/pypi/python-pam/
+.. _PyPI: https://pypi.org
+.. _twine: https://pypi.org/project/twine/
+.. _pypi-uploader: https://pypi.org/project/pypi-uploader/
+.. _python-pam: https://pypi.org/project/python-pam/
 .. |travis-status| image:: https://travis-ci.org/pypiserver/pypiserver.svg
     :alt: Travis build status
     :scale: 100%
     :target: https://travis-ci.org/pypiserver/pypiserver
 
 .. |pypi-ver| image::  https://img.shields.io/pypi/v/pypiserver.svg
-    :target: https://pypi.python.org/pypi/pypiserver/
+    :target: https://pypi.org/project/pypiserver/
     :alt: Latest Version in PyPI
 
 .. |python-ver| image:: https://img.shields.io/pypi/pyversions/pypiserver.svg
-    :target: https://pypi.python.org/pypi/pypiserver/
+    :target: https://pypi.org/project/pypiserver/
     :alt: Supported Python versions
 
 .. |downloads-count| image:: https://img.shields.io/pypi/dm/pypiserver.svg?period=week
-    :target: https://pypi.python.org/pypi/pypiserver/
+    :target: https://pypi.org/project/pypiserver/
     :alt: Downloads
 
 .. |proj-license| image:: https://img.shields.io/badge/license-BSD%2Bzlib%2Flibpng-blue.svg

@@ -127,7 +127,7 @@ def usage():
 
   pypi-server -U [OPTIONS] [PACKAGES_DIRECTORY...]
     update packages in PACKAGES_DIRECTORY. This command searches
-    pypi.python.org for updates and shows a pip command line which
+    pypi.org for updates and shows a pip command line which
     updates the package.
 
   The following additional options can be specified with -U:
@@ -143,7 +143,7 @@ def usage():
     -u
       allow updating to unstable version (alpha, beta, rc, dev versions)
 
-  Visit https://pypi.python.org/pypi/pypiserver for more information.
+  Visit https://pypi.org/project/pypiserver/ for more information.
   """)
 
 

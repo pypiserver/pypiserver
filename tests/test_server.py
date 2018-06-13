@@ -6,8 +6,8 @@ The tests below are using 3 ways to startup pypi-servers:
 
 - "open": a per-module server instance without any authed operations,
   serving a single `wheel` package, on a fixed port.
-- "open": a per-module server instance with authed 'download/upload' operations,
-  serving a single `wheel` package, on a fixed port.
+- "open": a per-module server instance with authed 'download/upload'
+  operations, serving a single `wheel` package, on a fixed port.
 - "new_server": starting a new server with any configurations on each test.
 
 """
@@ -21,13 +21,14 @@ import subprocess
 import sys
 import tempfile
 import time
+from shlex import split
+from subprocess import Popen
 from textwrap import dedent
 try:
     from urllib.request import urlopen
 except ImportError:
     from urllib import urlopen
 
-import pip
 from py import path  # @UnresolvedImport
 import pytest
 
@@ -166,16 +167,19 @@ def _build_url(port, user='', pswd=''):
 
 
 def _run_pip(cmd):
-    ncmd = ("--disable-pip-version-check --retries 0 --timeout 5"
-            " --no-input %s"
-            ) % cmd
+    ncmd = (
+        "pip --disable-pip-version-check --retries 0 --timeout 5 --no-input %s"
+    ) % cmd
     print('PIP: %s' % ncmd)
-    return pip.main(ncmd.split())
+    proc = Popen(split(ncmd))
+    proc.communicate()
+    return proc.returncode
 
 
 def _run_pip_install(cmd, port, install_dir, user=None, pswd=None):
     url = _build_url(port, user, pswd)
-    ncmd = '-vv install --download %s -i %s %s' % (install_dir, url, cmd)
+    # ncmd = '-vv install --download %s -i %s %s' % (install_dir, url, cmd)
+    ncmd = '-vv download -d %s -i %s %s' % (install_dir, url, cmd)
     return _run_pip(ncmd)
 
 
