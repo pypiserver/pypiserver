@@ -7,7 +7,7 @@
 ==============================================================================
 pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
-|pypi-ver| |travis-status| |dependencies| |downloads-count| |python-ver| \
+|pypi-ver| |travis-status| |dependencies| |python-ver| \
 |proj-license|
 
 :Version:     1.2.2
@@ -827,10 +827,6 @@ See the ``LICENSE.txt`` file.
 .. |python-ver| image:: https://img.shields.io/pypi/pyversions/pypiserver.svg
     :target: https://pypi.org/project/pypiserver/
     :alt: Supported Python versions
-
-.. |downloads-count| image:: https://img.shields.io/pypi/dm/pypiserver.svg?period=week
-    :target: https://pypi.org/project/pypiserver/
-    :alt: Downloads
 
 .. |proj-license| image:: https://img.shields.io/badge/license-BSD%2Bzlib%2Flibpng-blue.svg
     :target: https://raw.githubusercontent.com/pypiserver/pypiserver/master/LICENSE.txt
