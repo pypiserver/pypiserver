@@ -1,21 +1,31 @@
-sudo: false
-language: python
-python:
-  - 2.7
-  - 3.4
-  - 3.5
-  - 3.6
-  - pypy
-  - pypy3
+jobs:
+  include:
+    - stage: test supported Python versions
+      sudo: false
+      language: python
+      python:
+        - 2.7
+        - 3.4
+        - 3.5
+        - 3.6
+        - pypy
+        - pypy3
 
-install:
-  - pip install -U setuptools pip sphinx tox tox-travis
+      install:
+        - pip install -U setuptools pip sphinx tox tox-travis
 
-script:
-  - ./bin/test_standalone.sh
-  - tox
-  - ./bin/check_readme.sh
+      script:
+        - ./bin/test_standalone.sh
+        - tox
+        - ./bin/check_readme.sh
 
-branches:
-  except:
-    - standalone
+      branches:
+        except:
+          - standalone
+
+    - stage: test Docker image
+      sudo: required
+      services:
+        - docker
+      scirpt:
+        - bin/test-docker.sh
