@@ -12,7 +12,9 @@ python:
 
 install:
   - pip install -U setuptools pip sphinx tox tox-travis
+
 script:
+  - ./bin/test-docker.sh
   - ./bin/test_standalone.sh
   - tox
   - ./bin/check_readme.sh
@@ -20,14 +22,3 @@ script:
 branches:
   except:
     - standalone
-
-stages:
-  - docker
-  - test
-
-jobs:
-  include:
-    - stage: docker
-      install: []
-      scirpt:
-        - bin/test-docker.sh
