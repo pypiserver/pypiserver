@@ -1,7 +1,18 @@
-pypiserver:
-  image: pypiserver
-  volumes:
-    - /var/pypiserver:/data
-  command: -p 80 -P /data/.htaccess -a update,download,list /data/packages
-  ports:
-    - "8080:80"
+---
+########################################################################
+# pypiserver docker-compose example
+########################################################################
+
+version: "3"
+
+services:
+  pypiserver:
+    image: pypiserver:latest
+    volumes:
+      # Mount local /tmp/pypiserver to /data in container
+      - /tmp/pypiserver:/data
+    # Use an .htaccess file to control access, serve packages from
+    # /tmp/pypiserver/packages (/data/packages in the container)
+    command: -P /data/.htaccess -a update,download,list /data/packages
+    ports:
+      - "80:8080"

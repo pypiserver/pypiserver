@@ -1,14 +1,27 @@
 Changelog
 =========
 
+Next Release
+------------------
+
+- MAINT: Remove broken downloads badge (thanks @hugovk, #209)
+
+- ENH: Improved Dockerfile and ``docker-compose`` example, docs for using
+  the docker image, automatic docker builds
+
 1.2.2 (2018-06-12)
 ------------------
 
 - FIX: update fallback URL to https://pypi.org/simple since pypi.python.org
   has shut down
+
 - FIX: updated tests to use ``Popen`` rather than ``pip.main()`` given its
   removal in pip version 10.0
+
 - DOC: scrubbed docs of links to pypi.python.org
+
+- DEPRECATION: Drop support for Python 3.3 (tahnks @hugovk, #198)
+
 
 1.2.1 (2017-11-29)
 ------------------
