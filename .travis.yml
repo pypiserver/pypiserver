@@ -14,10 +14,14 @@ branches:
   except:
     - standalone
 
+stages:
+  - docker
+  - test
+
 jobs:
   include:
 
-    - stage: test Docker image
+    - stage: docker
       sudo: required
       services:
         - docker
