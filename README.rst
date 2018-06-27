@@ -332,6 +332,45 @@ use it like this::
     pypiupload requirements requirements.txt -i pypi_local
 
 
+Using the Docker Image
+======================
+
+Starting with version 1.2.3, official Docker images are built for each
+push to master, each dev, alpha, or beta release, and each final release.
+The most recent full release will always be available under the tag ``latest``,
+and the current master branch will always be available under the tag
+``master``.
+
+To run the most recent release of ``pypiserver`` with Docker, simply::
+
+    docker run pypiserver/pypiserver:latest
+
+This starts ``pypiserver`` serving packages from the ``/data/packages``
+directory inside the container, listening on the container port 8080.
+
+The container takes all the same arguments as the normal ``pypi-server``
+executable, with the exception of the internal container port (``-p``),
+which will always be 8080.
+
+Of course, just running a container isn't that interesting. To map
+port 80 on the host to port 8080 on the container::
+
+    docker run -p 80:8080 pypiserver/pypiserver:latest
+
+You can now access your ``pypiserver`` at ``localhost:80`` in a web browser.
+
+To serve packages from a directory on the host, e.g. ``~/packages``::
+
+    docker run -p 80:8080 -v ~/packages:/data/packages pypiserver/pypiserver:latest
+
+To authenticate against a local ``.htaccess`` file::
+
+    docker run -p 80:8080 -v ~/.htaccess:/data/.htaccess pypiserver/pypiserver:latest -P .htaccess packages
+
+You can also specify ``pypiserver`` to run as a Docker service using a
+composefile. An example composefile is `provided <docker-compose.yml>`_.
+
+
 Alternative Installation methods
 ================================
 When trying the methods below, first use the following command to check whether
