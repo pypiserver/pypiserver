@@ -24,6 +24,7 @@ jobs:
           - standalone
 
     - stage: test Docker image
+      language: python
       sudo: required
       services:
         - docker
