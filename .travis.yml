@@ -1,6 +1,6 @@
-# stage: test supported Python versions
-sudo: false
+sudo: required
 language: python
+services: docker
 
 python:
   - 2.7
@@ -9,6 +9,13 @@ python:
   - 3.6
   - pypy
   - pypy3
+
+install:
+  - pip install -U setuptools pip sphinx tox tox-travis
+script:
+  - ./bin/test_standalone.sh
+  - tox
+  - ./bin/check_readme.sh
 
 branches:
   except:
@@ -20,19 +27,7 @@ stages:
 
 jobs:
   include:
-
     - stage: docker
-      sudo: required
-      services:
-        - docker
       install: []
       scirpt:
         - bin/test-docker.sh
-
-    - stage: test
-      install:
-        - pip install -U setuptools pip sphinx tox tox-travis
-      script:
-        - ./bin/test_standalone.sh
-        - tox
-        - ./bin/check_readme.sh
