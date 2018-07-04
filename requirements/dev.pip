@@ -6,6 +6,7 @@
 -r exe.pip
 
 docopt  # For `/bin/bumpver.py`.
+ipdb
 gevent>=1.1b4; python_version >= '3'
 mock; python_version == '2.7'
 pip>=7

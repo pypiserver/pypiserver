@@ -1,27 +1,27 @@
-#
-# The cache implementation is only used when the watchdog package
-# is installed
-#
+"""A naive caching implementation using watchdog.
+
+The cache implementation is only used when the watchdog package is installed
+"""
 
 from os.path import dirname
 
 from watchdog.observers import Observer
 import threading
 
+
 class CacheManager(object):
-    """
-        A naive cache implementation for listdir and digest_file
+    """A naive cache implementation for listdir and digest_file
 
-        The listdir_cache is just a giant list of PkgFile objects, and
-        for simplicity it is invalidated anytime a modification occurs
-        within the directory it represents. If we were smarter about
-        the way that the listdir data structure were created/stored,
-        then we could do more granular invalidation. In practice, this
-        is good enough for now.
+    The listdir_cache is just a giant list of PkgFile objects, and
+    for simplicity it is invalidated anytime a modification occurs
+    within the directory it represents. If we were smarter about
+    the way that the listdir data structure were created/stored,
+    then we could do more granular invalidation. In practice, this
+    is good enough for now.
 
-        The digest_cache exists on a per-file basis, because computing
-        hashes on large files can get expensive, and it's very easy to
-        invalidate specific filenames.
+    The digest_cache exists on a per-file basis, because computing
+    hashes on large files can get expensive, and it's very easy to
+    invalidate specific filenames.
     """
 
     def __init__(self):
@@ -65,7 +65,7 @@ class CacheManager(object):
                 cache = self.digest_cache[hash_algo]
             except KeyError:
                 cache = self.digest_cache.setdefault(hash_algo, {})
-            
+
             try:
                 return cache[fpath]
             except KeyError:
@@ -84,6 +84,7 @@ class CacheManager(object):
     def _watch(self, root):
         self.watched.add(root)
         self.observer.schedule(_EventHandler(self, root), root, recursive=True)
+
 
 class _EventHandler(object):
 
@@ -116,5 +117,6 @@ class _EventHandler(object):
             for _, subcache in cache.digest_cache.items():
                 for path in paths:
                     subcache.pop(path, None)
+
 
 cache_manager = CacheManager()

@@ -148,6 +148,7 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
         if not dry_run:
             call(cmd)
 
+
 def update_all_packages(roots, destdir=None, dry_run=False, stable_only=True):
     packages = frozenset(itertools.chain(*[core.listdir(r) for r in roots]))
     update(packages, destdir, dry_run, stable_only)

@@ -3,7 +3,6 @@
 
 import functools
 import hashlib
-import io
 import itertools
 import logging
 import mimetypes
@@ -11,26 +10,36 @@ import os
 import re
 import sys
 
-import pkg_resources
 
-from . import Configuration
+if sys.version_info < (3,):
+    from io import open
 
 
 log = logging.getLogger(__name__)
+_archive_suffix_rx = re.compile(
+    r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|"
+    "\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$",
+    re.I)
+wheel_file_re = re.compile(
+    r"""^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))
+    ((-(?P<build>\d.*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)
+    \.whl|\.dist-info)$""",
+    re.VERBOSE)
+_pkgname_re = re.compile(r'-\d+[a-z_.!+]', re.I)
+_pkgname_parts_re = re.compile(
+    r"[\.\-](?=cp\d|py\d|macosx|linux|sunos|solaris|irix|aix|cygwin|win)",
+    re.I)
 
 
-def configure(**kwds):
+def configure(config):
+    """Validate configuration and return with a package list.
+
+    :param argparse.Namespace config: a config namespace
+
+    :return:  2-tuple (Configure, package-list)
+    :rtype: tuple
     """
-    :return: a 2-tuple (Configure, package-list)
-    """
-    c = Configuration(**kwds)
-    log.info("+++Pypiserver invoked with: %s", c)
-
-    if c.root is None:
-        c. root = os.path.expanduser("~/packages")
-    roots = c.root if isinstance(c.root, (list, tuple)) else [c.root]
-    roots = [os.path.abspath(r) for r in roots]
-    for r in roots:
+    for r in config.roots:
         try:
             os.listdir(r)
         except OSError:
@@ -38,49 +47,33 @@ def configure(**kwds):
             msg = "Error: while trying to list root(%s): %s"
             sys.exit(msg % (r, err))
 
-    packages = lambda: itertools.chain(*[listdir(r) for r in roots])
-    packages.root = roots[0]
+    def packages():
+        """Return an iterable over package files in package roots."""
+        return itertools.chain(*[listdir(r) for r in config.roots])
 
-    if not c.authenticated:
-        c.authenticated = []
-    if not callable(c.auther):
-        if c.password_file and c.password_file != '.':
+    packages.root = config.roots[0]
+
+    if not callable(config.auther):
+        if config.password_file and config.password_file != '.':
             from passlib.apache import HtpasswdFile
-            htPsswdFile = HtpasswdFile(c.password_file)
+            htPsswdFile = HtpasswdFile(config.password_file)
         else:
-            c.password_file = htPsswdFile = None
-        c.auther = functools.partial(auth_by_htpasswd_file, htPsswdFile)
+            config.password_file = htPsswdFile = None
+        config.auther = functools.partial(auth_by_htpasswd_file, htPsswdFile)
 
-    # Read welcome-msg from external file,
-    #     or failback to the embedded-msg (ie. in standalone mode).
-    #
     try:
-        if not c.welcome_file:
-            c.welcome_file = "welcome.html"
-            c.welcome_msg = pkg_resources.resource_string(  # @UndefinedVariable
-                __name__, "welcome.html").decode("utf-8")  # @UndefinedVariable
-        else:
-            with io.open(c.welcome_file, 'r', encoding='utf-8') as fd:
-                c.welcome_msg = fd.read()
+        with open(config.welcome_file, 'r', encoding='utf-8') as fd:
+            config.welcome_msg = fd.read()
     except Exception:
         log.warning(
-            "Could not load welcome-file(%s)!", c.welcome_file, exc_info=1)
+            "Could not load welcome file(%s)!",
+            config.welcome_file,
+            exc_info=1
+        )
 
-    if c.fallback_url is None:
-        c.fallback_url = "https://pypi.org/simple"
+    log.info("+++Pypiserver started with: %s", config)
 
-    if c.hash_algo:
-        try:
-            halgos = hashlib.algorithms_available
-        except AttributeError:
-            halgos = ['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512']
-
-        if c.hash_algo not in halgos:
-            sys.exit('Hash-algorithm %s not one of: %s' % (c.hash_algo, halgos))
-
-    log.info("+++Pypiserver started with: %s", c)
-
-    return c, packages
+    return config, packages
 
 
 def auth_by_htpasswd_file(htPsswdFile, username, password):
@@ -96,9 +89,14 @@ mimetypes.add_type("text/plain", ".asc")
 
 
 # ### Next 2 functions adapted from :mod:`distribute.pkg_resources`.
-#
 component_re = re.compile(r'(\d+ | [a-z]+ | \.| -)', re.I | re.VERBOSE)
-replace = {'pre': 'c', 'preview': 'c', '-': 'final-', 'rc': 'c', 'dev': '@'}.get
+replace = {
+    'pre': 'c',
+    'preview': 'c',
+    '-': 'final-',
+    'rc': 'c',
+    'dev': '@'
+}.get
 
 
 def _parse_version_parts(s):
@@ -123,23 +121,6 @@ def parse_version(s):
                 parts.pop()
         parts.append(part)
     return tuple(parts)
-#
-#### -- End of distribute's code.
-
-
-_archive_suffix_rx = re.compile(
-    r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|"
-    "\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$",
-    re.I)
-wheel_file_re = re.compile(
-    r"""^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))
-    ((-(?P<build>\d.*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)
-    \.whl|\.dist-info)$""",
-    re.VERBOSE)
-_pkgname_re = re.compile(r'-\d+[a-z_.!+]', re.I)
-_pkgname_parts_re = re.compile(
-    r"[\.\-](?=cp\d|py\d|macosx|linux|sunos|solaris|irix|aix|cygwin|win)",
-    re.I)
 
 
 def _guess_pkgname_and_version_wheel(basename):
@@ -189,6 +170,7 @@ def is_allowed_path(path_part):
 
 
 class PkgFile(object):
+    """Provide methods on a package file."""
 
     __slots__ = ['fn', 'root', '_fname_and_hash',
                  'relfn', 'relfn_unix',
@@ -198,7 +180,8 @@ class PkgFile(object):
                  'parsed_version',
                  'replaces']
 
-    def __init__(self, pkgname, version, fn=None, root=None, relfn=None, replaces=None):
+    def __init__(self, pkgname, version, fn=None, root=None,
+                 relfn=None, replaces=None):
         self.pkgname = pkgname
         self.pkgname_norm = normalize_pkgname(pkgname)
         self.version = version
@@ -212,14 +195,21 @@ class PkgFile(object):
     def __repr__(self):
         return "%s(%s)" % (
             self.__class__.__name__,
-            ", ".join(["%s=%r" % (k, getattr(self, k))
-                                  for k in sorted(self.__slots__)]))
+            ", ".join([
+                "%s=%r" % (k, getattr(self, k)) for k in sorted(self.__slots__)
+            ])
+        )
 
     def fname_and_hash(self, hash_algo):
         if not hasattr(self, '_fname_and_hash'):
             if hash_algo:
-                self._fname_and_hash = '%s#%s=%.32s' % (self.relfn_unix, hash_algo,
-                                                        digest_file(self.fn, hash_algo))
+                self._fname_and_hash = (
+                    '%s#%s=%.32s' % (
+                        self.relfn_unix,
+                        hash_algo,
+                        digest_file(self.fn, hash_algo)
+                    )
+                )
             else:
                 self._fname_and_hash = self.relfn_unix
         return self._fname_and_hash

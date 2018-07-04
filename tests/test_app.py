@@ -19,7 +19,8 @@ import webtest
 
 
 # Local Imports
-from pypiserver import __main__, bottle
+import pypiserver
+from pypiserver import __main__, bottle, config
 import tests.test_core as test_core
 
 
@@ -29,15 +30,27 @@ __main__.init_logging(level=logging.NOTSET)
 hp = HTMLParser()
 
 
-@pytest.fixture()
-def _app(app):
-    return app.module
+# @pytest.fixture()
+# def _app(app):
+#     return app.module
 
 
 @pytest.fixture
 def app(tmpdir):
-    from pypiserver import app
-    return app(root=tmpdir.strpath, authenticated=[])
+    conf = config.PypiserverParserFactory(
+        parser_type='pypi-server'
+    ).get_parser().parse_args(
+        ['-a', '.', tmpdir.strpath]
+    )
+    # return app(root=tmpdir.strpath, authenticated=[])
+    return pypiserver.app(conf)
+
+
+def app_from_args(args):
+    conf = config.PypiserverParserFactory(
+        parser_type='pypi-server'
+    ).get_parser().parse_args(args)
+    return pypiserver.app(conf)
 
 
 @pytest.fixture
@@ -123,18 +136,24 @@ def test_root_hostname(testapp):
 
 
 def test_root_welcome_msg_no_vars(root, welcome_file_no_vars):
-    from pypiserver import app
-    app = app(root=root.strpath, welcome_file=welcome_file_no_vars.strpath)
-    testapp = webtest.TestApp(app)
+    # from pypiserver import app
+    # app = app(root=root.strpath, welcome_file=welcome_file_no_vars.strpath)
+    app_ = app_from_args(
+        ['--welcome', welcome_file_no_vars.strpath, root.strpath]
+    )
+    testapp = webtest.TestApp(app_)
     resp = testapp.get("/")
     from pypiserver import __version__ as pver
     resp.mustcontain(welcome_file_no_vars.read(), no=pver)
 
 
 def test_root_welcome_msg_all_vars(root, welcome_file_all_vars):
-    from pypiserver import app
-    app = app(root=root.strpath, welcome_file=welcome_file_all_vars.strpath)
-    testapp = webtest.TestApp(app)
+    # from pypiserver import app
+    # app = app(root=root.strpath, welcome_file=welcome_file_all_vars.strpath)
+    app_ = app_from_args(
+        ['--welcome', welcome_file_all_vars.strpath, root.strpath]
+    )
+    testapp = webtest.TestApp(app_)
     resp = testapp.get("/")
 
     from pypiserver import __version__ as pver
@@ -174,14 +193,14 @@ def test_favicon(testapp):
     testapp.get("/favicon.ico", status=404)
 
 
-def test_fallback(root, _app, testapp):
-    assert _app.config.redirect_to_fallback
+def test_fallback(root, app, testapp):
+    assert app.config.redirect_to_fallback
     resp = testapp.get("/simple/pypiserver/", status=302)
     assert resp.headers["Location"] == "https://pypi.org/simple/pypiserver/"
 
 
-def test_no_fallback(root, _app, testapp):
-    _app.config.redirect_to_fallback = False
+def test_no_fallback(root, app, testapp):
+    app.config.redirect_to_fallback = False
     testapp.get("/simple/pypiserver/", status=404)
 
 
@@ -351,17 +370,18 @@ def test_simple_index_list_name_with_underscore_no_egg(root, testapp):
     assert hrefs == {"foo-bar/"}
 
 
-def test_no_cache_control_set(root, _app, testapp):
-    assert not _app.config.cache_control
+def test_no_cache_control_set(root, app, testapp):
+    assert not app.config.cache_control
     root.join("foo_bar-1.0.tar.gz").write("")
     resp = testapp.get("/packages/foo_bar-1.0.tar.gz")
     assert "Cache-Control" not in resp.headers
 
 
 def test_cache_control_set(root):
-    from pypiserver import app
     AGE = 86400
-    app_with_cache = webtest.TestApp(app(root=root.strpath, cache_control=AGE))
+    app_with_cache = webtest.TestApp(
+        app_from_args(['--cache-control', str(AGE), root.strpath])
+    )
     root.join("foo_bar-1.0.tar.gz").write("")
     resp = app_with_cache.get("/packages/foo_bar-1.0.tar.gz")
     assert "Cache-Control" in resp.headers
@@ -384,8 +404,11 @@ def test_upload_badAction(root, testapp):
                                      for f in test_core.files
                                      if f[1] and '/' not in f[0]])
 def test_upload(package, root, testapp):
-    resp = testapp.post("/", params={':action': 'file_upload'},
-            upload_files=[('content', package, b'')])
+    resp = testapp.post(
+        "/",
+        params={':action': 'file_upload'},
+        upload_files=[('content', package, b'')]
+    )
     assert resp.status_int == 200
     uploaded_pkgs = [f.basename for f in root.listdir()]
     assert len(uploaded_pkgs) == 1
@@ -396,10 +419,14 @@ def test_upload(package, root, testapp):
                                      for f in test_core.files
                                      if f[1] and '/' not in f[0]])
 def test_upload_with_signature(package, root, testapp):
-    resp = testapp.post("/", params={':action': 'file_upload'},
-            upload_files=[
-                    ('content', package, b''),
-                    ('gpg_signature', '%s.asc' % package, b'')])
+    resp = testapp.post(
+        "/",
+        params={':action': 'file_upload'},
+        upload_files=[
+            ('content', package, b''),
+            ('gpg_signature', '%s.asc' % package, b'')
+        ],
+    )
     assert resp.status_int == 200
     uploaded_pkgs = [f.basename.lower() for f in root.listdir()]
     assert len(uploaded_pkgs) == 2
@@ -411,9 +438,12 @@ def test_upload_with_signature(package, root, testapp):
         f[0] for f in test_core.files
         if f[1] is None])
 def test_upload_badFilename(package, root, testapp):
-    resp = testapp.post("/", params={':action': 'file_upload'},
-            upload_files=[('content', package, b'')],
-            expect_errors=1)
+    resp = testapp.post(
+        "/",
+        params={':action': 'file_upload'},
+        upload_files=[('content', package, b'')],
+        expect_errors=1
+    )
     assert resp.status == '400 Bad Request'
     assert "Bad filename: %s" % package in resp.text
 
@@ -430,20 +460,23 @@ def test_upload_badFilename(package, root, testapp):
 def test_remove_pkg_missingNaveVersion(name, version, root, testapp):
     msg = "Missing 'name'/'version' fields: name=%s, version=%s"
     params = {':action': 'remove_pkg', 'name': name, 'version': version}
-    params = dict((k, v) for k,v in params.items() if v is not None)
+    params = dict((k, v) for k, v in params.items() if v is not None)
     resp = testapp.post("/", expect_errors=1, params=params)
 
     assert resp.status == '400 Bad Request'
-    assert msg %(name, version) in hp.unescape(resp.text)
+    assert msg % (name, version) in hp.unescape(resp.text)
 
 
 def test_remove_pkg_notFound(root, testapp):
-    resp = testapp.post("/", expect_errors=1,
-            params={
-                    ':action': 'remove_pkg',
-                    'name': 'foo',
-                    'version': '123',
-    })
+    resp = testapp.post(
+        "/",
+        expect_errors=1,
+        params={
+            ':action': 'remove_pkg',
+            'name': 'foo',
+            'version': '123',
+        }
+    )
     assert resp.status == '404 Not Found'
     assert "foo (123) not found" in hp.unescape(resp.text)
 
