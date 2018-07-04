@@ -84,7 +84,7 @@ def create_app(config, packages):
     app.packages = packages
 
     class auth(object):
-        """Apply authentication for the decorated method & action"""
+        """Apply authentication for the decorated method & action."""
 
         def __init__(self, action):
             self.action = action

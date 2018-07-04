@@ -51,7 +51,10 @@ def main(argv=None):
 
     if (not config.authenticate and config.password_file != '.' or
             config.authenticate and config.password_file == '.'):
-        auth_err = "When auth-ops-list is empty (-a=.), password-file (-P=%r) must also be empty ('.')!"
+        auth_err = (
+            "When auth-ops-list is empty (-a=.), password-file (-P=%r) "
+            "must also be empty ('.')!"
+        )
         sys.exit(auth_err % config.password_file)
 
     init_logging(
