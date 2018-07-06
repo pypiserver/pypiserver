@@ -11,6 +11,7 @@ import pkg_resources
 
 from . import __version__
 from .bottle import server_names
+from .const import STANDALONE_WELCOME
 
 
 _AUTH_RE = re.compile(r'[, ]+')
@@ -21,6 +22,14 @@ _FALSES = ('no', 'off', '0', 'false')
 def str2bool(string):
     """Convert a string into a boolean."""
     return string.lower() not in _FALSES
+
+
+def _get_welcome_file():
+    """Get the welcome file or set a constant for the standalone package."""
+    try:
+        return pkg_resources.resource_filename('pypiserver', 'welcome.html')
+    except NotImplementedError:  # raised in standalone zipfile.
+        return STANDALONE_WELCOME
 
 
 class _Defaults(object):
@@ -348,7 +357,7 @@ class PypiserverParserFactory(object):
             '--welcome',
             default=environ.get(
                 'PYPISERVER_WELCOME',
-                pkg_resources.resource_filename('pypiserver', 'welcome.html'),
+                _get_welcome_file()
             ),
             dest='welcome_file',
             metavar='HTML_FILE',

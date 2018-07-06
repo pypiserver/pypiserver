@@ -4,8 +4,8 @@ FROM python:3.6-alpine
 COPY . /code
 WORKDIR /code
 
-RUN adduser -S -u 9898 pypiserver && \
-    addgroup -S -g 9898 pypiserver && \
+RUN addgroup -S -g 9898 pypiserver && \
+    adduser -S -u 9898 -G pypiserver pypiserver && \
     python setup.py install && \
     pip install passlib && \
     cd / && \

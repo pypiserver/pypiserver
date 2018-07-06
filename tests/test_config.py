@@ -4,9 +4,15 @@ import logging
 from os import getcwd
 from os.path import exists, expanduser
 
+try:
+    from unittest.mock import Mock
+except ImportError:  # py2
+    from mock import Mock
+
 import pytest
 
 from pypiserver import config
+from pypiserver import const
 
 
 class StubAction:
@@ -216,6 +222,17 @@ class TestDeprecatedParser:
             assert exists(welcome)
         else:
             assert parser.parse_args(args).welcome_file == exp
+
+    def test_standalone_welcome(self, monkeypatch):
+        """Test that the error raised in the standalone package is handled."""
+        monkeypatch.setattr(
+            config.pkg_resources,
+            'resource_filename',
+            Mock(side_effect=NotImplementedError)
+        )
+        assert config.PypiserverParserFactory(
+            parser_type='pypi-server'
+        ).get_parser().parse_args([]).welcome_file == const.STANDALONE_WELCOME
 
     @pytest.mark.parametrize('args, exp', (
         ([], None),
@@ -485,6 +502,17 @@ class TestParser:
             assert exists(welcome)
         else:
             assert parser.parse_args(args).welcome_file == exp
+
+    def test_standalone_welcome(self, monkeypatch):
+        """Test that the error raised in the standalone package is handled."""
+        monkeypatch.setattr(
+            config.pkg_resources,
+            'resource_filename',
+            Mock(side_effect=NotImplementedError)
+        )
+        assert config.PypiserverParserFactory().get_parser().parse_args(
+            ['run']
+        ).welcome_file == const.STANDALONE_WELCOME
 
     @pytest.mark.parametrize('args, exp', (
         ([], None),

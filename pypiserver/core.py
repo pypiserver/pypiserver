@@ -10,12 +10,16 @@ import os
 import re
 import sys
 
-
 if sys.version_info < (3,):
     from io import open
 
+import pkg_resources
+
+from .const import STANDALONE_WELCOME
+
 
 log = logging.getLogger(__name__)
+
 _archive_suffix_rx = re.compile(
     r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|"
     "\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$",
@@ -62,8 +66,15 @@ def configure(config):
         config.auther = functools.partial(auth_by_htpasswd_file, htPsswdFile)
 
     try:
-        with open(config.welcome_file, 'r', encoding='utf-8') as fd:
-            config.welcome_msg = fd.read()
+        # pkg_resources.resource_filename() is not supported for zipfiles,
+        # so we rely on resource_string() instead.
+        if config.welcome_file == STANDALONE_WELCOME:
+            config.welcome_msg = pkg_resources.resource_string(
+                __name__, 'welcome.html'
+            ).decode('utf-8')
+        else:
+            with open(config.welcome_file, 'r', encoding='utf-8') as fd:
+                config.welcome_msg = fd.read()
     except Exception:
         log.warning(
             "Could not load welcome file(%s)!",

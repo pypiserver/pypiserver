@@ -1,5 +1,6 @@
-#! /usr/bin/env py.test
 # -*- coding: utf-8 -*-
+
+# TODO: write more tests for core!
 
 import logging
 import os
@@ -9,8 +10,7 @@ import pytest
 from pypiserver import __main__, core
 
 
-## Enable logging to detect any problems with it
-##
+# Enable logging to detect any problems with it
 __main__.init_logging(level=logging.NOTSET)
 
 
@@ -57,17 +57,20 @@ files = [
     ("package-name-0.0.1.alpha.1.win-amd64-py3.2.exe", "package-name", "0.0.1.alpha.1"),
 ]
 
+
 def _capitalize_ext(fpath):
     f, e = os.path.splitext(fpath)
     if e != '.whl':
         e = e.upper()
     return f + e
 
+
 @pytest.mark.parametrize(("filename", "pkgname", "version"), files)
 def test_guess_pkgname_and_version(filename, pkgname, version):
     exp = (pkgname, version)
     assert core.guess_pkgname_and_version(filename) == exp
     assert core.guess_pkgname_and_version(_capitalize_ext(filename)) == exp
+
 
 @pytest.mark.parametrize(("filename", "pkgname", "version"), files)
 def test_guess_pkgname_and_version_asc(filename, pkgname, version):
@@ -81,10 +84,13 @@ def test_listdir_bad_name(tmpdir):
     res = list(core.listdir(tmpdir.strpath))
     assert res == []
 
+
 hashes = [
-        ('sha256',   'e3b0c44298fc1c149afbf4c8996fb924'), # empty-sha256
-        ('md5',      'd41d8cd98f00b204e9800998ecf8427e'), # empty-md5
+    ('sha256',   'e3b0c44298fc1c149afbf4c8996fb924'), # empty-sha256
+    ('md5',      'd41d8cd98f00b204e9800998ecf8427e'), # empty-md5
 ]
+
+
 @pytest.mark.parametrize(("algo", "digest"), hashes)
 def test_hashfile(tmpdir, algo, digest):
     f = tmpdir.join("empty")
