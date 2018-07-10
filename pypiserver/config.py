@@ -50,7 +50,7 @@ class _Defaults(object):
     server = 'auto'
 
 
-class PypiserverHelpFormatter(ArgumentDefaultsHelpFormatter):
+class _HelpFormatter(ArgumentDefaultsHelpFormatter):
     """A custom formatter to flip our one confusing argument.
 
     ``--disable-fallback`` is stored as ``redirect_to_fallback``,
@@ -64,12 +64,10 @@ class PypiserverHelpFormatter(ArgumentDefaultsHelpFormatter):
         if '--disable-fallback' in action.option_strings:
             return action.help + ' (default: False)'
         else:
-            return super(
-                PypiserverHelpFormatter, self
-            )._get_help_string(action)
+            return super(_HelpFormatter, self)._get_help_string(action)
 
 
-class PypiserverCustomParsers(object):
+class _CustomParsers(object):
     """Collect custom parsers."""
 
     @staticmethod
@@ -125,7 +123,7 @@ class PypiserverCustomParsers(object):
             return verbosities[-1]
 
 
-class PypiserverParser(ArgumentParser):
+class _PypiserverParser(ArgumentParser):
     """Allow extra actions following the final parse.
 
     Actions like "count", and regular "store" actions when "nargs" is
@@ -135,15 +133,15 @@ class PypiserverParser(ArgumentParser):
     """
 
     extra_parsers = {
-        'authenticate': PypiserverCustomParsers.auth,
-        'hash_algo': PypiserverCustomParsers.hash_algo,
-        'roots': PypiserverCustomParsers.roots,
-        'verbosity': PypiserverCustomParsers.verbosity,
+        'authenticate': _CustomParsers.auth,
+        'hash_algo': _CustomParsers.hash_algo,
+        'roots': _CustomParsers.roots,
+        'verbosity': _CustomParsers.verbosity,
     }
 
     def parse_args(self, args=None, namespace=None):
         """Parse arguments."""
-        parsed = super(PypiserverParser, self).parse_args(
+        parsed = super(_PypiserverParser, self).parse_args(
             args=args, namespace=namespace
         )
         for attr, parser in self.extra_parsers.items():
@@ -152,12 +150,11 @@ class PypiserverParser(ArgumentParser):
         return parsed
 
 
-class PypiserverParserFactory(object):
-    """Create a pypiserver argument parser."""
+class ConfigFactory(object):
+    """Factory for pypiserver configs and parsers."""
 
-    def __init__(self, parser_cls=PypiserverParser,
-                 help_formatter=PypiserverHelpFormatter,
-                 parser_type='pypiserver'):
+    def __init__(self, parser_cls=_PypiserverParser,
+                 help_formatter=_HelpFormatter, parser_type='pypiserver'):
         """Instantiate the factory.
 
         :param argparse.HelpFormatter help_formatter: the HelpForamtter class
@@ -168,6 +165,22 @@ class PypiserverParserFactory(object):
         self.help_formatter = help_formatter
         self.parser_cls = parser_cls
         self.parser_type = parser_type
+
+    def get_default(self, subcommand='run'):
+        """Return a parsed config with default argument values.
+
+        :param str subcommand:
+            the subcommand for which to return default arguments.
+        :rtype: argparse.Namespace
+        """
+        return self.get_parser().parse_args([subcommand])
+
+    def get_parsed(self):
+        """Return arguments parsed from the commandline.
+
+        :rtype: argparse.Namespace
+        """
+        return self.get_parser().parse_args()
 
     def get_parser(self):
         """Return an ArgumentParser instance with all arguments populated.

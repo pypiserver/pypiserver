@@ -30,24 +30,18 @@ __main__.init_logging(level=logging.NOTSET)
 hp = HTMLParser()
 
 
-# @pytest.fixture()
-# def _app(app):
-#     return app.module
-
-
 @pytest.fixture
 def app(tmpdir):
-    conf = config.PypiserverParserFactory(
+    conf = config.ConfigFactory(
         parser_type='pypi-server'
     ).get_parser().parse_args(
         ['-a', '.', tmpdir.strpath]
     )
-    # return app(root=tmpdir.strpath, authenticated=[])
     return pypiserver.app(conf)
 
 
 def app_from_args(args):
-    conf = config.PypiserverParserFactory(
+    conf = config.ConfigFactory(
         parser_type='pypi-server'
     ).get_parser().parse_args(args)
     return pypiserver.app(conf)

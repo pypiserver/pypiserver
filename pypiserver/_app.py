@@ -8,6 +8,7 @@ import re
 import xml.dom.minidom
 import zipfile
 from collections import namedtuple
+from warnings import warn
 
 try:
     from io import BytesIO
@@ -46,14 +47,25 @@ _bottle_upload_filename_re = re.compile(r'^[a-z0-9_.!+-]+$', re.I)
 Upload = namedtuple('Upload', 'pkg sig')
 
 
-def app(config=None, auther=None):
+def app(config=None, auther=None, **kwargs):
     """Return a hydrated app using the provided config and ``auther``.
 
     :param argparse.Namespace config: a hydrated config namespace
     :param callable auther: a callable authenticator
+    :param dict kwargs: DEPRECATED. Config keyword arguments.
     """
     if config.auther is None and auther is not None:
         setattr(config, 'auther', auther)
+
+    if kwargs:
+        warn(DeprecationWarning(
+            'Passing arbitrary keyword arguments to app() has been '
+            'deprecated. Please use config.ConfigFactory to generate '
+            'a config and pass it to this function.'
+        ))
+        for key, value in kwargs:
+            if key in config:
+                setattr(config, key, value)
 
     config, packages = core.configure(config)
     return create_app(config, packages)

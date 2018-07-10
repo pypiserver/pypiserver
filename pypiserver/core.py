@@ -60,10 +60,10 @@ def configure(config):
     if not callable(config.auther):
         if config.password_file and config.password_file != '.':
             from passlib.apache import HtpasswdFile
-            htPsswdFile = HtpasswdFile(config.password_file)
+            ht_pwd_file = HtpasswdFile(config.password_file)
         else:
-            config.password_file = htPsswdFile = None
-        config.auther = functools.partial(auth_by_htpasswd_file, htPsswdFile)
+            config.password_file = ht_pwd_file = None
+        config.auther = functools.partial(auth_by_htpasswd_file, ht_pwd_file)
 
     try:
         # pkg_resources.resource_filename() is not supported for zipfiles,
@@ -87,11 +87,11 @@ def configure(config):
     return config, packages
 
 
-def auth_by_htpasswd_file(htPsswdFile, username, password):
+def auth_by_htpasswd_file(ht_pwd_file, username, password):
     """The default ``config.auther``."""
-    if htPsswdFile is not None:
-        htPsswdFile.load_if_changed()
-        return htPsswdFile.check_password(username, password)
+    if ht_pwd_file is not None:
+        ht_pwd_file.load_if_changed()
+        return ht_pwd_file.check_password(username, password)
 
 
 mimetypes.add_type("application/octet-stream", ".egg")

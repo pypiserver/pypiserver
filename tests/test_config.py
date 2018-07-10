@@ -1,5 +1,6 @@
 """Test the ArgumentParser and associated functions."""
 
+import argparse
 import logging
 from os import getcwd
 from os.path import exists, expanduser
@@ -39,9 +40,9 @@ def test_argument_formatter(options, expected_help):
     case.
     """
     action = StubAction(options)
-    assert config.PypiserverHelpFormatter(
-        'prog'
-    )._get_help_string(action) == (expected_help)
+    assert config._HelpFormatter('prog')._get_help_string(action) == (
+        expected_help
+    )
 
 
 class TestCustomParsers(object):
@@ -59,28 +60,28 @@ class TestCustomParsers(object):
     ))
     def test_auth_parse_success(self, arg, exp):
         """Test parsing auth strings from the commandline."""
-        assert config.PypiserverCustomParsers.auth(arg) == exp
+        assert config._CustomParsers.auth(arg) == exp
 
     def test_auth_parse_disallowed_item(self):
         """Test that including a non-whitelisted action throws."""
         with pytest.raises(ValueError):
-            config.PypiserverCustomParsers.auth('download update foo')
+            config._CustomParsers.auth('download update foo')
 
     def test_roots_parse_abspath(self):
         """Test the parsing of root directories returns absolute paths."""
-        assert config.PypiserverCustomParsers.roots(
+        assert config._CustomParsers.roots(
             ['./foo']
         ) == ['{}/foo'.format(getcwd())]
 
     def test_roots_parse_home(self):
         """Test that parsing of root directories expands the user home."""
-        assert config.PypiserverCustomParsers.roots(
+        assert config._CustomParsers.roots(
             ['~/foo']
         ) == ([expanduser('~/foo')])
 
     def test_roots_parse_both(self):
         """Test that root directories are both expanded and absolute-ed."""
-        assert config.PypiserverCustomParsers.roots(
+        assert config._CustomParsers.roots(
             ['~/foo/..']
         ) == [expanduser('~')]
 
@@ -95,7 +96,7 @@ class TestCustomParsers(object):
     ))
     def test_verbosity_parse(self, verbosity, exp):
         """Test converting a number of -v's into a log level."""
-        assert config.PypiserverCustomParsers.verbosity(verbosity) == exp
+        assert config._CustomParsers.verbosity(verbosity) == exp
 
 
 class TestDeprecatedParser:
@@ -104,9 +105,7 @@ class TestDeprecatedParser:
     @pytest.fixture()
     def parser(self):
         """Return a deprecated parser."""
-        return config.PypiserverParserFactory(
-            parser_type='pypi-server'
-        ).get_parser()
+        return config.ConfigFactory(parser_type='pypi-server').get_parser()
 
     def test_version_exits(self, parser):
         """Test that asking for the version exits the program."""
@@ -230,7 +229,7 @@ class TestDeprecatedParser:
             'resource_filename',
             Mock(side_effect=NotImplementedError)
         )
-        assert config.PypiserverParserFactory(
+        assert config.ConfigFactory(
             parser_type='pypi-server'
         ).get_parser().parse_args([]).welcome_file == const.STANDALONE_WELCOME
 
@@ -327,7 +326,7 @@ class TestParser:
     @pytest.fixture()
     def parser(self):
         """Return a deprecated parser."""
-        return config.PypiserverParserFactory().get_parser()
+        return config.ConfigFactory().get_parser()
 
     # **********************************************************************
     # Root Command
@@ -510,7 +509,7 @@ class TestParser:
             'resource_filename',
             Mock(side_effect=NotImplementedError)
         )
-        assert config.PypiserverParserFactory().get_parser().parse_args(
+        assert config.ConfigFactory().get_parser().parse_args(
             ['run']
         ).welcome_file == const.STANDALONE_WELCOME
 
@@ -604,3 +603,45 @@ class TestParser:
         """Test specifying the execute flag."""
         args.insert(0, 'update')
         assert parser.parse_args(args).download_directory is exp
+
+
+class TestReadyMades(object):
+    """Test generating ready-made configs."""
+
+    def test_get_default(self):
+        """Test getting the default config."""
+        conf = config.ConfigFactory().get_default()
+        assert any(d in conf for d in vars(config._Defaults))
+        for default, value in vars(config._Defaults).items():
+            if default in conf:
+                if default == 'roots':
+                    assert getattr(conf, default) == (
+                        [expanduser(v) for v in value]
+                    )
+                elif default == 'authenticate':
+                    assert getattr(conf, default) == (
+                        [a for a in value.split()]
+                    )
+                else:
+                    assert getattr(conf, default) == value
+
+    def test_get_default_specify_subcommand(self):
+        """Test getting default args for a non-default subcommand."""
+        conf = config.ConfigFactory().get_default(subcommand='update')
+        exp_defaults = (
+            ('execute', False),
+            ('pre', False),
+            ('download_directory', None)
+        )
+        for default, value in exp_defaults:
+            assert getattr(conf, default) is value
+
+    def test_get_parsed(self, monkeypatch):
+        """Test getting a Namespace from commandline args."""
+        monkeypatch.setattr(
+            argparse._sys,
+            'argv',
+            ['pypiserver', 'run', '--interface', '1.2.3.4']
+        )
+        conf = config.ConfigFactory().get_parsed()
+        assert conf.host == '1.2.3.4'

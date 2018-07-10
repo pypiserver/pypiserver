@@ -74,7 +74,10 @@ setup(
     zip_safe=True,
     entry_points={
         'paste.app_factory': ['main=pypiserver.paste:paste_app_factory'],
-        'console_scripts': ['pypi-server=pypiserver.__main__:main']
+        'console_scripts': [
+            'pypi-server=pypiserver.__main__:main',
+            'pypiserver=pypiserver.__main__:_new_main',
+        ]
     },
     options={
         'bdist_wheel': {'universal': True},

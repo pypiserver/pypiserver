@@ -3,7 +3,7 @@
 import os
 
 from ._app import app
-from .config import str2bool, PypiserverParserFactory
+from .config import str2bool, ConfigFactory
 
 
 def _str_strip(string):
@@ -46,7 +46,7 @@ def paste_app_factory(global_config, **local_conf):
             return os.path.expanduser(root)
         return root
 
-    c = PypiserverParserFactory(
+    c = ConfigFactory(
         parser_type='pypi-server'
     ).get_parser().parse_args([])
 

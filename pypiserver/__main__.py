@@ -8,9 +8,10 @@ from __future__ import print_function
 
 import logging
 import sys
+import warnings
 
 import pypiserver
-from pypiserver.config import PypiserverParserFactory
+from pypiserver.config import ConfigFactory
 from pypiserver import bottle
 
 import functools as ft
@@ -44,11 +45,8 @@ def _logwrite(logger, level, msg):
             logger.log(level, msg)
 
 
-def main(argv=None):
-    config = PypiserverParserFactory(
-        parser_type='pypi-server'
-    ).get_parser().parse_args(args=argv)
-
+def _run_app_from_config(config):
+    """Run a bottle application for the given config."""
     if (not config.authenticate and config.password_file != '.' or
             config.authenticate and config.password_file == '.'):
         auth_err = (
@@ -88,6 +86,31 @@ def main(argv=None):
         port=config.port,
         server=config.server,
     )
+
+
+def main(argv=None):
+    """Run the deprecated pypi-server command."""
+    PY2 = sys.version_info < (3,)
+    if PY2:
+        # I honestly don't know why Python 2 is not raising this warning
+        # with "default" as the filter.
+        warnings.filterwarnings('always', category=DeprecationWarning)
+    warnings.warn(DeprecationWarning(
+        'The "pypi-server" command has been deprecated and will be removed '
+        'in the next major release. Please use "pypiserver run" or '
+        '"pypiserver update" instead.'
+    ))
+    if PY2:
+        warnings.filterwarnings('default', category=DeprecationWarning)
+    config = ConfigFactory(
+        parser_type='pypi-server'
+    ).get_parser().parse_args(args=argv)
+    _run_app_from_config(config)
+
+
+def _new_main():
+    """Run the new pypiserver command."""
+    _run_app_from_config(ConfigFactory().get_parsed())
 
 
 if __name__ == "__main__":
