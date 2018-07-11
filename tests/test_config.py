@@ -645,3 +645,12 @@ class TestReadyMades(object):
         )
         conf = config.ConfigFactory().get_parsed()
         assert conf.host == '1.2.3.4'
+
+    def test_from_kwargs(self):
+        """Test getting a default config updated with provided kwargs."""
+        conf = config.ConfigFactory().from_kwargs(
+            port=9999,
+            foo='foo',
+        )
+        assert conf.port == 9999
+        assert conf.foo == 'foo'

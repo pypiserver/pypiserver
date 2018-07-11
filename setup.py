@@ -77,6 +77,11 @@ setup(
         'console_scripts': [
             'pypi-server=pypiserver.__main__:main',
             'pypiserver=pypiserver.__main__:_new_main',
+        ],
+        'pypiserver.authenticators': [
+            'htpasswd = '
+            'pypiserver.plugins.authenticators.htpasswd:HtpasswdAuthenticator '
+            '[passlib]',
         ]
     },
     options={

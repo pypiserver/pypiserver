@@ -1,11 +1,14 @@
+"""Management tools for pypiserver."""
+
+import itertools
 import sys
 import os
 from subprocess import call
 
 from . import core
-import itertools
+from .const import PY2
 
-if sys.version_info >= (3, 0):
+if not PY2:
     from xmlrpc.client import Server
 
     def make_pypi_client(url):

@@ -10,12 +10,12 @@ import os
 import re
 import sys
 
-if sys.version_info < (3,):
-    from io import open
-
 import pkg_resources
 
-from .const import STANDALONE_WELCOME
+from .const import PY2, STANDALONE_WELCOME
+
+if PY2:
+    from io import open
 
 
 log = logging.getLogger(__name__)
