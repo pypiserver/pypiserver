@@ -196,6 +196,18 @@ class ConfigFactory(object):
                 'Unsupported parser_type: {}'.format(self.parser_type)
             )
 
+    def from_kwargs(self, **kwargs):
+        """Return a default config updated with the provided kwargs.
+
+        :param dict kwargs: key-value pairs with which to populate the
+            config. Keys may be provided that are not in the default
+            config.
+        """
+        conf = self.get_default()
+        for key, value in kwargs.items():
+            setattr(conf, key, value)
+        return conf
+
     def _get_parser(self):
         """Return a hydrated parser."""
         parser = self.parser_cls(
@@ -412,6 +424,7 @@ class ConfigFactory(object):
                 only %(default)s is password-protected
             ''')
         )
+        # TODO: replace with args parsed from plugins
         security.add_argument(
             '-P', '--passwords',
             dest='password_file',

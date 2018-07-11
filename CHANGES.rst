@@ -9,6 +9,62 @@ Next Release
 - ENH: Improved Dockerfile and ``docker-compose`` example, docs for using
   the docker image, automatic docker builds
 
+New Features
+~~~~~~~~~~~~
+
+- Dockerfile, ``docker-compose`` example, and Docker Hub integration for
+  automatic builds.
+
+- New ``config`` module with ``argparse``-based ``ConfigFactory`` class.
+  Essential for further improvements in pluggability!
+
+- New ``pypiserver`` command interface (as opposed to ``pypi-server``),
+  also essential for further improvements in pluggability.
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- The ``pypi-server`` command has been deprecated and will be removed in the
+  next major release.
+
+- The ``pypiserver.app()`` interface now takes a ``config`` object as its
+  primary argument. Configuration keyword arguments are deprecated and the
+  capacity to specify them will be removed in the next major release. Use
+  ``pypiserver.config.ConfigFactory().from_kwargs()`` instead.
+
+Backwards Incompatible Changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Changed:**
+
+- ``pypiserver.core.configure()`` no longer takes arbitrary keyword arguments.
+  It should now be passed a ``config`` namespace, such as one produced by
+  ``pypiserver.config.ConfigFactyr().from_kwargs()``.
+
+**Removed:**
+
+- ``pypiserver.Config`` - use ``pypiserver.config.ConfigFactory`` instead.
+
+- ``pypiserver.default_config()`` - use
+  ``pypiserver.config.ConfigFactory().get_default()`` instead.
+
+- ``pypiserver.DEFAULT_SERVER`` - use
+  ``pypiserver.config.ConfigFactory().get_default().server`` if this is for
+  some reason necessary
+
+- ``pypiserver.__main__.usage()`` - use
+  ``pyiserver.config.ConfigFactory().get_parser().print_help()``
+
+
+**Moved:**
+
+- ``pypiserver.str2bool()`` -> ``pypiserver.config.str2bool()``
+
+- ``pypiserver.paste_app_factory()`` ->
+  ``pypiserver.paste.paste_app_factory()``
+
+
 1.2.2 (2018-06-12)
 ------------------
 

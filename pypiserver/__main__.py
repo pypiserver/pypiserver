@@ -6,15 +6,16 @@
 """
 from __future__ import print_function
 
+import functools as ft
 import logging
 import sys
 import warnings
 
 import pypiserver
-from pypiserver.config import ConfigFactory
 from pypiserver import bottle
+from pypiserver.config import ConfigFactory
+from pypiserver.const import PY2
 
-import functools as ft
 
 
 log = logging.getLogger('pypiserver.main')
@@ -90,7 +91,6 @@ def _run_app_from_config(config):
 
 def main(argv=None):
     """Run the deprecated pypi-server command."""
-    PY2 = sys.version_info < (3,)
     if PY2:
         # I honestly don't know why Python 2 is not raising this warning
         # with "default" as the filter.
