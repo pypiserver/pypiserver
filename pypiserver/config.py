@@ -8,6 +8,7 @@ from os import environ, path
 from textwrap import dedent
 
 import pkg_resources
+from pkg_resources import iter_entry_points
 
 from . import __version__
 from .bottle import server_names
@@ -165,6 +166,14 @@ class ConfigFactory(object):
         self.help_formatter = help_formatter
         self.parser_cls = parser_cls
         self.parser_type = parser_type
+        self._plugins = {
+            'auth': {},
+        }
+
+    def load_plugins(self):
+        """Load plugins for later access."""
+        for entrypoint in iter_entry_points('pypiserver.authenticators'):
+            self._plugins['auth'][entrypoint.name] = entrypoint.load()
 
     def get_default(self, subcommand='run'):
         """Return a parsed config with default argument values.
@@ -210,6 +219,7 @@ class ConfigFactory(object):
 
     def _get_parser(self):
         """Return a hydrated parser."""
+        self.load_plugins()
         parser = self.parser_cls(
             description='PyPI-compatible package server',
             formatter_class=self.help_formatter
@@ -257,16 +267,16 @@ class ConfigFactory(object):
             version='%(prog)s {}'.format(__version__),
         )
 
-    @classmethod
-    def add_run_subcommand(cls, subparsers):
+    def add_run_subcommand(self, subparsers):
         """Add the "update" command to the subparsers instance.
 
         :param subparsers: an ArgumentParser subparser.
         """
         run = subparsers.add_parser('run', help='run pypiserver')
-        cls.add_server_arg_group(run)
-        cls.add_security_arg_group(run)
-        cls.add_http_logging_group(run)
+        self.add_server_arg_group(run)
+        self.add_security_arg_group(run)
+        self.add_plugin_args_run(run)
+        self.add_http_logging_group(run)
 
     @staticmethod
     def add_update_subcommand(subparsers):
@@ -306,7 +316,10 @@ class ConfigFactory(object):
 
         :param ArgumentParser parser: an ArgumentParser instance
         """
-        server = parser.add_argument_group('server')
+        server = parser.add_argument_group(
+            title='Server',
+            description='Configure the pypiserver instance'
+        )
         server.add_argument(
             'roots',
             default=_Defaults.roots,
@@ -397,13 +410,15 @@ class ConfigFactory(object):
                   'downloads. Pip 6+ needs this for caching')
         )
 
-    @staticmethod
-    def add_security_arg_group(parser):
+    def add_security_arg_group(self, parser):
         """Add security arguments to the parser.
 
         :param ArgumentParser parser: an ArgumentParser instance
         """
-        security = parser.add_argument_group('security')
+        security = parser.add_argument_group(
+            title='Security',
+            description='Configure pypiserver access controls'
+        )
         # TODO: pull some of this long stuff out into an epilog
         security.add_argument(
             '-a', '--authenticate',
@@ -424,22 +439,23 @@ class ConfigFactory(object):
                 only %(default)s is password-protected
             ''')
         )
-        # TODO: replace with args parsed from plugins
-        security.add_argument(
-            '-P', '--passwords',
-            dest='password_file',
-            default=environ.get('PYPISERVER_PASSWORD_FILE'),
-            help=dedent('''\
-                use apache htpasswd file PASSWORD_FILE to set usernames &
-                passwords when authenticating certain actions (see -a option).
-                If you want to allow unauthorized access, set this option
-                and -a to '.'
-            ''')
-        )
+        if self.parser_type == 'pypi-server':
+            security.add_argument(
+                '-P', '--passwords',
+                dest='password_file',
+                default=environ.get('PYPISERVER_PASSWORD_FILE'),
+                help=dedent('''\
+                    use apache htpasswd file PASSWORD_FILE to set usernames &
+                    passwords when authenticating certain actions (see -a option).
+                    If you want to allow unauthorized access, set this option
+                    and -a to '.'
+                ''')
+            )
         security.add_argument(
             '--auth-backend',
             dest='auther',
             default=environ.get('PYPISERVER_AUTH_BACKEND'),
+            choices=self._plugins['auth'].keys(),
             help=(
                 'Specify an authentication backend. By default, will attempt '
                 'to use an htpasswd file if provided. If specified, must '
@@ -448,12 +464,29 @@ class ConfigFactory(object):
         )
 
     @staticmethod
+    def add_plugin_group(parser, name, plugin):
+        """Add a plugin group to the parser."""
+        group = parser.add_argument_group(
+            title='{} ({} plugin)'.format(plugin.plugin_name, name),
+            description=plugin.plugin_help,
+        )
+        plugin.update_parser(group)
+
+    def add_plugin_args_run(self, parser):
+        """Add plugin args for the "run" subcommand.
+
+        :param ArgumentParser parser: the "run" subcommand parser
+        """
+        for name, plugin in self._plugins['auth'].items():
+            self.add_plugin_group(parser, name, plugin)
+
+    @staticmethod
     def add_logging_arg_group(parser):
         """Add pypiserver logging arguments.
 
         :param ArgumentParser parser: an ArgumentParser instance
         """
-        logs = parser.add_argument_group('logs')
+        logs = parser.add_argument_group(title='logs')
         logs.add_argument(
             '--log-file',
             default=environ.get('PYPISERVER_LOG_FILE'),
@@ -473,7 +506,10 @@ class ConfigFactory(object):
 
         :param ArgumentParser parser: an ArgumentParser instance
         """
-        http_logs = parser.add_argument_group('HTTP logs')
+        http_logs = parser.add_argument_group(
+            title='HTTP logs',
+            description='Define the logging format for HTTP events'
+        )
         http_logs.add_argument(
             '--log-req-frmt',
             default=environ.get(

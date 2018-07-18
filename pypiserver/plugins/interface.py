@@ -1,39 +1,50 @@
 """Common plugin interface for pypiserver."""
 
-from abc import ABCMeta, abstractmethod
-
 from pypiserver.const import PY2
 
 if PY2:
     # Create the equivalent of Python 3's ABC class
+    from abc import ABCMeta, abstractproperty
+
     ABC = ABCMeta('ABC', (object,), {'__slots__', ()})
+
 else:
     from abc import ABC
+    from .util import py3_abstractproperty as abstractproperty
 
 
 class PluginInterface(ABC):
     """Base plugin interface for pypiserver plugins."""
 
-    @abstractmethod
+    @abstractproperty
+    def plugin_name(self):
+        """Return the plugin name.
+
+        Note that this can (and should) just be defined as a class
+        attribute, e.g.:
+
+        .. code:: python
+
+            class MyPlugin(PluginInterface):
+                plugin_name = "My Plugin"
+
+        """
+
+    @abstractproperty
     def plugin_help(self):
-        """Return some general help text for the plugin.
+        """Return user-facing one-line summary of plugin.
 
         :rtype: str
         :return: a short description of the plugin's purpose
         """
 
     @classmethod
-    def add_config_arguments(cls, parser):
-        """Add arguments to the argument parser."""
+    def update_parser(cls, parser):
+        """Add arguments to the pypiserver argument parser.
 
-    def add_config_subcommand(self, root_parser):
-        """Add a subcommand to the root parser."""
+        Generally, this will be a subcommand parser (usually for "run"),
+        but it could vary by plugin type.
 
-    def add_config_root_argument_group(self, root_parser):
-        """Add a config argument group to the root parser."""
-
-    def add_config_run_argument_group(self, run_parser):
-        """Add a config argument group to the "run" parser."""
-
-    def add_config_update_argument_group(self, update_parser):
-        """Add a config argument group to the "update" parser."""
+        :param argparse.ArgumentParser parser: the parser for the "run"
+            subcommand
+        """

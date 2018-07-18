@@ -11,12 +11,15 @@ from .interface import AuthenticatorInterface
 class HtpasswdAuthenticator(AuthenticatorInterface):
     """Authenticate using passlib and an htpasswd file."""
 
+    plugin_name = 'Htpasswd Authenticator'
+    plugin_help = 'Authenticate using an Apache htpasswd file'
+
     def __init__(self, config):
         """Instantiate the authenticator."""
         self.config = config
 
     @classmethod
-    def add_config_arguments(cls, parser):
+    def update_parser(cls, parser):
         """Add htpasswd arguments to the config parser.
 
         :param argparse.ArgumentParser parser: the config parser
