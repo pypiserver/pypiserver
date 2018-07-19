@@ -151,7 +151,7 @@ class _PypiserverParser(ArgumentParser):
         return parsed
 
 
-class ConfigFactory(object):
+class Config(object):
     """Factory for pypiserver configs and parsers."""
 
     def __init__(self, parser_cls=_PypiserverParser,

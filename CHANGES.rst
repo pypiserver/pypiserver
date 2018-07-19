@@ -15,7 +15,7 @@ New Features
 - Dockerfile, ``docker-compose`` example, and Docker Hub integration for
   automatic builds.
 
-- New ``config`` module with ``argparse``-based ``ConfigFactory`` class.
+- New ``config`` module with ``argparse``-based ``Config`` class.
   Essential for further improvements in pluggability!
 
 - New ``pypiserver`` command interface (as opposed to ``pypi-server``),
@@ -31,7 +31,7 @@ Deprecations
 - The ``pypiserver.app()`` interface now takes a ``config`` object as its
   primary argument. Configuration keyword arguments are deprecated and the
   capacity to specify them will be removed in the next major release. Use
-  ``pypiserver.config.ConfigFactory().from_kwargs()`` instead.
+  ``pypiserver.config.Config().from_kwargs()`` instead.
 
 Backwards Incompatible Changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,17 +44,17 @@ Backwards Incompatible Changes
 
 **Removed:**
 
-- ``pypiserver.Config`` - use ``pypiserver.config.ConfigFactory`` instead.
+- ``pypiserver.Config`` - use ``pypiserver.config.Config`` instead.
 
 - ``pypiserver.default_config()`` - use
-  ``pypiserver.config.ConfigFactory().get_default()`` instead.
+  ``pypiserver.config.Config().get_default()`` instead.
 
 - ``pypiserver.DEFAULT_SERVER`` - use
-  ``pypiserver.config.ConfigFactory().get_default().server`` if this is for
+  ``pypiserver.config.Config().get_default().server`` if this is for
   some reason necessary
 
 - ``pypiserver.__main__.usage()`` - use
-  ``pyiserver.config.ConfigFactory().get_parser().print_help()``
+  ``pyiserver.config.Config().get_parser().print_help()``
 
 
 **Moved:**

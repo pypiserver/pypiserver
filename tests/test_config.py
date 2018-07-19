@@ -105,7 +105,7 @@ class TestDeprecatedParser:
     @pytest.fixture()
     def parser(self):
         """Return a deprecated parser."""
-        return config.ConfigFactory(parser_type='pypi-server').get_parser()
+        return config.Config(parser_type='pypi-server').get_parser()
 
     def test_version_exits(self, parser):
         """Test that asking for the version exits the program."""
@@ -229,7 +229,7 @@ class TestDeprecatedParser:
             'resource_filename',
             Mock(side_effect=NotImplementedError)
         )
-        assert config.ConfigFactory(
+        assert config.Config(
             parser_type='pypi-server'
         ).get_parser().parse_args([]).welcome_file == const.STANDALONE_WELCOME
 
@@ -326,7 +326,7 @@ class TestParser:
     @pytest.fixture()
     def parser(self):
         """Return a deprecated parser."""
-        return config.ConfigFactory().get_parser()
+        return config.Config().get_parser()
 
     # **********************************************************************
     # Root Command
@@ -509,7 +509,7 @@ class TestParser:
             'resource_filename',
             Mock(side_effect=NotImplementedError)
         )
-        assert config.ConfigFactory().get_parser().parse_args(
+        assert config.Config().get_parser().parse_args(
             ['run']
         ).welcome_file == const.STANDALONE_WELCOME
 
@@ -610,7 +610,7 @@ class TestReadyMades(object):
 
     def test_get_default(self):
         """Test getting the default config."""
-        conf = config.ConfigFactory().get_default()
+        conf = config.Config().get_default()
         assert any(d in conf for d in vars(config._Defaults))
         for default, value in vars(config._Defaults).items():
             if default in conf:
@@ -627,7 +627,7 @@ class TestReadyMades(object):
 
     def test_get_default_specify_subcommand(self):
         """Test getting default args for a non-default subcommand."""
-        conf = config.ConfigFactory().get_default(subcommand='update')
+        conf = config.Config().get_default(subcommand='update')
         exp_defaults = (
             ('execute', False),
             ('pre', False),
@@ -643,12 +643,12 @@ class TestReadyMades(object):
             'argv',
             ['pypiserver', 'run', '--interface', '1.2.3.4']
         )
-        conf = config.ConfigFactory().get_parsed()
+        conf = config.Config().get_parsed()
         assert conf.host == '1.2.3.4'
 
     def test_from_kwargs(self):
         """Test getting a default config updated with provided kwargs."""
-        conf = config.ConfigFactory().from_kwargs(
+        conf = config.Config().from_kwargs(
             port=9999,
             foo='foo',
         )

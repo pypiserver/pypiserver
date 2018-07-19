@@ -13,9 +13,8 @@ import warnings
 
 import pypiserver
 from pypiserver import bottle
-from pypiserver.config import ConfigFactory
+from pypiserver.config import Config
 from pypiserver.const import PY2
-
 
 
 log = logging.getLogger('pypiserver.main')
@@ -102,7 +101,7 @@ def main(argv=None):
     ))
     if PY2:
         warnings.filterwarnings('default', category=DeprecationWarning)
-    config = ConfigFactory(
+    config = Config(
         parser_type='pypi-server'
     ).get_parser().parse_args(args=argv)
     _run_app_from_config(config)
@@ -110,7 +109,7 @@ def main(argv=None):
 
 def _new_main():
     """Run the new pypiserver command."""
-    _run_app_from_config(ConfigFactory().get_parsed())
+    _run_app_from_config(Config().get_parsed())
 
 
 if __name__ == "__main__":

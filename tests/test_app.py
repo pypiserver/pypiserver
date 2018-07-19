@@ -32,7 +32,7 @@ hp = HTMLParser()
 
 @pytest.fixture
 def app(tmpdir):
-    conf = config.ConfigFactory(
+    conf = config.Config(
         parser_type='pypi-server'
     ).get_parser().parse_args(
         ['-a', '.', tmpdir.strpath]
@@ -41,7 +41,7 @@ def app(tmpdir):
 
 
 def app_from_args(args):
-    conf = config.ConfigFactory(
+    conf = config.Config(
         parser_type='pypi-server'
     ).get_parser().parse_args(args)
     return pypiserver.app(conf)

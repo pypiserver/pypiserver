@@ -60,7 +60,7 @@ def app(config=None, auther=None, **kwargs):
     if kwargs:
         warn(DeprecationWarning(
             'Passing arbitrary keyword arguments to app() has been '
-            'deprecated. Please use config.ConfigFactory to generate '
+            'deprecated. Please use config.Config to generate '
             'a config and pass it to this function.'
         ))
         for key, value in kwargs:
