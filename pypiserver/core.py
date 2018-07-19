@@ -8,7 +8,6 @@ import logging
 import mimetypes
 import os
 import re
-import sys
 
 import pkg_resources
 from pkg_resources import iter_entry_points
@@ -50,15 +49,36 @@ def _validate_roots(roots):
                 '{}'.format(root, repr(exc))
             )
 
+def _welcome_msg(welcome_file):
+    """Parse the provided welcome file to get the welcome message."""
+    try:
+        # pkg_resources.resource_filename() is not supported for zipfiles,
+        # so we rely on resource_string() instead.
+        if welcome_file == STANDALONE_WELCOME:
+            welcome_msg = pkg_resources.resource_string(
+                __name__, 'welcome.html'
+            ).decode('utf-8')
+        else:
+            with open(welcome_file, 'r', encoding='utf-8') as fd:
+                welcome_msg = fd.read()
+    except Exception:
+        log.warning(
+            "Could not load welcome file(%s)!",
+            welcome_file,
+            exc_info=1
+        )
+    return welcome_msg
 
-def validate_config(config):
-    """Check config arguments.
+
+def prep_config(config):
+    """Check config arguments and update values when required.
 
     :param argparse.Namespace config: a config namespace
 
     :raises ValueError: if a config value is invalid
     """
     _validate_roots(config.roots)
+    config.welcome_msg = _welcome_msg(config.welcome_file)
 
 
 def configure(config):
@@ -69,7 +89,7 @@ def configure(config):
     :return:  2-tuple (Configure, package-list)
     :rtype: tuple
     """
-    validate_config(config)
+    prep_config(config)
     add_plugins_to_config(config)
 
     def packages():
@@ -85,23 +105,6 @@ def configure(config):
         else:
             config.password_file = ht_pwd_file = None
         config.auther = functools.partial(auth_by_htpasswd_file, ht_pwd_file)
-
-    try:
-        # pkg_resources.resource_filename() is not supported for zipfiles,
-        # so we rely on resource_string() instead.
-        if config.welcome_file == STANDALONE_WELCOME:
-            config.welcome_msg = pkg_resources.resource_string(
-                __name__, 'welcome.html'
-            ).decode('utf-8')
-        else:
-            with open(config.welcome_file, 'r', encoding='utf-8') as fd:
-                config.welcome_msg = fd.read()
-    except Exception:
-        log.warning(
-            "Could not load welcome file(%s)!",
-            config.welcome_file,
-            exc_info=1
-        )
 
     log.info("+++Pypiserver started with: %s", config)
 

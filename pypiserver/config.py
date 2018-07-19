@@ -28,7 +28,9 @@ def str2bool(string):
 def _get_welcome_file():
     """Get the welcome file or set a constant for the standalone package."""
     try:
-        return pkg_resources.resource_filename('pypiserver', 'welcome.html')
+        return pkg_resources.resource_filename(
+            'pypiserver', _Defaults.welcome_file
+        )
     except NotImplementedError:  # raised in standalone zipfile.
         return STANDALONE_WELCOME
 
@@ -49,6 +51,7 @@ class _Defaults(object):
     redirect_to_fallback = True
     roots = ['~/packages']
     server = 'auto'
+    welcome_file = 'welcome.html'
 
 
 class _HelpFormatter(ArgumentDefaultsHelpFormatter):
