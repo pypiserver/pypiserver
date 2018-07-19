@@ -14,6 +14,7 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.org/project/pypiserver/
 :Travis:      https://travis-ci.org/pypiserver/pypiserver
+:Docker:      https://hub.docker.com/r/pypiserver/pypiserver/
 :Maintainers: Kostis Anagnostopoulos <ankostis@gmail.com>,
               Matthew Planchard <mplanchard@gmail.com>
 :License:     zlib/libpng + MIT
