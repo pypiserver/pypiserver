@@ -9,6 +9,8 @@ import pytest
 
 from pypiserver import __main__, core
 
+from .doubles import GenericNamespace
+
 
 # Enable logging to detect any problems with it
 __main__.init_logging(level=logging.NOTSET)
@@ -86,8 +88,8 @@ def test_listdir_bad_name(tmpdir):
 
 
 hashes = [
-    ('sha256',   'e3b0c44298fc1c149afbf4c8996fb924'), # empty-sha256
-    ('md5',      'd41d8cd98f00b204e9800998ecf8427e'), # empty-md5
+    ('sha256',   'e3b0c44298fc1c149afbf4c8996fb924'),  # empty-sha256
+    ('md5',      'd41d8cd98f00b204e9800998ecf8427e'),  # empty-md5
 ]
 
 
@@ -96,3 +98,53 @@ def test_hashfile(tmpdir, algo, digest):
     f = tmpdir.join("empty")
     f.ensure()
     assert core.digest_file(f.strpath, algo) == digest
+
+
+def test_load_plugins():
+    """Test loading plugins.
+
+    We should at least be able to get the ones included with the full
+    passlib install.
+    """
+    plugins = core.load_plugins()
+    assert 'htpasswd' in plugins['authenticators']
+
+
+def test_load_plugin_group():
+    """Test loading a single plugin group.
+
+    This test is not quite definitive at the time of authorship since
+    there's only one plugin (therefore the output will be the same as
+    for ``load_plugins()`` with no arguments). However, as soon as
+    a second plugin type is added, it'll become more meaningful.
+    """
+    auth_plugins = core.load_plugins('authenticators')
+    assert 'htpasswd' in auth_plugins['authenticators']
+
+
+def test_load_plugin_bad_group():
+    """Test that trying to load a bad group raises an error."""
+    with pytest.raises(ValueError):
+        # hopefully this is never a legit plugin type
+        core.load_plugins('fhgwgad')
+
+
+def test_load_plugins_bad_and_good_group():
+    """Test that the bad group is detected even among a good one."""
+    with pytest.raises(ValueError):
+        core.load_plugins('authenticators', 'wheelchair_assassins')
+
+
+def test_add_plugins_to_config_load(monkeypatch):
+    """Test that load_plugins() is called for no provided plugins."""
+    monkeypatch.setattr(core, 'load_plugins', lambda *x: 'plugin_stub')
+    config = GenericNamespace()
+    core.add_plugins_to_config(config)
+    assert config.plugins == 'plugin_stub'  # pylint: disable=no-member
+
+
+def test_add_plugins_to_config_no_load():
+    """Test adding passed plugins to a config."""
+    config = GenericNamespace()
+    core.add_plugins_to_config(config, plugins='plugins!')
+    assert config.plugins == 'plugins!'  # pylint: disable=no-member

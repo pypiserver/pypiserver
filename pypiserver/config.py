@@ -8,10 +8,10 @@ from os import environ, path
 from textwrap import dedent
 
 import pkg_resources
-from pkg_resources import iter_entry_points
 
 from . import __version__
 from .bottle import server_names
+from .core import load_plugins
 from .const import STANDALONE_WELCOME
 
 
@@ -166,14 +166,7 @@ class Config(object):
         self.help_formatter = help_formatter
         self.parser_cls = parser_cls
         self.parser_type = parser_type
-        self._plugins = {
-            'auth': {},
-        }
-
-    def load_plugins(self):
-        """Load plugins for later access."""
-        for entrypoint in iter_entry_points('pypiserver.authenticators'):
-            self._plugins['auth'][entrypoint.name] = entrypoint.load()
+        self._plugins = load_plugins()
 
     def get_default(self, subcommand='run'):
         """Return a parsed config with default argument values.
@@ -219,7 +212,6 @@ class Config(object):
 
     def _get_parser(self):
         """Return a hydrated parser."""
-        self.load_plugins()
         parser = self.parser_cls(
             description='PyPI-compatible package server',
             formatter_class=self.help_formatter
@@ -446,16 +438,16 @@ class Config(object):
                 default=environ.get('PYPISERVER_PASSWORD_FILE'),
                 help=dedent('''\
                     use apache htpasswd file PASSWORD_FILE to set usernames &
-                    passwords when authenticating certain actions (see -a option).
-                    If you want to allow unauthorized access, set this option
-                    and -a to '.'
+                    passwords when authenticating certain actions (see
+                    -a option). If you want to allow unauthorized access,
+                    set this option and -a to '.'
                 ''')
             )
         security.add_argument(
             '--auth-backend',
             dest='auther',
             default=environ.get('PYPISERVER_AUTH_BACKEND'),
-            choices=self._plugins['auth'].keys(),
+            choices=self._plugins['authenticators'].keys(),
             help=(
                 'Specify an authentication backend. By default, will attempt '
                 'to use an htpasswd file if provided. If specified, must '
@@ -477,7 +469,7 @@ class Config(object):
 
         :param ArgumentParser parser: the "run" subcommand parser
         """
-        for name, plugin in self._plugins['auth'].items():
+        for name, plugin in self._plugins['authenticators'].items():
             self.add_plugin_group(parser, name, plugin)
 
     @staticmethod

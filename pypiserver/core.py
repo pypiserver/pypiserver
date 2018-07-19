@@ -11,8 +11,9 @@ import re
 import sys
 
 import pkg_resources
+from pkg_resources import iter_entry_points
 
-from .const import PY2, STANDALONE_WELCOME
+from .const import PLUGIN_GROUPS, PY2, STANDALONE_WELCOME
 
 if PY2:
     from io import open
@@ -35,6 +36,31 @@ _pkgname_parts_re = re.compile(
     re.I)
 
 
+def _validate_roots(roots):
+    """Validate roots.
+
+    :param List[str] roots: a list of package roots.
+    """
+    for root in roots:
+        try:
+            os.listdir(root)
+        except OSError as exc:
+            raise ValueError(
+                'Error while trying to list root({}): '
+                '{}'.format(root, repr(exc))
+            )
+
+
+def validate_config(config):
+    """Check config arguments.
+
+    :param argparse.Namespace config: a config namespace
+
+    :raises ValueError: if a config value is invalid
+    """
+    _validate_roots(config.roots)
+
+
 def configure(config):
     """Validate configuration and return with a package list.
 
@@ -43,13 +69,8 @@ def configure(config):
     :return:  2-tuple (Configure, package-list)
     :rtype: tuple
     """
-    for r in config.roots:
-        try:
-            os.listdir(r)
-        except OSError:
-            err = sys.exc_info()[1]
-            msg = "Error: while trying to list root(%s): %s"
-            sys.exit(msg % (r, err))
+    validate_config(config)
+    add_plugins_to_config(config)
 
     def packages():
         """Return an iterable over package files in package roots."""
@@ -85,6 +106,43 @@ def configure(config):
     log.info("+++Pypiserver started with: %s", config)
 
     return config, packages
+
+
+def load_plugins(*groups):
+    """Load pypiserver plugins.
+
+    :param groups: the plugin group(s) names (str) to load. Group names
+        must be one of ``const.PLUGIN_GROUPS``. If no groups are
+        provided, all groups will be loaded.
+
+    :return: a dict whose keys are plugin group names and whose values
+        are nested dicts whose keys are plugin names and whose values
+        are the loaded plugins.
+    :rtype: dict
+    """
+    if groups and not all(g in PLUGIN_GROUPS for g in groups):
+        raise ValueError(
+            'Invalid group provided. Groups must '
+            'be one of: {}'.format(PLUGIN_GROUPS)
+        )
+    groups = groups if groups else PLUGIN_GROUPS
+    plugins = {}
+    for group in groups:
+        plugins.setdefault(group, {})
+        for plugin in iter_entry_points('pypiserver.{}'.format(group)):
+            plugins[group][plugin.name] = plugin.load()
+    return plugins
+
+
+def add_plugins_to_config(config, plugins=None):
+    """Load plugins if necessary and add to a config object.
+
+    :param argparse.Namespace config: a config namespace
+    :param dict plugins: an optional loaded plugin dict. If not
+        provided, plugins will be loaded.
+    """
+    plugins = load_plugins() if plugins is None else plugins
+    config.plugins = plugins
 
 
 def auth_by_htpasswd_file(ht_pwd_file, username, password):
