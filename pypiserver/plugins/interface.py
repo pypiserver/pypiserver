@@ -6,7 +6,7 @@ if PY2:
     # Create the equivalent of Python 3's ABC class
     from abc import ABCMeta, abstractproperty
 
-    ABC = ABCMeta('ABC', (object,), {'__slots__', ()})
+    ABC = ABCMeta('ABC', (object,), {'__slots__': ()})
 
 else:
     from abc import ABC
