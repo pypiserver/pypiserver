@@ -49,6 +49,7 @@ def _validate_roots(roots):
                 '{}'.format(root, repr(exc))
             )
 
+
 def _welcome_msg(welcome_file):
     """Parse the provided welcome file to get the welcome message."""
     try:

@@ -59,7 +59,7 @@ def _run_app_from_config(config):
         level=config.verbosity, filename=config.log_file, frmt=config.log_frmt
     )
 
-    if config.update_packages:
+    if hasattr(config, 'update_packages') and config.update_packages:
         from pypiserver.manage import update_all_packages
         update_all_packages(
             config.roots,

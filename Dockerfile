@@ -6,8 +6,7 @@ WORKDIR /code
 
 RUN addgroup -S -g 9898 pypiserver && \
     adduser -S -u 9898 -G pypiserver pypiserver && \
-    python setup.py install && \
-    pip install passlib && \
+    pip install .[passlib] && \
     cd / && \
     rm -rf /code && \
     mkdir -p /data/packages && \
@@ -21,5 +20,7 @@ USER pypiserver
 WORKDIR /data
 EXPOSE 8080
 
-ENTRYPOINT ["pypi-server", "-p", "8080"]
-CMD ["packages"]
+ENV PYPISERVER_PORT=8080
+
+ENTRYPOINT ["pypiserver"]
+CMD ["run", "packages"]

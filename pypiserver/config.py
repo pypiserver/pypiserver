@@ -376,7 +376,7 @@ class Config(object):
                 cherrypy, twisted, gunicorn, gevent, wsgiref, auto. The
                 default is to use "auto" which chooses one of paste, cherrypy,
                 twisted or wsgiref
-        '''))
+            '''))
         )
         server.add_argument(
             '--hash-algo',

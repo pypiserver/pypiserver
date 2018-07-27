@@ -13,6 +13,9 @@
 .~
 .DS_Store
 .ropeproject
+.cache
+.pytest_cache
+.standalone
 ID
 __pycache__/
 /build/

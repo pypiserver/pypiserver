@@ -4,7 +4,7 @@
 from os import path
 import sys
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 tests_require = ['pytest>=2.3', 'tox', 'twine', 'pip>=7',
@@ -37,7 +37,7 @@ setup(
     description="A minimal PyPI server for use with pip/easy_install.",
     long_description=open("README.rst").read(),
     version=get_version(),
-    packages=["pypiserver"],
+    packages=find_packages(exclude=('tests', 'tests.*')),
     package_data={'pypiserver': ['welcome.html']},
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     setup_requires=setup_requires,
