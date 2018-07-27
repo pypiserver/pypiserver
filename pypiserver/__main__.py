@@ -69,13 +69,15 @@ def _run_app_from_config(config):
     elif getattr(config, 'update_packages', False):
         return _update(config)
 
-    if (not config.authenticate and config.password_file != '.' or
-            config.authenticate and config.password_file == '.'):
-        auth_err = (
-            "When auth-ops-list is empty (-a=.), password-file (-P=%r) "
-            "must also be empty ('.')!"
-        )
-        sys.exit(auth_err % config.password_file)
+    # TODO: move this to the auth plugin.
+    if hasattr(config, 'password_file'):
+        if (not config.authenticate and config.password_file != '.' or
+                config.authenticate and config.password_file == '.'):
+            auth_err = (
+                "When auth-ops-list is empty (-a=.), password-file (-P=%r) "
+                "must also be empty ('.')!"
+            )
+            sys.exit(auth_err % config.password_file)
 
     if config.server and config.server.startswith('gevent'):
         import gevent.monkey  # @UnresolvedImport
