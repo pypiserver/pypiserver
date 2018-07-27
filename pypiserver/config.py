@@ -448,7 +448,11 @@ class Config(object):
             )
         security.add_argument(
             '--auth-backend',
-            default=environ.get('PYPISERVER_AUTH_BACKEND', 'htpasswd'),
+            default=environ.get(
+                'PYPISERVER_AUTH_BACKEND',
+                'htpasswd' if 'htpasswd' in self._plugins['authenticators']
+                else 'no-auth'
+            ),
             choices=self._plugins['authenticators'].keys(),
             help=(
                 'Specify an authentication backend. By default, will attempt '

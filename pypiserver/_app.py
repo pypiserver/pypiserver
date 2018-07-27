@@ -70,12 +70,10 @@ def app(config=None, auther=None, **kwargs):
             'instead.'
         ))
         config.auther = convert_legacy(config.auther)
-    elif getattr(config, 'auth_backend', None) is not None:
+    else:
         config.auther = config.plugins['authenticators'][config.auth_backend](
             config
         )
-    else:
-        config.auther = convert_legacy(lambda *x: True)
 
     if kwargs:
         warn(DeprecationWarning(

@@ -11,7 +11,7 @@ git fetch origin standalone:origin/standalone
 git branch --track standalone origin/standalone
 ./bin/commit-standalone.sh no_commit
 
-./pypi-server-standalone.py . &
+./pypi-server-standalone.py run . &
 server_pid=$!
 sleep 2
 

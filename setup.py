@@ -82,6 +82,8 @@ setup(
             'htpasswd = '
             'pypiserver.plugins.authenticators.htpasswd:HtpasswdAuthenticator '
             '[passlib]',
+            'no-auth = '
+            'pypiserver.plugins.authenticators.no_auth:NoAuthAuthenticator'
         ]
     },
     options={
