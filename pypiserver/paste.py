@@ -68,6 +68,9 @@ def paste_app_factory(global_config, **local_conf):
     ]
     for str_item in str_items:
         upd_conf_with_str_item(c, str_item, local_conf)
+    if getattr(c, 'authenticated', None) is not None:
+        # Update for v 2.0
+        c.authenticate = c.authenticated
     # cache_control is undocumented; don't know what type is expected:
     # upd_conf_with_str_item(c, 'cache_control', local_conf)
 

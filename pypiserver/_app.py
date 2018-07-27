@@ -26,8 +26,9 @@ except ImportError:
     import xmlrpclib  # py2
 
 
-from ._version import __version__
 from . import core
+from ._version import __version__
+from .plugins.authenticators.interface import convert_legacy
 
 
 from .bottle import (
@@ -54,8 +55,27 @@ def app(config=None, auther=None, **kwargs):
     :param callable auther: a callable authenticator
     :param dict kwargs: DEPRECATED. Config keyword arguments.
     """
-    if config.auther is None and auther is not None:
-        setattr(config, 'auther', auther)
+    config, packages = core.configure(config)
+
+    if auther is not None:
+        warn(DeprecationWarning(
+            'Passing an authentication callable to app() is deprecated. '
+            'Please create and use an authenticator plugin instead.'
+        ))
+        config.auther = convert_legacy(auther)
+    elif callable(getattr(config, 'auther', None)):
+        warn(DeprecationWarning(
+            'Passing an authentication callable manually via the config '
+            'is deprecated. Please create and use an authenticator plugin '
+            'instead.'
+        ))
+        config.auther = convert_legacy(config.auther)
+    elif getattr(config, 'auth_backend', None) is not None:
+        config.auther = config.plugins['authenticators'][config.auth_backend](
+            config
+        )
+    else:
+        config.auther = convert_legacy(lambda *x: True)
 
     if kwargs:
         warn(DeprecationWarning(
@@ -67,12 +87,11 @@ def app(config=None, auther=None, **kwargs):
             if key in config:
                 setattr(config, key, value)
 
-    config, packages = core.configure(config)
     return create_app(config, packages)
 
 
 def is_valid_pkg_filename(fname):
-    """See https://github.com/pypiserver/pypiserver/issues/102"""
+    """See https://github.com/pypiserver/pypiserver/issues/102."""
     return _bottle_upload_filename_re.match(fname) is not None
 
 
@@ -111,7 +130,7 @@ def create_app(config, packages):
                             401,
                             headers={"WWW-Authenticate": 'Basic realm="pypi"'}
                         )
-                    if not config.auther(*request.auth):
+                    if not config.auther.authenticate(request):
                         raise HTTPError(403)
                 return method(*args, **kwargs)
 

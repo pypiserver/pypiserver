@@ -3,6 +3,13 @@
 import pytest
 
 from pypiserver import paste
+from pypiserver.core import load_plugins
+
+
+def configure_fake(config):
+    """Fake for the configure() function."""
+    config.plugins = load_plugins()
+    return config, []
 
 
 @pytest.mark.parametrize('conf_options', [
@@ -15,5 +22,5 @@ from pypiserver import paste
 ])
 def test_paste_app_factory(conf_options, monkeypatch):
     """Test the paste_app_factory method."""
-    monkeypatch.setattr('pypiserver.core.configure', lambda x: (x, []))
+    monkeypatch.setattr('pypiserver.core.configure', configure_fake)
     paste.paste_app_factory({}, **conf_options)

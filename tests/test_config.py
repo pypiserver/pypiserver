@@ -11,12 +11,13 @@ except ImportError:  # py2
     from mock import Mock
 
 import pytest
+from pkg_resources import resource_filename
 
 from pypiserver import config
 from pypiserver import const
 
 
-class StubAction:
+class StubAction(object):
     """Quick stub for argparse actions."""
 
     def __init__(self, option_strings):
@@ -99,7 +100,7 @@ class TestCustomParsers(object):
         assert config._CustomParsers.verbosity(verbosity) == exp
 
 
-class TestDeprecatedParser:
+class TestDeprecatedParser(object):
     """Tests for the deprecated parser."""
 
     @pytest.fixture()
@@ -320,7 +321,7 @@ class TestDeprecatedParser:
         assert parser.parse_args(args).download_directory is exp
 
 
-class TestParser:
+class TestParser(object):
     """Tests for the parser."""
 
     @pytest.fixture()
@@ -621,6 +622,10 @@ class TestReadyMades(object):
                 elif default == 'authenticate':
                     assert getattr(conf, default) == (
                         [a for a in value.split()]
+                    )
+                elif default == 'welcome_file':
+                    assert getattr(conf, default) == (
+                        resource_filename('pypiserver', value)
                     )
                 else:
                     assert getattr(conf, default) == value

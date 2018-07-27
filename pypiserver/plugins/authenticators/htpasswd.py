@@ -36,7 +36,8 @@ class HtpasswdAuthenticator(AuthenticatorInterface):
 
     def authenticate(self, request):
         """Authenticate the provided request."""
-        if self.config.password_file is None:
+        if (self.config.password_file is None or
+                self.config.password_file == '.'):
             return True
         pwd_file = HtpasswdFile(self.config.password_file)
         pwd_file.load_if_changed()

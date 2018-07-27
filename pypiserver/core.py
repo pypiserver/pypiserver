@@ -1,18 +1,19 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
-import functools
 import hashlib
 import itertools
 import logging
 import mimetypes
 import os
 import re
+from warnings import warn
 
 import pkg_resources
 from pkg_resources import iter_entry_points
 
 from .const import PLUGIN_GROUPS, PY2, STANDALONE_WELCOME
+from .plugins.authenticators.interface import convert_legacy
 
 if PY2:
     from io import open
@@ -98,14 +99,6 @@ def configure(config):
         return itertools.chain(*[listdir(r) for r in config.roots])
 
     packages.root = config.roots[0]
-
-    if not callable(config.auther):
-        if config.password_file and config.password_file != '.':
-            from passlib.apache import HtpasswdFile
-            ht_pwd_file = HtpasswdFile(config.password_file)
-        else:
-            config.password_file = ht_pwd_file = None
-        config.auther = functools.partial(auth_by_htpasswd_file, ht_pwd_file)
 
     log.info("+++Pypiserver started with: %s", config)
 

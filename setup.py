@@ -76,7 +76,7 @@ setup(
         'paste.app_factory': ['main=pypiserver.paste:paste_app_factory'],
         'console_scripts': [
             'pypi-server=pypiserver.__main__:main',
-            'pypiserver=pypiserver.__main__:_new_main',
+            'pypiserver=pypiserver.__main__:main',
         ],
         'pypiserver.authenticators': [
             'htpasswd = '

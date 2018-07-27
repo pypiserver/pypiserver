@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 import warnings
+
 try:
     from unittest import mock
 except ImportError:
@@ -51,6 +52,18 @@ def main(request, monkeypatch):
 
 class TestMain(object):
     """Test the main() method."""
+
+    @pytest.fixture(autouse=True)
+    def patch_warner(self, monkeypatch):
+        """Don't bother emitting deprecation warnings."""
+        monkeypatch.setattr(__main__, '_warn_deprecation', lambda: None)
+
+    @pytest.fixture(autouse=True)
+    def patch_argv(self, monkeypatch):
+        """Set argv so it looks like pypi-server started the script."""
+        new_argv = list(sys.argv)
+        new_argv[0] = 'pypi-server'
+        monkeypatch.setattr(__main__.sys, 'argv', new_argv)
 
     def test_default_pkgdir(self, main):
         main([])
@@ -118,7 +131,6 @@ class TestMain(object):
         main(["-v", "--log-file", logfile.strpath])
         assert logfile.check(), logfile
 
-    # @pytest.mark.filterwarnings('ignore::DeprecationWarning')
     def test_logging_verbosity(self, main):
         main([])
         assert logging.getLogger().level == logging.WARN

@@ -23,3 +23,22 @@ class AuthenticatorInterface(PluginInterface):
         :return: whether the request was successfully authenticated
         :rtype: bool
         """
+
+
+def convert_legacy(auther):
+    """Convert a legacy auther to the new interface automatically.
+
+    :param callable auther: a callable expecting to receive
+        `*request.auth` and returning a bool
+    :return: a new class corresponding to the proper plugin interface
+        but calling the legacy auth callable
+    :rtype: AuthenticatorInterface
+    """
+    class NewAuther(AuthenticatorInterface):
+        """Pass the request auth instead of the request."""
+
+        def authenticate(self, request):
+            """Pass request.auth to the legacy auther callable."""
+            return auther(*request.auth)
+
+    return NewAuther

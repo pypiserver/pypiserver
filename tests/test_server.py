@@ -37,11 +37,13 @@ _BUFF_SIZE = 2**16
 _port = 8090
 SLEEP_AFTER_SRV = 3  # sec
 
+
 @pytest.fixture
 def port():
     global _port
     _port += 1
     return _port
+
 
 Srv = namedtuple('Srv', ('proc', 'port', 'package'))
 
@@ -54,8 +56,9 @@ def _run_server(packdir, port, authed, other_cli=''):
         'partial': "-Ptests/htpasswd.a.a -a update",
     }
     pswd_opts = pswd_opt_choices[authed]
-    cmd = "%s -m pypiserver.__main__ -vvv --overwrite -p %s %s %s %s" % (
-        sys.executable, port, pswd_opts, other_cli, packdir)
+    cmd = "pypi-server -vvv --overwrite -p %s %s %s %s" % (
+        port, pswd_opts, other_cli, packdir
+    )
     proc = subprocess.Popen(cmd.split(), bufsize=_BUFF_SIZE)
     time.sleep(SLEEP_AFTER_SRV)
     assert proc.poll() is None

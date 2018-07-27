@@ -10,11 +10,11 @@ import functools as ft
 import logging
 import sys
 import warnings
+from os import path
 
 import pypiserver
 from pypiserver import bottle
 from pypiserver.config import Config
-from pypiserver.const import PY2
 
 
 log = logging.getLogger('pypiserver.main')
@@ -45,8 +45,30 @@ def _logwrite(logger, level, msg):
             logger.log(level, msg)
 
 
+def _update(config):
+    """Output an update command or update packages."""
+    from pypiserver.manage import update_all_packages
+    update_all_packages(
+        config.roots,
+        config.download_directory,
+        dry_run=not(config.execute),
+        stable_only=not(config.unstable)
+    )
+
+
 def _run_app_from_config(config):
     """Run a bottle application for the given config."""
+    init_logging(
+        level=config.verbosity, filename=config.log_file, frmt=config.log_frmt
+    )
+
+    # Handle new config format
+    if getattr(config, 'command', '') == 'update':
+        return _update(config)
+    # Handle deprecated config format
+    elif getattr(config, 'update_packages', False):
+        return _update(config)
+
     if (not config.authenticate and config.password_file != '.' or
             config.authenticate and config.password_file == '.'):
         auth_err = (
@@ -54,20 +76,6 @@ def _run_app_from_config(config):
             "must also be empty ('.')!"
         )
         sys.exit(auth_err % config.password_file)
-
-    init_logging(
-        level=config.verbosity, filename=config.log_file, frmt=config.log_frmt
-    )
-
-    if hasattr(config, 'update_packages') and config.update_packages:
-        from pypiserver.manage import update_all_packages
-        update_all_packages(
-            config.roots,
-            config.download_directory,
-            dry_run=not(config.execute),
-            stable_only=not(config.unstable)
-        )
-        return
 
     if config.server and config.server.startswith('gevent'):
         import gevent.monkey  # @UnresolvedImport
@@ -88,28 +96,31 @@ def _run_app_from_config(config):
     )
 
 
-def main(argv=None):
-    """Run the deprecated pypi-server command."""
-    if PY2:
-        # I honestly don't know why Python 2 is not raising this warning
-        # with "default" as the filter.
-        warnings.filterwarnings('always', category=DeprecationWarning)
+def _warn_deprecation():
+    """Set warning filters to show a deprecation warning."""
+    warnings.filterwarnings('always', category=DeprecationWarning)
     warnings.warn(DeprecationWarning(
         'The "pypi-server" command has been deprecated and will be removed '
         'in the next major release. Please use "pypiserver run" or '
         '"pypiserver update" instead.'
     ))
-    if PY2:
-        warnings.filterwarnings('default', category=DeprecationWarning)
-    config = Config(
-        parser_type='pypi-server'
-    ).get_parser().parse_args(args=argv)
+    warnings.filterwarnings('default', category=DeprecationWarning)
+
+
+def main(argv=None):
+    """Run the deprecated pypi-server command."""
+    caller = path.basename(sys.argv[0])
+
+    if caller == 'pypi-server':
+        _warn_deprecation()
+    elif caller != 'pypiserver':
+        # Allow calling via API from other scripts, but adjust the caller
+        # to get the default config type.
+        caller = 'pypiserver'
+
+    config = Config(parser_type=caller).get_parser().parse_args(args=argv)
+
     _run_app_from_config(config)
-
-
-def _new_main():
-    """Run the new pypiserver command."""
-    _run_app_from_config(Config().get_parsed())
 
 
 if __name__ == "__main__":
