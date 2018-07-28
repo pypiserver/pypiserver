@@ -7,6 +7,7 @@ python:
   - 3.4
   - 3.5
   - 3.6
+  - 3.7
   - pypy
   - pypy3
 
@@ -15,7 +16,6 @@ install:
 
 script:
   - ./bin/test-docker.sh
-  - ./bin/test_standalone.sh
   - tox
   - ./bin/check_readme.sh
 
