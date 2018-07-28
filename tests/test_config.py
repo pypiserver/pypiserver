@@ -16,6 +16,8 @@ from pkg_resources import resource_filename
 from pypiserver import config
 from pypiserver import const
 
+from .doubles import GenericNamespace
+
 
 class StubAction(object):
     """Quick stub for argparse actions."""
@@ -535,6 +537,42 @@ class TestParser(object):
         """Test specifying authed actions."""
         args.insert(0, 'run')
         assert parser.parse_args(args).authenticate == exp
+
+    @pytest.mark.parametrize('args, exp', (
+        ([], 'htpasswd'),
+        (['--auth-backend', 'no-auth'], 'no-auth')
+    ))
+    def test_auth_backend(self, parser, args, exp):
+        """Test specifying an auth backend."""
+        args.insert(0, 'run')
+        assert parser.parse_args(args).auth_backend == exp
+
+    def test_auth_backend_no_passlib(self, monkeypatch):
+        """Ensure that we fallback to no-auth.
+
+        If passlib is not available and the ``htpasswd`` plugin
+        cannot be loaded, we should fall back to the ``no-auth``
+        dummy authenticator.
+        """
+        conf = config.Config()
+        monkeypatch.setitem(
+            conf._plugins,
+            'authenticators',
+            {
+                'no-auth': GenericNamespace(
+                    plugin_name='a',
+                    plugin_help='a',
+                    update_parser=lambda *x, **y: None,
+                )
+            }
+        )
+        parser = conf.get_parser()
+        assert parser.parse_args(['run']).auth_backend == 'no-auth'
+
+    def test_auth_backend_bad_value(self, parser):
+        """Test that only loaded plugins may be specified."""
+        with pytest.raises(SystemExit):
+            parser.parse_args(['--auth-backend', 'foobar'])
 
     @pytest.mark.parametrize('args, exp', (
         ([], None),

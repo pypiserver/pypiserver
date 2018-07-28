@@ -27,9 +27,9 @@ from textwrap import dedent
 try:
     from urllib.request import urlopen
 except ImportError:
-    from urllib import urlopen
+    from urllib import urlopen  # type: ignore
 
-from py import path  # @UnresolvedImport
+from py import path  # @UnresolvedImport pylint: disable=no-name-in-module
 import pytest
 
 
@@ -191,26 +191,26 @@ def pipdir(tmpdir):
     return tmpdir.mkdir("pip")
 
 
-def test_pipInstall_packageNotFound(empty_packdir, port, pipdir, package):
-    with new_server(empty_packdir, port) as srv:
+def test_pip_install_package_not_found(empty_packdir, port, pipdir, package):
+    with new_server(empty_packdir, port):
         cmd = "centodeps"
         assert _run_pip_install(cmd, port, pipdir) != 0
         assert not pipdir.listdir()
 
 
-def test_pipInstall_openOk(open_server, package, pipdir):
+def test_pip_install_open_ok(open_server, package, pipdir):
     cmd = "centodeps"
     assert _run_pip_install(cmd, open_server.port, pipdir) == 0
     assert pipdir.join(package.basename).check()
 
 
-def test_pipInstall_authedFails(protected_server, pipdir):
+def test_pip_install_authed_fails(protected_server, pipdir):
     cmd = "centodeps"
     assert _run_pip_install(cmd, protected_server.port, pipdir) != 0
     assert not pipdir.listdir()
 
 
-def test_pipInstall_authedOk(protected_server, package, pipdir):
+def test_pip_install_authed_ok(protected_server, package, pipdir):
     cmd = "centodeps"
     assert _run_pip_install(cmd, protected_server.port, pipdir,
                             user='a', pswd='a') == 0
@@ -246,18 +246,18 @@ def pypirc_file(txt):
 
 
 @pytest.mark.parametrize("pkg_frmt", ['bdist', 'bdist_wheel'])
-def test_setuptoolsUpload_open(empty_packdir, port, project, package,
-                               pkg_frmt):
+def test_setuptools_upload_open(empty_packdir, port, project, package,
+                                pkg_frmt):
     url = _build_url(port, None, None)
     with pypirc_file(dedent("""\
-            [distutils]
-            index-servers: test
+                [distutils]
+                index-servers: test
 
-            [test]
-            repository: %s
-            username: ''
-            password: ''
-        """ % url)):
+                [test]
+                repository: %s
+                username: ''
+                password: ''
+            """ % url)):
         with new_server(empty_packdir, port):
             with chdir(project.strpath):
                 cmd = "setup.py -vvv %s upload -r %s" % (pkg_frmt, url)
@@ -269,21 +269,23 @@ def test_setuptoolsUpload_open(empty_packdir, port, project, package,
 
 
 @pytest.mark.parametrize("pkg_frmt", ['bdist', 'bdist_wheel'])
-def test_setuptoolsUpload_authed(empty_packdir, port, project, package,
-                                 pkg_frmt, monkeypatch):
+def test_setuptools_upload_authed(empty_packdir, port, project, package,
+                                  pkg_frmt, monkeypatch):
     url = _build_url(port)
     with pypirc_file(dedent("""\
-            [distutils]
-            index-servers: test
+                [distutils]
+                index-servers: test
 
-            [test]
-            repository: %s
-            username: a
-            password: a
-        """ % url)):
+                [test]
+                repository: %s
+                username: a
+                password: a
+            """ % url)):
         with new_server(empty_packdir, port, authed=True):
             with chdir(project.strpath):
-                cmd = "setup.py -vvv %s register -r test upload -r test" % pkg_frmt
+                cmd = "setup.py -vvv %s register -r test upload -r test" % (
+                    pkg_frmt
+                )
                 for i in range(5):
                     print('++Attempt #%s' % i)
                     assert _run_python(cmd) == 0
@@ -297,14 +299,14 @@ def test_setuptools_upload_partial_authed(empty_packdir, port, project,
     """Test uploading a package with setuptools with partial auth."""
     url = _build_url(port)
     with pypirc_file(dedent("""\
-            [distutils]
-            index-servers: test
+                [distutils]
+                index-servers: test
 
-            [test]
-            repository: %s
-            username: a
-            password: a
-        """ % url)):
+                [test]
+                repository: %s
+                username: a
+                password: a
+            """ % url)):
         with new_server(empty_packdir, port, authed='partial'):
             with chdir(project.strpath):
                 cmd = ("setup.py -vvv %s register -r test upload -r test" %
@@ -359,7 +361,7 @@ def registerer(pypirc, monkeypatch):
 @pytest.mark.skipif(sys.version_info[:2] == (3, 2),
                     reason="urllib3 fails on twine (see https://travis-ci"
                            ".org/ankostis/pypiserver/builds/81044993)")
-def test_twineUpload_open(empty_packdir, port, package, uploader, pypirc):
+def test_twine_upload_open(empty_packdir, port, package, uploader, pypirc):
     """Test twine upload with no authentication"""
     user, pswd = 'foo', 'bar'
     update_pypirc(pypirc, port, user=user, pswd=pswd)
@@ -377,7 +379,7 @@ def test_twineUpload_open(empty_packdir, port, package, uploader, pypirc):
 @pytest.mark.skipif(sys.version_info[:2] == (3, 2),
                     reason="urllib3 fails on twine (see https://travis-ci"
                            ".org/ankostis/pypiserver/builds/81044993)")
-def test_twineUpload_authed(empty_packdir, port, package, uploader, pypirc):
+def test_twine_upload_authed(empty_packdir, port, package, uploader, pypirc):
     """Test authenticated twine upload"""
     user, pswd = 'a', 'a'
     update_pypirc(pypirc, port, user=user, pswd=pswd)
@@ -417,7 +419,7 @@ def test_twine_upload_partial_authed(empty_packdir, port, package, uploader,
 @pytest.mark.skipif(sys.version_info[:2] == (3, 2),
                     reason="urllib3 fails on twine (see https://travis-ci"
                            ".org/ankostis/pypiserver/builds/81044993)")
-def test_twineRegister_open(open_server, package, registerer, pypirc):
+def test_twine_register_open(open_server, package, registerer, pypirc):
     """Test unauthenticated twine registration"""
     srv = open_server
     update_pypirc(pypirc, srv.port)
@@ -430,7 +432,8 @@ def test_twineRegister_open(open_server, package, registerer, pypirc):
 @pytest.mark.skipif(sys.version_info[:2] == (3, 2),
                     reason="urllib3 fails on twine (see https://travis-ci"
                            ".org/ankostis/pypiserver/builds/81044993)")
-def test_twineRegister_authedOk(protected_server, package, registerer, pypirc):
+def test_twine_register_authed_ok(protected_server, package, registerer,
+                                  pypirc):
     """Test authenticated twine registration"""
     srv = protected_server
     user, pswd = 'a', 'a'
