@@ -15,7 +15,7 @@ install:
   - pip install -U setuptools pip sphinx tox tox-travis
 
 script:
-  - ./bin/test-docker.sh
+  - ./bin/test_docker.sh
   - tox
   - ./bin/check_readme.sh
 
