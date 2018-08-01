@@ -4,6 +4,8 @@ from subprocess import call
 
 from . import core
 import itertools
+import pip
+from distutils.version import StrictVersion
 
 if sys.version_info >= (3, 0):
     from xmlrpc.client import Server
@@ -140,9 +142,14 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
         sys.stdout.write("# update %s from %s to %s\n" %
                          (pkg.pkgname, pkg.replaces.version, pkg.version))
 
-        cmd = ["pip", "-q", "install", "--no-deps", "-i", "https://pypi.org/simple",
-               "-d", destdir or os.path.dirname(pkg.replaces.fn),
-               "%s==%s" % (pkg.pkgname, pkg.version)]
+        if StrictVersion(pip.__version__) < StrictVersion('10.0.0'):
+            cmd = ["pip", "-q", "install", "--no-deps", "-i", "https://pypi.org/simple",
+                   "-d", destdir or os.path.dirname(pkg.replaces.fn),
+                   "%s==%s" % (pkg.pkgname, pkg.version)]
+        else:
+            cmd = ["pip", "-q", "download", "--no-deps", "-i", "https://pypi.org/simple",
+                   "-d", destdir or os.path.dirname(pkg.replaces.fn),
+                   "%s==%s" % (pkg.pkgname, pkg.version)]
 
         sys.stdout.write("%s\n\n" % (" ".join(cmd),))
         if not dry_run:
