@@ -12,9 +12,11 @@ mock; python_version == '2.7'
 pip>=7
 passlib>=1.6
 pytest>=2.3
+requests
 setuptools
 setuptools-git>=0.3
 tox
 twine>=1.7
+virtualenv
 webtest
 wheel>=0.25.0

@@ -130,7 +130,7 @@ class TestDeprecatedParser(object):
         assert parser.parse_args(args).verbosity == exp
 
     @pytest.mark.parametrize('args, exp', (
-        ([], list(map(expanduser, config._Defaults.roots))),
+        ([], list(map(expanduser, config._Defaults.roots))),  # type: ignore
         (['/foo'], ['/foo']),
         (['/foo', '~/bar'], ['/foo', expanduser('~/bar')]),
     ))
@@ -401,7 +401,7 @@ class TestParser(object):
         assert parser.parse_args(['run']).command == 'run'
 
     @pytest.mark.parametrize('args, exp', (
-        ([], list(map(expanduser, config._Defaults.roots))),
+        ([], list(map(expanduser, config._Defaults.roots))),  # type: ignore
         (['/foo'], ['/foo']),
         (['/foo', '~/bar'], ['/foo', expanduser('~/bar')]),
     ))
@@ -606,7 +606,7 @@ class TestParser(object):
         assert parser.parse_args(['update']).command == 'update'
 
     @pytest.mark.parametrize('args, exp', (
-        ([], list(map(expanduser, config._Defaults.roots))),
+        ([], list(map(expanduser, config._Defaults.roots))),  # type: ignore
         (['/foo'], ['/foo']),
         (['/foo', '~/bar'], ['/foo', expanduser('~/bar')]),
     ))
