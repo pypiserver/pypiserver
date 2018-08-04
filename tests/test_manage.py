@@ -1,12 +1,34 @@
-#! /usr/bin/env py.test
+#!/usr/bin/env py.test
+"""Tests for manage.py."""
 
-import pytest, py
-from pypiserver.core import parse_version, PkgFile, guess_pkgname_and_version
-from pypiserver.manage import is_stable_version, build_releases, filter_stable_releases, filter_latest_pkgs
+from __future__ import absolute_import, print_function, unicode_literals
+
+try:
+    from unittest.mock import Mock
+except ImportError:
+    from mock import Mock
+
+import py
+import pytest
+
+from pypiserver import manage
+from pypiserver.core import (
+    PkgFile,
+    guess_pkgname_and_version,
+    parse_version,
+)
+from pypiserver.manage import (
+    PipCmd,
+    build_releases,
+    filter_stable_releases,
+    filter_latest_pkgs,
+    is_stable_version,
+    update_package,
+)
 
 
 def touch_files(root, files):
-    root = py.path.local(root)
+    root = py.path.local(root)  # pylint: disable=no-member
     for f in files:
         root.join(f).ensure()
 
@@ -14,7 +36,7 @@ def touch_files(root, files):
 def pkgfile_from_path(fn):
     pkgname, version = guess_pkgname_and_version(fn)
     return PkgFile(pkgname=pkgname, version=version,
-                   root=py.path.local(fn).parts()[1].strpath,
+                   root=py.path.local(fn).parts()[1].strpath,  # noqa pylint: disable=no-member
                    fn=fn)
 
 
@@ -69,3 +91,90 @@ def test_filter_latest_pkgs_case_insensitive():
     pkgs = [pkgfile_from_path(x) for x in paths]
 
     assert frozenset(filter_latest_pkgs(pkgs)) == frozenset(pkgs[1:])
+
+
+@pytest.mark.parametrize('pip_ver, cmd_type', (
+    ('10.0.0', 'd'),
+    ('10.0.0rc10', 'd'),
+    ('10.0.0b10', 'd'),
+    ('10.0.0a3', 'd'),
+    ('10.0.0.dev8', 'd'),
+    ('10.0.0.dev8', 'd'),
+    ('18.0', 'd'),
+    ('9.9.8', 'i'),
+    ('9.9.8rc10', 'i'),
+    ('9.9.8b10', 'i'),
+    ('9.9.8a10', 'i'),
+    ('9.9.8.dev10', 'i'),
+    ('9.9', 'i'),
+))
+def test_pip_cmd_root(pip_ver, cmd_type):
+    """Verify correct determination of the command root by pip version."""
+    exp_cmd = (
+        'pip',
+        '-q',
+        'install' if cmd_type == 'i' else 'download',
+    )
+    assert tuple(PipCmd.update_root(pip_ver)) == exp_cmd
+
+
+def test_pip_cmd_update():
+    """Verify the correct determination of a pip command."""
+    index = 'https://pypi.org/simple'
+    destdir = 'foo/bar'
+    pkg_name = 'mypkg'
+    pkg_version = '12.0'
+    cmd_root = ('pip', '-q', 'download')
+    exp_cmd = cmd_root + (
+        '--no-deps',
+        '-i',
+        index,
+        '-d',
+        destdir,
+        '{}=={}'.format(pkg_name, pkg_version)
+    )
+    assert exp_cmd == tuple(
+        PipCmd.update(cmd_root, destdir, pkg_name, pkg_version)
+    )
+
+
+def test_pip_cmd_update_index_overridden():
+    """Verify the correct determination of a pip command."""
+    index = 'https://pypi.org/complex'
+    destdir = 'foo/bar'
+    pkg_name = 'mypkg'
+    pkg_version = '12.0'
+    cmd_root = ('pip', '-q', 'download')
+    exp_cmd = cmd_root + (
+        '--no-deps',
+        '-i', index,
+        '-d', destdir,
+        '{}=={}'.format(pkg_name, pkg_version)
+    )
+    assert exp_cmd == tuple(
+        PipCmd.update(cmd_root, destdir, pkg_name, pkg_version, index=index)
+    )
+
+
+def test_update_package(monkeypatch):
+    """Test generating an update command for a package."""
+    monkeypatch.setattr(manage, 'call', Mock())
+    pkg = PkgFile('mypkg', '1.0', replaces=PkgFile('mypkg', '0.9'))
+    update_package(pkg, '.')
+    manage.call.assert_called_once_with((  # pylint: disable=no-member
+        'pip',
+        '-q',
+        'download',
+        '--no-deps',
+        '-i', 'https://pypi.org/simple',
+        '-d', '.',
+        'mypkg==1.0',
+    ))
+
+
+def test_update_package_dry_run(monkeypatch):
+    """Test generating an update command for a package."""
+    monkeypatch.setattr(manage, 'call', Mock())
+    pkg = PkgFile('mypkg', '1.0', replaces=PkgFile('mypkg', '0.9'))
+    update_package(pkg, '.', dry_run=True)
+    assert not manage.call.mock_calls  # pylint: disable=no-member
