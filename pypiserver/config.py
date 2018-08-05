@@ -465,7 +465,7 @@ class Config(object):
             '--auth-backend',
             default=environ.get(
                 'PYPISERVER_AUTH_BACKEND',
-                'htpasswd' if 'htpasswd' in self._plugins['authenticators']
+                'passlib' if 'passlib' in self._plugins['authenticators']
                 else 'no-auth'
             ),
             choices=self._plugins['authenticators'].keys(),

@@ -244,6 +244,8 @@ class TestDeprecatedParser(object):
         """Test specifying cache retention time."""
         assert parser.parse_args(args).cache_control == exp
 
+    # TODO: test for updated auth flow
+
     @pytest.mark.parametrize('args, exp', (
         ([], ['update']),
         (['-a', '.'], []),

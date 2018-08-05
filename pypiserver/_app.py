@@ -231,7 +231,7 @@ def create_app(config, packages):
     @auth("update")
     def update():
         try:
-            action = request.forms[':action']  # pylint: disable=E1136
+            action = request.forms[':action']  # noqa pylint: disable=unsubscriptable-object
         except KeyError:
             raise HTTPError(400, "Missing ':action' field!")
 
