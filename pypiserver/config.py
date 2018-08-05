@@ -148,6 +148,10 @@ class _PypiserverParser(ArgumentParser):
         parsed = super(_PypiserverParser, self).parse_args(
             args=args, namespace=namespace
         )
+        if not hasattr(parsed, 'authenticate'):
+            # Ensure a useful value is present even when no auth
+            # plugins are installed.
+            parsed.authenticate = _Defaults.authenticate
         for attr, parser in self.extra_parsers.items():
             if hasattr(parsed, attr):
                 setattr(parsed, attr, parser(getattr(parsed, attr)))
@@ -410,31 +414,42 @@ class Config(object):
 
         :param ArgumentParser parser: an ArgumentParser instance
         """
+        auth_plugins_available = bool(
+            set(self._plugins['authenticators']).difference(
+                set(('no-auth',))
+            )
+        )
         security = parser.add_argument_group(
             title='Security',
             description='Configure pypiserver access controls'
         )
-        # TODO: pull some of this long stuff out into an epilog
-        security.add_argument(
-            '-a', '--authenticate',
-            default=environ.get(
-                'PYPISERVER_AUTHENTICATE',
-                _Defaults.authenticate,
-            ),
-            help=dedent('''\
-                comma-separated list of (case-insensitive) actions to
-                authenticate. Use "." for no authentication. Requires the
-                password (-P option) to be set. For example to password-protect
-                package downloads (in addition to uploads), while leaving
-                listings public, use: `-P foo/htpasswd.txt`  -a update,download
-                To drop all authentications, use: `-P .  -a `.
-                Note that when uploads are not protected, the `register`
-                command is not necessary, but `~/.pypirc` still requires
-                username and password fields, even if bogus. By default,
-                only %(default)s is password-protected
-            ''')
-        )
+        if auth_plugins_available or self.parser_type == 'pypi-server':
+            # Do not bother to show authentication arguments when no
+            # non-dummy auth plugins are installed.
+            security.add_argument(
+                '-a', '--authenticate',
+                default=environ.get(
+                    'PYPISERVER_AUTHENTICATE',
+                    _Defaults.authenticate,
+                ),
+                # TODO: pull some of this long stuff out into an epilog
+                help=dedent('''\
+                    comma-separated list of (case-insensitive) actions to
+                    authenticate. Use "." for no authentication. Requires the
+                    password (-P option) to be set. For example to
+                    password-protect package downloads (in addition to
+                    uploads), while leaving listings public, use:
+                    `-P foo/htpasswd.txt -a update,download`.
+                    To drop all authentications, use: `-P .  -a .`.
+                    Note that when uploads are not protected, the `register`
+                    command is not necessary, but `~/.pypirc` still requires
+                    username and password fields, even if bogus. By default,
+                    only %(default)s is password-protected
+                ''')
+            )
         if self.parser_type == 'pypi-server':
+            # This argument is created by the `pypiserver-passlib` plugin
+            # for pypiserver>=2.0
             security.add_argument(
                 '-P', '--passwords',
                 dest='password_file',

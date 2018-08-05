@@ -42,12 +42,12 @@ setup(
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     setup_requires=setup_requires,
     extras_require={
-        'passlib': ['passlib>=1.6'],
+        'passlib': ['pypiserver-passlib'],
         'cache': ['watchdog']
     },
     tests_require=tests_require,
     url="https://github.com/pypiserver/pypiserver",
-    maintainer=("Kostis Anagnostopoulos <ankostis@gmail.com>"
+    maintainer=("Kostis Anagnostopoulos <ankostis@gmail.com> "
                 "Matthew Planchard <mplanchard@gmail.com>"),
     maintainer_email="ankostis@gmail.com",
     classifiers=[
@@ -70,7 +70,8 @@ setup(
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Build Tools",
-        "Topic :: System :: Software Distribution"],
+        "Topic :: System :: Software Distribution"
+    ],
     zip_safe=True,
     entry_points={
         'paste.app_factory': ['main=pypiserver.paste:paste_app_factory'],
@@ -79,9 +80,6 @@ setup(
             'pypiserver=pypiserver.__main__:main',
         ],
         'pypiserver.authenticators': [
-            'htpasswd = '
-            'pypiserver.plugins.authenticators.htpasswd:HtpasswdAuthenticator '
-            '[passlib]',
             'no-auth = '
             'pypiserver.plugins.authenticators.no_auth:NoAuthAuthenticator'
         ]

@@ -2,7 +2,7 @@
 
 import sys
 from contextlib import contextmanager
-from os import chdir, getcwd, environ, path, remove
+from os import chdir, getcwd, environ, listdir, path, remove
 from shutil import copy2, rmtree
 from subprocess import PIPE, Popen
 from tempfile import mkdtemp
@@ -52,33 +52,50 @@ def activate_venv(venv_dir):
     environ['VIRTUAL_ENV'] = start_venv
 
 
-def pypiserver_cmd(venv_dir, root, *args):
+def pypiserver_cmd(root, *args):
     """Yield a command to run pypiserver.
 
     :param str exc: the path to the python executable to use in
         running pypiserver.
     :param args: extra arguments for ``pypiserver run``
     """
-    yield '{}/bin/pypiserver'.format(venv_dir)
+    # yield '{}/bin/pypiserver'.format(venv_dir)
+    yield 'pypiserver'
     yield 'run'
     yield root
     for arg in args:
         yield arg
 
 
-def pip_cmd(venv_dir, *args):
+def pip_cmd(*args):
     """Yield a command to run pip.
 
-    :param str bindir: the path to the bin directory where the pip
-        command can be found.
     :param args: extra arguments for ``pip``
     """
-    yield '{}/bin/pip'.format(venv_dir)
+    yield 'pip'
     for arg in args:
         yield arg
-    if 'install' in args or 'download' in args:
-        yield '--index-url'
+    if any(i in args for i in ('install', 'download', 'search')):
+        yield '-i'
         yield 'http://localhost:8080'
+
+
+def twine_cmd(*args):
+    """Yield a command to run twine.
+
+    :param args: arguments for `twine`
+    """
+    yield 'twine'
+    for arg in args:
+        yield arg
+    for part in ('--repository-url', 'http://localhost:8080'):
+        yield part
+    if '-u' not in args:
+        for part in ('-u', 'username'):
+            yield part
+    if '-p' not in args:
+        for part in ('-p', 'password'):
+            yield part
 
 
 def run(args, raise_on_err=True, capture=False, **kwargs):
@@ -112,7 +129,6 @@ def venv():
         venv_dir,
     ))
     with activate_venv(venv_dir):
-        import ipdb; ipdb.set_trace()
         run(
             (
                 'python',
@@ -161,9 +177,7 @@ class TestNoAuth:
         """Run pypiserver with no auth."""
         pkg_root = mkdtemp()
         with activate_venv(venv):
-            proc = Popen(pypiserver_cmd(
-                venv, pkg_root, '--auth-backend', 'no-auth'
-            ), env=environ)
+            proc = Popen(pypiserver_cmd(pkg_root), env=environ)
         yield pkg_root
         proc.kill()
         rmtree(pkg_root)
@@ -182,10 +196,21 @@ class TestNoAuth:
         yield
         remove(path.join(pkg_root, SIMPLE_DEV_PKG))
 
-    @pytest.mark.usefixtures('venv_active')
-    def test_install(self, venv, simple_pkg):
+    @pytest.mark.usefixtures('venv_active', 'simple_pkg')
+    def test_install(self):
         """Test pulling a package with pip from the repo."""
-        run(('pip', 'install', 'simple_pkg'))
-        assert 'simple-pkg' in run(
-            ('pip', 'freeze'), capture=True, env=environ
-        )
+        run(pip_cmd('install', 'simple_pkg'))
+        assert 'simple-pkg' in run(pip_cmd('freeze'), capture=True)
+
+    @pytest.mark.usefixtures('venv_active')
+    def test_upload(self, pkg_root):
+        """Test putting a package into the rpeo."""
+        assert SIMPLE_PKG not in listdir(pkg_root)
+        run(twine_cmd('upload', SIMPLE_PKG_PATH))
+        assert SIMPLE_PKG in listdir(pkg_root)
+
+    @pytest.mark.usefixtures('venv_active', 'simple_pkg')
+    def test_search(self):
+        """Test results of pip search."""
+        out = run(pip_cmd('search', 'simple_pkg'), capture=True)
+        assert 'simple_pkg' in out
