@@ -9,8 +9,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
 |pypi-ver| |travis-status| |dependencies| |python-ver| |proj-license|
 
-:Version:     1.2.2
-:Date:        2018-06-12 11:49:30
+:Version:     1.2.3
+:Date:        2018-08-04 11:49:30
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.org/project/pypiserver/
 :Travis:      https://travis-ci.org/pypiserver/pypiserver
@@ -336,11 +336,14 @@ use it like this::
 Using the Docker Image
 ======================
 
-Starting with version 1.2.3, official Docker images are built for each
+Starting with version 1.2.3, official Docker images will be built for each
 push to master, each dev, alpha, or beta release, and each final release.
 The most recent full release will always be available under the tag ``latest``,
 and the current master branch will always be available under the tag
-``master``.
+``unstable``.
+
+You can always check to see what tags are currently available at our
+`Docker Repo`_.
 
 To run the most recent release of ``pypiserver`` with Docker, simply::
 
@@ -372,7 +375,10 @@ You can also specify ``pypiserver`` to run as a Docker service using a
 composefile. An example composefile is `provided <docker-compose.yml>`_.
 
 
-Alternative Installation methods
+.. _`docker repo`: https://hub.docker.com/r/pypiserver/pypiserver/tags/
+
+
+Alternative Installation Methods
 ================================
 When trying the methods below, first use the following command to check whether
 previous versions of *pypiserver* already exist, and (optionally) uninstall them::
