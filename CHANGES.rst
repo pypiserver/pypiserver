@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Next Release
+1.2.3 (2018-08-04)
 ------------------
 
 - MAINT: Remove broken downloads badge (thanks @hugovk, #209)
