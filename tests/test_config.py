@@ -244,8 +244,6 @@ class TestDeprecatedParser(object):
         """Test specifying cache retention time."""
         assert parser.parse_args(args).cache_control == exp
 
-    # TODO: test for updated auth flow
-
     @pytest.mark.parametrize('args, exp', (
         ([], ['update']),
         (['-a', '.'], []),
@@ -535,10 +533,31 @@ class TestParser(object):
         (['-a', 'update, download'], ['update', 'download']),
         (['-a', 'update,download'], ['update', 'download']),
     ))
-    def test_specify_auth(self, parser, args, exp):
-        """Test specifying authed actions."""
+    def test_specify_auth(self, monkeypatch, parser, args, exp):
+        """Test specifying authed actions.
+
+        We need to patch the plugins list to ensure it includes passlib,
+        (really just something other than "no-auth"), otherwise the
+        ``-a`` option is not provided.
+        """
         args.insert(0, 'run')
-        assert parser.parse_args(args).authenticate == exp
+        conf = config.Config()
+        passlib = GenericNamespace(
+            plugin_name='passlib',
+            plugin_help='foo',
+            update_parser=lambda x: None,
+        )
+        no_auth = GenericNamespace(
+            plugin_name='noauth',
+            plugin_help='foo',
+            update_parser=lambda x: None
+        )
+        monkeypatch.setattr(
+            conf,
+            '_plugins',
+            {'authenticators': {'passlib': passlib, 'no-auth': no_auth}}
+        )
+        assert conf.get_parser().parse_args(args).authenticate == exp
 
     @pytest.mark.parametrize('args, exp', (
         ([], 'htpasswd'),

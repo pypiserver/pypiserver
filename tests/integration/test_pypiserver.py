@@ -269,7 +269,7 @@ class TestPasslibAuth(object):
                 '-i', 'https://pypi.org/simple',
                 '-U',
                 '--pre',
-                'pypiserver-passlib==1.0.0.dev2'
+                'pypiserver-passlib',
             ))
             proc = Popen(
                 pypiserver_cmd(pkg_root, '-P', htpasswd_file)
