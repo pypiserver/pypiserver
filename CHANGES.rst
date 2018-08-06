@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.2.4 (2018-08-06)
+------------------
+
+- FIX: the command to download new versions of available packages now
+  works with ``pip`` >= 10.0 (thanks @elboerto, #215)
+
 1.2.3 (2018-08-04)
 ------------------
 
