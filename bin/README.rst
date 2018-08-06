@@ -33,5 +33,8 @@ Release check-list:
 
 7. Run ``bin/commit-standalone.sh``.
 
+7. Ensure that the new tag is built on hub.docker.com as ``latest`` and as a
+   direct tag reference.
+
 8. Copy release notes from ``/CHANGES.rst`` in GitHub as new *"release"* page
    on the new tag.  Check syntactic differences between ``.md`` and ``.rst`` files.
