@@ -1,9 +1,16 @@
-import sys
+"""Management operations for pypiserver."""
+
+from __future__ import absolute_import, print_function, unicode_literals
+
+import itertools
 import os
+import sys
+from distutils.version import LooseVersion
 from subprocess import call
 
+import pip
+
 from . import core
-import itertools
 
 if sys.version_info >= (3, 0):
     from xmlrpc.client import Server
@@ -134,19 +141,64 @@ def find_updates(pkgset, stable_only=True):
     return need_update
 
 
+class PipCmd(object):
+    """Methods for generating pip commands."""
+
+    @staticmethod
+    def update_root(pip_version):
+        """Yield an appropriate root command depending on pip version."""
+        # legacy_pip = StrictVersion(pip_version) < StrictVersion('10.0')
+        legacy_pip = LooseVersion(pip_version) < LooseVersion('10.0')
+        for part in ('pip', '-q'):
+            yield part
+        yield 'install' if legacy_pip else 'download'
+
+    @staticmethod
+    def update(cmd_root, destdir, pkg_name, pkg_version,
+               index='https://pypi.org/simple'):
+        """Yield an update command for pip."""
+        for part in cmd_root:
+            yield part
+        for part in ('--no-deps', '-i', index, '-d', destdir):
+            yield part
+        yield '{}=={}'.format(pkg_name, pkg_version)
+
+
+def update_package(pkg, destdir, dry_run=False):
+    """Print and optionally execute a package update."""
+    print(
+        "# update {0.pkgname} from {0.replaces.version} to "
+        "{0.version}".format(pkg)
+    )
+
+    cmd = tuple(
+        PipCmd.update(
+            PipCmd.update_root(pip.__version__),
+            destdir or os.path.dirname(pkg.replaces.fn),
+            pkg.pkgname,
+            pkg.version
+        )
+    )
+
+    print("{}\n".format(" ".join(cmd)))
+    if not dry_run:
+        call(cmd)
+
+
 def update(pkgset, destdir=None, dry_run=False, stable_only=True):
+    """Print and optionally execute pip update commands.
+
+    :param pkgset: the set of currently available packages
+    :param str destdir: the destination directory for downloads
+    :param dry_run: whether commands should be executed (rather than
+        just being printed)
+    :param stable_only: whether only stable (non prerelease) updates
+        should be considered.
+    """
     need_update = find_updates(pkgset, stable_only=stable_only)
     for pkg in sorted(need_update, key=lambda x: x.pkgname):
-        sys.stdout.write("# update %s from %s to %s\n" %
-                         (pkg.pkgname, pkg.replaces.version, pkg.version))
+        update_package(pkg, destdir, dry_run=dry_run)
 
-        cmd = ["pip", "-q", "install", "--no-deps", "-i", "https://pypi.org/simple",
-               "-d", destdir or os.path.dirname(pkg.replaces.fn),
-               "%s==%s" % (pkg.pkgname, pkg.version)]
-
-        sys.stdout.write("%s\n\n" % (" ".join(cmd),))
-        if not dry_run:
-            call(cmd)
 
 def update_all_packages(roots, destdir=None, dry_run=False, stable_only=True):
     packages = frozenset(itertools.chain(*[core.listdir(r) for r in roots]))
