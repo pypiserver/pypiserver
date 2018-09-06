@@ -12,9 +12,9 @@ services:
             - type: bind
               source: ./data
               target: /data
-        # Use an .htaccess file to control access, serve packages from
+        # Use an .htpasswd file to control access, serve packages from
         # ./data (which will be /data in the container)
-        command: -P /data/.htaccess -a update,download,list /data/packages
+        command: -P /data/.htpasswd -a update,download,list /data/packages
         ports:
             - "80:8080"
 volumes:

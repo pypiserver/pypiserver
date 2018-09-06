@@ -366,9 +366,9 @@ To serve packages from a directory on the host, e.g. ``~/packages``::
 
     docker run -p 80:8080 -v ~/packages:/data/packages pypiserver/pypiserver:latest
 
-To authenticate against a local ``.htaccess`` file::
+To authenticate against a local ``.htpasswd`` file::
 
-    docker run -p 80:8080 -v ~/.htaccess:/data/.htaccess pypiserver/pypiserver:latest -P .htaccess packages
+    docker run -p 80:8080 -v ~/.htpasswd:/data/.htpasswd pypiserver/pypiserver:latest -P .htpasswd packages
 
 You can also specify ``pypiserver`` to run as a Docker service using a
 composefile. An example composefile is `provided <docker-compose.yml>`_.
@@ -557,7 +557,7 @@ package and as such, it provides excellent cross-platform support for process
 management. An example configuration file for ``supervisor`` is given below::
 
     [program:pypi]
-    command=/home/pypi/pypi-venv/bin/pypi-server -p 7001 -P /home/pypi/.htaccess /home/pypi/packages
+    command=/home/pypi/pypi-venv/bin/pypi-server -p 7001 -P /home/pypi/.htpasswd /home/pypi/packages
     directory=/home/pypi
     user=pypi
     autostart=true
