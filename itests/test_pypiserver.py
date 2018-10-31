@@ -49,7 +49,6 @@ def pypiserver_cmd(root, *args):
         running pypiserver.
     :param args: extra arguments for ``pypiserver run``
     """
-    # yield '{}/bin/pypiserver'.format(venv_dir)
     yield bin_target('pypiserver')
     yield 'run'
     yield root
