@@ -1,5 +1,9 @@
 """Integration tests for the new pypiserver command."""
 
+from __future__ import (
+    absolute_import, division, print_function, unicode_literals
+)
+
 import os
 import sys
 from contextlib import contextmanager
@@ -7,6 +11,9 @@ from os import chdir, getcwd, environ, listdir, path, remove
 from shutil import copy2, rmtree
 from subprocess import PIPE, Popen
 from tempfile import mkdtemp, mkstemp
+
+if sys.version_info < (3,):
+    from itertools import ifilter as filter  # noqa pylint: disable=no-name-in-module
 
 import pytest
 from passlib.apache import HtpasswdFile
@@ -30,27 +37,9 @@ def changedir(target):
     chdir(start)
 
 
-@contextmanager
-def activate_venv(venv_dir):
-    """Set up the environment to use the provided venv."""
-    start_venv = environ['VIRTUAL_ENV']
-    start_pythonpath = environ.get('PYTHONPATH')
-    start_launcher = environ.get('__PYVENV_LAUNCHER__')
-    environ['VIRTUAL_ENV'] = venv_dir
-    environ['PYTHONPATH'] = pythonpath(venv_dir)
-    environ['__PYVENV_LAUNCHER__'] = '{}/bin/python'.format(venv_dir)
-    with add_to_path(path.join(venv_dir, 'bin')):
-        # with changedir(venv_dir):
-        yield
-    if start_pythonpath is None:
-        del environ['PYTHONPATH']
-    else:
-        environ['PYTHONPATH'] = start_pythonpath
-    if start_launcher is None:
-        del environ['__PYVENV_LAUNCHER__']
-    else:
-        environ['__PYVENV_LAUNCHER__'] = start_launcher
-    environ['VIRTUAL_ENV'] = start_venv
+def bin_target(target):
+    """Get a binary target relative to the current python executable."""
+    return path.abspath(path.join(sys.executable, '..', target))
 
 
 def pypiserver_cmd(root, *args):
@@ -61,7 +50,7 @@ def pypiserver_cmd(root, *args):
     :param args: extra arguments for ``pypiserver run``
     """
     # yield '{}/bin/pypiserver'.format(venv_dir)
-    yield 'pypiserver'
+    yield bin_target('pypiserver')
     yield 'run'
     yield root
     for arg in args:
@@ -73,7 +62,7 @@ def pip_cmd(*args):
 
     :param args: extra arguments for ``pip``
     """
-    yield 'pip'
+    yield bin_target('pip')
     for arg in args:
         yield arg
     if (any(i in args for i in ('install', 'download', 'search'))
@@ -87,7 +76,7 @@ def twine_cmd(*args):
 
     :param args: arguments for `twine`
     """
-    yield 'twine'
+    yield bin_target('twine')
     for arg in args:
         yield arg
     for part in ('--repository-url', 'http://localhost:8080'):
@@ -116,34 +105,6 @@ def run(args, raise_on_err=True, capture=False, **kwargs):
     return proc.returncode
 
 
-@pytest.fixture(scope='module', autouse=True)
-def venv():
-    """Return the path to a virtual python interpreter.
-
-    Pypiserver is installed into the venv, along with passlib.
-    """
-    venv_root = mkdtemp()
-    venv_dir = path.join(venv_root, 'venv')
-    run((
-        'virtualenv',
-        '-p',
-        path.basename(sys.executable),
-        '--always-copy',
-        venv_dir,
-    ))
-    with activate_venv(venv_dir):
-        run(
-            (
-                'python',
-                '{}/setup.py'.format(ROOT_DIR),
-                'install',
-            ),
-            env=environ
-        )
-    yield venv_dir
-    rmtree(venv_dir)
-
-
 @contextmanager
 def add_to_path(target):
     """Adjust the PATH to add the target at the front."""
@@ -153,18 +114,60 @@ def add_to_path(target):
     environ['PATH'] = start
 
 
-def pythonpath(venv_dir):
-    """Get the python path for the venv_dir."""
-    return '{}/lib/{}/site-packages'.format(
-        venv_dir, path.basename(sys.executable)
-    )
+@contextmanager
+def add_to_pythonpath(target):
+    """Adjust the PYTHONPATH to add the target at the front."""
+    start = environ.get('PYTHONPATH', '')
+    environ['PYTHONPATH'] = '{}:{}'.format(target, start)
+    yield
+    environ['PYTHONPATH'] = start
 
 
 @pytest.fixture()
-def venv_active(venv):
-    """Adjust the PATH to add the venv."""
-    with activate_venv(venv):
-        yield
+def site_packages():
+    """Return a temporary directory to use as an additional packages dir."""
+    spdir = mkdtemp()
+    yield spdir
+    rmtree(spdir)
+
+
+@pytest.fixture(scope='class')
+def extra_pythonpath():
+    """Return a temporary directory added to the front of the pythonpath."""
+    ppath = mkdtemp()
+    with add_to_pythonpath(ppath):
+        yield ppath
+    rmtree(ppath)
+
+
+@pytest.fixture(scope='session')
+def download_passlib():
+    """Download passlib into a temporary directory."""
+    passlib_dir = mkdtemp()
+    with changedir(passlib_dir):
+        run((
+            bin_target('pip'),
+            'download',
+            '--no-deps',
+            'git+git://github.com/pypiserver/pypiserver-passlib',
+        ))
+    passlib_file = next(filter(
+        lambda x: x.endswith('.zip'),
+        os.listdir(passlib_dir)
+    ))
+    yield passlib_file
+    rmtree(passlib_dir)
+
+
+@pytest.fixture(scope='class')
+def install_passlib(download_passlib, extra_pythonpath):
+    """Install passlib into the extra pythonpath."""
+    run((
+        bin_target('pip'),
+        'install',
+        '--no-deps',
+        download_passlib,
+    ))
 
 
 @pytest.fixture(scope='class', autouse=True)
@@ -204,27 +207,25 @@ class TestNoAuth(object):
     """Tests for running pypiserver with no authentication."""
 
     @pytest.fixture(scope='class', autouse=True)
-    def runserver(self, venv, pkg_root):
+    def runserver(self, pkg_root):
         """Run pypiserver with no auth."""
-        with activate_venv(venv):
-            proc = Popen(pypiserver_cmd(pkg_root), env=environ)
+        proc = Popen(pypiserver_cmd(pkg_root), env=environ)
         yield proc
         proc.kill()
 
-    @pytest.mark.usefixtures('venv_active', 'simple_pkg')
+    @pytest.mark.usefixtures('simple_pkg')
     def test_install(self):
         """Test pulling a package with pip from the repo."""
         run(pip_cmd('install', 'simple_pkg'))
         assert 'simple-pkg' in run(pip_cmd('freeze'), capture=True)
 
-    @pytest.mark.usefixtures('venv_active')
     def test_upload(self, pkg_root):
-        """Test putting a package into the rpeo."""
+        """Test putting a package into the repo."""
         assert SIMPLE_PKG not in listdir(pkg_root)
         run(twine_cmd('upload', SIMPLE_PKG_PATH))
         assert SIMPLE_PKG in listdir(pkg_root)
 
-    @pytest.mark.usefixtures('venv_active', 'simple_pkg')
+    @pytest.mark.usefixtures('simple_pkg')
     def test_search(self):
         """Test results of pip search."""
         out = run(pip_cmd('search', 'simple_pkg'), capture=True)
@@ -261,23 +262,15 @@ class TestPasslibAuth(object):
         remove(passfile)
 
     @pytest.fixture(scope='class', autouse=True)
-    def runserver(self, venv, pkg_root, htpasswd_file):
+    def runserver(self, pkg_root, install_passlib, htpasswd_file):
         """Run with default auth when pypiserver-passlib is installed."""
-        with activate_venv(venv):
-            run(pip_cmd(
-                'install',
-                '-i', 'https://pypi.org/simple',
-                '-U',
-                '--pre',
-                'pypiserver-passlib',
-            ))
-            proc = Popen(
-                pypiserver_cmd(pkg_root, '-P', htpasswd_file)
-            )
+        proc = Popen(
+            pypiserver_cmd(pkg_root, '-P', htpasswd_file)
+        )
         yield proc
         proc.kill()
 
-    @pytest.mark.usefixtures('venv_active', 'clean_pkg_root')
+    @pytest.mark.usefixtures('clean_pkg_root')
     def test_upload(self, pkg_root):
         """Test putting a package into the repo."""
         assert SIMPLE_PKG not in listdir(pkg_root)
@@ -286,7 +279,6 @@ class TestPasslibAuth(object):
         ))
         assert SIMPLE_PKG in listdir(pkg_root)
 
-    @pytest.mark.usefixtures('venv_active')
     def test_upload_fail(self, pkg_root):
         """Test putting a package into the repo with bad creds."""
         assert SIMPLE_PKG not in listdir(pkg_root)
