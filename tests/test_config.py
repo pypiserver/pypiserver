@@ -560,7 +560,7 @@ class TestParser(object):
         assert conf.get_parser().parse_args(args).authenticate == exp
 
     @pytest.mark.parametrize('args, exp', (
-        ([], 'htpasswd'),
+        ([], 'passlib'),
         (['--auth-backend', 'no-auth'], 'no-auth')
     ))
     def test_auth_backend(self, parser, args, exp):
@@ -571,7 +571,7 @@ class TestParser(object):
     def test_auth_backend_no_passlib(self, monkeypatch):
         """Ensure that we fallback to no-auth.
 
-        If passlib is not available and the ``htpasswd`` plugin
+        If passlib is not available and the ``passlib`` plugin
         cannot be loaded, we should fall back to the ``no-auth``
         dummy authenticator.
         """
@@ -598,7 +598,7 @@ class TestParser(object):
     @pytest.mark.parametrize('args, exp', (
         ([], None),
         (['-P', 'foo'], 'foo'),
-        (['--passwords', 'foo'], 'foo'),
+        (['--password-file', 'foo'], 'foo'),
     ))
     def test_specify_password_file(self, parser, args, exp):
         """Test specifying a password file."""

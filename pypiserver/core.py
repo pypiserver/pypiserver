@@ -7,7 +7,6 @@ import logging
 import mimetypes
 import os
 import re
-from warnings import warn
 
 import pkg_resources
 from pkg_resources import iter_entry_points

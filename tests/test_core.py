@@ -107,7 +107,7 @@ def test_load_plugins():
     passlib install.
     """
     plugins = core.load_plugins()
-    assert 'htpasswd' in plugins['authenticators']
+    assert 'passlib' in plugins['authenticators']
 
 
 def test_load_plugin_group():
@@ -119,7 +119,7 @@ def test_load_plugin_group():
     a second plugin type is added, it'll become more meaningful.
     """
     auth_plugins = core.load_plugins('authenticators')
-    assert 'htpasswd' in auth_plugins['authenticators']
+    assert 'passlib' in auth_plugins['authenticators']
 
 
 def test_load_plugin_bad_group():
