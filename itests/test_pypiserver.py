@@ -5,15 +5,15 @@ from __future__ import (
 )
 
 import os
+from os import chdir, getcwd, environ, listdir, path, remove
 import sys
 from contextlib import contextmanager
-from os import chdir, getcwd, environ, listdir, path, remove
 from shutil import copy2, rmtree
 from subprocess import PIPE, Popen
 from tempfile import mkdtemp, mkstemp
 
 if sys.version_info < (3,):
-    from itertools import ifilter as filter  # noqa pylint: disable=no-name-in-module
+    from itertools import ifilter as filter  # noqa pylint: disable=no-name-in-module,redefined-builtin
 
 import pytest
 from passlib.apache import HtpasswdFile
@@ -154,7 +154,7 @@ def download_passlib():
         lambda x: x.endswith('.zip'),
         os.listdir(passlib_dir)
     ))
-    yield passlib_file
+    yield path.abspath(path.join(passlib_dir, passlib_file))
     rmtree(passlib_dir)
 
 
