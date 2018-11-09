@@ -6,6 +6,7 @@ WORKDIR /code
 
 RUN adduser -S -u 9898 pypiserver && \
     addgroup -S -g 9898 pypiserver && \
+    apk add py-bcrypt && \
     python setup.py install && \
     pip install passlib && \
     cd / && \
