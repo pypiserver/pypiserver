@@ -14,6 +14,7 @@ pytest>=2.3
 setuptools
 setuptools-git>=0.3
 tox
-twine>=1.7
+# TODO: fix tests for twine 1.12
+twine<1.12
 webtest
 wheel>=0.25.0
