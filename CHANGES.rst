@@ -1,6 +1,16 @@
 Changelog
 =========
 
+1.2.5 (2018-11-09)
+------------------
+
+- FIX: bcrypt is now installed into the Docker image, which allows
+  passlib to work like it should (thanks @Diftraku, #224)
+
+- MAINT: integration tests with ``twine`` have been updated to use the
+  command-line interface rather than the internal API, which should
+  make them more resilient over time (#226)
+
 1.2.4 (2018-08-06)
 ------------------
 
@@ -26,7 +36,7 @@ Changelog
 
 - DOC: scrubbed docs of links to pypi.python.org
 
-- DEPRECATION: Drop support for Python 3.3 (tahnks @hugovk, #198)
+- DEPRECATION: Drop support for Python 3.3 (thanks @hugovk, #198)
 
 
 1.2.1 (2017-11-29)
