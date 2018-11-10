@@ -415,7 +415,7 @@ def test_twine_register_open(open_server, package):
         twine_register([package.strpath], repository='test', conf=rcfile)
 
 
-def test_twine_register_authedOk(protected_server, package):
+def test_twine_register_authed_ok(protected_server, package):
     """Test authenticated twine registration"""
     srv = protected_server
     user, pswd = 'a', 'a'
