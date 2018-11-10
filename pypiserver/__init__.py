@@ -2,9 +2,9 @@ import os
 import re as _re
 import sys
 
-version = __version__ = "1.2.5.dev0"
+version = __version__ = "1.2.5"
 __version_info__ = tuple(_re.split('[.-]', __version__))
-__updated__ = "2018-08-06 17:51:22"
+__updated__ = "2018-11-09 19:25:39"
 
 __title__ = "pypiserver"
 __summary__ = "A minimal PyPI server for use with pip/easy_install."
