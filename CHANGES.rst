@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.2.5 (2018-11-09)
+1.2.5 (2018-11-11)
 ------------------
 
 - FIX: bcrypt is now installed into the Docker image, which allows
