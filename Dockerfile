@@ -6,9 +6,32 @@ WORKDIR /code
 
 RUN addgroup -S -g 9898 pypiserver && \
     adduser -S -u 9898 -G pypiserver pypiserver && \
-    apk add py-bcrypt && \
+    apk add --no-cache --virtual .build-deps  \
+      bzip2-dev \
+      coreutils \
+      dpkg-dev dpkg \
+      expat-dev \
+      findutils \
+      gcc \
+      gdbm-dev \
+      libc-dev \
+      libffi-dev \
+      libressl \
+      libressl-dev \
+      linux-headers \
+      make \
+      ncurses-dev \
+      pax-utils \
+      readline-dev \
+      sqlite-dev \
+      tcl-dev \
+      tk \
+      tk-dev \
+      xz-dev \
+      zlib-dev &&\
     python setup.py install && \
-    pip install passlib && \
+    pip install passlib bcrypt && \
+    apk del .build-deps && \
     cd / && \
     rm -rf /code && \
     mkdir -p /data/packages && \
