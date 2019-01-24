@@ -250,7 +250,7 @@ def simpleindex():
 @auth("list")
 def simple(prefix=""):
     # PEP 503: require normalized prefix
-    normalized = core.normalize_pkgname(prefix)
+    normalized = core.normalize_pkgname_for_url(prefix)
     if prefix != normalized:
         return redirect('/simple/{0}/'.format(normalized), 301)
 
@@ -327,11 +327,5 @@ def server_static(filename):
 @app.route('/:prefix')
 @app.route('/:prefix/')
 def bad_url(prefix):
-    p = request.fullpath
-    if p.endswith("/"):
-        p = p[:-1]
-    p = p.rsplit('/', 1)[0]
-    p += "/simple/%s/" % prefix
-
-    return redirect(p)
-
+    """Redirect unknown root URLs to /simple/."""
+    return redirect(core.get_bad_url_redirect_path(request, prefix))

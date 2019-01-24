@@ -20,6 +20,7 @@ import webtest
 
 # Local Imports
 from pypiserver import __main__, bottle
+
 import tests.test_core as test_core
 
 
@@ -430,11 +431,11 @@ def test_upload_badFilename(package, root, testapp):
 def test_remove_pkg_missingNaveVersion(name, version, root, testapp):
     msg = "Missing 'name'/'version' fields: name=%s, version=%s"
     params = {':action': 'remove_pkg', 'name': name, 'version': version}
-    params = dict((k, v) for k,v in params.items() if v is not None)
+    params = dict((k, v) for k, v in params.items() if v is not None)
     resp = testapp.post("/", expect_errors=1, params=params)
 
     assert resp.status == '400 Bad Request'
-    assert msg %(name, version) in hp.unescape(resp.text)
+    assert msg % (name, version) in hp.unescape(resp.text)
 
 
 def test_remove_pkg_notFound(root, testapp):

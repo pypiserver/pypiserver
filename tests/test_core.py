@@ -7,6 +7,7 @@ import os
 import pytest
 
 from pypiserver import __main__, core
+from tests.doubles import Namespace
 
 
 ## Enable logging to detect any problems with it
@@ -90,3 +91,20 @@ def test_hashfile(tmpdir, algo, digest):
     f = tmpdir.join("empty")
     f.ensure()
     assert core.digest_file(f.strpath, algo) == digest
+
+
+def test_redirect_prefix_encodes_newlines():
+    """Ensure raw newlines are url encoded in the generated redirect."""
+    request = Namespace(
+        fullpath='/\nSet-Cookie:malicious=1;'
+    )
+    prefix = '\nSet-Cookie:malicious=1;'
+    newpath = core.get_bad_url_redirect_path(request, prefix)
+    assert '\n' not in newpath
+
+
+def test_normalize_pkgname_for_url_encodes_newlines():
+    """Ensure newlines are url encoded in package names for urls."""
+    assert '\n' not in core.normalize_pkgname_for_url(
+        '/\nSet-Cookie:malicious=1;'
+    )

@@ -11,6 +11,11 @@ import os
 import re
 import sys
 
+try:  # PY3
+    from urllib.parse import quote
+except ImportError:  # PY2
+    from urllib import quote
+
 import pkg_resources
 
 from . import Configuration
@@ -183,6 +188,11 @@ def normalize_pkgname(name):
     return re.sub(r"[-_.]+", "-", name).lower()
 
 
+def normalize_pkgname_for_url(name):
+    """Perform PEP 503 normalization and ensure the value is safe for URLs."""
+    return quote(re.sub(r"[-_.]+", "-", name).lower())
+
+
 def is_allowed_path(path_part):
     p = path_part.replace("\\", "/")
     return not (p.startswith(".") or "/." in p)
@@ -271,6 +281,17 @@ def store(root, filename, save_method):
     assert "/" not in filename
     dest_fn = os.path.join(root, filename)
     save_method(dest_fn, overwrite=True)  # Overwite check earlier.
+
+
+def get_bad_url_redirect_path(request, prefix):
+    """Get the path for a bad root url."""
+    p = request.fullpath
+    if p.endswith("/"):
+        p = p[:-1]
+    p = p.rsplit('/', 1)[0]
+    prefix = quote(prefix)
+    p += "/simple/{}/".format(prefix)
+    return p
 
 
 def _digest_file(fpath, hash_algo):
