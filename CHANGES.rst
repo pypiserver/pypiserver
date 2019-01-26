@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.2.6 (2019-01-26)
+------------------
+
+- SEC: mitigate potential CRLF injection attacks from malicious URLs
+  (thanks @samwcyo, #237)
+
 1.2.5 (2018-11-11)
 ------------------
 
