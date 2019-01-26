@@ -61,8 +61,16 @@ def _run_server(packdir, port, authed, other_cli=''):
         'partial': "-Ptests/htpasswd.a.a -a update",
     }
     pswd_opts = pswd_opt_choices[authed]
-    cmd = "%s -m pypiserver.__main__ -vvv --overwrite -p %s %s %s %s" % (
-        sys.executable, port, pswd_opts, other_cli, packdir)
+    cmd = (
+        "%s -m pypiserver.__main__ -vvv --overwrite -i 127.0.0.1 "
+        "-p %s %s %s %s" % (
+            sys.executable,
+            port,
+            pswd_opts,
+            other_cli,
+            packdir,
+        )
+    )
     proc = subprocess.Popen(cmd.split(), bufsize=_BUFF_SIZE)
     time.sleep(SLEEP_AFTER_SRV)
     assert proc.poll() is None
