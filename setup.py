@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
+"""Pypiserver setup file."""
 
-from os.path import dirname, join
+from os.path import abspath, dirname, join
 
 from setuptools import find_packages, setup
 
@@ -12,25 +12,25 @@ REQS_FILE = "requirements/run.txt"
 
 def read(path: str, encoding: str = "utf8") -> str:
     """Read a file and return the text."""
-    from os import listdir
-    from os.path import abspath
-    mydir = abspath(dirname(__file__))
-    print(listdir(mydir))
-    return open(join(dirname(__file__), path), encoding=encoding).read()
+    return open(
+        join(abspath(dirname(__file__)), path), encoding=encoding
+    ).read()
 
 
 def get_info():
     """Get package info."""
     info_txt = read(INFO_FILE)
     ret = {}
-    exec(info_txt, ret)  # nosec
+    exec(info_txt, ret)  # nosec pylint: disable=exec-used
     return ret
 
 
 def get_requirements():
     """Get package requirements."""
     req_txt = read(REQS_FILE)
-    return req_txt.splitlines()
+    return list(
+        filter(lambda x: x and not x.startswith("#"), req_txt.splitlines())
+    )
 
 
 INFO = get_info()
@@ -54,7 +54,11 @@ setup(
         #   'rst': ['docutils>=0.11'],
         #   ':python_version=="2.6"': ['argparse'],
     },
-    entry_points={},
+    entry_points={
+        'console_scripts': [
+            'pypiserver=pypiserver.main:main'
+        ]
+    },
     classifiers=[
         # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
         "Development Status :: 5 - Production/Stable",

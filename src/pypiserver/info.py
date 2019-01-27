@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 """Package information."""
 
 __pkg_name__ = 'pypiserver'

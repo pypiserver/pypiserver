@@ -40,6 +40,7 @@ __pycache__/
 
 # IDE stuff
 .idea/
+**/.ropeproject/
 
 # Venvs
 .venv/
