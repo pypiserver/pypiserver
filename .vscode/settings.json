@@ -1,0 +1,18 @@
+{
+    "python.envFile": "${workspaceFolder}/.dev.env",
+    "python.formatting.blackArgs": [
+        "--line-length", "79"
+    ],
+    "python.formatting.provider": "black",
+    "python.linting.banditEnabled": true,
+    "python.linting.flake8Enabled": false,
+    "python.linting.mypyEnabled": true,
+    "python.linting.pydocstyleArgs": [
+        "--ignore",
+        "D203,D210,D213"
+    ],
+    "python.linting.pydocstyleEnabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.prospectorEnabled": true,
+    "python.pythonPath": "${env:HOME}/.pyvenv/pypiserver/bin/python"
+}

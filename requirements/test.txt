@@ -1,0 +1,5 @@
+bandit
+mypy
+pydocstyle
+pytest
+prospector
