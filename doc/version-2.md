@@ -5,4 +5,7 @@
 * Totally rewritten
 * Python 3.6+ compatible only
 * License changed from BSD to MIT
-* Break from the "absolutely no dependencies" rule
+* Break from the "absolutely no dependencies" rule, while still trying
+  to keep minimal dependencies
+* Provide authentication & authorization control out-of-the-box, with
+  no added dependencies
