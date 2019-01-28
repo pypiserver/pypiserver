@@ -2,7 +2,7 @@
 
 import pytest
 
-from pypiserver.models.compliance import Pep426, Pep503
+from pypiserver.core.compliance import Pep426, Pep503
 
 
 class TestPep426:

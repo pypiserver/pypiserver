@@ -1,6 +1,5 @@
 """Model(s) related to a python package."""
 
-from pypiserver.optimization import memoize
 from .compliance import Pep426, Pep503
 
 

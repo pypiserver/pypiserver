@@ -35,11 +35,12 @@ def memoize(max_records: int = 0) -> t.Callable:
             _prune_odict, max_records
         )
     else:
-        prune = lambda *x, **y: None
+        def prune(*args, **kwargs):  # pylint: disable=unused-argument
+            return None
 
     def create_decorator(func: t.Callable) -> t.Callable:
         """Generate the decorator."""
-        results: OrderedDict[t.Tuple[t.Hashable, ...], t.Any] = OrderedDict()
+        results: OrderedDict[t.Tuple[t.Hashable, ...], t.Any] = OrderedDict()  # noqa pylint: disable=unsubscriptable-object
 
         @wraps(func)
         def wrapper(*args: t.Hashable, **kwargs: t.Hashable) -> t.Any:

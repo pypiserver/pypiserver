@@ -5,7 +5,7 @@
     ],
     "python.formatting.provider": "black",
     "python.linting.banditArgs": [
-        "--skip", "B101"
+        "--skip", "B101,B603"
     ],
     "python.linting.banditEnabled": true,
     "python.linting.flake8Enabled": false,
@@ -17,7 +17,6 @@
     "python.linting.pydocstyleEnabled": true,
     "python.linting.pylintEnabled": false,
     "python.linting.prospectorArgs": [
-        "--doc-warnings",
         "--strictness", "veryhigh"
     ],
     "python.linting.prospectorEnabled": true,

@@ -1,2 +1,9 @@
+[MESSAGES CONTROL]
 disable=
+    # I'd like to keep bad-continuation, but it fails on properly
+    # spaced function arguments with the close paren on the following
+    # line. See https://github.com/PyCQA/pylint/issues/289
+    bad-continuation,
+    invalid-name,
+    locally-disabled,
     too-few-public-methods,
