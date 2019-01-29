@@ -2,8 +2,9 @@
 
 | | |
 |----|----|
-| Author | Matthew Planchard
-| Date | 2019-01-28
+| **Author** | Matthew Planchard |
+| **Created** | 2019-01-28 |
+| **Updated** | 2019-01-28 |
 | | |
 
 Pypiserver version 2 will be a significant rewrite, with some major
@@ -55,6 +56,14 @@ meet production requirements for large organizations.
   the user experience, the command-line interface for pypiserver will be
   significantly expanded, including commands to view and manage packages,
   users, and permissions.
+* **Improved Documentation**
+  All of pypiserver's documentation is contained in the README. When that
+  document was first created in 2011, it was 32 lines long. It has grown to
+  be an unwieldy 882 lines. One of the things we will do in this version is
+  split out the documentation into reasonable chunks and ensure it is
+  published somewhere like ReadTheDocs or GitBook. We will also ensure that
+  automated API docs are generated and available, which should help to make
+  plugin development substantially easier.
 
 ## License Change
 
