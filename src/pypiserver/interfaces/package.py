@@ -13,6 +13,11 @@ class IPackageName(ABC):
 
     @property
     @abstractmethod
+    def raw(self) -> str:
+        """Return the passed package name without normalization."""
+
+    @property
+    @abstractmethod
     def valid(self) -> bool:
         """Return whether the package name is valid."""
 
@@ -23,6 +28,11 @@ class IPackageVersion(ABC):
 
 class IPackage(ABC):
     """Package interface."""
+
+    @property
+    @abstractmethod
+    def data(self) -> bytes:
+        """Raw package bytes."""
 
     @property
     @abstractmethod

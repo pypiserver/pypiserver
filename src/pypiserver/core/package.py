@@ -1,5 +1,6 @@
 """Model(s) related to a python package."""
 
+import typing as t
 from pypiserver.interfaces.package import (
     IPackage,
     IPackageName,
@@ -12,11 +13,13 @@ from .compliance import Pep426, Pep503
 class PackageName(IPackageName):
     """A python package name."""
 
-    __slots__ = ("normalized", "raw", "valid")
+    __slots__ = ("_normalized", "_valid", "_raw", "normalized", "raw", "valid")
 
     def __init__(self, name: str):
         """Create a name instance."""
-        self.raw = name
+        self._normalized: t.Optional[str] = None
+        self._valid: t.Optional[bool] = None
+        self._raw: str = name
 
     def __str__(self) -> str:
         """Return a friendly representation of the object."""
@@ -27,14 +30,23 @@ class PackageName(IPackageName):
         return f"PackageName('{self.raw}')"
 
     @property
-    def normalized(self):
+    def normalized(self) -> str:
         """Return a standards-compliant package name."""
-        return Pep503.normalized_name(self.raw)
+        if self._normalized is None:
+            self._normalized = Pep503.normalized_name(self.raw)
+        return self._normalized
+
+    @property
+    def raw(self) -> str:
+        """Return the passed name without normalization."""
+        return self._raw
 
     @property
     def valid(self) -> bool:
         """Return whether the package name is valid."""
-        return Pep426.valid_name(self.raw)
+        if self._valid is None:
+            self._valid = Pep426.valid_name(self.raw)
+        return self._valid
 
 
 class PackageVersion(IPackageVersion):
@@ -58,7 +70,15 @@ class PackageVersion(IPackageVersion):
 class Package(IPackage):
     """A python package."""
 
-    __slots__ = ("name", "version")
+    __slots__ = (
+        "_store",
+        "_name",
+        "_version",
+        "data",
+        "name",
+        "save",
+        "version",
+    )
 
     def __init__(
         self, store: IStore, name: PackageName, version: PackageVersion
@@ -71,6 +91,11 @@ class Package(IPackage):
     def __str__(self) -> str:
         """Return a string representation of the package."""
         return f"Package({self.name}, {self.version})"
+
+    @property
+    def data(self) -> bytes:
+        """Return package data."""
+        return b""
 
     @property
     def name(self) -> PackageName:

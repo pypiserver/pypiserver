@@ -25,4 +25,4 @@ class IStore(ABC):
 
     @abstractmethod
     async def save_package(self, package: IPackage):
-        """Return package bytes."""
+        """Save package to store."""
