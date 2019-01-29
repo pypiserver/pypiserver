@@ -1,0 +1,1 @@
+"""Commandline interface for pypiserver."""

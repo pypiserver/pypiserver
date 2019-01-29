@@ -60,7 +60,9 @@ class Package(IPackage):
 
     __slots__ = ("name", "version")
 
-    def __init__(self, store: Istore, name: PackageName, version: PackageVersion):
+    def __init__(
+        self, store: IStore, name: PackageName, version: PackageVersion
+    ):
         """Create a python package instance."""
         self._store = store
         self._name = name
