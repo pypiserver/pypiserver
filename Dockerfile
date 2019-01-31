@@ -17,7 +17,7 @@ FROM base as builder
 # Copy the requirements and install them
 # Do this in a separate image in a separate directory
 # to not have all the pip stuff in the final image
-COPY requirements.txt /requirements.txt
+COPY docker-requirements.txt /requirements.txt
 
 # Install python packages
 RUN apk add --no-cache py2-pip \
