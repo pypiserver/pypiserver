@@ -11,7 +11,7 @@ python:
   - pypy3
 
 install:
-  - pip install -U setuptools pip sphinx tox tox-travis
+  - pip install -U setuptools twine pip sphinx tox tox-travis
 
 script:
   - ./bin/test-docker.sh
