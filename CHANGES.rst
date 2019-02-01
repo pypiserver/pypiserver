@@ -1,6 +1,15 @@
 Changelog
 =========
 
+1.2.7 (2019-01-31)
+------------------
+
+- FIX: bcrypt is now *properly* installed in the Docker image, and our
+  automated tests now do a better job of making sure authentication and
+  uploads work as expected in Docker (thanks @ronneke1996, #239; also
+  thanks @kellycampbell, #235 for an alternate approach that wound up
+  being unused but is still appreciated!)
+
 1.2.6 (2019-01-26)
 ------------------
 
