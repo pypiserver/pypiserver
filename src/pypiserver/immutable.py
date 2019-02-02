@@ -1,9 +1,28 @@
 """Utilities to make immutability easier.
 
 This module defines `ImmutableStatic`, `Immutable`, and `Freezable`
-classes. Inherit from these classes to use their properties.
+classes. Inherit from these classes to use their properties. Note that
+none of the immutability conferred by these classes extends to their
+attributes. If `immutable.a` is a dict, the dict does not magically
+become immutable, at least not yet.
 
-`ImmutableStatic` classes may not be instantiated.
+`ImmutableStatic` classes may not be instantiated. Static attributes and
+methods (class or static) may be specified in the class definition, but
+may not be altered thereafter.
+
+`Immutable` classes may be instantiated, but neither instances or class
+references are mutable.
+
+`Freezable` classes are mutable by default, but provide a `.freeze()`
+method to convert them to an immutable state. A `.thaw()` method is also
+provided to make them mutable again.
+
+Attempting to assign a value to an immutable or frozen class or instance
+will raise a subclass of `AttributeError`, either `ImmutableAssignmentError`
+or `FrozenAssignmentError` as appropriate.
+
+Attempting to instantiate an `ImmutableStatic` class will raise a
+subclass of `TypeError`, `ImmutableInstantiationError`.
 """
 
 import typing as t
@@ -37,7 +56,9 @@ class _ImmutableStaticMeta(type):
     @staticmethod
     def _instance_setattr(inst, _, __):
         """Disallow setting of instance attributes."""
-        raise ImmutableAssignmentError("{} is immutable".format(inst.__class__.__name__))
+        raise ImmutableAssignmentError(
+            "{} is immutable".format(inst.__class__.__name__)
+        )
 
     def __new__(  # nopep8
         cls: "t.Type[_ImmutableStaticMeta]",
@@ -77,7 +98,7 @@ class _ImmutableMeta(type):
             kls._kls_frozen = False
             object.__setattr__(inst, "_inst_frozen", False)
 
-            delay_freeze = kwargs.pop('delay_freeze', False)
+            delay_freeze = kwargs.pop("delay_freeze", False)
 
             init(inst, *args, **kwargs)
 
@@ -124,7 +145,9 @@ class _ImmutableMeta(type):
     def __setattr__(cls, attr, val):  # nopep8
         """Disallow setting class attributes while class is frozen."""
         if attr != "_kls_frozen" and cls._kls_frozen:
-            raise ImmutableAssignmentError("{} is immutable".format(cls.__name__))
+            raise ImmutableAssignmentError(
+                "{} is immutable".format(cls.__name__)
+            )
         super().__setattr__(attr, val)
 
 
