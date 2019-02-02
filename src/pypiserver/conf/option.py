@@ -1,8 +1,6 @@
 """An option implementation for use in a variety of sources."""
 
-import typing as t
-
-from pypiserver.immutable import Immutable, ImmutableStatic
+from pypiserver.immutable import Immutable
 
 
 class Sources(Immutable):
