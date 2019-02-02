@@ -6,4 +6,5 @@ disable=
     bad-continuation,
     invalid-name,
     locally-disabled,
+    misplaced-comparison-constant,
     too-few-public-methods,
