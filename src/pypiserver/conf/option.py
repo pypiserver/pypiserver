@@ -1,43 +1,33 @@
 """An option implementation for use in a variety of sources."""
 
 from pypiserver.immutable import Immutable
-
-
-class Sources(Immutable):
-    """Represent the possible sources of an option."""
-
-    NONE: int = 0
-    CONF: int = 1
-    ENV: int = 2
-    ARGS: int = 4
-
-    def __init__(self, sources: int):
-        """Create an OptionSource with the provided sources.
-
-        :param sources: sources may be combined using the bitwise OR
-            operator, e.g. `OptionSource(Sources.CONF | Sources.ENV)`.
-        """
-        self._sources = sources
-
-    @property
-    def conf(self) -> bool:
-        """Return whether sources include the config."""
-        return Sources.CONF & self._sources == Sources.CONF
-
-    @property
-    def env(self) -> bool:
-        """Return whether sources include the environment."""
-        return Sources.ENV & self._sources == Sources.ENV
-
-    @property
-    def args(self) -> bool:
-        """Return whether sources include commandline arguments."""
-        return Sources.ARGS & self._sources == Sources.ARGS
+from .source import Source
 
 
 class Option(Immutable):
     """An option that may be sourced from multiple locations."""
 
-    def __init__(self, sources: Sources):
+    def __init__(self, sources: int, help_txt: str = ""):
         """Create a representation of an option."""
-        self.sources = sources
+        self._sources = sources
+        self._help = help_txt
+
+    @property
+    def is_conf_opt(self) -> bool:
+        """Return whether the opt is a config option."""
+        return Source.conf(self._sources)
+
+    @property
+    def is_env_opt(self) -> bool:
+        """Return whether the opt is an env option."""
+        return Source.env(self._sources)
+
+    @property
+    def is_args_opt(self) -> bool:
+        """Return whether the opt is a commandline option."""
+        return Source.args(self._sources)
+
+    @property
+    def help(self) -> str:
+        """Return the help text for this option."""
+        return self._help
