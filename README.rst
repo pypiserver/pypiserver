@@ -320,18 +320,6 @@ To avoid storing you passwords on disk, in clear text, you may either:
      twine upload -r local --sign -identity user_name ./foo-1.zip
 
 
-Upload with `pypi-uploader`_
-----------------------------
-You can also upload packages using `pypi-uploader`_, which
-obviates the need to download packages locally prior to uploading them to
-pypiserver. You can install it with ``pip install pypi-uploader``, and
-assuming you have a ``pypi_local`` source set up in your ``~/.pypirc``,
-use it like this::
-
-    pypiupload packages mock==1.0.1 requests==2.2.1 -i pypi_local
-    pypiupload requirements requirements.txt -i pypi_local
-
-
 Using the Docker Image
 ======================
 
