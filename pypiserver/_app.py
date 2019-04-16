@@ -80,8 +80,6 @@ def favicon():
 
 @app.route('/')
 def root():
-    fp = request.fullpath
-
     try:
         numpkgs = len(list(packages()))
     except:
@@ -93,8 +91,8 @@ def root():
                     URL=request.url,
                     VERSION=__version__,
                     NUMPKGS=numpkgs,
-                    PACKAGES=urljoin(fp, "packages/"),
-                    SIMPLE=urljoin(fp, "simple/")
+                    PACKAGES=urljoin(request.url, "packages/"),
+                    SIMPLE=urljoin(request.url, "simple/")
                     )
 
 _bottle_upload_filename_re = re.compile(r'^[a-z0-9_.!+-]+$', re.I)
@@ -197,7 +195,7 @@ def update():
 @app.route('/packages')
 @auth("list")
 def pep_503_redirects(prefix=None):
-    return redirect(request.fullpath + "/", 301)
+    return redirect(request.url + "/", 301)
 
 
 @app.post('/RPC2')
@@ -261,9 +259,8 @@ def simple(prefix=""):
             return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
         return HTTPError(404, 'Not Found (%s does not exist)\n\n' % normalized)
 
-    fp = request.fullpath
     links = [(os.path.basename(f.relfn),
-              urljoin(fp, "../../packages/%s" % f.fname_and_hash(config.hash_algo)))
+              urljoin(request.url, "../../packages/%s" % f.fname_and_hash(config.hash_algo)))
              for f in files]
     tmpl = """\
     <html>
@@ -284,12 +281,11 @@ def simple(prefix=""):
 @app.route('/packages/')
 @auth("list")
 def list_packages():
-    fp = request.fullpath
     files = sorted(core.find_packages(packages()),
                    key=lambda x: (os.path.dirname(x.relfn),
                                   x.pkgname,
                                   x.parsed_version))
-    links = [(f.relfn_unix, urljoin(fp, f.fname_and_hash(config.hash_algo)))
+    links = [(f.relfn_unix, urljoin(request.url, f.fname_and_hash(config.hash_algo)))
              for f in files]
     tmpl = """\
     <html>
