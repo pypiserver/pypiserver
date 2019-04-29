@@ -285,7 +285,7 @@ def store(root, filename, save_method):
 
 def get_bad_url_redirect_path(request, prefix):
     """Get the path for a bad root url."""
-    p = request.url
+    p = request.fullpath
     if p.endswith("/"):
         p = p[:-1]
     p = p.rsplit('/', 1)[0]

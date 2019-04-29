@@ -117,7 +117,7 @@ except IOError:
 if py3k:
     import http.client as httplib
     import _thread as thread
-    from urllib.parse import urljoin, SplitResult as UrlSplitResult
+    from urllib.parse import urlparse, urljoin, SplitResult as UrlSplitResult
     from urllib.parse import urlencode, quote as urlquote, unquote as urlunquote
     urlunquote = functools.partial(urlunquote, encoding='latin1')
     from http.cookies import SimpleCookie
@@ -136,7 +136,7 @@ if py3k:
 else:  # 2.x
     import httplib
     import thread
-    from urlparse import urljoin, SplitResult as UrlSplitResult
+    from urlparse import urlparse, urljoin, SplitResult as UrlSplitResult
     from urllib import urlencode, quote as urlquote, unquote as urlunquote
     from Cookie import SimpleCookie
     from itertools import imap
@@ -1330,19 +1330,31 @@ class BaseRequest(object):
         http = env.get('HTTP_X_FORWARDED_PROTO') \
              or env.get('wsgi.url_scheme', 'http')
         host = env.get('HTTP_X_FORWARDED_HOST') or env.get('HTTP_HOST')
+
+        path = urlquote(self.scriptpath)
+        if host:
+            parsed = urlparse(http + "://" + host)
+            path = parsed.path.rstrip('/') + '/' + path.lstrip('/')
+            host = parsed.netloc
+
         if not host:
             # HTTP 1.1 requires a Host-header. This is for HTTP/1.0 clients.
             host = env.get('SERVER_NAME', '127.0.0.1')
             port = env.get('SERVER_PORT')
             if port and port != ('80' if http == 'http' else '443'):
                 host += ':' + port
-        path = urlquote(self.fullpath)
+
         return UrlSplitResult(http, host, path, env.get('QUERY_STRING'), '')
 
     @property
-    def fullpath(self):
+    def scriptpath(self):
         """ Request path including :attr:`script_name` (if present). """
         return urljoin(self.script_name, self.path.lstrip('/'))
+
+    @property
+    def fullpath(self):
+        """ The path including :attr:`scriptpath`, the prefix of the url """
+        return self.urlparts.path
 
     @property
     def query_string(self):
