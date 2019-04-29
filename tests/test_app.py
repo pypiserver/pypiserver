@@ -292,6 +292,18 @@ def test_nonroot_root(testpriv):
     resp.mustcontain("easy_install -i http://nonroot/priv/simple/ PACKAGE")
 
 
+def test_nonroot_root_with_x_forwarded_host(testapp):
+    resp = testapp.get("/", headers={"X-Forwarded-Host": "forward.ed/priv/"})
+    resp.mustcontain("easy_install -i http://forward.ed/priv/simple/ PACKAGE")
+    resp.mustcontain("""<a href="/priv/packages/">here</a>""")
+
+
+def test_nonroot_root_with_x_forwarded_host_without_tailing_slash(testapp):
+    resp = testapp.get("/", headers={"X-Forwarded-Host": "forward.ed/priv/"})
+    resp.mustcontain("easy_install -i http://forward.ed/priv/simple/ PACKAGE")
+    resp.mustcontain("""<a href="/priv/packages/">here</a>""")
+
+
 def test_nonroot_simple_index(root, testpriv):
     root.join("foobar-1.0.zip").write("")
     resp = testpriv.get("/priv/simple/foobar/")
@@ -300,9 +312,25 @@ def test_nonroot_simple_index(root, testpriv):
     assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
 
 
+def test_nonroot_simple_index_with_x_forwarded_host(root, testapp):
+    root.join("foobar-1.0.zip").write("")
+    resp = testapp.get("/simple/foobar/", headers={"X-Forwarded-Host": "forwarded.ed/priv/"})
+    links = resp.html("a")
+    assert len(links) == 1
+    assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
+
+
 def test_nonroot_simple_packages(root, testpriv):
     root.join("foobar-1.0.zip").write("123")
     resp = testpriv.get("/priv/packages/")
+    links = resp.html("a")
+    assert len(links) == 1
+    assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
+
+
+def test_nonroot_simple_packages_with_x_forwarded_host(root, testapp):
+    root.join("foobar-1.0.zip").write("123")
+    resp = testapp.get("/packages/", headers={"X-Forwarded-Host": "forwarded/priv/"})
     links = resp.html("a")
     assert len(links) == 1
     assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
