@@ -298,8 +298,8 @@ def test_nonroot_root_with_x_forwarded_host(testapp):
     resp.mustcontain("""<a href="/priv/packages/">here</a>""")
 
 
-def test_nonroot_root_with_x_forwarded_host_without_tailing_slash(testapp):
-    resp = testapp.get("/", headers={"X-Forwarded-Host": "forward.ed/priv/"})
+def test_nonroot_root_with_x_forwarded_host_without_trailing_slash(testapp):
+    resp = testapp.get("/", headers={"X-Forwarded-Host": "forward.ed/priv"})
     resp.mustcontain("easy_install -i http://forward.ed/priv/simple/ PACKAGE")
     resp.mustcontain("""<a href="/priv/packages/">here</a>""")
 
