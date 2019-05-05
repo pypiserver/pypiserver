@@ -9,8 +9,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
 |pypi-ver| |travis-status| |dependencies| |python-ver| |proj-license|
 
-:Version:     1.2.7
-:Date:        2019-01-31
+:Version:     1.3.0
+:Date:        2019-05-05
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.org/project/pypiserver/
 :Travis:      https://travis-ci.org/pypiserver/pypiserver
@@ -476,20 +476,30 @@ installation, by specifying the ``cache`` extras option::
 
     pip install pypiserver[cache]
 
-If you are using a static webserver such as *Apache* or *nginx* as
-a reverse-proxy for pypiserver, additional speedup can be gained by
-directly serving the packages directory:
+Additional speedups can be obtained by using your webserver's builtin
+caching functionality. For example, if you are using `nginx` as a
+reverse-proxy as described below in `Behind a reverse proxy`_, you can
+easily enable caching. For example, to allow nginx to cache up to
+10 gigabytes of data for up to 1 hour::
 
-For instance, in *nginx* you may adding the following config to serve
-packages-directly directly (take care not to expose "sensitive" files)::
+    proxy_cache_path /data/nginx/cache
+                     levels=1:2
+                     keys_zone=pypiserver_cache:10m
+                     max_size=10g
+                     inactive=60m
+                     use_temp_path=off;
 
-    location /packages/ {
-      root /path/to/packages/parentdir;
+    server {
+        # ...
+        location / {
+            proxy_cache pypiserver_cache;
+            proxy_pass http://localhost:8080;
+        }
     }
 
-If you have packages that are very large, you may find it helpful to
-disable hashing of files (set ``--hash-algo=off``, or ``hash_algo=None`` when
-using wsgi).
+Using webserver caching is especially helpful if you have high request
+volume. Using `nginx` caching, a real-world pypiserver installation was
+able to easily support over 1000 package downloads/min at peak load.
 
 
 Managing Automated Startup
@@ -688,7 +698,7 @@ unstable packages on different paths::
 
 Behind a reverse proxy
 ----------------------
-You can run *pypiserver* behind a reverse proxy aswell.
+You can run *pypiserver* behind a reverse proxy as well.
 
 Nginx
 ~~~~~
@@ -699,7 +709,7 @@ Extend your nginx configuration::
     }
 
     server {
-       server_name         myproxy.example.com;
+      server_name         myproxy.example.com;
 
       location / {
         proxy_set_header  Host $host:$server_port;
@@ -708,6 +718,64 @@ Extend your nginx configuration::
         proxy_pass        http://pypi;
       }
     }
+
+As of pypiserver 1.3, you may also use the `X-Forwarded-Host` header in your
+reverse proxy config to enable changing the base URL. For example if you
+want to host pypiserver under a particular path on your server::
+
+    upstream pypi {
+      server              locahost:8000;
+    }
+
+    server {
+      location /pypi/ {
+          proxy_set_header  X-Forwarded-Host $host:$server_port/pypi;
+          proxy_set_header  X-Forwarded-Proto $scheme;
+          proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header  X-Real-IP $remote_addr;
+          proxy_pass        http://pypi;
+      }
+    }
+
+
+Supporting HTTPS/SSL
+~~~~~~~~~~~~~~~~~~~~
+
+Using a reverse proxy is the preferred way of getting pypiserver behind
+HTTPS. For example, to put pypiserver behind HTTPs on port 443, with
+automatic HTTP redirection, using `nginx`::
+
+    upstream pypi {
+      server               localhost:8000;
+    }
+
+    server {
+      listen              80 default_server;
+      server_name         _;
+      return              301 https://$host$request_uri;
+    }
+
+    server {
+      listen              443 ssl;
+      server_name         pypiserver.example.com;
+
+      ssl_certificate     /etc/star.example.com.crt;
+      ssl_certificate_key /etc/star.example.com.key;
+      ssl_protocols       TLSv1 TLSv1.1 TLSv1.2;
+      ssl_ciphers         HIGH:!aNULL:!MD5;
+
+      location / {
+        proxy_set_header  Host $host:$server_port;
+        proxy_set_header  X-Forwarded-Proto $scheme;
+        proxy_set_header  X-Real-IP $remote_addr;
+        proxy_pass        http://pypi;
+      }
+    }
+
+Please see `nginx's HTTPS docs for more details <http://nginx.org/en/docs/http/configuring_https_servers.html>`_.
+
+Getting and keeping your certificates up-to-date can be simplified using,
+for example, using `certbot and letsencrypt <https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-18-04>`_.
 
 
 Utilizing the API
@@ -795,8 +863,6 @@ The following limitations are known:
 - It does not handle misspelled packages as *pypi-repo* does,
   therefore it is suggested to use it with ``--extra-index-url`` instead
   of ``--index-url`` (see `#38 <https://github.com/pypiserver/pypiserver/issues/38>`_).
-- It does not support changing the *prefix* of the path of the url
-  (see `#155 <https://github.com/pypiserver/pypiserver/issues/155>`_ for workarounds).
 
 Please use Github's `bugtracker <https://github.com/pypiserver/pypiserver/issues>`_
 for other bugs you find.
