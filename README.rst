@@ -772,10 +772,10 @@ automatic HTTP redirection, using `nginx`::
       }
     }
 
-Please see [nginx's HTTPS docs for more details](http://nginx.org/en/docs/http/configuring_https_servers.html).
+Please see `nginx's HTTPS docs for more details <http://nginx.org/en/docs/http/configuring_https_servers.html>`_.
 
 Getting and keeping your certificates up-to-date can be simplified using,
-for example, using [certbot and letsencrypt](https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-18-04).
+for example, using `certbot and letsencrypt <https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-18-04>`_.
 
 
 Utilizing the API
