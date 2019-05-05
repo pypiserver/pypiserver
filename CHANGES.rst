@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.3.0 (2019-05-xx)
+1.3.0 (2019-05-05)
 ------------------
 
 - ENH: pypiserver now consistently and correctly handles the `X-Forwarded-Host`
