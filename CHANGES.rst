@@ -9,10 +9,10 @@ Changelog
   @kujyp for an excellent first-time contribution!)
 - DOC: significantly more information added to the `docker-compose.yml`
   example, including recipes for various configuration options (thanks
-  @jetheurer for pointing out the errors in the existing docs!)
+  @jetheurer for pointing out the errors in the existing docs, #243!)
 - DOC: removed outdated suggestion to serve the packages data directly via
   a webserver and replaced with information about setting up nginx
-  caching (thanks @RiceKab for bringing the issue to our attention)
+  caching (thanks @RiceKab for bringing the issue to our attention, #232)
 
 
 1.2.7 (2019-01-31)
