@@ -21,9 +21,9 @@ except ImportError:
     from StringIO import StringIO as BytesIO
 
 try:  # PY3
-    from urllib.parse import urljoin
+    from urllib.parse import urljoin, urlparse
 except ImportError:  # PY2
-    from urlparse import urljoin
+    from urlparse import urljoin, urlparse
 
 
 log = logging.getLogger(__name__)
@@ -59,6 +59,13 @@ def log_request():
     log.info(config.log_req_frmt, request.environ)
 
 
+@app.hook('before_request')
+def print_request():
+    parsed = urlparse(request.urlparts.scheme + "://" + request.urlparts.netloc)
+    request.custom_host = parsed.netloc
+    request.custom_fullpath = parsed.path.rstrip('/') + '/' + request.fullpath.lstrip('/')
+
+
 @app.hook('after_request')
 def log_response():
     log.info(config.log_res_frmt, {  # vars(response))  ## DOES NOT WORK!
@@ -80,7 +87,7 @@ def favicon():
 
 @app.route('/')
 def root():
-    fp = request.fullpath
+    fp = request.custom_fullpath
 
     try:
         numpkgs = len(list(packages()))
@@ -90,11 +97,11 @@ def root():
     # Ensure template() does not consider `msg` as filename!
     msg = config.welcome_msg + '\n'
     return template(msg,
-                    URL=request.url,
+                    URL=request.url.rstrip("/") + '/',
                     VERSION=__version__,
                     NUMPKGS=numpkgs,
-                    PACKAGES=urljoin(fp, "packages/"),
-                    SIMPLE=urljoin(fp, "simple/")
+                    PACKAGES=fp.rstrip("/") + "/packages/",
+                    SIMPLE=fp.rstrip("/") + "/simple/"
                     )
 
 _bottle_upload_filename_re = re.compile(r'^[a-z0-9_.!+-]+$', re.I)
@@ -197,7 +204,7 @@ def update():
 @app.route('/packages')
 @auth("list")
 def pep_503_redirects(prefix=None):
-    return redirect(request.fullpath + "/", 301)
+    return redirect(request.custom_fullpath + "/", 301)
 
 
 @app.post('/RPC2')
@@ -261,7 +268,7 @@ def simple(prefix=""):
             return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
         return HTTPError(404, 'Not Found (%s does not exist)\n\n' % normalized)
 
-    fp = request.fullpath
+    fp = request.custom_fullpath
     links = [(os.path.basename(f.relfn),
               urljoin(fp, "../../packages/%s" % f.fname_and_hash(config.hash_algo)))
              for f in files]
@@ -284,7 +291,7 @@ def simple(prefix=""):
 @app.route('/packages/')
 @auth("list")
 def list_packages():
-    fp = request.fullpath
+    fp = request.custom_fullpath
     files = sorted(core.find_packages(packages()),
                    key=lambda x: (os.path.dirname(x.relfn),
                                   x.pkgname,

@@ -96,7 +96,7 @@ def test_hashfile(tmpdir, algo, digest):
 def test_redirect_prefix_encodes_newlines():
     """Ensure raw newlines are url encoded in the generated redirect."""
     request = Namespace(
-        fullpath='/\nSet-Cookie:malicious=1;'
+        custom_fullpath='/\nSet-Cookie:malicious=1;'
     )
     prefix = '\nSet-Cookie:malicious=1;'
     newpath = core.get_bad_url_redirect_path(request, prefix)
