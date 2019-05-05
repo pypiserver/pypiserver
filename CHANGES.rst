@@ -1,6 +1,20 @@
 Changelog
 =========
 
+1.3.0 (2019-05-xx)
+------------------
+
+- ENH: pypiserver now consistently and correctly handles the `X-Forwarded-Host`
+  header to allow for alternative base URLs (#248, resolves #155, thanks
+  @kujyp for an excellent first-time contribution!)
+- DOC: significantly more information added to the `docker-compose.yml`
+  example, including recipes for various configuration options (thanks
+  @jetheurer for pointing out the errors in the existing docs!)
+- DOC: removed outdated suggestion to serve the packages data directly via
+  a webserver and replaced with information about setting up nginx
+  caching (thanks @RiceKab for bringing the issue to our attention)
+
+
 1.2.7 (2019-01-31)
 ------------------
 

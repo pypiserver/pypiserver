@@ -1,21 +1,73 @@
 ---
-########################################################################
-# pypiserver docker-compose example
-########################################################################
+# ######################################################################
+# pypiserver docker-compose examples
+# ######################################################################
+# The below examples illustrate different ways that pypiserver may be
+# configured with docker-compose (and by extension, with Docker) to
+# serve your python packages.
+#
+# Most of the configuration options detailed below can be mixed and
+# matched as desired.
+# ######################################################################
 
 version: "3.3"
 
 services:
-    pypiserver:
+
+    # ##################################################################
+    # Default
+    # ##################################################################
+    # The default configuration serves packages from the /data/packages
+    # directory inside the container. This directory is mounted as a
+    # volume in the Dockerfile, so it will be persisted, as long as you
+    # do not remove it with `docker-compose down -v` or
+    # `docker volume rm`.
+    # ##################################################################
+
+    pypiserver-default:
+        image: pypiserver/pypiserver:latest
+        ports:
+            - "8080:8080"
+
+    # ##################################################################
+    # Authenticated
+    # ##################################################################
+    # This config uses a locally created .htpasswd file to authenticate
+    # access to pypiserver. We assume our .htpasswd file is in a local
+    # directory `./auth`, which we mount to `/data/auth` in the
+    # container, and update the `command` from the Dockerfile to look
+    # for that file for authentication. Note that because we are
+    # overriding the default `command`, which tells pypiserver where to
+    # serve packages from, we need to include that part of the command
+    # in addition to our authentication information.
+    # ##################################################################
+
+    pypiserver-authenticated:
         image: pypiserver/pypiserver:latest
         volumes:
             - type: bind
-              source: ./data
-              target: /data
-        # Use an .htpasswd file to control access, serve packages from
-        # ./data (which will be /data in the container)
-        command: -P /data/.htpasswd -a update,download,list /data/packages
+              source: ./auth
+              target: /data/auth
+        command: -P /data/auth/.htpasswd -a update,download,list /data/packages
         ports:
-            - "80:8080"
-volumes:
-    data:
+            - "8081:8080"
+
+    # ##################################################################
+    # Serve local packages
+    # ##################################################################
+    # This config allows us to manage our package directory locally,
+    # rather than in a volume managed directly by docker. Note that
+    # especially if running from a Mac, this may cause performance
+    # degradations, which can be worked around by using the `consistency`
+    # setting if desired. Here, we mount a local `./packages` directory
+    # to `/data/packages`, overriding the standard volume.
+    # ##################################################################
+
+    pypiserver-local-packages:
+        image: pypiserver/pypiserver:latest
+        volumes:
+            - type: bind
+              source: ./packages
+              target: /data/packages
+        ports:
+            - "8082:8080"
