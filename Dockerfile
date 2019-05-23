@@ -43,5 +43,5 @@ USER pypiserver
 WORKDIR /data
 EXPOSE 8080
 
-ENTRYPOINT ["pypi-server", "-p", "8080"]
+ENTRYPOINT ["pypi-server"]
 CMD ["packages"]
