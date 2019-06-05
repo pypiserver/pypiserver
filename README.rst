@@ -895,7 +895,7 @@ among the most popular alternatives:
   A command-line utility to upload packages to your *pypiserver* from pypi without
   having to store them locally first.
 
-- Check this SO question: ` How to roll my own pypi
+- Check this SO question: `How to roll my own pypi
   <http://stackoverflow.com/questions/1235331/how-to-roll-my-own-pypi>`_
 
 
