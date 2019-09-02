@@ -228,8 +228,9 @@ class PkgFile(object):
     def fname_and_hash(self, hash_algo):
         if not hasattr(self, '_fname_and_hash'):
             if hash_algo:
-                self._fname_and_hash = '%s#%s=%.32s' % (self.relfn_unix, hash_algo,
-                                                        digest_file(self.fn, hash_algo))
+                self._fname_and_hash = '%s#%s=%s' % (
+                    self.relfn_unix, hash_algo, digest_file(self.fn, hash_algo)
+                )
             else:
                 self._fname_and_hash = self.relfn_unix
         return self._fname_and_hash
@@ -308,7 +309,7 @@ def _digest_file(fpath, hash_algo):
     with open(fpath, 'rb') as f:
         for block in iter(lambda: f.read(blocksize), b''):
             digester.update(block)
-    return digester.hexdigest()[:32]
+    return digester.hexdigest()
 
 
 try:

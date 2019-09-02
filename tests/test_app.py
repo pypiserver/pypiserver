@@ -3,10 +3,13 @@
 # Builtin imports
 import logging
 
-try:
+
+try:  # python 3
     from html.parser import HTMLParser
+    from html import unescape
 except ImportError:
     from HTMLParser import HTMLParser
+    unescape = HTMLParser().unescape
 
 try:
     import xmlrpc.client as xmlrpclib
@@ -27,7 +30,6 @@ import tests.test_core as test_core
 # Enable logging to detect any problems with it
 ##
 __main__.init_logging(level=logging.NOTSET)
-hp = HTMLParser()
 
 
 @pytest.fixture()
@@ -400,13 +402,13 @@ def test_cache_control_set(root):
 def test_upload_noAction(root, testapp):
     resp = testapp.post("/", expect_errors=1)
     assert resp.status == '400 Bad Request'
-    assert "Missing ':action' field!" in hp.unescape(resp.text)
+    assert "Missing ':action' field!" in unescape(resp.text)
 
 
 def test_upload_badAction(root, testapp):
     resp = testapp.post("/", params={':action': 'BAD'}, expect_errors=1)
     assert resp.status == '400 Bad Request'
-    assert "Unsupported ':action' field: BAD" in hp.unescape(resp.text)
+    assert "Unsupported ':action' field: BAD" in unescape(resp.text)
 
 
 @pytest.mark.parametrize("package", [f[0]
@@ -463,7 +465,7 @@ def test_remove_pkg_missingNaveVersion(name, version, root, testapp):
     resp = testapp.post("/", expect_errors=1, params=params)
 
     assert resp.status == '400 Bad Request'
-    assert msg % (name, version) in hp.unescape(resp.text)
+    assert msg % (name, version) in unescape(resp.text)
 
 
 def test_remove_pkg_notFound(root, testapp):
@@ -474,7 +476,7 @@ def test_remove_pkg_notFound(root, testapp):
                     'version': '123',
     })
     assert resp.status == '404 Not Found'
-    assert "foo (123) not found" in hp.unescape(resp.text)
+    assert "foo (123) not found" in unescape(resp.text)
 
 
 @pytest.mark.parametrize('pkgs,matches', [

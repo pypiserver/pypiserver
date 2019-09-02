@@ -65,7 +65,7 @@ class CacheManager(object):
                 cache = self.digest_cache[hash_algo]
             except KeyError:
                 cache = self.digest_cache.setdefault(hash_algo, {})
-            
+
             try:
                 return cache[fpath]
             except KeyError:
