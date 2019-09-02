@@ -183,7 +183,8 @@ def _build_url(port, user='', pswd=''):
 
 def _run_pip(cmd):
     ncmd = (
-        "pip --disable-pip-version-check --retries 0 --timeout 5 --no-input %s"
+        "pip --no-cache-dir --disable-pip-version-check "
+        "--retries 0 --timeout 5 --no-input %s"
     ) % cmd
     print('PIP: %s' % ncmd)
     proc = Popen(split(ncmd))
@@ -390,7 +391,22 @@ def test_twine_upload_open(empty_packdir, port, package):
         with pypirc_tmpfile(port, user, pswd) as rcfile:
             twine_upload([package.strpath], repository='test', conf=rcfile)
         time.sleep(SLEEP_AFTER_SRV)
+
     assert len(empty_packdir.listdir()) == 1
+
+
+@pytest.mark.parametrize("hash_algo", ("md5", "sha256", "sha512"))
+def test_hash_algos(empty_packdir, port, package, pipdir, hash_algo):
+    """Test twine upload with no authentication"""
+    user, pswd = 'foo', 'bar'
+    with new_server(
+        empty_packdir, port, other_cli="--hash-algo {}".format(hash_algo)
+    ):
+        with pypirc_tmpfile(port, user, pswd) as rcfile:
+            twine_upload([package.strpath], repository='test', conf=rcfile)
+        time.sleep(SLEEP_AFTER_SRV)
+
+        assert _run_pip_install("centodeps", port, pipdir) == 0
 
 
 def test_twine_upload_authed(empty_packdir, port, package):

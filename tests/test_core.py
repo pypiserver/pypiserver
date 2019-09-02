@@ -82,15 +82,30 @@ def test_listdir_bad_name(tmpdir):
     res = list(core.listdir(tmpdir.strpath))
     assert res == []
 
-hashes = [
-        ('sha256',   'e3b0c44298fc1c149afbf4c8996fb924'), # empty-sha256
-        ('md5',      'd41d8cd98f00b204e9800998ecf8427e'), # empty-md5
-]
+hashes = (
+    # empty-sha256
+    ('sha256', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'),
+    # empty-md5
+    ('md5', 'd41d8cd98f00b204e9800998ecf8427e'),
+)
 @pytest.mark.parametrize(("algo", "digest"), hashes)
 def test_hashfile(tmpdir, algo, digest):
     f = tmpdir.join("empty")
     f.ensure()
     assert core.digest_file(f.strpath, algo) == digest
+
+
+@pytest.mark.parametrize("hash_algo", ("md5", "sha256", "sha512"))
+def test_fname_and_hash(tmpdir, hash_algo):
+    """Ensure we are returning the expected hashes for files."""
+    f = tmpdir.join("tmpfile")
+    f.ensure()
+    pkgfile = core.PkgFile(
+        "tmp", "1.0.0", f.strpath, f.dirname, f.basename
+    )
+    assert pkgfile.fname_and_hash(hash_algo) == "{}#{}={}".format(
+        f.basename, hash_algo, str(f.computehash(hashtype=hash_algo))
+    )
 
 
 def test_redirect_prefix_encodes_newlines():
