@@ -2,7 +2,7 @@ import os
 import re as _re
 import sys
 
-version = __version__ = "1.3.0"
+version = __version__ = "1.3.1"
 __version_info__ = tuple(_re.split('[.-]', __version__))
 __updated__ = "2019-05-05 15:49:11"
 

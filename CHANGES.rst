@@ -1,6 +1,13 @@
 Changelog
 =========
 
+1.3.1 (tbd)
+-----------
+
+- DEV: switched to GitLab for CI
+- DEV: automatically deploy .dev releases for each commit on master that
+  passes tests
+
 1.3.0 (2019-05-05)
 ------------------
 
