@@ -46,13 +46,13 @@ def usage():
       Listen on interface INTERFACE (default: 0.0.0.0, any interface).
 
     -a, --authenticate (update|download|list), ...
-      Comma-separated list of (case-insensitive) actions to authenticate
-      Use '.' or '' for empty. Requires to have set the password (-P option).
-      For example to password-protect package downloads (in addition to uploads)
-      while leaving listings public, give:
-        -P foo/htpasswd.txt  -a update,download
-      To drop all authentications, use:
-        -P .  -a .
+      Comma-separated list of (case-insensitive) actions to authenticate.
+      Requires to have set the password (-P option).
+      To password-protect package downloads (in addition to uploads) while
+      leaving listings public, use:
+        -P foo/htpasswd.txt -a update,download
+      To allow unauthorized access, use:
+        -P . -a .
       Note that when uploads are not protected, the `register` command
       is not necessary, but `~/.pypirc` still need username and password fields,
       even if bogus.
@@ -61,8 +61,8 @@ def usage():
     -P, --passwords PASSWORD_FILE
       Use apache htpasswd file PASSWORD_FILE to set usernames & passwords when
       authenticating certain actions (see -a option).
-      If you want to allow un-authorized access, set this option and -a
-      explicitly to empty (either '.' or '').
+      To allow unauthorized access, use:
+        -P . -a .
 
     --disable-fallback
       Disable redirect to real PyPI index for packages not found in the
