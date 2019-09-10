@@ -1,6 +1,20 @@
 Changelog
 =========
 
+1.3.1 (2019-09-10)
+------------------
+
+- FIX: previously, it was possible to upload packages with hashing algorithms
+  other than md5, but downloading them again with pip was impossible due to
+  incorrect truncation of the hash. This has been fixed! (Thanks
+  @ArneBachmann for figuring out what was wrong and reporting the issue
+  in #265).
+- FIX: argument parsing would previously fail for the short form of
+  ``--help``, due an incorrect operator used during comparison (thanks to
+  @maggyero, #271)
+- DOC: significant improvements to formatting and consistency in the README
+  (thanks to @maggyero, #270)
+
 1.3.0 (2019-05-05)
 ------------------
 
