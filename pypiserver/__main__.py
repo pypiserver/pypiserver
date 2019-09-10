@@ -40,13 +40,13 @@ def usage():
   pypi-server understands the following options:
 
     -p, --port PORT
-      listen on port PORT (default: 8080)
+      Listen on port PORT (default: 8080).
 
     -i, --interface INTERFACE
-      listen on interface INTERFACE (default: 0.0.0.0, any interface)
+      Listen on interface INTERFACE (default: 0.0.0.0, any interface).
 
-    -a, --authenticate (UPDATE|download|list), ...
-      comma-separated list of (case-insensitive) actions to authenticate
+    -a, --authenticate (update|download|list), ...
+      Comma-separated list of (case-insensitive) actions to authenticate
       Use '.' or '' for empty. Requires to have set the password (-P option).
       For example to password-protect package downloads (in addition to uploads)
       while leaving listings public, give:
@@ -59,58 +59,62 @@ def usage():
       By default, only 'update' is password-protected.
 
     -P, --passwords PASSWORD_FILE
-      use apache htpasswd file PASSWORD_FILE to set usernames & passwords when
+      Use apache htpasswd file PASSWORD_FILE to set usernames & passwords when
       authenticating certain actions (see -a option).
       If you want to allow un-authorized access, set this option and -a
-      explicitly to empty (either '.' or'').
+      explicitly to empty (either '.' or '').
 
     --disable-fallback
-      disable redirect to real PyPI index for packages not found in the
-      local index
+      Disable redirect to real PyPI index for packages not found in the
+      local index.
 
     --fallback-url FALLBACK_URL
-      for packages not found in the local index, this URL will be used to
-      redirect to (default: https://pypi.python.org/simple)
+      For packages not found in the local index, this URL will be used to
+      redirect to (default: https://pypi.org/simple/).
 
     --server METHOD
-      use METHOD to run the server. Valid values include paste,
+      Use METHOD to run the server. Valid values include paste,
       cherrypy, twisted, gunicorn, gevent, wsgiref, auto. The
       default is to use "auto" which chooses one of paste, cherrypy,
       twisted or wsgiref.
 
     -r, --root PACKAGES_DIRECTORY
-      [deprecated] serve packages from PACKAGES_DIRECTORY
+      [deprecated] Serve packages from PACKAGES_DIRECTORY.
 
     -o, --overwrite
-      allow overwriting existing package files
+      Allow overwriting existing package files.
 
     --hash-algo ALGO
-      any `hashlib` available algo used as fragments on package links.
-      Set one of (0, no, off, false) to disabled it. (default: md5)
+      Any `hashlib` available algo used as fragments on package links.
+      Set one of (0, no, off, false) to disabled it (default: md5).
 
     --welcome HTML_FILE
-      uses the ASCII contents of HTML_FILE as welcome message response.
+      Uses the ASCII contents of HTML_FILE as welcome message response.
 
     -v
-      enable verbose logging;  repeat for more verbosity.
+      Enable verbose logging; repeat for more verbosity.
+
+    --log-conf <FILE>
+      read logging configuration from FILE.
+      By default, configuration is read from `log.conf` if found in server's dir.
 
     --log-file <FILE>
-      write logging info into this FILE.
+      Write logging info into this FILE.
 
     --log-frmt <FILE>
-      the logging format-string.  (see `logging.LogRecord` class from standard python library)
+      The logging format-string.  (see `logging.LogRecord` class from standard python library)
       [Default: %(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s]
 
     --log-req-frmt FORMAT
-      a format-string selecting Http-Request properties to log; set to  '%s' to see them all.
+      A format-string selecting Http-Request properties to log; set to  '%s' to see them all.
       [Default: %(bottle.request)s]
 
     --log-res-frmt FORMAT
-      a format-string selecting Http-Response properties to log; set to  '%s' to see them all.
+      A format-string selecting Http-Response properties to log; set to  '%s' to see them all.
       [Default: %(status)s]
 
     --log-err-frmt FORMAT
-      a format-string selecting Http-Error properties to log; set to  '%s' to see them all.
+      A format-string selecting Http-Error properties to log; set to  '%s' to see them all.
       [Default: %(body)s: %(exception)s \n%(traceback)s]
 
     --cache-control AGE
@@ -118,30 +122,29 @@ def usage():
       Pip 6+ needs this for caching.
 
 
-  pypi-server -h
-  pypi-server --help
-    show this help message
+  pypi-server -h, --help
+    Show this help message.
 
   pypi-server --version
-    show pypi-server's version
+    Show pypi-server's version.
 
   pypi-server -U [OPTIONS] [PACKAGES_DIRECTORY...]
-    update packages in PACKAGES_DIRECTORY. This command searches
+    Update packages in PACKAGES_DIRECTORY. This command searches
     pypi.org for updates and shows a pip command line which
     updates the package.
 
   The following additional options can be specified with -U:
 
     -x
-      execute the pip commands instead of only showing them
+      Execute the pip commands instead of only showing them.
 
     -d DOWNLOAD_DIRECTORY
-      download package updates to this directory. The default is to use
+      Download package updates to this directory. The default is to use
       the directory which contains the latest version of the package to
       be updated.
 
     -u
-      allow updating to unstable version (alpha, beta, rc, dev versions)
+      Allow updating to unstable version (alpha, beta, rc, dev versions).
 
   Visit https://pypi.org/project/pypiserver/ for more information.
   """)
