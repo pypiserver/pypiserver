@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.3.2 (tbd)
+-----------
+
+- DEV: switched to gitlab for CI
+
 1.3.1 (2019-09-10)
 ------------------
 
