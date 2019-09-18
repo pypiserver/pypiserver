@@ -1,6 +1,5 @@
 stages:
   - test
-  - deploy
 
 default:
   image: python:3
@@ -89,15 +88,3 @@ test-pypy-3:
     - pypy3 -m pip install tox
   script:
     - tox -e pypy3
-
-deploy-dev:
-  only:
-    - master
-  stage: deploy
-  before_script:
-    - pip install setuptools wheel twine
-    - pip install -e .
-  script:
-    - rm -rf dist/
-    - python setup.py egg_info --tag-build ".dev$(date +%s)" sdist bdist_wheel
-    - twine upload -u "$PYPI_USERNAME" -p "$PYPI_PASSWORD" dist/*
