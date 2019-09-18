@@ -147,14 +147,16 @@ def remove_pkg():
     if not name or not version:
         msg = "Missing 'name'/'version' fields: name=%s, version=%s"
         raise HTTPError(400, msg % (name, version))
-    found = None
-    for pkg in core.find_packages(packages()):
-        if pkg.pkgname == name and pkg.version == version:
-            found = pkg
-            break
-    if found is None:
+    pkgs = list(
+        filter(
+            lambda pkg: pkg.pkgname == name and pkg.version == version,
+            core.find_packages(packages()),
+        )
+    )
+    if len(pkgs) == 0:
         raise HTTPError(404, "%s (%s) not found" % (name, version))
-    os.unlink(found.fn)
+    for pkg in pkgs:
+        os.unlink(pkg.fn)
 
 
 Upload = namedtuple("Upload", "pkg sig")
