@@ -4,6 +4,11 @@ Changelog
 1.3.2 (tbd)
 -----------
 
+- FIX: The `remove_pkg` API action now removes any extant instances of a
+  package name-version combination, not just the first one found. This means
+  that now, for example, if a `.whl` and `.tar.gz` file exist for the
+  requested package name and version, both will be removed (thanks to
+  @esciara for reporting in #268)
 - DEV: switched to gitlab for CI
 
 1.3.1 (2019-09-10)

@@ -484,38 +484,6 @@ def test_upload_badFilename(package, root, testapp):
 
 
 @pytest.mark.parametrize(
-    ("name", "version"),
-    [
-        (None, None),
-        (None, ""),
-        ("", None),
-        (None, "1"),
-        ("pkg", None),
-        ("", "1"),
-        ("pkg", ""),
-    ],
-)
-def test_remove_pkg_missingNaveVersion(name, version, root, testapp):
-    msg = "Missing 'name'/'version' fields: name=%s, version=%s"
-    params = {":action": "remove_pkg", "name": name, "version": version}
-    params = dict((k, v) for k, v in params.items() if v is not None)
-    resp = testapp.post("/", expect_errors=1, params=params)
-
-    assert resp.status == "400 Bad Request"
-    assert msg % (name, version) in unescape(resp.text)
-
-
-def test_remove_pkg_notFound(root, testapp):
-    resp = testapp.post(
-        "/",
-        expect_errors=1,
-        params={":action": "remove_pkg", "name": "foo", "version": "123"},
-    )
-    assert resp.status == "404 Not Found"
-    assert "foo (123) not found" in unescape(resp.text)
-
-
-@pytest.mark.parametrize(
     "pkgs,matches",
     [
         ([], []),
@@ -575,6 +543,96 @@ def test_search(root, testapp, search_xml, pkgs, matches):
             assert returned["version"] in [match[1] for match in matches]
 
 
-@pytest.mark.xfail()
-def test_remove_pkg(root, testapp):
-    assert 0
+class TestRemovePkg:
+    """The API allows removal of packages."""
+
+    @pytest.mark.parametrize(
+        "pkg, name, ver",
+        (
+            ("test-1.0.tar.gz", "test", "1.0"),
+            ("test-1.0-py2-py3-none-any.whl", "test", "1.0"),
+        ),
+    )
+    def test_remove_pkg(self, root, testapp, pkg, name, ver):
+        """Packages can be removed via POST."""
+        root.join(pkg).write("")
+        assert len(os.listdir(str(root))) == 1
+        params = {":action": "remove_pkg", "name": name, "version": ver}
+        testapp.post("/", params=params)
+        assert len(os.listdir(str(root))) == 0
+
+    @pytest.mark.parametrize(
+        "pkg, name, ver",
+        (
+            ("test-1.0.tar.gz", "test", "1.0"),
+            ("test-1.0-py2-py3-none-any.whl", "test", "1.0"),
+        ),
+    )
+    @pytest.mark.parametrize(
+        "other",
+        (
+            "test-2.0.tar.gz",
+            "test-2.0-py2-py3-none-any.whl",
+            "other-1.0.tar.gz",
+            "other-1.0-py2-py3-none-any.whl",
+        ),
+    )
+    def test_remove_pkg_only_targeted(
+        self, root, testapp, pkg, name, ver, other
+    ):
+        """Only the targeted package is removed."""
+        root.join(pkg).write("")
+        root.join(other).write("")
+        assert len(os.listdir(str(root))) == 2
+        params = {":action": "remove_pkg", "name": name, "version": ver}
+        testapp.post("/", params=params)
+        assert len(os.listdir(str(root))) == 1
+
+    @pytest.mark.parametrize(
+        "pkgs, name, ver",
+        (
+            (
+                ("test-1.0.tar.gz", "test-1.0-py2-py3-none-any.whl"),
+                "test",
+                "1.0",
+            ),
+        ),
+    )
+    def test_all_instances_removed(self, root, testapp, pkgs, name, ver):
+        """Test that all instances of the target are removed."""
+        for pkg in pkgs:
+            root.join(pkg).write("")
+        assert len(os.listdir(str(root))) == len(pkgs)
+        params = {":action": "remove_pkg", "name": name, "version": ver}
+        testapp.post("/", params=params)
+        assert len(os.listdir(str(root))) == 0
+
+    @pytest.mark.parametrize(
+        ("name", "version"),
+        [
+            (None, None),
+            (None, ""),
+            ("", None),
+            (None, "1"),
+            ("pkg", None),
+            ("", "1"),
+            ("pkg", ""),
+        ],
+    )
+    def test_remove_pkg_missingNaveVersion(self, name, version, root, testapp):
+        msg = "Missing 'name'/'version' fields: name=%s, version=%s"
+        params = {":action": "remove_pkg", "name": name, "version": version}
+        params = dict((k, v) for k, v in params.items() if v is not None)
+        resp = testapp.post("/", expect_errors=1, params=params)
+
+        assert resp.status == "400 Bad Request"
+        assert msg % (name, version) in unescape(resp.text)
+
+    def test_remove_pkg_notFound(self, root, testapp):
+        resp = testapp.post(
+            "/",
+            expect_errors=1,
+            params={":action": "remove_pkg", "name": "foo", "version": "123"},
+        )
+        assert resp.status == "404 Not Found"
+        assert "foo (123) not found" in unescape(resp.text)
