@@ -17,13 +17,14 @@ Files:
 
 Release check-list:
 ===================
-1. Update ``/CHANGES.rst`` (+ Title + Date) & ``/README.rst``.
+1. Update ``/CHANGES.rst`` (+ Title + Date) & ``/README.rst`` (Date,
+   not version).
 
 2. Push to GitHub to run all TCs once more.
 
 3. Bump version: commit & tag it with ``/bin/bumpver.py``.
    Use ``--help``.
-   Read `PEP-440 <https://www.python.org/dev/peps/pep-0440/`_ to decide the version.
+   Read `PEP-440 <https://www.python.org/dev/peps/pep-0440/>`_ to decide the version.
 
 4. Push it in GitHub with ``--follow-tags``.
 

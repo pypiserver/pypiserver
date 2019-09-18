@@ -21,7 +21,7 @@ CONTAINER_ID=$(docker run \
 
 trap "docker container stop $CONTAINER_ID" EXIT
 
-sleep 5  # give the container some time to get going
+sleep 15  # give the container some time to get going
 
 # Ensure we can authenticate locally
 RET=$(curl localhost:8080)

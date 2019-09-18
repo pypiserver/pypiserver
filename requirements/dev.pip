@@ -11,6 +11,7 @@ mock; python_version == '2.7'
 pip>=7
 passlib>=1.6
 pytest>=2.3
+pytest-cov
 setuptools
 setuptools-git>=0.3
 tox
