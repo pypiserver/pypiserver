@@ -1,0 +1,24 @@
+sudo: required
+language: python
+services: docker
+
+python:
+  - 2.7
+  - 3.4
+  - 3.5
+  - 3.6
+  - pypy
+  - pypy3
+
+install:
+  - pip install -U setuptools twine pip sphinx tox tox-travis
+
+script:
+  - ./bin/test-docker.sh
+  - ./bin/test_standalone.sh
+  - tox
+  - ./bin/check_readme.sh
+
+branches:
+  except:
+    - standalone
