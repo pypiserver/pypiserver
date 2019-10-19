@@ -7,7 +7,7 @@
 ==============================================================================
 pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
-|pypi-ver| |gitlab-status| |dependencies| |python-ver| |proj-license|
+|pypi-ver| |travis-status| |dependencies| |python-ver| |proj-license|
 
 :Version:     1.3.1
 :Date:        2019-09-10
@@ -920,10 +920,10 @@ See the ``LICENSE.txt`` file.
 .. _twine: https://pypi.org/project/twine/
 .. _pypi-uploader: https://pypi.org/project/pypi-uploader/
 .. _python-pam: https://pypi.org/project/python-pam/
-.. |gitlab-status| image:: https://gitlab.com/mplanchard/pypiserver/badges/master/pipeline.svg
-    :alt: GitLab build status
+.. |travis-status| image:: https://travis-ci.org/pypiserver/pypiserver.svg
+    :alt: Travis build status
     :scale: 100%
-    :target: https://gitlab.com/mplanchard/pypiserver/commits/master
+    :target: https://travis-ci.org/pypiserver/pypiserver
 
 .. |pypi-ver| image::  https://img.shields.io/pypi/v/pypiserver.svg
     :target: https://pypi.org/project/pypiserver/
