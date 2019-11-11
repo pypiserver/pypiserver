@@ -10,7 +10,9 @@ RUN addgroup -S -g 9898 pypiserver \
     # pypiserver group
     && chmod g+s /data/packages \
     && apk --no-cache add python py2-bcrypt py2-cffi py2-six \
-    && find /usr -name "*.py" ! -name "__*" -exec rm {} \;
+    && find /usr -name "*.py" ! -name "__*" -exec rm {} \; \
+    # Ensure pip is available to all further images
+    && apk add --no-cache py2-pip
 
 FROM base as builder
 
@@ -20,8 +22,7 @@ FROM base as builder
 COPY docker-requirements.txt /requirements.txt
 
 # Install python packages
-RUN apk add --no-cache py2-pip \
-    && mkdir /install \
+RUN mkdir /install \
     && pip install --prefix=/install --requirement /requirements.txt \
     && find /install -name "*.py" ! -name "__*" -exec rm {} \;
 
