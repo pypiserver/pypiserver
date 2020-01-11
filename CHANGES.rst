@@ -8,6 +8,8 @@ Changelog
   rather than Python 2.7 (#284, thanks @etene!)
 - ENH: The `welcome.html` page has been updated to provide more metadata
   and be more HTML-standards compliant (#283, thanks @maggyero!)
+- FIX: the `pypi-server -U` command no longer fails when run inside the
+  Docker container (thanks to @mkolb-navican for reporting in #264)
 - FIX: The `remove_pkg` API action now removes any extant instances of a
   package name-version combination, not just the first one found. This means
   that now, for example, if a `.whl` and `.tar.gz` file exist for the
