@@ -1,15 +1,25 @@
 Changelog
 =========
 
-1.3.2 (tbd)
------------
+1.3.2 (2020-01-11)
+------------------
 
+- ENH: The Dockerfile used for the official Docker images now uses Python 3.6
+  rather than Python 2.7 (#284, thanks @etene!)
+- ENH: The `welcome.html` page has been updated to provide more metadata
+  and be more HTML-standards compliant (#283, thanks @maggyero!)
 - FIX: The `remove_pkg` API action now removes any extant instances of a
   package name-version combination, not just the first one found. This means
   that now, for example, if a `.whl` and `.tar.gz` file exist for the
   requested package name and version, both will be removed (thanks to
   @esciara for reporting in #268)
-- DEV: switched to gitlab for CI
+- FIX: include missing `simple/` path on a URL in the example pip commands
+  on the `welcome.html` page (@276, thanks @maggyero!)
+- DOC: more consistent and accurate documentation for pip commands provided
+  on the `welcome.html` page (#278, thanks @maggyero!)
+- DOC: fixes to the README to make it easier for people to use pypiserver
+  behind an apache webserver (#289, thanks @Helveg!)
+
 
 1.3.1 (2019-09-10)
 ------------------

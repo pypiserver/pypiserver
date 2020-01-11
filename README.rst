@@ -9,8 +9,8 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
 |pypi-ver| |travis-status| |dependencies| |python-ver| |proj-license|
 
-:Version:     1.3.1
-:Date:        2019-09-10
+:Version:     1.3.2
+:Date:        2020-01-11
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.org/project/pypiserver/
 :Travis:      https://travis-ci.org/pypiserver/pypiserver
@@ -647,7 +647,7 @@ explained in `bottle's documentation <http://bottlepy.org/docs/dev/deployment.ht
 .. Note::
    For security reasons, notice that the ``Directory`` directive grants access
    to a directory holding the ``wsgi`` start-up script, alone; nothing else.
-   
+
 .. Note::
    To enable HTTPS support on Apache, configure the directive that contains the
    WSGI configuration to use SSL.
