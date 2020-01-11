@@ -610,7 +610,7 @@ explained in `bottle's documentation <http://bottlepy.org/docs/dev/deployment.ht
                                 processes=1 threads=5 maximum-requests=500 \
                                 display-name=wsgi-pypisrv inactivity-timeout=300
         WSGIProcessGroup        pypisrv
-        WSGIPassAuthorization On    # (Optional) Use also apache's authentication.
+        WSGIPassAuthorization On    # Required for authentication (https://github.com/pypiserver/pypiserver/issues/288)
 
         <Directory /yoursite/wsgi >
             Require all granted
@@ -647,6 +647,10 @@ explained in `bottle's documentation <http://bottlepy.org/docs/dev/deployment.ht
 .. Note::
    For security reasons, notice that the ``Directory`` directive grants access
    to a directory holding the ``wsgi`` start-up script, alone; nothing else.
+   
+.. Note::
+   To enable HTTPS support on Apache, configure the directive that contains the
+   WSGI configuration to use SSL.
 
 ``gunicorn``
 ~~~~~~~~~~~~
