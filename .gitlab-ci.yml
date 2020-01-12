@@ -36,18 +36,6 @@ validate-readme:
   script:
     - ./bin/check_readme.sh
 
-test-2.7:
-  extends: .base_test
-  image: python:2.7
-  script:
-    - tox -e py27
-
-test-3.4:
-  extends: .base_test
-  image: python:3.4
-  script:
-    - tox -e py34
-
 test-3.5:
   extends: .base_test
   image: python:3.5
@@ -71,14 +59,6 @@ test-3.8:
   image: python:3.8
   script:
     - tox -e py38
-
-test-pypy-2:
-  extends: .base_test
-  image: pypy:2
-  before_script:
-    - pypy -m pip install tox
-  script:
-    - tox -e pypy
 
 test-pypy-3:
   extends: .base_test

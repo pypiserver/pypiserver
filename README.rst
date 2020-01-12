@@ -9,7 +9,7 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
 |pypi-ver| |travis-status| |dependencies| |python-ver| |proj-license|
 
-:Version:     1.3.2
+:Version:     1.4.0
 :Date:        2020-01-11
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.org/project/pypiserver/
@@ -32,9 +32,9 @@ with ``scp``.
 Quickstart: Installation and Usage
 ==================================
 
-``pypiserver`` > 1.2.x works with Python 2.7 and 3.4+ or PyPy.
+``pypiserver`` >= 1.4.x works with Python 3.5+ and Pypy3.
 Older Python versions may still work, but they are not tested.
-For legacy Python versions, use ``pypiserver-1.1.x`` series.
+For legacy Python versions, use ``pypiserver-1.3.x`` series.
 
 .. Tip::
    The commands below work on a unix-like operating system with a posix shell.
