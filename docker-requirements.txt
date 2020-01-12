@@ -1,2 +1,2 @@
-passlib==1.7.1
+passlib==1.7.2
 bcrypt==3.1.7
