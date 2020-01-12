@@ -1,6 +1,12 @@
 Changelog
 =========
 
+x.x.x (tbd)
+-----------
+
+- MAINT: Update bottle to [0.12.18](https://github.com/bottlepy/bottle/releases/tag/0.12.18)
+  for Python 3.8 compatibility
+
 1.3.2 (2020-01-11)
 ------------------
 
