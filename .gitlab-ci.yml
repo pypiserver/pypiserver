@@ -22,7 +22,7 @@ test-docker:
   except:
     - standalone
   before_script:
-    - apk add --no-cache curl python3
+    - apk add --no-cache curl python3 python3-dev gcc libffi-dev musl-dev openssl-dev
     - pip3 install twine
   script:
     - ./bin/test-docker.sh
