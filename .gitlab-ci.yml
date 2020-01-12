@@ -66,10 +66,9 @@ test-3.7:
   script:
     - tox -e py37
 
-test-3.8-rc:
+test-3.8:
   extends: .base_test
-  image: python:3.8-rc
-  allow_failure: true
+  image: python:3.8
   script:
     - tox -e py38
 
