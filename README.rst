@@ -786,6 +786,12 @@ Please see `nginx's HTTPS docs for more details <http://nginx.org/en/docs/http/c
 Getting and keeping your certificates up-to-date can be simplified using,
 for example, using `certbot and letsencrypt <https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-18-04>`_.
 
+Traefik
+~~~~~~~
+
+It is also possible to use `Traefik <https://docs.traefik.io/>`_ to put pypiserver behind HTTPS on port 443, with
+automatic HTTP redirection using Docker Compose. Please see the provided `<docker-compose.yml>`_ example for more information.
+
 Utilizing the API
 -----------------
 
