@@ -1,0 +1,8 @@
+## Pip-dependencies for app-engine plugin
+#
+# Install it with:
+#   pip install -r requirements/appengine.pip
+
+-r exe.pip
+
+google-cloud-storage==1.26.0
