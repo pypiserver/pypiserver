@@ -146,7 +146,7 @@ def usage():
     -u
       Allow updating to unstable version (alpha, beta, rc, dev versions).
       
-    -b BLACKLIST_FILE
+    --blacklist-file BLACKLIST_FILE
       Don't update packages listed in this file (one package name per line,
       without versions, '#' comments honored). This can be useful if you upload
       private packages into pypiserver, but also keep a mirror of public
