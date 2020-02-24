@@ -200,6 +200,15 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
         update_package(pkg, destdir, dry_run=dry_run)
 
 
-def update_all_packages(roots, destdir=None, dry_run=False, stable_only=True):
-    packages = frozenset(itertools.chain(*[core.listdir(r) for r in roots]))
+def update_all_packages(roots, destdir=None, dry_run=False, stable_only=True, blacklist_file=None):
+    all_packages = itertools.chain(*[core.listdir(r) for r in roots])
+
+    skip_packages = set()
+    if blacklist_file:
+        skip_packages = set(core.read_lines(blacklist_file))
+        print('Skipping update of blacklisted packages (listed in "{}"): {}'
+              .format(blacklist_file, ', '.join(sorted(skip_packages))))
+
+    packages = frozenset([pkg for pkg in all_packages if pkg.pkgname not in skip_packages])
+
     update(packages, destdir, dry_run, stable_only)

@@ -222,7 +222,7 @@ class PkgFile(object):
     def __repr__(self):
         return "%s(%s)" % (
             self.__class__.__name__,
-            ", ".join(["%s=%r" % (k, getattr(self, k))
+            ", ".join(["%s=%r" % (k, getattr(self, k, 'AttributeError'))
                                   for k in sorted(self.__slots__)]))
 
     def fname_and_hash(self, hash_algo):
@@ -254,6 +254,22 @@ def _listdir(root):
                               version=version,
                               fn=fn, root=root,
                               relfn=fn[len(root) + 1:])
+
+
+def read_lines(filename):
+    """
+    Read the contents of `filename`, stripping empty lines and '#'-comments.
+    Return a list of strings, containing the lines of the file.
+    """
+    lines = []
+
+    try:
+        with open(filename) as f:
+            lines = [line.strip() for line in f.readlines() if line.strip() and not line.strip().startswith('#')]
+    except Exception:
+        pass
+
+    return lines
 
 
 def find_packages(pkgs, prefix=""):
