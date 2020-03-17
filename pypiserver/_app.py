@@ -369,6 +369,31 @@ def list_packages():
     return template(tmpl, links=links)
 
 
+@app.route("/packages/:prefix/latest")
+@auth("download")
+def download_latest_package(prefix):
+    # PEP 503: require normalized prefix
+    normalized = core.normalize_pkgname_for_url(prefix)
+    if prefix != normalized:
+        return redirect("/packages/{0}/latest".format(normalized), 301)
+
+    files = sorted(
+        core.find_packages(packages(), prefix=prefix),
+        key=lambda x: (x.parsed_version, x.relfn),
+    )
+    if not files:
+        return HTTPError(404, "Not Found (%s does not exist)\n\n" % normalized)
+
+    latest_package = files[-1]
+    response = static_file(
+        latest_package.relfn_unix,
+        root=latest_package.root,
+        mimetype=mimetypes.guess_type(latest_package.relfn_unix)[0],
+    )
+
+    return response
+
+
 @app.route("/packages/:filename#.*#")
 @auth("download")
 def server_static(filename):
