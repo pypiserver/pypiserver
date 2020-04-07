@@ -614,14 +614,14 @@ explained in `bottle's documentation <http://bottlepy.org/docs/dev/deployment.ht
 
         <Directory /yoursite/wsgi >
             Require all granted
-        </Directort>
+        </Directory>
 
    or if using older ``Apache < 2.4``, substitute the last part with this::
 
         <Directory /yoursite/wsgi >
             Order deny,allow
             Allow from all
-        </Directort>
+        </Directory>
 
 2. Then create the ``/yoursite/cfg/pypiserver.wsgi`` file and make sure that
    the ``user`` and ``group`` of the ``WSGIDaemonProcess`` directive
