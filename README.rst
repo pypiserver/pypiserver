@@ -24,6 +24,11 @@ Wheels, bdists, eggs and accompanying PGP-signatures can be uploaded
 either with ``pip``, ``setuptools``, ``twine``, ``pypi-uploader``, or simply copied
 with ``scp``.
 
+The official software powering PyPI_ (known as warehouse_) is maintained
+by PyPA_; but ``pypiserver`` implements interfaces allowing standard
+Python packaging tooling such as ``pip`` and ``twine`` to interact with
+it as they would the normal PyPI_, thereby making it much easier to get
+a running index server.
 
 .. contents:: Table of Contents
   :backlinks: top
@@ -893,6 +898,9 @@ There are lots of other projects, which allow you to run your own
 PyPI server. If ``pypiserver`` doesn't work for you, the following are
 among the most popular alternatives:
 
+- `warehouse`_:
+  the software that powers PyPI_ itself.
+
 - `devpi-server <https://pypi.org/project/devpi/>`_:
   a reliable fast pypi.org caching server, part of
   the comprehensive `github-style pypi index server and packaging meta tool
@@ -926,10 +934,12 @@ See the ``LICENSE.txt`` file.
 
 
 .. _bottle: http://bottlepy.org
+.. _PyPA: https://www.pypa.io/en/latest/
 .. _PyPI: https://pypi.org
 .. _twine: https://pypi.org/project/twine/
 .. _pypi-uploader: https://pypi.org/project/pypi-uploader/
 .. _python-pam: https://pypi.org/project/python-pam/
+.. _warehouse: https://github.com/pypa/warehouse/
 .. |travis-status| image:: https://travis-ci.org/pypiserver/pypiserver.svg
     :alt: Travis build status
     :scale: 100%
