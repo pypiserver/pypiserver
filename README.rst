@@ -24,16 +24,17 @@ Wheels, bdists, eggs and accompanying PGP-signatures can be uploaded
 either with ``pip``, ``setuptools``, ``twine``, ``pypi-uploader``, or simply copied
 with ``scp``.
 
-The official software powering PyPI_ is Warehouse_. However, Warehouse_
-is fairly specialized to be ``pypi.org``'s own software, and should not
-be used in other contexts. In particular, it does not officially support
-being used as a custom package index by users wishing to serve their own
-packages.
+.. note::
+   The official software powering PyPI_ is Warehouse_. However, Warehouse_
+   is fairly specialized to be ``pypi.org``'s own software, and should not
+   be used in other contexts. In particular, it does not officially support
+   being used as a custom package index by users wishing to serve their own
+   packages.
 
-``pypiserver`` implements the same interfaces as `PyPI`_, allowing
-standard Python packaging tooling such as ``pip`` and ``twine`` to
-interact with it as a package index just as they would with PyPI_, while
-making it much easier to get a running index server.
+   ``pypiserver`` implements the same interfaces as `PyPI`_, allowing
+   standard Python packaging tooling such as ``pip`` and ``twine`` to
+   interact with it as a package index just as they would with PyPI_, while
+   making it much easier to get a running index server.
 
 .. contents:: Table of Contents
   :backlinks: top
