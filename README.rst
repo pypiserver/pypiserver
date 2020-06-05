@@ -522,7 +522,8 @@ Managing Automated Startup
 
 There are a variety of options for handling the automated starting of
 pypiserver upon system startup. Two of the most common are *systemd* and
-*supervisor*.
+*supervisor* for linux systems. For windows creating services with scripts isn't
+an easy task without a third party tool such as *NSSM*.
 
 Running As a ``systemd`` Service
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -579,6 +580,46 @@ management. An example configuration file for ``supervisor`` is given below::
     stdout_logfile=/var/log/pypiserver.out.log
 
 From there, the process can be managed via ``supervisord`` using ``supervisorctl``.
+
+Running As a service with ``NSSM`` (Windows)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Download NSSM from https://nssm.cc unzip to a desired location such as Program Files. Decide whether you are going
+to use win32 or win64, and add that exe to environment PATH.
+
+Create a start_pypiserver.bat::
+
+    pypi-server -p 8080 C:\Path\To\Packages &
+
+Test the batch file by running it first before creating the service. Make sure you can access
+the server remotely, and install packages. If you can, proceed, if not troubleshoot until you can.
+This will ensure you know the server works, before adding NSSM into the mix.
+
+From the command prompt::
+
+    nssm install pypiserver
+
+This command will launch a NSSM gui application::
+
+    Path: C:\Path\To\start_pypiserver.bat
+    Startup directory: Auto generates when selecting path
+    Service name: pypiserver
+
+There are more tabs, but that is the basic setup. If the service needs to be running with a certain
+login credentials, make sure you enter those credentials in the logon tab.
+
+Start the service::
+
+    nssm start pypiserver
+
+Other useful commands::
+
+    nssm --help
+    nssm stop <servicename>
+    nssm restart <servicename>
+    nssm status <servicename>
+
+For detailed information please visit https://nssm.cc
 
 Using a Different WSGI Server
 -----------------------------
