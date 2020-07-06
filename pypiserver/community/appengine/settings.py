@@ -23,4 +23,4 @@ class GlobalSettings:
     LOCAL_DIRECTORY = os.getenv(
         "LOCAL_PACKAGE_DIRECTORY", "./packages" if RUNNING_DEV else "/tmp")
     REMOTE_DIRECTORY = os.getenv(
-        "REMOTE_PACKAGE_DIRECTORY", "./.remote_packages" if RUNNING_DEV else "packages")
+        "REMOTE_PACKAGE_DIRECTORY", "./.remote_packages" if RUNNING_DEV else "/packages")

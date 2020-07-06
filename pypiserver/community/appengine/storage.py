@@ -107,7 +107,7 @@ class BasicStorageClient:
         return change_event.process()
 
 
-class StandardFileStoreDriver:
+class BaseFileStoreDriver:
 
     def __init__(self, local_directory=None, remote_directory=None, logger=None):
         self._local_directory = local_directory
@@ -162,7 +162,7 @@ class StandardFileStoreDriver:
             "Subclasses must implement `upload_to_remote`")
 
 
-class LocalFileStoreDriver(StandardFileStoreDriver):
+class LocalFileStoreDriver(BaseFileStoreDriver):
 
     def __init__(self, local_directory=None, remote_directory=None, logger=None):
         super().__init__(local_directory=local_directory,
@@ -206,7 +206,7 @@ class LocalFileStoreDriver(StandardFileStoreDriver):
             return False
 
 
-class LocalToGoogleCloudStorageFileStoreDriver(StandardFileStoreDriver):
+class LocalToGoogleCloudStorageFileStoreDriver(BaseFileStoreDriver):
 
     def __init__(self, local_directory=None, remote_directory=None, bucket_name=None, logger=None):
         super().__init__(local_directory=local_directory,
