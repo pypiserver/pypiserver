@@ -22,7 +22,7 @@ def setup_synchronization_plugin(pypiserver_app,
     """Setup the new syncrhonization plugin on top of the pypiserver app.
 
     Args:
-        pypiserver_app (pypiserver.app): [description]
+        pypiserver_app (pypiserver.app): an application definition of pypiserver
         local_location (str): location of the local files
         remote_location (str): location of the remote files
         storage_client (pypiserver.community.appengine.BasicStorageClient, optional): storage client to use. Defaults to BasicStorageClient.
