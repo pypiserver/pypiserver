@@ -36,6 +36,7 @@ class PkgFile:
         "relfn_unix",  # The relative file path in unix notation
         "parsed_version",  # The package version as a tuple of parts
         "digester",  # a function that calculates the digest for the package
+        "_requires_python",  # The 'data-requires-python' attribute
     ]
     digest: t.Optional[str]
     digester: t.Optional[t.Callable[["PkgFile"], t.Optional[str]]]
@@ -80,3 +81,22 @@ class PkgFile:
             self.digest = self.digester(self)
         hashpart = f"#{self.digest}" if self.digest else ""
         return self.relfn_unix + hashpart  # type: ignore
+
+
+    @property
+    def requires_python(self):
+        if not hasattr(self, '_requires_python'):
+            try:
+                from zipfile import ZipFile
+                from email.parser import Parser
+                with ZipFile(self.fn, 'r') as wheel:
+                    name = [e for e in wheel.namelist() if
+                            e.endswith(".dist-info/METADATA") or
+                            e.endswith("/PKG-INFO")][0]
+                    wheel_metadata = wheel.read(name)
+                    parser = Parser()
+                    metadata = parser.parsestr(wheel_metadata.decode("utf-8"))
+                    self._requires_python = metadata["Requires-Python"]
+            except Exception as e:
+                self._requires_python = ''
+        return self._requires_python
