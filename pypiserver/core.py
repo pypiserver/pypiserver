@@ -271,7 +271,9 @@ def read_lines(filename):
                 if line and not line.startswith('#')
             ]
     except Exception:
-        pass
+        log.exception('Failed to read package blacklist file "%s", '
+                      'starting the server without any blacklisted packages!'
+                      % filename)
 
     return lines
 
