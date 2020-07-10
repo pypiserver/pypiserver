@@ -43,7 +43,7 @@ with ``scp``.
 Quickstart: Installation and Usage
 ==================================
 
-``pypiserver`` > 1.2.x works with Python 2.7 and 3.4+ or PyPy.
+``pypiserver`` > 1.2.x works with Python 2.7 and 3.5+ or PyPy.
 Older Python versions may still work, but they are not tested.
 For legacy Python versions, use ``pypiserver-1.1.x`` series.
 
