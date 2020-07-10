@@ -265,7 +265,11 @@ def read_lines(filename):
 
     try:
         with open(filename) as f:
-            lines = [line.strip() for line in f.readlines() if line.strip() and not line.strip().startswith('#')]
+            lines = [
+                line 
+                for line in (ln.strip() for ln in f.readlines()) 
+                if line and not line.startswith('#')
+            ]
     except Exception:
         pass
 
