@@ -8,6 +8,7 @@ x.x.x (tbd)
 - MAINT: Update bottle to [0.12.18](https://github.com/bottlepy/bottle/releases/tag/0.12.18)
   for Python 3.8 compatibility
 - MAINT: bump version of passlib from 1.7.1 to 1.7.2 in Docker requirements
+- MAINT: drop official support for Python 3.4
 
 1.3.2 (2020-01-11)
 ------------------

@@ -24,6 +24,17 @@ Wheels, bdists, eggs and accompanying PGP-signatures can be uploaded
 either with ``pip``, ``setuptools``, ``twine``, ``pypi-uploader``, or simply copied
 with ``scp``.
 
+.. note::
+   The official software powering PyPI_ is Warehouse_. However, Warehouse_
+   is fairly specialized to be ``pypi.org``'s own software, and should not
+   be used in other contexts. In particular, it does not officially support
+   being used as a custom package index by users wishing to serve their own
+   packages.
+
+   ``pypiserver`` implements the same interfaces as `PyPI`_, allowing
+   standard Python packaging tooling such as ``pip`` and ``twine`` to
+   interact with it as a package index just as they would with PyPI_, while
+   making it much easier to get a running index server.
 
 .. contents:: Table of Contents
   :backlinks: top
@@ -32,7 +43,7 @@ with ``scp``.
 Quickstart: Installation and Usage
 ==================================
 
-``pypiserver`` > 1.2.x works with Python 2.7 and 3.4+ or PyPy.
+``pypiserver`` > 1.2.x works with Python 2.7 and 3.5+ or PyPy.
 Older Python versions may still work, but they are not tested.
 For legacy Python versions, use ``pypiserver-1.1.x`` series.
 
@@ -511,7 +522,8 @@ Managing Automated Startup
 
 There are a variety of options for handling the automated starting of
 pypiserver upon system startup. Two of the most common are *systemd* and
-*supervisor*.
+*supervisor* for linux systems. For windows creating services with scripts isn't
+an easy task without a third party tool such as *NSSM*.
 
 Running As a ``systemd`` Service
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -569,6 +581,46 @@ management. An example configuration file for ``supervisor`` is given below::
 
 From there, the process can be managed via ``supervisord`` using ``supervisorctl``.
 
+Running As a service with ``NSSM`` (Windows)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Download NSSM from https://nssm.cc unzip to a desired location such as Program Files. Decide whether you are going
+to use win32 or win64, and add that exe to environment PATH.
+
+Create a start_pypiserver.bat::
+
+    pypi-server -p 8080 C:\Path\To\Packages &
+
+Test the batch file by running it first before creating the service. Make sure you can access
+the server remotely, and install packages. If you can, proceed, if not troubleshoot until you can.
+This will ensure you know the server works, before adding NSSM into the mix.
+
+From the command prompt::
+
+    nssm install pypiserver
+
+This command will launch a NSSM gui application::
+
+    Path: C:\Path\To\start_pypiserver.bat
+    Startup directory: Auto generates when selecting path
+    Service name: pypiserver
+
+There are more tabs, but that is the basic setup. If the service needs to be running with a certain
+login credentials, make sure you enter those credentials in the logon tab.
+
+Start the service::
+
+    nssm start pypiserver
+
+Other useful commands::
+
+    nssm --help
+    nssm stop <servicename>
+    nssm restart <servicename>
+    nssm status <servicename>
+
+For detailed information please visit https://nssm.cc
+
 Using a Different WSGI Server
 -----------------------------
 
@@ -614,14 +666,14 @@ explained in `bottle's documentation <http://bottlepy.org/docs/dev/deployment.ht
 
         <Directory /yoursite/wsgi >
             Require all granted
-        </Directort>
+        </Directory>
 
    or if using older ``Apache < 2.4``, substitute the last part with this::
 
         <Directory /yoursite/wsgi >
             Order deny,allow
             Allow from all
-        </Directort>
+        </Directory>
 
 2. Then create the ``/yoursite/cfg/pypiserver.wsgi`` file and make sure that
    the ``user`` and ``group`` of the ``WSGIDaemonProcess`` directive
@@ -906,15 +958,27 @@ among the most popular alternatives:
 - `flask-pypi-proxy <http://flask-pypi-proxy.readthedocs.org/>`_
   A proxy for PyPI that also enables also uploading custom packages.
 
-- `twine`_:
-  A command-line utility for interacting with PyPI or ``pypiserver``.
+- Check this SO question: `How to roll my own pypi
+  <http://stackoverflow.com/questions/1235331/how-to-roll-my-own-pypi>`_
+
+
+Related Software
+================
+
+Though not direct alternatives for ``pypiserver``'s use as an index
+server, the following is a list of related software projects that you
+may want to familiarize with:
 
 - `pypi-uploader`_:
   A command-line utility to upload packages to your ``pypiserver`` from pypi without
   having to store them locally first.
 
-- Check this SO question: `How to roll my own pypi
-  <http://stackoverflow.com/questions/1235331/how-to-roll-my-own-pypi>`_
+- `twine`_:
+  A command-line utility for interacting with PyPI or ``pypiserver``.
+
+- `warehouse`_:
+  the software that powers PyPI_ itself. It is not generally intended to
+  be run by end-users.
 
 
 Licensing
@@ -926,7 +990,9 @@ See the ``LICENSE.txt`` file.
 
 
 .. _bottle: http://bottlepy.org
+.. _PyPA: https://www.pypa.io/en/latest/
 .. _PyPI: https://pypi.org
+.. _Warehouse: https://github.com/pypa/warehouse/
 .. _twine: https://pypi.org/project/twine/
 .. _pypi-uploader: https://pypi.org/project/pypi-uploader/
 .. _python-pam: https://pypi.org/project/python-pam/
