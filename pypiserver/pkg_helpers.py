@@ -110,3 +110,21 @@ def guess_pkgname_and_version(path: str) -> t.Optional[t.Tuple[str, str]]:
         parts = _pkgname_parts_re.split(ver_spec)
         version = parts[0]
     return pkgname, version
+
+
+def _requires_python(fpath):
+    try:
+        # TODO: we support only wheels and zip source packages here. We should
+        # also support the various tar source packages.
+        from zipfile import ZipFile
+        from email.parser import Parser
+        with ZipFile(fpath, 'r') as wheel:
+            name = [e for e in wheel.namelist() if
+                    e.endswith(".dist-info/METADATA") or
+                    e.endswith("/PKG-INFO")][0]
+            wheel_metadata = wheel.read(name)
+            parser = Parser()
+            metadata = parser.parsestr(wheel_metadata.decode("utf-8"))
+            return metadata["Requires-Python"]
+    except Exception as e:
+        return ''

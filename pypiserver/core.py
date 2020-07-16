@@ -5,7 +5,7 @@ import mimetypes
 import typing as t
 from urllib.parse import quote
 
-from pypiserver.pkg_helpers import normalize_pkgname, parse_version
+from pypiserver.pkg_helpers import normalize_pkgname, parse_version, _requires_python
 
 mimetypes.add_type("application/octet-stream", ".egg")
 mimetypes.add_type("application/octet-stream", ".whl")
@@ -86,17 +86,5 @@ class PkgFile:
     @property
     def requires_python(self):
         if not hasattr(self, '_requires_python'):
-            try:
-                from zipfile import ZipFile
-                from email.parser import Parser
-                with ZipFile(self.fn, 'r') as wheel:
-                    name = [e for e in wheel.namelist() if
-                            e.endswith(".dist-info/METADATA") or
-                            e.endswith("/PKG-INFO")][0]
-                    wheel_metadata = wheel.read(name)
-                    parser = Parser()
-                    metadata = parser.parsestr(wheel_metadata.decode("utf-8"))
-                    self._requires_python = metadata["Requires-Python"]
-            except Exception as e:
-                self._requires_python = ''
+            self._requires_python = _requires_python(self.fn)
         return self._requires_python
