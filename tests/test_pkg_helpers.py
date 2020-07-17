@@ -114,3 +114,30 @@ paths = [
 @pytest.mark.parametrize(("pathname", "allowed"), paths)
 def test_allowed_path_check(pathname, allowed):
     assert is_listed_path(pathname) == allowed
+
+
+# @pytest.fixture(scope='module')
+# def source_zip_package(project, request):
+#     with chdir(project.strpath):
+#         cmd = 'setup.py sdist --formats=zip'
+#         assert _run_python(cmd) == 0
+#         pkgs = list(project.join('dist').visit('centodeps*.zip'))
+#         assert len(pkgs) == 1
+#         pkg = path.local(pkgs[0])
+#         assert pkg.check()
+#
+#         return pkg
+
+# def test_requires_python(open_server, package, source_zip_package):
+#     url = _build_url(open_server.port) + '/simple/centodeps/'
+#     resp = urlopen(url)
+#     assert resp.getcode() == 200
+#     page_content = resp.read().decode('utf-8')
+#     print(page_content)
+#     assert 'data-requires-python="&gt;=4.2"' in page_content
+#     # Should we depend on something like beautifulsoup to parse the HTML or does
+#     # someone sees a 'simpler' solution?
+#     # The goal here would be to check for the presence of the
+#     # 'data-requires-python' attribute in each link on the queried page.
+#     raise Exception("This test is WIP")
+#
