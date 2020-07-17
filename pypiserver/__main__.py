@@ -145,6 +145,15 @@ def usage():
 
     -u
       Allow updating to unstable version (alpha, beta, rc, dev versions).
+      
+    --blacklist-file BLACKLIST_FILE
+      Don't update packages listed in this file (one package name per line,
+      without versions, '#' comments honored). This can be useful if you upload
+      private packages into pypiserver, but also keep a mirror of public
+      packages that you regularly update. Attempting to pull an update of
+      a private package from `pypi.org` might pose a security risk - e.g. a
+      malicious user might publish a higher version of the private package,
+      containing arbitrary code.
 
   Visit https://pypi.org/project/pypiserver/ for more information.
   """)
@@ -163,6 +172,7 @@ def main(argv=None):
     update_dry_run = True
     update_directory = None
     update_stable_only = True
+    update_blacklist_file = None
 
     try:
         opts, roots = getopt.getopt(argv[1:], "i:p:a:r:d:P:Uuvxoh", [
@@ -176,6 +186,7 @@ def main(argv=None):
             "disable-fallback",
             "overwrite",
             "hash-algo=",
+            "blacklist-file=",
             "log-file=",
             "log-frmt=",
             "log-req-frmt=",
@@ -232,6 +243,8 @@ def main(argv=None):
             update_stable_only = False
         elif k == "-d":
             update_directory = v
+        elif k == "--blacklist-file":
+            update_blacklist_file = v
         elif k in ("-P", "--passwords"):
             c.password_file = v
         elif k in ("-o", "--overwrite"):
@@ -274,8 +287,11 @@ def main(argv=None):
 
     if command == "update":
         from pypiserver.manage import update_all_packages
-        update_all_packages(roots, update_directory,
-                dry_run=update_dry_run, stable_only=update_stable_only)
+        update_all_packages(
+            roots, update_directory,
+            dry_run=update_dry_run, stable_only=update_stable_only,
+            blacklist_file=update_blacklist_file
+        )
         return
 
     # Fixes #49:

@@ -24,6 +24,7 @@ from pypiserver.manage import (
     filter_latest_pkgs,
     is_stable_version,
     update_package,
+    update_all_packages,
 )
 
 
@@ -178,3 +179,97 @@ def test_update_package_dry_run(monkeypatch):
     pkg = PkgFile('mypkg', '1.0', replaces=PkgFile('mypkg', '0.9'))
     update_package(pkg, '.', dry_run=True)
     assert not manage.call.mock_calls  # pylint: disable=no-member
+
+
+def test_update_all_packages(monkeypatch):
+    """Test calling update_all_packages()"""
+    public_pkg_1 = PkgFile('Flask', '1.0')
+    public_pkg_2 = PkgFile('requests', '1.0')
+    private_pkg_1 = PkgFile('my_private_pkg', '1.0')
+    private_pkg_2 = PkgFile('my_other_private_pkg', '1.0')
+
+    roots_mock = {
+        '/opt/pypi': [
+            public_pkg_1,
+            private_pkg_1,
+        ],
+        '/data/pypi': [
+            public_pkg_2,
+            private_pkg_2
+        ],
+    }
+
+    def core_listdir_mock(directory):
+        return roots_mock.get(directory, [])
+
+    monkeypatch.setattr(manage.core, 'listdir', core_listdir_mock)
+    monkeypatch.setattr(manage.core, 'read_lines', Mock(return_value=[]))
+    monkeypatch.setattr(manage, 'update', Mock(return_value=None))
+
+    destdir = None
+    dry_run = False
+    stable_only = True
+    blacklist_file = None
+
+    update_all_packages(
+        roots=list(roots_mock.keys()),
+        destdir=destdir,
+        dry_run=dry_run,
+        stable_only=stable_only,
+        blacklist_file=blacklist_file,
+    )
+
+    manage.core.read_lines.assert_not_called()   # pylint: disable=no-member
+    manage.update.assert_called_once_with(   # pylint: disable=no-member
+        frozenset([public_pkg_1, public_pkg_2, private_pkg_1, private_pkg_2]),
+        destdir,
+        dry_run,
+        stable_only
+    )
+
+
+def test_update_all_packages_with_blacklist(monkeypatch):
+    """Test calling update_all_packages()"""
+    public_pkg_1 = PkgFile('Flask', '1.0')
+    public_pkg_2 = PkgFile('requests', '1.0')
+    private_pkg_1 = PkgFile('my_private_pkg', '1.0')
+    private_pkg_2 = PkgFile('my_other_private_pkg', '1.0')
+
+    roots_mock = {
+        '/opt/pypi': [
+            public_pkg_1,
+            private_pkg_1,
+        ],
+        '/data/pypi': [
+            public_pkg_2,
+            private_pkg_2
+        ],
+    }
+
+    def core_listdir_mock(directory):
+        return roots_mock.get(directory, [])
+
+    monkeypatch.setattr(manage.core, 'listdir', core_listdir_mock)
+    monkeypatch.setattr(manage.core, 'read_lines', Mock(return_value=['my_private_pkg', 'my_other_private_pkg']))
+    monkeypatch.setattr(manage, 'update', Mock(return_value=None))
+
+    destdir = None
+    dry_run = False
+    stable_only = True
+    blacklist_file = '/root/pkg_blacklist'
+
+    update_all_packages(
+        roots=list(roots_mock.keys()),
+        destdir=destdir,
+        dry_run=dry_run,
+        stable_only=stable_only,
+        blacklist_file=blacklist_file,
+    )
+
+    manage.update.assert_called_once_with(   # pylint: disable=no-member
+        frozenset([public_pkg_1, public_pkg_2]),
+        destdir,
+        dry_run,
+        stable_only
+    )
+    manage.core.read_lines.assert_called_once_with(blacklist_file)   # pylint: disable=no-member
