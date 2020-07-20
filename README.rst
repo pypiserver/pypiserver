@@ -859,7 +859,7 @@ hosting solution.
 Google Cloud Platform AppEngine
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To make use of the GCP AppEngine, one needs to `setup a Google Storage bucket <>`_ and
+To make use of the GCP AppEngine, one needs to `setup a Google Storage bucket <https://cloud.google.com/storage/docs/creating-buckets>`_ and
 `create an AppEngine <https://cloud.google.com/appengine/docs/standard/python3/quickstart>`_ application.
 
 1. Make sample AppEngine app::
