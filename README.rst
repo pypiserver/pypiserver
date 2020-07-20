@@ -884,7 +884,7 @@ To make use of the GCP AppEngine, one needs to `setup a Google Storage bucket <>
         redirect_http_response_code: 301
         script: auto
 
-2. Create the ``main.py`` AppEngine entrypoint module
+2. Create the ``main.py`` AppEngine entrypoint module::
 
     # Import required modules
     from pypiserver.community.appengine import 
