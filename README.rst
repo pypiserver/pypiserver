@@ -874,16 +874,15 @@ To make use of the GCP AppEngine, one needs to `setup a Google Storage bucket <>
     instance_class: F2
 
     env_variables:                          # notice them used in step 2.
-      BUCKET_NAME: "<YOUR BUCKET NAME>                        # GCP Storage bucket for packages
+      BUCKET_NAME: "<YOUR BUCKET NAME>"                       # GCP Storage bucket for packages
       LOCAL_PACKAGE_DIRECTORY: "/tmp"                         # must be a subdirectory of /tmp, see https://cloud.google.com/appengine/docs/standard/python3/using-temp-files
       REMOTE_PACKAGE_DIRECTORY: "<YOUR PACKAGE DIRECTORY>"    # select a subdirectory of a bucket
 
     handlers:
-
-    - url: /.*
-      secure: always
-      redirect_http_response_code: 301
-      script: auto
+      - url: /.*
+        secure: always
+        redirect_http_response_code: 301
+        script: auto
 
 2. Create the ``main.py`` AppEngine entrypoint module
 
@@ -899,7 +898,7 @@ To make use of the GCP AppEngine, one needs to `setup a Google Storage bucket <>
         pypiserver_app = app(root=["/tmp/local_packages"])
 
         # Create the plugin
-        file_manager = LocalToGoogleCloudStorageFileStoreManager(
+        file_manager = LocalToGoogleFileStoreManager(
             bucket_name=os.getenv("BUCKET_NAME"))
         synchronizer_plugin = setup_synchronization_plugin(
             local_directory=os.getenv("LOCAL_PACKAGE_DIRECTORY"), 

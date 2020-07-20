@@ -10,7 +10,7 @@ from pypiserver.community.appengine.plugin import (StoragePluginBuilder,
                                                    SynchronizerPlugin)
 from pypiserver.community.appengine.storage import (BasicStorageClient,
                                                     LocalFileStoreManager,
-                                                    LocalToGoogleCloudStorageFileStoreManager)
+                                                    LocalToGoogleFileStoreManager)
 
 
 def setup_synchronization_plugin(local_directory=None,

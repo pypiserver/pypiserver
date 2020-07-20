@@ -214,7 +214,7 @@ class LocalFileStoreManager(BaseFileStoreManager):
             return False
 
 
-class LocalToGoogleCloudStorageFileStoreManager(BaseFileStoreManager):
+class LocalToGoogleFileStoreManager(BaseFileStoreManager):
 
     def __init__(self, local_directory=None, remote_directory=None, bucket_name=None, logger=None):
         super().__init__(local_directory=local_directory,
