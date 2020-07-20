@@ -113,18 +113,30 @@ def guess_pkgname_and_version(path: str) -> t.Optional[t.Tuple[str, str]]:
 
 
 def _requires_python(fpath):
-    try:
-        # TODO: we support only wheels and zip source packages here. We should
-        # also support the various tar source packages.
-        from zipfile import ZipFile
-        from email.parser import Parser
-        with ZipFile(fpath, 'r') as wheel:
-            name = [e for e in wheel.namelist() if
-                    e.endswith(".dist-info/METADATA") or
-                    e.endswith("/PKG-INFO")][0]
-            wheel_metadata = wheel.read(name)
-            parser = Parser()
-            metadata = parser.parsestr(wheel_metadata.decode("utf-8"))
-            return metadata["Requires-Python"]
-    except Exception as e:
-        return ''
+    import tarfile
+    from email.parser import Parser
+    from zipfile import ZipFile, BadZipFile
+    pkg_name, pkg_version = guess_pkgname_and_version(fpath)
+    if fpath.endswith(".zip") or fpath.endswith(".whl"):
+        try:
+            with ZipFile(fpath, 'r') as pkg:
+                if fpath.endswith(".whl"):
+                    pkg_info = "-".join([pkg_name, pkg_version]) + ".dist-info/METADATA"
+                else:
+                    pkg_info = "-".join([pkg_name, pkg_version]) + "/PKG-INFO"
+                pkg_metadata = pkg.read(pkg_info).decode("utf-8")
+                parser = Parser()
+                metadata = parser.parsestr(pkg_metadata)
+                return metadata["Requires-Python"]
+        except Exception as e:
+            return ''
+    else:
+        try:
+            with tarfile.open(fpath, 'r') as pkg:
+                pkg_info = "-".join([pkg_name, pkg_version]) + "/PKG-INFO"
+                pkg_metadata = pkg.extractfile(pkg_info).read().decode("utf-8")
+                parser = Parser()
+                metadata = parser.parsestr(pkg_metadata)
+                return metadata["Requires-Python"]
+        except Exception as e:
+            return ''
