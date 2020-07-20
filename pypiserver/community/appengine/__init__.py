@@ -8,17 +8,16 @@ synchronize local and remote directories
 from pypiserver.community.appengine.logger import CustomLogger
 from pypiserver.community.appengine.plugin import (StoragePluginBuilder,
                                                    SynchronizerPlugin)
-from pypiserver.community.appengine.settings import GlobalSettings
 from pypiserver.community.appengine.storage import (BasicStorageClient,
-                                                    LocalFileStoreDriver,
-                                                    LocalToGoogleCloudStorageFileStoreDriver)
+                                                    LocalFileStoreManager,
+                                                    LocalToGoogleCloudStorageFileStoreManager)
 
 
-def setup_synchronization_plugin(pypiserver_app,
-                                 local_location,
-                                 remote_location,
+def setup_synchronization_plugin(local_directory=None,
+                                 remote_directory=None,
                                  storage_client=BasicStorageClient,
-                                 file_store=LocalFileStoreDriver):
+                                 file_store_manager=LocalFileStoreManager,
+                                 logger=None):
     """Setup the new syncrhonization plugin on top of the pypiserver app.
 
     Args:
@@ -26,18 +25,19 @@ def setup_synchronization_plugin(pypiserver_app,
         local_location (str): location of the local files
         remote_location (str): location of the remote files
         storage_client (pypiserver.community.appengine.BasicStorageClient, optional): storage client to use. Defaults to BasicStorageClient.
-        file_store (pypiserver.community.appengine.storage.BaseFileStoreDriver, optional): file storage driver to use. Defaults to LocalFileStoreDriver.
+        file_store_manager (pypiserver.community.appengine.storage.BaseFileStoreManager, optional): file storage manager to use. Defaults to LocalFileStoreManager.
 
     Returns:
         pypiserver.app: the pypiserver with the sync plugin setup
     """
+    logger = logger if logger else CustomLogger()
     plugin_builder = StoragePluginBuilder(SynchronizerPlugin,
                                           storage_client,
-                                          file_store,
+                                          file_store_manager,
                                           logger=CustomLogger())
-    synchronizer_plugin = plugin_builder.build_plugin(local_location,
-                                                      remote_location)
-    return add_synchronization_app_hooks(pypiserver_app, synchronizer_plugin)
+    synchronizer_plugin = plugin_builder.build_plugin(local_directory,
+                                                      remote_directory)
+    return synchronizer_plugin
 
 
 def add_synchronization_app_hooks(pypiserver_app, plugin):
@@ -60,16 +60,14 @@ def __example__():
     from pypiserver import app
 
     # Like usual initialize the pypiserver application
-    pypiserver_app = app(
-        root=[GlobalSettings.LOCAL_DIRECTORY], password_file="htpasswd.txt")
+    pypiserver_app = app(root=["/tmp/local_packages"])
 
     # Configure the plugin builder
-    plugin_builder = StoragePluginBuilder(SynchronizerPlugin,
-                                          BasicStorageClient,
-                                          LocalFileStoreDriver,
-                                          logger=CustomLogger())
+    synchronizer_plugin = setup_synchronization_plugin(
+        "/tmp/local_packages", "/tmp/remote_packages", file_store_manager=LocalFileStoreManager)
 
-    # create the plugin
-    synchronizer_plugin = plugin_builder.build_plugin(
-        GlobalSettings.LOCAL_DIRECTORY,  GlobalSettings.REMOTE_DIRECTORY)
-    return add_synchronization_app_hooks(pypiserver_app, synchronizer_plugin)
+    # Register the plugin
+    pypiserver_app = add_synchronization_app_hooks(
+        pypiserver_app, synchronizer_plugin)
+
+    return pypiserver_app

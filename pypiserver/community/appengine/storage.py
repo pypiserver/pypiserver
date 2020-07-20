@@ -7,6 +7,8 @@ import time
 from google.cloud import storage
 from pypiserver import app
 
+LOGGER = logging.getLogger(__name__)
+
 
 class ContentChangeTypes:
 
@@ -43,34 +45,34 @@ class ContentChangeTypes:
 
 class RemovalChangeEvent(ContentChangeTypes):
 
-    def __init__(self, file_store_driver, difference=None, logger=None):
+    def __init__(self, file_store_manager, difference=None, logger=None):
         super().__init__(difference=difference, logger=logger)
         self._type = self.REMOVAL
-        self._file_store_driver = file_store_driver
+        self._file_store_manager = file_store_manager
 
     def handle(self, *args):
         self.logger.debug(
             "Handling {} with difference: {}".format(self.change_type, self.difference))
-        return self._file_store_driver.remove_from_remote(*args)
+        return self._file_store_manager.remove_from_remote(*args)
 
 
 class AdditionChangeEvent(ContentChangeTypes):
 
-    def __init__(self, file_store_driver, difference=None, logger=None):
+    def __init__(self, file_store_manager, difference=None, logger=None):
         super().__init__(difference=difference, logger=logger)
         self._type = self.ADDITION
-        self._file_store_driver = file_store_driver
+        self._file_store_manager = file_store_manager
 
     def handle(self, *args):
         self.logger.debug(
             "Handling {} with difference: {}".format(self.change_type, self.difference))
-        return self._file_store_driver.upload_to_remote(*args)
+        return self._file_store_manager.upload_to_remote(*args)
 
 
 class BasicStorageClient:
 
-    def __init__(self, file_store_driver=None, logger=None):
-        self._file_storage = file_store_driver
+    def __init__(self, file_store_manager=None, logger=None):
+        self._file_storage = file_store_manager
         self._current_local_contents = None
         self.logger = logger if logger else logging.getLogger(__name__)
 
@@ -107,7 +109,7 @@ class BasicStorageClient:
         return change_event.process()
 
 
-class BaseFileStoreDriver:
+class BaseFileStoreManager:
 
     def __init__(self, local_directory=None, remote_directory=None, logger=None):
         self._local_directory = local_directory
@@ -121,6 +123,12 @@ class BaseFileStoreDriver:
     @property
     def source_directory_path(self):
         return self._local_directory.rstrip("/")
+
+    def set_local_directory(self, local_directory):
+        self._local_directory = local_directory
+
+    def set_remote_directory(self, remote_directory):
+        self._remote_directory = remote_directory
 
     def pull_all_remote_files(self):
         try:
@@ -162,7 +170,7 @@ class BaseFileStoreDriver:
             "Subclasses must implement `upload_to_remote`")
 
 
-class LocalFileStoreDriver(BaseFileStoreDriver):
+class LocalFileStoreManager(BaseFileStoreManager):
 
     def __init__(self, local_directory=None, remote_directory=None, logger=None):
         super().__init__(local_directory=local_directory,
@@ -206,7 +214,7 @@ class LocalFileStoreDriver(BaseFileStoreDriver):
             return False
 
 
-class LocalToGoogleCloudStorageFileStoreDriver(BaseFileStoreDriver):
+class LocalToGoogleCloudStorageFileStoreManager(BaseFileStoreManager):
 
     def __init__(self, local_directory=None, remote_directory=None, bucket_name=None, logger=None):
         super().__init__(local_directory=local_directory,

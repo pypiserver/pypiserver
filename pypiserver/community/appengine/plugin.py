@@ -4,22 +4,22 @@ import logging
 
 
 class StoragePluginBuilder:
-    """A shallow builder of the supplied plugin class, storage clients and drivers
+    """A shallow builder of the supplied plugin class, storage clients and managers
 
     Args:
+        manager (pypiserver.community.appengine.storage.BaseFileStoreManager): a file storage manager that provides file operations
         plugin_class (type): a constructor for the plugin
         client_class (type): constructor for the storage client detecting the changes
-        driver_class (type): constructor for the file storage driver that provides file operations
     """
 
-    def __init__(self, plugin_class, client_class, driver_class, logger=None):
+    def __init__(self, manager, plugin_class, client_class, logger=None):
+        self.manager = manager
         self.plugin_class = plugin_class
         self.client_class = client_class
-        self.driver_class = driver_class
         self.logger = logger if logger else logging.getLogger(__name__)
 
     def build_plugin(self, local_location, remote_location):
-        """Construct the plugin instance with specified client and driver
+        """Construct the plugin instance with specified client and manager
         classe configured for specified local and remote locations.
 
         Args:
@@ -29,32 +29,34 @@ class StoragePluginBuilder:
         Returns:
             pypiserver.community.appengine.SynchronizerPlugin: the created plugin instance
         """
-        driver = self.create_driver(local_location, remote_location)
-        storage_client = self.create_client(driver)
+        manager = self.setup_manager(local_location, remote_location)
+        storage_client = self.create_client(manager)
         return self.create_plugin(storage_client)
 
-    def create_driver(self, local_directory, remote_directory):
-        """Construct plugin storage driver instance
+    def setup_manager(self, local_directory, remote_directory):
+        """Construct plugin storage manager instance
 
         Args:
             local_directory (str): a name of the local directory
             remote_directory (str): a name of the remote directory
 
         Returns:
-            pypiserver.community.appengine.storage.BaseFileStoreDriver: a new driver instance
+            pypiserver.community.appengine.storage.BaseFileStoreManager: a new manager instance
         """
-        return self.driver_class(local_directory=local_directory, remote_directory=remote_directory)
+        self.manager.set_local_directory(local_directory)
+        self.manager.set_remote_directory(remote_directory)
+        return self.manager
 
-    def create_client(self, storage_driver):
+    def create_client(self, storage_manager):
         """Construct new storage client instance
 
         Args:
-            storage_driver (pypiserver.community.appengine.storage.BaseFileStoreDriver): a storage driver instance
+            storage_manager (pypiserver.community.appengine.storage.BaseFileStoreManager): a storage manager instance
 
         Returns:
             pypiserver.community.appengine.BasicStorageClient: a new client instance
         """
-        return self.client_class(file_store_driver=storage_driver)
+        return self.client_class(file_store_manager=storage_manager)
 
     def create_plugin(self, storage_client):
         """Construct plugin given the storage client instance
@@ -78,10 +80,10 @@ class StoragePluginBuilder:
         Returns:
             str: a formatted string of own configuration
         """
-        return "Plugin builder configured with:\n\tPlugin:{plugin}\n\tStorageClient:{client}\n\tFileStoreDriver:{driver}".format(
+        return "Plugin builder configured with:\n\tPlugin:{plugin}\n\tStorageClient:{client}\n\tFileStoreManager:{manager}".format(
             plugin=self.plugin_class,
             client=self.client_class,
-            driver=self.driver_class
+            manager=self.manager
         )
 
 
