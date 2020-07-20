@@ -850,6 +850,69 @@ these steps:
    group, with a command like this: ``sudo usermod -a -G shadow pypy-user``.
 
 
+Running in PAAS
+---------------
+
+In cloud environments it is possible to run ``pypiserver`` in an ephemeral
+hosting solution.
+
+Google Cloud Platform AppEngine
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To make use of the GCP AppEngine, one needs to `setup a Google Storage bucket <>`_ and
+`create an AppEngine <https://cloud.google.com/appengine/docs/standard/python3/quickstart>`_ application.
+
+1. Make sample AppEngine app::
+
+    # Create `app.yaml` with the following content replacing placeholders with your values:
+
+    runtime: python37
+    service: <YOUR SERVICE NAME>
+
+    entrypoint: gunicorn -b :8081 -w 2 'main:get_app()'
+
+    instance_class: F2
+
+    env_variables:                          # notice them used in step 2.
+      BUCKET_NAME: "<YOUR BUCKET NAME>                        # GCP Storage bucket for packages
+      LOCAL_PACKAGE_DIRECTORY: "/tmp"                         # must be a subdirectory of /tmp, see https://cloud.google.com/appengine/docs/standard/python3/using-temp-files
+      REMOTE_PACKAGE_DIRECTORY: "<YOUR PACKAGE DIRECTORY>"    # select a subdirectory of a bucket
+
+    handlers:
+
+    - url: /.*
+      secure: always
+      redirect_http_response_code: 301
+      script: auto
+
+2. Create the ``main.py`` AppEngine entrypoint module
+
+    # Import required modules
+    from pypiserver.community.appengine import 
+
+    # Given community imports are present (see above)
+    from pypiserver import app
+
+    # Define the entrypoint for the AppEngine
+    def get_app():
+        # Like usual initialize the pypiserver application
+        pypiserver_app = app(root=["/tmp/local_packages"])
+
+        # Create the plugin
+        file_manager = LocalToGoogleCloudStorageFileStoreManager(
+            bucket_name=os.getenv("BUCKET_NAME"))
+        synchronizer_plugin = setup_synchronization_plugin(
+            local_directory=os.getenv("LOCAL_PACKAGE_DIRECTORY"), 
+            remote_directory=os.getenv("REMOTE_PACKAGE_DIRECTORY"), 
+            file_store_manager=file_manager)
+
+        # Register the plugin
+        pypiserver_app = add_synchronization_app_hooks(
+            pypiserver_app, synchronizer_plugin)
+
+        return pypiserver_app
+
+
 Sources
 =======
 
