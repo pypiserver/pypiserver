@@ -1,11 +1,9 @@
 import logging
 import os
 import shutil
-import sys
-import time
 
 from google.cloud import storage
-from pypiserver import app
+
 
 LOGGER = logging.getLogger(__name__)
 
