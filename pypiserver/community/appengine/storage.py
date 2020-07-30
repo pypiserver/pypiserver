@@ -147,12 +147,6 @@ class BaseFileStoreManager:
     def _get_local_target_path(self, file_name):
         return "{}/{}".format(self.source_directory_path, file_name)
 
-    def _get_remote_target_path(self, file_name):
-        return "{}/{}".format(self.sync_directory_path, file_name)
-
-    def _get_local_target_path(self, file_name):
-        return "{}/{}".format(self.source_directory_path, file_name)
-
     def get_remote_file_names(self):
         raise NotImplementedError(
             "Subclasses must implement `get_remote_file_names`")
