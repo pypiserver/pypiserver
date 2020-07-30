@@ -899,13 +899,6 @@ among the most popular alternatives:
   <https://pypi.org/project/devpi/>`_.
   (version: 2.1.4, access date: 8/3/2015)
 
-- `pip2pi <https://github.com/wolever/pip2pi>`_
-  a simple cmd-line tool that builds a PyPI-compatible local folder from pip requirements
-  (version: 0.6.7, access date: 8/3/2015)
-
-- `flask-pypi-proxy <http://flask-pypi-proxy.readthedocs.org/>`_
-  A proxy for PyPI that also enables also uploading custom packages.
-
 - `twine`_:
   A command-line utility for interacting with PyPI or ``pypiserver``.
 
@@ -915,6 +908,15 @@ among the most popular alternatives:
 
 - Check this SO question: `How to roll my own pypi
   <http://stackoverflow.com/questions/1235331/how-to-roll-my-own-pypi>`_
+
+
+Unmaintained or archived
+------------------------
+- `pip2pi <https://github.com/wolever/pip2pi>`_
+  a simple cmd-line tool that builds a PyPI-compatible local folder from pip requirements
+
+- `flask-pypi-proxy <http://flask-pypi-proxy.readthedocs.org/>`_
+  A proxy for PyPI that also enables also uploading custom packages.
 
 
 Licensing
