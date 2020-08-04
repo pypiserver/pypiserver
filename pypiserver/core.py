@@ -134,7 +134,7 @@ def parse_version(s):
 
 _archive_suffix_rx = re.compile(
     r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|"
-    "\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$",
+    r"\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$",
     re.I)
 wheel_file_re = re.compile(
     r"""^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))
@@ -222,7 +222,7 @@ class PkgFile(object):
     def __repr__(self):
         return "%s(%s)" % (
             self.__class__.__name__,
-            ", ".join(["%s=%r" % (k, getattr(self, k))
+            ", ".join(["%s=%r" % (k, getattr(self, k, 'AttributeError'))
                                   for k in sorted(self.__slots__)]))
 
     def fname_and_hash(self, hash_algo):
@@ -254,6 +254,29 @@ def _listdir(root):
                               version=version,
                               fn=fn, root=root,
                               relfn=fn[len(root) + 1:])
+
+
+def read_lines(filename):
+    """
+    Read the contents of `filename`, stripping empty lines and '#'-comments.
+    Return a list of strings, containing the lines of the file.
+    """
+    lines = []
+
+    try:
+        with open(filename) as f:
+            lines = [
+                line 
+                for line in (ln.strip() for ln in f.readlines()) 
+                if line and not line.startswith('#')
+            ]
+    except Exception:
+        log.error('Failed to read package blacklist file "%s". '
+                  'Aborting server startup, please fix this.'
+                  % filename)
+        raise
+
+    return lines
 
 
 def find_packages(pkgs, prefix=""):

@@ -174,9 +174,7 @@ def file_upload():
     ):
         raise HTTPError(
             400,
-            "Unrelated signature %r for package %r!",
-            ufiles.sig,
-            ufiles.pkg,
+            "Unrelated signature %r for package %r!" % (ufiles.sig, ufiles.pkg)
         )
 
     for uf in ufiles:
@@ -197,8 +195,8 @@ def file_upload():
             raise HTTPError(
                 409,
                 "Package %r already exists!\n"
-                "  You may start server with `--overwrite` option.",
-                uf.raw_filename,
+                "  You may start server with `--overwrite` option."
+                % uf.raw_filename,
             )
 
         core.store(packages.root, uf.raw_filename, uf.save)

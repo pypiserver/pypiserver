@@ -168,3 +168,12 @@ def test_dot_password_without_auth_list(main, monkeypatch):
 
     main(["-P", ".", "-a", "."])
     assert main.app.module.config.authenticated == []
+
+
+def test_blacklist_file(main):
+    """
+    Test that calling the app with the --blacklist-file argument does not
+    throw a getopt error
+    """
+    blacklist_file = "/root/pkg_blacklist"
+    main(["--blacklist-file", blacklist_file])

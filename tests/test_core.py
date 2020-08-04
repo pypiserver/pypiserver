@@ -82,6 +82,23 @@ def test_listdir_bad_name(tmpdir):
     res = list(core.listdir(tmpdir.strpath))
     assert res == []
 
+
+def test_read_lines(tmpdir):
+    filename = 'pkg_blacklist'
+    file_contents = (
+        '# Names of private packages that we don\'t want to upgrade\n'
+        '\n'
+        'my_private_pkg \n'
+        ' \t# This is a comment with starting space and tab\n'
+        ' my_other_private_pkg'
+    )
+
+    f = tmpdir.join(filename).ensure()
+    f.write(file_contents)
+
+    assert core.read_lines(f.strpath) == ['my_private_pkg', 'my_other_private_pkg']
+
+
 hashes = (
     # empty-sha256
     ('sha256', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'),
