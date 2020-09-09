@@ -20,7 +20,7 @@ log = logging.getLogger('pypiserver.main')
 
 
 def init_logging(level=None, frmt=None, filename=None):
-    logging.basicConfig(level=level, format=frmt)
+    logging.basicConfig(level=level, format=frmt, stream=sys.stdout)
     rlog = logging.getLogger()
     rlog.setLevel(level)
     if filename:
