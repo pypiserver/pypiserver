@@ -51,6 +51,7 @@ def default_config(
         log_req_frmt="%(bottle.request)s",
         log_res_frmt="%(status)s",
         log_err_frmt="%(body)s: %(exception)s \n%(traceback)s",
+        log_to_stdout=False,
         welcome_file=None,
         cache_control=None,
         auther=None,

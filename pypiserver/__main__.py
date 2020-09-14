@@ -19,13 +19,20 @@ import functools as ft
 log = logging.getLogger('pypiserver.main')
 
 
-def init_logging(level=None, frmt=None, filename=None):
-    logging.basicConfig(level=level, format=frmt, stream=sys.stdout)
-    rlog = logging.getLogger()
-    rlog.setLevel(level)
-    if filename:
-        rlog.addHandler(logging.FileHandler(filename))
+def init_logging(level=logging.NOTSET, frmt=None, filename=None, stream=sys.stderr, logger=None):
+    logger = logger or logging.getLogger()
+    logger.setLevel(level)
 
+    formatter = logging.Formatter(frmt)
+    if len(logger.handlers) == 0:
+        handler = logging.StreamHandler(stream)
+        handler.setFormatter(formatter)
+        logger.addHandler(logging.StreamHandler(stream))
+
+    if filename:
+        handler = logging.FileHandler(filename)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
 def usage():
     return textwrap.dedent("""\
@@ -117,6 +124,9 @@ def usage():
       A format-string selecting Http-Error properties to log; set to  '%s' to see them all.
       [Default: %(body)s: %(exception)s \n%(traceback)s]
 
+    --log-to-stdout
+      log messages to stdout instead of the default stderr
+
     --cache-control AGE
       Add "Cache-Control: max-age=AGE, public" header to package downloads.
       Pip 6+ needs this for caching.
@@ -192,6 +202,7 @@ def main(argv=None):
             "log-req-frmt=",
             "log-res-frmt=",
             "log-err-frmt=",
+            "log-to-stdout",
             "welcome=",
             "cache-control=",
             "version",
@@ -261,6 +272,8 @@ def main(argv=None):
             c.log_res_frmt = v
         elif k == "--log-err-frmt":
             c.log_err_frmt = v
+        elif k == "--log-to-stdout":
+            c.log_to_stdout = True
         elif k == "--cache-control":
             c.cache_control = v
         elif k == "-v":

@@ -129,6 +129,19 @@ def test_logging_verbosity(main):
     main(["-v", "-v", "-v"])
     assert logging.getLogger().level == logging.NOTSET
 
+@mock.patch.object(__main__,'init_logging')
+def test_log_to_stdout(init_logging, main):
+    main(["--log-to-stdout"])
+    assert init_logging.call_args.kwargs.get('stream') == sys.stdout
+
+def test_init_logging_stream():
+    logger = logging.getLogger("test")
+    assert not logger.handlers
+
+    __main__.init_logging(stream=sys.stdout, logger=logger)
+    assert isinstance(logger.handlers[0], logging.StreamHandler)
+    assert logger.handlers[0].stream == sys.stdout
+
 def test_welcome_file(main):
     sample_msg_file = os.path.join(os.path.dirname(__file__), "sample_msg.html")
     main(["--welcome", sample_msg_file])
