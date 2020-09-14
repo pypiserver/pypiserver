@@ -101,10 +101,6 @@ def usage():
     -v
       Enable verbose logging; repeat for more verbosity.
 
-    --log-conf <FILE>
-      read logging configuration from FILE.
-      By default, configuration is read from `log.conf` if found in server's dir.
-
     --log-file <FILE>
       Write logging info into this FILE.
 
