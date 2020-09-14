@@ -292,7 +292,12 @@ def main(argv=None):
     verbose_levels=[
         logging.WARNING, logging.INFO, logging.DEBUG, logging.NOTSET]
     log_level=list(zip(verbose_levels, range(c.verbosity)))[-1][0]
-    init_logging(level=log_level, filename=c.log_file, frmt=c.log_frmt)
+    init_logging(
+        level=log_level,
+        filename=c.log_file,
+        frmt=c.log_frmt,
+        stream=sys.stdout if c.log_to_stdout else sys.stderr
+    )
 
     if command == "update":
         from pypiserver.manage import update_all_packages
