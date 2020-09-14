@@ -132,7 +132,7 @@ def test_logging_verbosity(main):
 @mock.patch.object(__main__,'init_logging')
 def test_log_to_stdout(init_logging, main):
     main(["--log-to-stdout"])
-    assert init_logging.call_args.kwargs.get('stream') == sys.stdout
+    assert init_logging.call_args[1].get('stream') is sys.stdout
 
 def test_init_logging_stream():
     logger = logging.getLogger("test")
@@ -140,7 +140,7 @@ def test_init_logging_stream():
 
     __main__.init_logging(stream=sys.stdout, logger=logger)
     assert isinstance(logger.handlers[0], logging.StreamHandler)
-    assert logger.handlers[0].stream == sys.stdout
+    assert logger.handlers[0].stream is sys.stdout
 
 def test_welcome_file(main):
     sample_msg_file = os.path.join(os.path.dirname(__file__), "sample_msg.html")
