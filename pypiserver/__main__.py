@@ -102,7 +102,7 @@ def usage():
       Enable verbose logging; repeat for more verbosity.
 
     --log-file <FILE>
-      Write logging info into this FILE.
+      Write logging info into this FILE, as well as to stdout or stderr, if configured.
 
     --log-frmt <FILE>
       The logging format-string.  (see `logging.LogRecord` class from standard python library)
