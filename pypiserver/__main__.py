@@ -102,7 +102,7 @@ def usage():
       Enable verbose logging; repeat for more verbosity.
 
     --log-file <FILE>
-      Write logging info into this FILE.
+      Write logging info into this FILE, as well as to stdout or stderr, if configured.
 
     --log-stream <STREAM>
       Log messages to the specified STREAM. Valid values are "stdout", "stderr", or "none"
