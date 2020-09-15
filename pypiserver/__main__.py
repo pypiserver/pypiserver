@@ -24,7 +24,7 @@ def init_logging(level=logging.NOTSET, frmt=None, filename=None, stream=sys.stde
     logger.setLevel(level)
 
     formatter = logging.Formatter(frmt)
-    if len(logger.handlers) == 0:
+    if len(logger.handlers) == 0 and stream is not None:
         handler = logging.StreamHandler(stream)
         handler.setFormatter(formatter)
         logger.addHandler(logging.StreamHandler(stream))
@@ -104,6 +104,9 @@ def usage():
     --log-file <FILE>
       Write logging info into this FILE.
 
+    --log-stream <STREAM>
+      Log messages to the specified STREAM. Valid values are "stdout", "stderr", or "none"
+
     --log-frmt <FILE>
       The logging format-string.  (see `logging.LogRecord` class from standard python library)
       [Default: %(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s]
@@ -120,8 +123,8 @@ def usage():
       A format-string selecting Http-Error properties to log; set to  '%s' to see them all.
       [Default: %(body)s: %(exception)s \n%(traceback)s]
 
-    --log-to-stdout
-      log messages to stdout instead of the default stderr
+    --log-stream
+      Log messages to the specified stream. Valid values are "stdout", "stderr", or "none"
 
     --cache-control AGE
       Add "Cache-Control: max-age=AGE, public" header to package downloads.
@@ -194,11 +197,11 @@ def main(argv=None):
             "hash-algo=",
             "blacklist-file=",
             "log-file=",
+            "log-stream=",
             "log-frmt=",
             "log-req-frmt=",
             "log-res-frmt=",
             "log-err-frmt=",
-            "log-to-stdout",
             "welcome=",
             "cache-control=",
             "version",
@@ -260,6 +263,8 @@ def main(argv=None):
             c.hash_algo = None if not pypiserver.str2bool(v, c.hash_algo) else v
         elif k == "--log-file":
             c.log_file = v
+        elif k == "--log-stream":
+            c.log_stream = v
         elif k == "--log-frmt":
             c.log_frmt = v
         elif k == "--log-req-frmt":
@@ -268,8 +273,6 @@ def main(argv=None):
             c.log_res_frmt = v
         elif k == "--log-err-frmt":
             c.log_err_frmt = v
-        elif k == "--log-to-stdout":
-            c.log_to_stdout = True
         elif k == "--cache-control":
             c.cache_control = v
         elif k == "-v":
@@ -292,11 +295,17 @@ def main(argv=None):
     verbose_levels=[
         logging.WARNING, logging.INFO, logging.DEBUG, logging.NOTSET]
     log_level=list(zip(verbose_levels, range(c.verbosity)))[-1][0]
+
+    valid_streams = {"none": None, "stderr": sys.stderr, "stdout": sys.stdout}
+    if c.log_stream not in valid_streams:
+        sys.exit("invalid log stream %s. choose one of %s" % (
+            c.log_stream, ", ".join(valid_streams.keys())))
+
     init_logging(
         level=log_level,
         filename=c.log_file,
         frmt=c.log_frmt,
-        stream=sys.stdout if c.log_to_stdout else sys.stderr
+        stream=valid_streams[c.log_stream]
     )
 
     if command == "update":

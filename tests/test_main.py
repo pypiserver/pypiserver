@@ -129,10 +129,18 @@ def test_logging_verbosity(main):
     main(["-v", "-v", "-v"])
     assert logging.getLogger().level == logging.NOTSET
 
-@mock.patch.object(__main__,'init_logging')
-def test_log_to_stdout(init_logging, main):
-    main(["--log-to-stdout"])
-    assert init_logging.call_args[1].get('stream') is sys.stdout
+@pytest.mark.parametrize(
+    "cli_arg, expected_stream",[
+        ("stderr", sys.stderr),
+        ("stdout", sys.stdout),
+        ("none", None),
+    ]
+)
+@mock.patch.object(__main__, "init_logging")
+def test_log_to_stdout(init_logging, main, cli_arg, expected_stream):
+    main(["--log-stream", cli_arg])
+    assert init_logging.call_args[1].get("stream") is expected_stream
+
 
 def test_init_logging_stream():
     logger = logging.getLogger("test")
