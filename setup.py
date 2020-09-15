@@ -2,7 +2,7 @@
 
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 if sys.version_info >= (3, 0):
     exec("def do_exec(co, loc): exec(co, loc)\n")
@@ -41,7 +41,7 @@ setup(
     description="A minimal PyPI server for use with pip/easy_install.",
     long_description=open("README.rst").read(),
     version=get_version(),
-    packages=["pypiserver"],
+    packages=find_packages(include='pypiserver.*'),
     package_data={"pypiserver": ["welcome.html"]},
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     setup_requires=setup_requires,
