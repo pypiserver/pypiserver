@@ -101,13 +101,13 @@ def usage():
     -v
       Enable verbose logging; repeat for more verbosity.
 
-    --log-file <FILE>
+    --log-file FILE
       Write logging info into this FILE, as well as to stdout or stderr, if configured.
 
-    --log-stream <STREAM>
+    --log-stream STREAM
       Log messages to the specified STREAM. Valid values are "stdout", "stderr", or "none"
 
-    --log-frmt <FILE>
+    --log-frmt FORMAT
       The logging format-string.  (see `logging.LogRecord` class from standard python library)
       [Default: %(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s]
 
@@ -122,9 +122,6 @@ def usage():
     --log-err-frmt FORMAT
       A format-string selecting Http-Error properties to log; set to  '%s' to see them all.
       [Default: %(body)s: %(exception)s \n%(traceback)s]
-
-    --log-stream
-      Log messages to the specified stream. Valid values are "stdout", "stderr", or "none"
 
     --cache-control AGE
       Add "Cache-Control: max-age=AGE, public" header to package downloads.
