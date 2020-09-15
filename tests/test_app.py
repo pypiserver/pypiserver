@@ -31,7 +31,7 @@ import tests.test_core as test_core
 
 # Enable logging to detect any problems with it
 ##
-__main__.init_logging(level=logging.NOTSET)
+__main__.init_logging()
 
 
 @pytest.fixture()
