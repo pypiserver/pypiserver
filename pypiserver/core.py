@@ -32,7 +32,7 @@ def configure(**kwds):
     log.info("+++Pypiserver invoked with: %s", c)
 
     if c.root is None:
-        c. root = os.path.expanduser("~/packages")
+        c.root = os.path.expanduser("~/packages")
     roots = c.root if isinstance(c.root, (list, tuple)) else [c.root]
     roots = [os.path.abspath(r) for r in roots]
     for r in roots:
@@ -49,8 +49,9 @@ def configure(**kwds):
     if not c.authenticated:
         c.authenticated = []
     if not callable(c.auther):
-        if c.password_file and c.password_file != '.':
+        if c.password_file and c.password_file != ".":
             from passlib.apache import HtpasswdFile
+
             htPsswdFile = HtpasswdFile(c.password_file)
         else:
             c.password_file = htPsswdFile = None
@@ -63,13 +64,15 @@ def configure(**kwds):
         if not c.welcome_file:
             c.welcome_file = "welcome.html"
             c.welcome_msg = pkg_resources.resource_string(  # @UndefinedVariable
-                __name__, "welcome.html").decode("utf-8")  # @UndefinedVariable
+                __name__, "welcome.html"
+            ).decode(
+                "utf-8"
+            )  # @UndefinedVariable
         else:
-            with io.open(c.welcome_file, 'r', encoding='utf-8') as fd:
+            with io.open(c.welcome_file, "r", encoding="utf-8") as fd:
                 c.welcome_msg = fd.read()
     except Exception:
-        log.warning(
-            "Could not load welcome-file(%s)!", c.welcome_file, exc_info=1)
+        log.warning("Could not load welcome-file(%s)!", c.welcome_file, exc_info=1)
 
     if c.fallback_url is None:
         c.fallback_url = "https://pypi.org/simple"
@@ -78,10 +81,10 @@ def configure(**kwds):
         try:
             halgos = hashlib.algorithms_available
         except AttributeError:
-            halgos = ['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512']
+            halgos = ["md5", "sha1", "sha224", "sha256", "sha384", "sha512"]
 
         if c.hash_algo not in halgos:
-            sys.exit('Hash-algorithm %s not one of: %s' % (c.hash_algo, halgos))
+            sys.exit("Hash-algorithm %s not one of: %s" % (c.hash_algo, halgos))
 
     log.info("+++Pypiserver started with: %s", c)
 
@@ -102,32 +105,34 @@ mimetypes.add_type("text/plain", ".asc")
 
 # ### Next 2 functions adapted from :mod:`distribute.pkg_resources`.
 #
-component_re = re.compile(r'(\d+ | [a-z]+ | \.| -)', re.I | re.VERBOSE)
-replace = {'pre': 'c', 'preview': 'c', '-': 'final-', 'rc': 'c', 'dev': '@'}.get
+component_re = re.compile(r"(\d+ | [a-z]+ | \.| -)", re.I | re.VERBOSE)
+replace = {"pre": "c", "preview": "c", "-": "final-", "rc": "c", "dev": "@"}.get
 
 
 def _parse_version_parts(s):
     for part in component_re.split(s):
         part = replace(part, part)
-        if part in ['', '.']:
+        if part in ["", "."]:
             continue
-        if part[:1] in '0123456789':
+        if part[:1] in "0123456789":
             yield part.zfill(8)  # pad for numeric comparison
         else:
-            yield '*' + part
+            yield "*" + part
 
-    yield '*final'  # ensure that alpha/beta/candidate are before final
+    yield "*final"  # ensure that alpha/beta/candidate are before final
 
 
 def parse_version(s):
     parts = []
     for part in _parse_version_parts(s.lower()):
-        if part.startswith('*'):
+        if part.startswith("*"):
             # remove trailing zeros from each series of numeric parts
-            while parts and parts[-1] == '00000000':
+            while parts and parts[-1] == "00000000":
                 parts.pop()
         parts.append(part)
     return tuple(parts)
+
+
 #
 #### -- End of distribute's code.
 
@@ -135,16 +140,18 @@ def parse_version(s):
 _archive_suffix_rx = re.compile(
     r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|"
     r"\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$",
-    re.I)
+    re.I,
+)
 wheel_file_re = re.compile(
     r"""^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))
     ((-(?P<build>\d.*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)
     \.whl|\.dist-info)$""",
-    re.VERBOSE)
-_pkgname_re = re.compile(r'-\d+[a-z_.!+]', re.I)
+    re.VERBOSE,
+)
+_pkgname_re = re.compile(r"-\d+[a-z_.!+]", re.I)
 _pkgname_parts_re = re.compile(
-    r"[\.\-](?=cp\d|py\d|macosx|linux|sunos|solaris|irix|aix|cygwin|win)",
-    re.I)
+    r"[\.\-](?=cp\d|py\d|macosx|linux|sunos|solaris|irix|aix|cygwin|win)", re.I
+)
 
 
 def _guess_pkgname_and_version_wheel(basename):
@@ -168,16 +175,16 @@ def guess_pkgname_and_version(path):
         return _guess_pkgname_and_version_wheel(path)
     if not _archive_suffix_rx.search(path):
         return
-    path = _archive_suffix_rx.sub('', path)
-    if '-' not in path:
-        pkgname, version = path, ''
-    elif path.count('-') == 1:
-        pkgname, version = path.split('-', 1)
-    elif '.' not in path:
-        pkgname, version = path.rsplit('-', 1)
+    path = _archive_suffix_rx.sub("", path)
+    if "-" not in path:
+        pkgname, version = path, ""
+    elif path.count("-") == 1:
+        pkgname, version = path.split("-", 1)
+    elif "." not in path:
+        pkgname, version = path.rsplit("-", 1)
     else:
         pkgname = _pkgname_re.split(path)[0]
-        ver_spec = path[len(pkgname) + 1:]
+        ver_spec = path[len(pkgname) + 1 :]
         parts = _pkgname_parts_re.split(ver_spec)
         version = parts[0]
     return pkgname, version
@@ -200,13 +207,18 @@ def is_allowed_path(path_part):
 
 class PkgFile(object):
 
-    __slots__ = ['fn', 'root', '_fname_and_hash',
-                 'relfn', 'relfn_unix',
-                 'pkgname_norm',
-                 'pkgname',
-                 'version',
-                 'parsed_version',
-                 'replaces']
+    __slots__ = [
+        "fn",
+        "root",
+        "_fname_and_hash",
+        "relfn",
+        "relfn_unix",
+        "pkgname_norm",
+        "pkgname",
+        "version",
+        "parsed_version",
+        "replaces",
+    ]
 
     def __init__(self, pkgname, version, fn=None, root=None, relfn=None, replaces=None):
         self.pkgname = pkgname
@@ -222,14 +234,21 @@ class PkgFile(object):
     def __repr__(self):
         return "%s(%s)" % (
             self.__class__.__name__,
-            ", ".join(["%s=%r" % (k, getattr(self, k, 'AttributeError'))
-                                  for k in sorted(self.__slots__)]))
+            ", ".join(
+                [
+                    "%s=%r" % (k, getattr(self, k, "AttributeError"))
+                    for k in sorted(self.__slots__)
+                ]
+            ),
+        )
 
     def fname_and_hash(self, hash_algo):
-        if not hasattr(self, '_fname_and_hash'):
+        if not hasattr(self, "_fname_and_hash"):
             if hash_algo:
-                self._fname_and_hash = '%s#%s=%s' % (
-                    self.relfn_unix, hash_algo, digest_file(self.fn, hash_algo)
+                self._fname_and_hash = "%s#%s=%s" % (
+                    self.relfn_unix,
+                    hash_algo,
+                    digest_file(self.fn, hash_algo),
                 )
             else:
                 self._fname_and_hash = self.relfn_unix
@@ -250,10 +269,13 @@ def _listdir(root):
                 continue
             pkgname, version = res
             if pkgname:
-                yield PkgFile(pkgname=pkgname,
-                              version=version,
-                              fn=fn, root=root,
-                              relfn=fn[len(root) + 1:])
+                yield PkgFile(
+                    pkgname=pkgname,
+                    version=version,
+                    fn=fn,
+                    root=root,
+                    relfn=fn[len(root) + 1 :],
+                )
 
 
 def read_lines(filename):
@@ -266,14 +288,15 @@ def read_lines(filename):
     try:
         with open(filename) as f:
             lines = [
-                line 
-                for line in (ln.strip() for ln in f.readlines()) 
-                if line and not line.startswith('#')
+                line
+                for line in (ln.strip() for ln in f.readlines())
+                if line and not line.startswith("#")
             ]
     except Exception:
-        log.error('Failed to read package blacklist file "%s". '
-                  'Aborting server startup, please fix this.'
-                  % filename)
+        log.error(
+            'Failed to read package blacklist file "%s". '
+            "Aborting server startup, please fix this." % filename
+        )
         raise
 
     return lines
@@ -312,7 +335,7 @@ def get_bad_url_redirect_path(request, prefix):
     p = request.custom_fullpath
     if p.endswith("/"):
         p = p[:-1]
-    p = p.rsplit('/', 1)[0]
+    p = p.rsplit("/", 1)[0]
     prefix = quote(prefix)
     p += "/simple/{}/".format(prefix)
     return p
@@ -327,10 +350,10 @@ def _digest_file(fpath, hash_algo):
 
     From http://stackoverflow.com/a/21565932/548792
     """
-    blocksize = 2**16
+    blocksize = 2 ** 16
     digester = getattr(hashlib, hash_algo)()
-    with open(fpath, 'rb') as f:
-        for block in iter(lambda: f.read(blocksize), b''):
+    with open(fpath, "rb") as f:
+        for block in iter(lambda: f.read(blocksize), b""):
             digester.update(block)
     return digester.hexdigest()
 
@@ -345,6 +368,7 @@ try:
     def digest_file(fpath, hash_algo):
         # fpath must be absolute path
         return cache_manager.digest_file(fpath, hash_algo, _digest_file)
+
 
 except ImportError:
     listdir = _listdir

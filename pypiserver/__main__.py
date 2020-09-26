@@ -16,7 +16,7 @@ import textwrap
 import functools as ft
 
 
-log = logging.getLogger('pypiserver.main')
+log = logging.getLogger("pypiserver.main")
 
 
 def init_logging(level=None, frmt=None, filename=None):
@@ -28,7 +28,8 @@ def init_logging(level=None, frmt=None, filename=None):
 
 
 def usage():
-    return textwrap.dedent("""\
+    return textwrap.dedent(
+        """\
   pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
     start PyPI compatible package server serving packages from
     PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
@@ -156,7 +157,8 @@ def usage():
       containing arbitrary code.
 
   Visit https://pypi.org/project/pypiserver/ for more information.
-  """)
+  """
+    )
 
 
 def main(argv=None):
@@ -175,28 +177,32 @@ def main(argv=None):
     update_blacklist_file = None
 
     try:
-        opts, roots = getopt.getopt(argv[1:], "i:p:a:r:d:P:Uuvxoh", [
-            "interface=",
-            "passwords=",
-            "authenticate=",
-            "port=",
-            "root=",
-            "server=",
-            "fallback-url=",
-            "disable-fallback",
-            "overwrite",
-            "hash-algo=",
-            "blacklist-file=",
-            "log-file=",
-            "log-frmt=",
-            "log-req-frmt=",
-            "log-res-frmt=",
-            "log-err-frmt=",
-            "welcome=",
-            "cache-control=",
-            "version",
-            "help"
-        ])
+        opts, roots = getopt.getopt(
+            argv[1:],
+            "i:p:a:r:d:P:Uuvxoh",
+            [
+                "interface=",
+                "passwords=",
+                "authenticate=",
+                "port=",
+                "root=",
+                "server=",
+                "fallback-url=",
+                "disable-fallback",
+                "overwrite",
+                "hash-algo=",
+                "blacklist-file=",
+                "log-file=",
+                "log-frmt=",
+                "log-req-frmt=",
+                "log-res-frmt=",
+                "log-err-frmt=",
+                "welcome=",
+                "cache-control=",
+                "version",
+                "help",
+            ],
+        )
     except getopt.GetoptError:
         err = sys.exc_info()[1]
         sys.exit("usage error: %s" % (err,))
@@ -209,10 +215,8 @@ def main(argv=None):
                 err = sys.exc_info()[1]
                 sys.exit("Invalid port(%r) due to: %s" % (v, err))
         elif k in ("-a", "--authenticate"):
-            c.authenticated = [a.lower()
-                               for a in re.split("[, ]+", v.strip(" ,"))
-                               if a]
-            if c.authenticated == ['.']:
+            c.authenticated = [a.lower() for a in re.split("[, ]+", v.strip(" ,")) if a]
+            if c.authenticated == ["."]:
                 c.authenticated = []
             else:
                 actions = ("list", "download", "update")
@@ -269,46 +273,57 @@ def main(argv=None):
             print(usage())
             sys.exit(0)
 
-    if (not c.authenticated and c.password_file != '.' or
-            c.authenticated and c.password_file == '.'):
+    if (
+        not c.authenticated
+        and c.password_file != "."
+        or c.authenticated
+        and c.password_file == "."
+    ):
         auth_err = "When auth-ops-list is empty (-a=.), password-file (-P=%r) must also be empty ('.')!"
         sys.exit(auth_err % c.password_file)
 
     if len(roots) == 0:
         roots.append(os.path.expanduser("~/packages"))
 
-    roots=[os.path.abspath(x) for x in roots]
+    roots = [os.path.abspath(x) for x in roots]
     c.root = roots
 
-    verbose_levels=[
-        logging.WARNING, logging.INFO, logging.DEBUG, logging.NOTSET]
-    log_level=list(zip(verbose_levels, range(c.verbosity)))[-1][0]
+    verbose_levels = [logging.WARNING, logging.INFO, logging.DEBUG, logging.NOTSET]
+    log_level = list(zip(verbose_levels, range(c.verbosity)))[-1][0]
     init_logging(level=log_level, filename=c.log_file, frmt=c.log_frmt)
 
     if command == "update":
         from pypiserver.manage import update_all_packages
+
         update_all_packages(
-            roots, update_directory,
-            dry_run=update_dry_run, stable_only=update_stable_only,
-            blacklist_file=update_blacklist_file
+            roots,
+            update_directory,
+            dry_run=update_dry_run,
+            stable_only=update_stable_only,
+            blacklist_file=update_blacklist_file,
         )
         return
 
     # Fixes #49:
     #    The gevent server adapter needs to patch some
     #    modules BEFORE importing bottle!
-    if c.server and c.server.startswith('gevent'):
+    if c.server and c.server.startswith("gevent"):
         import gevent.monkey  # @UnresolvedImport
+
         gevent.monkey.patch_all()
 
     from pypiserver import bottle
+
     if c.server not in bottle.server_names:
-        sys.exit("unknown server %r. choose one of %s" % (
-            c.server, ", ".join(bottle.server_names.keys())))
+        sys.exit(
+            "unknown server %r. choose one of %s"
+            % (c.server, ", ".join(bottle.server_names.keys()))
+        )
 
     bottle.debug(c.verbosity > 1)
-    bottle._stderr = ft.partial(pypiserver._logwrite,
-            logging.getLogger(bottle.__name__), logging.INFO)
+    bottle._stderr = ft.partial(
+        pypiserver._logwrite, logging.getLogger(bottle.__name__), logging.INFO
+    )
     app = pypiserver.app(**vars(c))
     bottle.run(app=app, host=c.host, port=c.port, server=c.server)
 
