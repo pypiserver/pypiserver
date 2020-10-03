@@ -1,9 +1,6 @@
 #! /usr/bin/env python
-"""
-.. NOTE:: To the developer:
-    This module is moved to the root of the standalone zip-archive,
-    to be used as its entry-point. Therefore DO NOT import relative.
-"""
+"""Entrypoint for pypiserver."""
+
 from __future__ import print_function
 
 import getopt

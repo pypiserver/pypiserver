@@ -56,9 +56,7 @@ def configure(**kwds):
             c.password_file = htPsswdFile = None
         c.auther = functools.partial(auth_by_htpasswd_file, htPsswdFile)
 
-    # Read welcome-msg from external file,
-    #     or failback to the embedded-msg (ie. in standalone mode).
-    #
+    # Read welcome-msg from external file or failback to the embedded-msg
     try:
         if not c.welcome_file:
             c.welcome_file = "welcome.html"
