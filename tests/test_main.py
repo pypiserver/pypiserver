@@ -129,6 +129,38 @@ def test_logging_verbosity(main):
     main(["-v", "-v", "-v"])
     assert logging.getLogger().level == logging.NOTSET
 
+@pytest.mark.parametrize(
+    "cli_arg, expected_stream",[
+        ("stderr", sys.stderr),
+        ("stdout", sys.stdout),
+        ("none", None),
+    ]
+)
+@mock.patch.object(__main__, "init_logging")
+def test_log_to_stdout(init_logging, main, cli_arg, expected_stream):
+    main(["--log-stream", cli_arg])
+    assert init_logging.call_args[1].get("stream") is expected_stream
+
+
+@pytest.fixture
+def dummy_logger():
+    logger = logging.getLogger('test')
+    yield logger
+    logger.handlers = []
+
+def test_init_logging_with_stream(dummy_logger):
+    assert not dummy_logger.handlers
+
+    __main__.init_logging(stream=sys.stdout, logger=dummy_logger)
+    assert isinstance(dummy_logger.handlers[0], logging.StreamHandler)
+    assert dummy_logger.handlers[0].stream is sys.stdout
+
+def test_init_logging_with_none_stream_doesnt_add_stream_handler(dummy_logger):
+    assert not dummy_logger.handlers
+
+    __main__.init_logging(stream=None, logger=dummy_logger)
+    assert not dummy_logger.handlers
+
 def test_welcome_file(main):
     sample_msg_file = os.path.join(os.path.dirname(__file__), "sample_msg.html")
     main(["--welcome", sample_msg_file])
