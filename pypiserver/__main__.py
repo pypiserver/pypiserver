@@ -19,13 +19,20 @@ import functools as ft
 log = logging.getLogger('pypiserver.main')
 
 
-def init_logging(level=None, frmt=None, filename=None):
-    logging.basicConfig(level=level, format=frmt)
-    rlog = logging.getLogger()
-    rlog.setLevel(level)
-    if filename:
-        rlog.addHandler(logging.FileHandler(filename))
+def init_logging(level=logging.NOTSET, frmt=None, filename=None, stream=sys.stderr, logger=None):
+    logger = logger or logging.getLogger()
+    logger.setLevel(level)
 
+    formatter = logging.Formatter(frmt)
+    if len(logger.handlers) == 0 and stream is not None:
+        handler = logging.StreamHandler(stream)
+        handler.setFormatter(formatter)
+        logger.addHandler(logging.StreamHandler(stream))
+
+    if filename:
+        handler = logging.FileHandler(filename)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
 def usage():
     return textwrap.dedent("""\
@@ -94,14 +101,13 @@ def usage():
     -v
       Enable verbose logging; repeat for more verbosity.
 
-    --log-conf <FILE>
-      read logging configuration from FILE.
-      By default, configuration is read from `log.conf` if found in server's dir.
+    --log-file FILE
+      Write logging info into this FILE, as well as to stdout or stderr, if configured.
 
-    --log-file <FILE>
-      Write logging info into this FILE.
+    --log-stream STREAM
+      Log messages to the specified STREAM. Valid values are "stdout", "stderr", or "none"
 
-    --log-frmt <FILE>
+    --log-frmt FORMAT
       The logging format-string.  (see `logging.LogRecord` class from standard python library)
       [Default: %(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s]
 
@@ -188,6 +194,7 @@ def main(argv=None):
             "hash-algo=",
             "blacklist-file=",
             "log-file=",
+            "log-stream=",
             "log-frmt=",
             "log-req-frmt=",
             "log-res-frmt=",
@@ -253,6 +260,8 @@ def main(argv=None):
             c.hash_algo = None if not pypiserver.str2bool(v, c.hash_algo) else v
         elif k == "--log-file":
             c.log_file = v
+        elif k == "--log-stream":
+            c.log_stream = v
         elif k == "--log-frmt":
             c.log_frmt = v
         elif k == "--log-req-frmt":
@@ -283,7 +292,18 @@ def main(argv=None):
     verbose_levels=[
         logging.WARNING, logging.INFO, logging.DEBUG, logging.NOTSET]
     log_level=list(zip(verbose_levels, range(c.verbosity)))[-1][0]
-    init_logging(level=log_level, filename=c.log_file, frmt=c.log_frmt)
+
+    valid_streams = {"none": None, "stderr": sys.stderr, "stdout": sys.stdout}
+    if c.log_stream not in valid_streams:
+        sys.exit("invalid log stream %s. choose one of %s" % (
+            c.log_stream, ", ".join(valid_streams.keys())))
+
+    init_logging(
+        level=log_level,
+        filename=c.log_file,
+        frmt=c.log_frmt,
+        stream=valid_streams[c.log_stream]
+    )
 
     if command == "update":
         from pypiserver.manage import update_all_packages

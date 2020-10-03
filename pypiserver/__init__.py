@@ -47,6 +47,7 @@ def default_config(
         hash_algo='md5',
         verbosity=1,
         log_file=None,
+        log_stream="stderr",
         log_frmt="%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s",
         log_req_frmt="%(bottle.request)s",
         log_res_frmt="%(status)s",
