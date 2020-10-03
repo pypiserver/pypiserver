@@ -17,6 +17,9 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 :Maintainers: Kostis Anagnostopoulos <ankostis@gmail.com>,
               Matthew Planchard <mplanchard@gmail.com>
 :License:     zlib/libpng + MIT
+:Community:   https://pypiserver.zulipchat.com
+
+Chat with us on `Zulip <https://pypiserver.zulipchat.com>`_!
 
 ``pypiserver`` is a minimal PyPI_ compatible server for ``pip`` or ``easy_install``.
 It is based on bottle_ and serves packages from regular directories.
