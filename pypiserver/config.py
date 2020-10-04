@@ -1,10 +1,82 @@
 """Pypiserver configuration management."""
 
 import argparse
+import contextlib
+import hashlib
+import io
+import pkg_resources
 import textwrap
+import sys
 import typing as t
 
 from pypiserver import __version__
+
+
+def auth_arg(arg: str) -> t.List[str]:
+    """Parse the authentication argument."""
+    # Split on commas, remove duplicates, remove whitespace, ensure lowercase.
+    items = list(set(i.strip().lower() for i in arg.split(",")))
+    # Throw for any invalid options
+    if any(i not in ("download", "list", "update", ".") for i in items):
+        raise ValueError(
+            "Invalid authentication option. Valid values are download, list, "
+            "and update, or . (for no authentication)."
+        )
+    # The "no authentication" option must be specified in isolation.
+    if "." in items and len(items) > 1:
+        raise ValueError(
+            "Invalid authentication options. `.` (no authentication) "
+            "must be specified alone."
+        )
+    return items
+
+
+def hash_algo_arg(arg: str) -> t.Callable:
+    """Parse a hash algorithm from the string."""
+    if arg not in hashlib.algorithms_available:
+        raise ValueError(
+            f"Hash algorithm {arg} is not available. Please select one "
+            f"of {hashlib.algorithms_available}"
+        )
+    return getattr(hashlib, arg)
+
+
+def html_file_arg(arg: t.Optional[str]) -> str:
+    """Parse the provided HTML file and return its contents."""
+    if arg is None:
+        return pkg_resources.resource_string(__name__, "welcome.html").decode(
+            "utf-8"
+        )
+    with open(arg, "r", encoding="utf-8") as f:
+        msg = f.read()
+    return msg
+
+
+def ignorelist_file_arg(arg: t.Optional[str]) -> t.List[str]:
+    """Parse the ignorelist and return the list of ignored files."""
+    if arg is None:
+        return []
+    with open(arg) as f:
+        stripped_lines = (ln.strip() for ln in f.readlines())
+        return [ln for ln in stripped_lines if ln and not ln.startswith("#")]
+
+
+def log_stream_arg(arg: str) -> t.Optional[t.IO]:
+    """Parse the log-stream argument."""
+    lower = arg.lower()
+    # Convert a `none` string to a real none.
+    val = lower if lower != "none" else None
+    # Ensure the remaining value is a valid stream type, and return it.
+    if val is None:
+        return val
+    if val == "stdout":
+        return sys.stdout
+    if val == "stderr":
+        return sys.stderr
+    raise ValueError(
+        "Invalid option for --log-stream. Value must be one of stdout, "
+        "stderr, or none."
+    )
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -20,24 +92,83 @@ def get_parser() -> argparse.ArgumentParser:
             may be specified."""
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        epilog=(
+            "Visit https://github.com/pypiserver/pypiserver "
+            "for more information"
+        ),
     )
-    parser.add_argument(
+
+    global_args = argparse.ArgumentParser(add_help=False)
+
+    global_args.add_argument(
+        "package_directory",
+        default=["~/packages"],
+        nargs="*",
+        help="The directory from which to serve packages.",
+    )
+    global_args.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Enable verbose logging; repeat for more verbosity.",
+    )
+    global_args.add_argument(
+        "--log-file",
+        metavar="FILE",
+        help=(
+            "Write logging info into this FILE, as well as to stdout or "
+            "stderr, if configured."
+        ),
+    )
+    global_args.add_argument(
+        "--log-stream",
+        metavar="STREAM",
+        choices=("stdout", "stderr", "none"),
+        default=sys.stdout,
+        type=log_stream_arg,  # type: ignore
+        help=(
+            "Log messages to the specified STREAM. Valid values are stdout, "
+            "stderr, and none"
+        ),
+    )
+    global_args.add_argument(
+        "--log-frmt",
+        metavar="FORMAT",
+        default="%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s",
+        help=(
+            "The logging format-string.  (see `logging.LogRecord` class from "
+            "standard python library)"
+        ),
+    )
+    global_args.add_argument(
+        "--version",
+        action="version",
+        version=__version__,
+    )
+
+    subparsers = parser.add_subparsers(help="subcommands", dest="cmd")
+
+    run_parser = subparsers.add_parser("run", parents=[global_args])
+
+    run_parser.add_argument(
         "-p",
         "--port",
         type=int,
         default=8080,
         help="Listen on port PORT (default: 8080)",
     )
-    parser.add_argument(
+    run_parser.add_argument(
         "-i",
         "--interface",
         default="0.0.0.0",
         help="Listen on interface INTERFACE (default: 0.0.0.0)",
     )
-    parser.add_argument(
+    run_parser.add_argument(
         "-a",
         "--authenticate",
-        default="update",
+        default=["update"],
+        type=auth_arg,
         help=textwrap.dedent(
             """\
             Comma-separated list of (case-insensitive) actions to authenticate
@@ -51,7 +182,7 @@ def get_parser() -> argparse.ArgumentParser:
             password fields, even if bogus."""
         ),
     )
-    parser.add_argument(
+    run_parser.add_argument(
         "-P",
         "--passwords",
         metavar="PASSWORD_FILE",
@@ -63,7 +194,7 @@ def get_parser() -> argparse.ArgumentParser:
             """
         ),
     )
-    parser.add_argument(
+    run_parser.add_argument(
         "--disable-fallback",
         action="store_true",
         help=(
@@ -71,7 +202,7 @@ def get_parser() -> argparse.ArgumentParser:
             "the local index."
         ),
     )
-    parser.add_argument(
+    run_parser.add_argument(
         "--fallback-url",
         default="https://pypi.org/simple/",
         help=(
@@ -79,7 +210,7 @@ def get_parser() -> argparse.ArgumentParser:
             "index."
         ),
     )
-    parser.add_argument(
+    run_parser.add_argument(
         "--server",
         metavar="METHOD",
         default="auto",
@@ -92,15 +223,16 @@ def get_parser() -> argparse.ArgumentParser:
             """
         ),
     )
-    parser.add_argument(
+    run_parser.add_argument(
         "-o",
         "--overwrite",
         action="store_true",
         help="Allow overwriting existing package files during upload.",
     )
-    parser.add_argument(
+    run_parser.add_argument(
         "--hash-algo",
         default="md5",
+        type=hash_algo_arg,
         help=textwrap.dedent(
             """\
            Any `hashlib` available algorithm to use for generating fragments on
@@ -108,76 +240,16 @@ def get_parser() -> argparse.ArgumentParser:
            """
         ),
     )
-    parser.add_argument(
+    run_parser.add_argument(
         "--welcome",
         metavar="HTML_FILE",
+        type=html_file_arg,
         help=(
-            "Use the ASCII contents of HTML_FILE as a custom welcome message "
+            "Use the contents of HTML_FILE as a custom welcome message "
             "on the home page."
         ),
     )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        default=0,
-        help="Enable verbose logging; repeat for more verbosity.",
-    )
-    parser.add_argument(
-        "--log-file",
-        metavar="FILE",
-        help=(
-            "Write logging info into this FILE, as well as to stdout or "
-            "stderr, if configured."
-        ),
-    )
-    parser.add_argument(
-        "--log-stream",
-        metavar="STREAM",
-        choices=("stdout", "stderr", "none"),
-        type=str.lower,
-        help=(
-            "Log messages to the specified STREAM. Valid values are stdout, "
-            "stderr, and none"
-        ),
-    )
-    parser.add_argument(
-        "--log-frmt",
-        metavar="FORMAT",
-        default="%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s",
-        help=(
-            "The logging format-string.  (see `logging.LogRecord` class from "
-            "standard python library)"
-        ),
-    )
-    parser.add_argument(
-        "--log-req-frmt",
-        metavar="FORMAT",
-        default="%(bottle.request)s",
-        help=(
-            "A format-string selecting Http-Request properties to log; set "
-            "to '%s' to see them all."
-        ),
-    )
-    parser.add_argument(
-        "--log-res-frmt",
-        metavar="FORMAT",
-        default="%(status)s",
-        help=(
-            "A format-string selecting Http-Response properties to log; set "
-            "to '%s' to see them all."
-        ),
-    )
-    parser.add_argument(
-        "--log-err-frmt",
-        metavar="FORMAT",
-        default="%(body)s: %(exception)s \n%(traceback)s",
-        help=(
-            "A format-string selecting Http-Error properties to log; set "
-            "to '%s' to see them all."
-        ),
-    )
-    parser.add_argument(
+    run_parser.add_argument(
         "--cache-control",
         metavar="AGE",
         type=int,
@@ -186,10 +258,260 @@ def get_parser() -> argparse.ArgumentParser:
             "Pip 6+ requires this for caching."
         ),
     )
-    parser.add_argument(
-        "--version", action="version", version=__version__,
+    run_parser.add_argument(
+        "--log-req-frmt",
+        metavar="FORMAT",
+        default="%(bottle.request)s",
+        help=(
+            "A format-string selecting Http-Request properties to log; set "
+            "to '%%s' to see them all."
+        ),
+    )
+    run_parser.add_argument(
+        "--log-res-frmt",
+        metavar="FORMAT",
+        default="%(status)s",
+        help=(
+            "A format-string selecting Http-Response properties to log; set "
+            "to '%%s' to see them all."
+        ),
+    )
+    run_parser.add_argument(
+        "--log-err-frmt",
+        metavar="FORMAT",
+        default="%(body)s: %(exception)s \n%(traceback)s",
+        help=(
+            "A format-string selecting Http-Error properties to log; set "
+            "to '%%s' to see them all."
+        ),
+    )
+
+    update_parser = subparsers.add_parser(
+        "update",
+        aliases=["-U"],
+        parents=[global_args],
+        help=textwrap.dedent(
+            """\
+            Handle updates of packages managed by pypiserver. By default,
+            a pip command to update the packages is printed to stdout for
+            introspection or pipelining. See the `-x` option for updating
+            packages directly.
+            """
+        ),
+    )
+    update_parser.add_argument(
+        "-x",
+        "--execute",
+        action="store_true",
+        help="Execute the pip commands rather than printing to stdout",
+    )
+    update_parser.add_argument(
+        "-d",
+        "--download-directory",
+        help=textwrap.dedent(
+            """\
+            Specify a directory where packages updates will be downloaded.
+            The default behavior is to use the directory which contains
+            the package being updated.
+            """
+        ),
+    )
+    update_parser.add_argument(
+        "-u",
+        "--allow-unstable",
+        action="store_true",
+        help=(
+            "Allow updating to unstable versions (alpha, beta, rc, dev, etc.)"
+        ),
+    )
+    update_parser.add_argument(
+        "--blacklist-file",
+        "--ignorelist-file",
+        dest="ignorelist_file",
+        type=ignorelist_file_arg,
+        help=textwrap.dedent(
+            """\
+            Don't update packages listed in this file (one package name per
+            line, without versions, '#' comments honored). This can be useful
+            if you upload private packages into pypiserver, but also keep a
+            mirror of public packages that you regularly update. Attempting
+            to pull an update of a private package from `pypi.org` might pose
+            a security risk - e.g. a malicious user might publish a higher
+            version of the private package, containing arbitrary code.
+            """
+        ),
     )
     return parser
 
 
-print(get_parser().parse_args(["--help"]))
+class _ConfigCommon:
+    def __init__(self, namespace: argparse.Namespace) -> None:
+        """Construct a RuntimeConfig."""
+        # Global arguments
+        self.verbosity: int = namespace.verbose
+        self.log_file: t.Optional[str] = namespace.log_file
+        self.log_stream: t.Optional[t.IO] = namespace.log_stream
+        self.log_frmt: str = namespace.log_frmt
+        self.roots: t.List[str] = namespace.package_directory
+
+    def __repr__(self):
+        return "{}({})".format(
+            self.__class__.__name__,
+            ", ".join(
+                f"{k}={v}"
+                for k, v in vars(self).items()
+                if not k.startswith("_")
+            ),
+        )
+
+
+class RunConfig(_ConfigCommon):
+    """A config for the Run command."""
+
+    def __init__(self, namespace: argparse.Namespace) -> None:
+        """Construct a RuntimeConfig."""
+        super().__init__(namespace)
+        self.port: int = namespace.port
+        self.interface: str = namespace.interface
+        self.authenticate: t.List[str] = namespace.authenticate
+        self.password_file: t.Optional[str] = namespace.passwords
+        self.disable_fallback: bool = namespace.disable_fallback
+        self.fallback_url: str = namespace.fallback_url
+        self.server_method: str = namespace.server
+        self.overwrite: bool = namespace.overwrite
+        self.hash_algo: t.Callable = namespace.hash_algo
+        self.welcome_msg: str = namespace.welcome
+        self.cache_control: t.Optional[int] = namespace.cache_control
+        self.log_req_frmt: str = namespace.log_req_frmt
+        self.log_res_frmt: str = namespace.log_res_frmt
+        self.log_err_frmt: str = namespace.log_err_frmt
+
+
+class UpdateConfig(_ConfigCommon):
+    """A config for the Update command."""
+
+    def __init__(self, namespace: argparse.Namespace) -> None:
+        """Construct an UpdateConfig."""
+        super().__init__(namespace)
+        self.execute: bool = namespace.execute
+        self.download_directory: t.Optional[str] = namespace.download_directory
+        self.allow_unstable: bool = namespace.allow_unstable
+        self.ignorelist: t.List[str] = namespace.ignorelist_file
+
+
+class Config:
+    """Config constructor for building a config from args."""
+
+    @classmethod
+    def from_args(
+        cls, args: t.Sequence[str] = None
+    ) -> t.Union[RunConfig, UpdateConfig]:
+        """Construct a Config from the passed args or sys.argv."""
+        args = args if args is not None else sys.argv[1:]
+        parser = get_parser()
+        try:
+            # The parser prints regardless of whether we're catching the
+            # error or not, so we redirect sdout for this first run.
+            # However, we'll _keep_ the output and print it if the second
+            # run fails, since the first run will give the user feedback
+            # related to what they actually put in.
+            with capture_stderr() as cap:
+                try:
+                    parsed = parser.parse_args(args)
+                finally:
+                    cap.seek(0)
+                    orig_err = cap.read()
+            if parsed.cmd is None:
+                # No command was found, which happens if no arguments were
+                # provided. We will raise a SystemExit so we get the same
+                # deprecated argument handling functionality as we do for
+                # a failed parse.
+                orig_err = None
+                raise SystemExit
+        except SystemExit:
+            # argparse could not parse the arguments. Perhaps they are
+            # old-style arguments, so we'll try adjusting and re-parsing.
+            err_msg = (
+                orig_err if orig_err is not None else parser.format_usage()
+            )
+            try:
+                # Prevent showing the error for the adjusted args, since
+                # we want to show the captured error from the user's
+                # actually provided args.
+                with capture_stderr():
+                    parsed = parser.parse_args(cls._adjust_old_args(args))
+            except SystemExit:
+                # Here we could not parse our adjusted arguments either,
+                # So we'll print the original error message and rethrow
+                # the exit.
+                print(err_msg, file=sys.stderr)
+                raise
+            else:
+                # Here on the other hand we _were_ able to parse the adjusted
+                # arguments, which means the user is using a deprecated form.
+                # Print out a warning, along with our original error or
+                # usage string.
+                print(
+                    "Warning: you are using deprecated cmdline arguments. "
+                    "Please see the usage message below, and update your "
+                    "cmdline arguments.\n",
+                    file=sys.stderr,
+                )
+                print(err_msg, file=sys.stderr)
+
+        if parsed.cmd == "run":
+            return RunConfig(parsed)
+        if parsed.cmd == "update":
+            return UpdateConfig(parsed)
+        raise SystemExit(parser.format_usage())
+
+    @staticmethod
+    def _adjust_old_args(args: t.Sequence[str]) -> t.List[str]:
+        """Adjust args for backwards compatibility.
+
+        Should only be called once args have been verified to be unparseable.
+        """
+        # Backwards compatibility hack: for most of pypiserver's life, "run"
+        # and "update" were not separate subcommands. The `-U` flag being
+        # present on the cmdline, regardless of other arguments, would lead
+        # to update behavior. In order to allow subcommands without
+        # breaking backwards compatibility, we need to insert "run" or
+        # "update" as a positional arg before any other arguments.
+
+        # We will be adding our subcommand as the first argument.
+        insertion_idx = 0
+
+        # Don't actually update the passed list, in case it was the global
+        # sys.argv.
+        args = list(args)
+
+        # Find the update index. For "reasons", python's index search throws
+        # if the value isn't found, so manually wrap in the usual "return -1
+        # if not found" standard
+        try:
+            update_idx = args.index("-U")
+        except ValueError:
+            update_idx = -1
+
+        if update_idx == -1:
+            # We were a "run" command.
+            args.insert(insertion_idx, "run")
+        else:
+            # Remove the -U from the args and add the "update" command at the
+            # start of the arg list.
+            args.pop(update_idx)
+            args.insert(insertion_idx, "update")
+
+        return args
+
+
+@contextlib.contextmanager
+def capture_stderr():
+    """Capture stderr and yield as a buffer."""
+    orig = sys.stderr
+    cap = io.StringIO()
+    sys.stderr = cap
+    try:
+        yield cap
+    finally:
+        sys.stderr = orig
