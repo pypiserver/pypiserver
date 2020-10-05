@@ -7,7 +7,7 @@
 
 docopt  # For `/bin/bumpver.py`.
 gevent>=1.1b4; python_version >= '3'
-mock; python_version == '2.7'
+mypy
 pip>=7
 passlib>=1.6
 pytest>=2.3

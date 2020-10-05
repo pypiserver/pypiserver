@@ -180,7 +180,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--log-stream",
         metavar="STREAM",
         default=DEFAULTS.LOG_STREAM,
-        type=log_stream_arg,  # type: ignore
+        type=log_stream_arg,
         help=(
             "Log messages to the specified STREAM. Valid values are stdout, "
             "stderr, and none"
@@ -588,7 +588,7 @@ class Config:
 
 
 @contextlib.contextmanager
-def capture_stderr():
+def capture_stderr() -> t.Iterator[t.IO]:
     """Capture stderr and yield as a buffer."""
     orig = sys.stderr
     cap = io.StringIO()
