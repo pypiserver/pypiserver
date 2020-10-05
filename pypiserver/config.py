@@ -1,4 +1,30 @@
-"""Pypiserver configuration management."""
+"""Pypiserver configuration management.
+
+To add a config option:
+
+- If it should be available for all subcommands (run, update), add it to
+  the `global_args` parser.
+- If it should only be available for the `run` command, add it to the
+  `run_parser`.
+- If it should only be available for the `update` command, add it to the
+  `update_parser`.
+- Add it to the appropriate Config class, `_ConfigCommon` for global options,
+  `RunConfig` for `run` options, and `UpdateConfig` for `update` options.
+- Ensure your config option is tested in `tests/test_config.py`.
+
+The `Config` class provides a `.from_args()` static method, which returns
+either a `RunConfig` or an `UpdateConfig`, depending on which subcommand
+is specified in the args.
+
+Legacy commandline arguments did not require a subcommand. This form is
+still supported, but deprecated. A warning is printing to stderr if
+the legacy commandline format is used.
+
+Command line arguments should be parsed as early as possible, using
+custom functions like the `auth_*` functions below if needed. For example,
+if an option were to take JSON as an argument, that JSON should be parsed
+into a dict by the argument parser.
+"""
 
 import argparse
 import contextlib
@@ -12,10 +38,30 @@ import typing as t
 from pypiserver import __version__
 
 
+# Specify defaults here so that we can use them in tests &c. and not need
+# to update things in multiple places if a default changes.
+class DEFAULTS:
+    """Config defaults."""
+
+    AUTHENTICATE = ["update"]
+    FALLBACK_URL = "https://pypi.org/simple/"
+    HASH_ALGO = "md5"
+    INTERFACE = "0.0.0.0"
+    LOG_FRMT = "%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s"
+    LOG_ERR_FRMT = "%(body)s: %(exception)s \n%(traceback)s"
+    LOG_REQ_FRMT = "%(bottle.request)s"
+    LOG_RES_FRMT = "%(status)s"
+    LOG_STREAM = sys.stdout
+    PACKAGE_DIRECTORIES = ["~/packages"]
+    PORT = 8080
+    SERVER_METHOD = "auto"
+
+
 def auth_arg(arg: str) -> t.List[str]:
     """Parse the authentication argument."""
     # Split on commas, remove duplicates, remove whitespace, ensure lowercase.
-    items = list(set(i.strip().lower() for i in arg.split(",")))
+    # Sort so that they'll have a consistent ordering.
+    items = sorted(list(set(i.strip().lower() for i in arg.split(","))))
     # Throw for any invalid options
     if any(i not in ("download", "list", "update", ".") for i in items):
         raise ValueError(
@@ -43,7 +89,7 @@ def hash_algo_arg(arg: str) -> t.Callable:
 
 def html_file_arg(arg: t.Optional[str]) -> str:
     """Parse the provided HTML file and return its contents."""
-    if arg is None:
+    if arg is None or arg == "pypiserver/welcome.html":
         return pkg_resources.resource_string(__name__, "welcome.html").decode(
             "utf-8"
         )
@@ -54,11 +100,17 @@ def html_file_arg(arg: t.Optional[str]) -> str:
 
 def ignorelist_file_arg(arg: t.Optional[str]) -> t.List[str]:
     """Parse the ignorelist and return the list of ignored files."""
-    if arg is None:
+    if arg is None or arg == "pypiserver/no-ignores":
         return []
     with open(arg) as f:
         stripped_lines = (ln.strip() for ln in f.readlines())
         return [ln for ln in stripped_lines if ln and not ln.startswith("#")]
+
+
+# We need to capture this at compile time, because we replace sys.stderr
+# during config parsing in order to better control error output when we
+# encounter legacy cmdline arguments.
+_ORIG_STDERR = sys.stderr
 
 
 def log_stream_arg(arg: str) -> t.Optional[t.IO]:
@@ -72,7 +124,7 @@ def log_stream_arg(arg: str) -> t.Optional[t.IO]:
     if val == "stdout":
         return sys.stdout
     if val == "stderr":
-        return sys.stderr
+        return _ORIG_STDERR
     raise ValueError(
         "Invalid option for --log-stream. Value must be one of stdout, "
         "stderr, or none."
@@ -102,7 +154,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     global_args.add_argument(
         "package_directory",
-        default=["~/packages"],
+        default=DEFAULTS.PACKAGE_DIRECTORIES,
         nargs="*",
         help="The directory from which to serve packages.",
     )
@@ -124,8 +176,7 @@ def get_parser() -> argparse.ArgumentParser:
     global_args.add_argument(
         "--log-stream",
         metavar="STREAM",
-        choices=("stdout", "stderr", "none"),
-        default=sys.stdout,
+        default=DEFAULTS.LOG_STREAM,
         type=log_stream_arg,  # type: ignore
         help=(
             "Log messages to the specified STREAM. Valid values are stdout, "
@@ -135,7 +186,7 @@ def get_parser() -> argparse.ArgumentParser:
     global_args.add_argument(
         "--log-frmt",
         metavar="FORMAT",
-        default="%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s",
+        default=DEFAULTS.LOG_FRMT,
         help=(
             "The logging format-string.  (see `logging.LogRecord` class from "
             "standard python library)"
@@ -155,19 +206,19 @@ def get_parser() -> argparse.ArgumentParser:
         "-p",
         "--port",
         type=int,
-        default=8080,
+        default=DEFAULTS.PORT,
         help="Listen on port PORT (default: 8080)",
     )
     run_parser.add_argument(
         "-i",
         "--interface",
-        default="0.0.0.0",
+        default=DEFAULTS.INTERFACE,
         help="Listen on interface INTERFACE (default: 0.0.0.0)",
     )
     run_parser.add_argument(
         "-a",
         "--authenticate",
-        default=["update"],
+        default=DEFAULTS.AUTHENTICATE,
         type=auth_arg,
         help=textwrap.dedent(
             """\
@@ -204,7 +255,7 @@ def get_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument(
         "--fallback-url",
-        default="https://pypi.org/simple/",
+        default=DEFAULTS.FALLBACK_URL,
         help=(
             "Redirect to FALLBACK_URL for packages not found in the local "
             "index."
@@ -213,7 +264,17 @@ def get_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--server",
         metavar="METHOD",
-        default="auto",
+        default=DEFAULTS.SERVER_METHOD,
+        choices=(
+            "auto",
+            "cherrypy",
+            "gevent",
+            "gunicorn",
+            "paste",
+            "twisted",
+            "wsgiref",
+        ),
+        type=str.lower,
         help=textwrap.dedent(
             """\
             Use METHOD to run th eserver. Valid values include paste, cherrypy,
@@ -231,8 +292,8 @@ def get_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument(
         "--hash-algo",
-        default="md5",
-        type=hash_algo_arg,
+        default=DEFAULTS.HASH_ALGO,
+        choices=hashlib.algorithms_available,
         help=textwrap.dedent(
             """\
            Any `hashlib` available algorithm to use for generating fragments on
@@ -243,6 +304,11 @@ def get_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--welcome",
         metavar="HTML_FILE",
+        # we want to run our `html_file_arg` function to get our default value
+        # if the value isn't provided, but if we specify `None` as a default
+        # or let argparse handle the default logic, it will not call that
+        # function with the None value. So, we set it to a custom value.
+        default="pypiserver/welcome.html",
         type=html_file_arg,
         help=(
             "Use the contents of HTML_FILE as a custom welcome message "
@@ -261,7 +327,7 @@ def get_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--log-req-frmt",
         metavar="FORMAT",
-        default="%(bottle.request)s",
+        default=DEFAULTS.LOG_REQ_FRMT,
         help=(
             "A format-string selecting Http-Request properties to log; set "
             "to '%%s' to see them all."
@@ -270,7 +336,7 @@ def get_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--log-res-frmt",
         metavar="FORMAT",
-        default="%(status)s",
+        default=DEFAULTS.LOG_RES_FRMT,
         help=(
             "A format-string selecting Http-Response properties to log; set "
             "to '%%s' to see them all."
@@ -279,7 +345,7 @@ def get_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--log-err-frmt",
         metavar="FORMAT",
-        default="%(body)s: %(exception)s \n%(traceback)s",
+        default=DEFAULTS.LOG_ERR_FRMT,
         help=(
             "A format-string selecting Http-Error properties to log; set "
             "to '%%s' to see them all."
@@ -288,7 +354,6 @@ def get_parser() -> argparse.ArgumentParser:
 
     update_parser = subparsers.add_parser(
         "update",
-        aliases=["-U"],
         parents=[global_args],
         help=textwrap.dedent(
             """\
@@ -328,6 +393,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--blacklist-file",
         "--ignorelist-file",
         dest="ignorelist_file",
+        default="pypiserver/no-ignores",
         type=ignorelist_file_arg,
         help=textwrap.dedent(
             """\
@@ -354,7 +420,8 @@ class _ConfigCommon:
         self.log_frmt: str = namespace.log_frmt
         self.roots: t.List[str] = namespace.package_directory
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """A string representation indicating the class and its properties."""
         return "{}({})".format(
             self.__class__.__name__,
             ", ".join(
@@ -362,6 +429,18 @@ class _ConfigCommon:
                 for k, v in vars(self).items()
                 if not k.startswith("_")
             ),
+        )
+
+    def __eq__(self, other: t.Any) -> bool:
+        """Configs are equal if their public values are equal."""
+        if not isinstance(other, self.__class__):
+            return False
+        return all(getattr(other, k) == v for k, v in self)  # type: ignore
+
+    def __iter__(self) -> t.Iterable[t.Tuple[str, t.Any]]:
+        """Iterate over config (k, v) pairs."""
+        yield from (
+            (k, v) for k, v in vars(self).items() if not k.startswith("_")
         )
 
 
