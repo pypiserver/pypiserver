@@ -244,7 +244,9 @@ def pypirc_file(txt):
             pypirc_path.remove()
 
 
-def twine_upload(packages, repository="test", conf="pypirc", expect_failure=False):
+def twine_upload(
+    packages, repository="test", conf="pypirc", expect_failure=False
+):
     """Call 'twine upload' with appropriate arguments"""
     proc = Popen(
         (
@@ -262,7 +264,9 @@ def twine_upload(packages, repository="test", conf="pypirc", expect_failure=Fals
         assert False, "Twine upload failed. See stdout/err"
 
 
-def twine_register(packages, repository="test", conf="pypirc", expect_failure=False):
+def twine_register(
+    packages, repository="test", conf="pypirc", expect_failure=False
+):
     """Call 'twine register' with appropriate args"""
     proc = Popen(
         (
@@ -306,7 +310,10 @@ def test_pipInstall_authedFails(protected_server, pipdir):
 
 def test_pipInstall_authedOk(protected_server, package, pipdir):
     cmd = "centodeps"
-    assert _run_pip_install(cmd, protected_server.port, pipdir, user="a", pswd="a") == 0
+    assert (
+        _run_pip_install(cmd, protected_server.port, pipdir, user="a", pswd="a")
+        == 0
+    )
     assert pipdir.join(package.basename).check()
 
 
@@ -358,7 +365,10 @@ def test_setuptoolsUpload_authed(
     ):
         with new_server(empty_packdir, port, authed=True):
             with chdir(project.strpath):
-                cmd = "setup.py -vvv %s register -r " "test upload -r test" % pkg_frmt
+                cmd = (
+                    "setup.py -vvv %s register -r "
+                    "test upload -r test" % pkg_frmt
+                )
                 for i in range(5):
                     print("++Attempt #%s" % i)
                     assert _run_python(cmd) == 0
@@ -367,7 +377,9 @@ def test_setuptoolsUpload_authed(
 
 
 @pytest.mark.parametrize("pkg_frmt", ["bdist", "bdist_wheel"])
-def test_setuptools_upload_partial_authed(empty_packdir, port, project, pkg_frmt):
+def test_setuptools_upload_partial_authed(
+    empty_packdir, port, project, pkg_frmt
+):
     """Test uploading a package with setuptools with partial auth."""
     url = _build_url(port)
     with pypirc_file(
@@ -386,7 +398,10 @@ def test_setuptools_upload_partial_authed(empty_packdir, port, project, pkg_frmt
     ):
         with new_server(empty_packdir, port, authed="partial"):
             with chdir(project.strpath):
-                cmd = "setup.py -vvv %s register -r test upload -r test" % pkg_frmt
+                cmd = (
+                    "setup.py -vvv %s register -r test upload -r test"
+                    % pkg_frmt
+                )
                 for i in range(5):
                     print("++Attempt #%s" % i)
                     assert _run_python(cmd) == 0
@@ -417,7 +432,9 @@ def test_twine_upload_open(empty_packdir, port, package):
 def test_hash_algos(empty_packdir, port, package, pipdir, hash_algo):
     """Test twine upload with no authentication"""
     user, pswd = "foo", "bar"
-    with new_server(empty_packdir, port, other_cli="--hash-algo {}".format(hash_algo)):
+    with new_server(
+        empty_packdir, port, other_cli="--hash-algo {}".format(hash_algo)
+    ):
         with pypirc_tmpfile(port, user, pswd) as rcfile:
             twine_upload([package.strpath], repository="test", conf=rcfile)
         time.sleep(SLEEP_AFTER_SRV)

@@ -122,7 +122,9 @@ find_links = os.environ.get(
 if find_links:
     cmd.extend(["-f", find_links])
 
-distribute_path = ws.find(pkg_resources.Requirement.parse("distribute")).location
+distribute_path = ws.find(
+    pkg_resources.Requirement.parse("distribute")
+).location
 
 requirement = "zc.buildout"
 version = options.version

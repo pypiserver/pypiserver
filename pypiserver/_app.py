@@ -168,9 +168,13 @@ def file_upload():
     )
     if not ufiles.pkg:
         raise HTTPError(400, "Missing 'content' file-field!")
-    if ufiles.sig and "%s.asc" % ufiles.pkg.raw_filename != ufiles.sig.raw_filename:
+    if (
+        ufiles.sig
+        and "%s.asc" % ufiles.pkg.raw_filename != ufiles.sig.raw_filename
+    ):
         raise HTTPError(
-            400, "Unrelated signature %r for package %r!" % (ufiles.sig, ufiles.pkg)
+            400,
+            "Unrelated signature %r for package %r!" % (ufiles.sig, ufiles.pkg),
         )
 
     for uf in ufiles:
@@ -191,7 +195,8 @@ def file_upload():
             raise HTTPError(
                 409,
                 "Package %r already exists!\n"
-                "  You may start server with `--overwrite` option." % uf.raw_filename,
+                "  You may start server with `--overwrite` option."
+                % uf.raw_filename,
             )
 
         core.store(packages.root, uf.raw_filename, uf.save)
@@ -238,11 +243,17 @@ def handle_rpc():
     """Handle pip-style RPC2 search requests"""
     parser = xml.dom.minidom.parse(request.body)
     methodname = (
-        parser.getElementsByTagName("methodName")[0].childNodes[0].wholeText.strip()
+        parser.getElementsByTagName("methodName")[0]
+        .childNodes[0]
+        .wholeText.strip()
     )
     log.info("Processing RPC2 request for '%s'", methodname)
     if methodname == "search":
-        value = parser.getElementsByTagName("string")[0].childNodes[0].wholeText.strip()
+        value = (
+            parser.getElementsByTagName("string")[0]
+            .childNodes[0]
+            .wholeText.strip()
+        )
         response = []
         ordering = 0
         for p in packages():
@@ -257,7 +268,9 @@ def handle_rpc():
                 }
                 response.append(d)
             ordering += 1
-        call_string = xmlrpclib.dumps((response,), "search", methodresponse=True)
+        call_string = xmlrpclib.dumps(
+            (response,), "search", methodresponse=True
+        )
         return call_string
 
 
@@ -295,14 +308,18 @@ def simple(prefix=""):
     )
     if not files:
         if config.redirect_to_fallback:
-            return redirect("%s/%s/" % (config.fallback_url.rstrip("/"), prefix))
+            return redirect(
+                "%s/%s/" % (config.fallback_url.rstrip("/"), prefix)
+            )
         return HTTPError(404, "Not Found (%s does not exist)\n\n" % normalized)
 
     fp = request.custom_fullpath
     links = [
         (
             os.path.basename(f.relfn),
-            urljoin(fp, "../../packages/%s" % f.fname_and_hash(config.hash_algo)),
+            urljoin(
+                fp, "../../packages/%s" % f.fname_and_hash(config.hash_algo)
+            ),
         )
         for f in files
     ]
@@ -331,7 +348,8 @@ def list_packages():
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
     )
     links = [
-        (f.relfn_unix, urljoin(fp, f.fname_and_hash(config.hash_algo))) for f in files
+        (f.relfn_unix, urljoin(fp, f.fname_and_hash(config.hash_algo)))
+        for f in files
     ]
     tmpl = """\
     <html>

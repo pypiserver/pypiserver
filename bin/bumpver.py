@@ -169,7 +169,9 @@ def do_tag(tag, tag_msg, dry_run, force):
         exec_cmd(cmd)
 
 
-def bumpver(new_ver, dry_run=False, force=False, amend=False, tag_name_or_commit=None):
+def bumpver(
+    new_ver, dry_run=False, force=False, amend=False, tag_name_or_commit=None
+):
     """
     :param tag_name_or_commit:
         if true, do `git commit`, if string, also `git tag` with that as msg.

@@ -39,7 +39,9 @@ def pkgfile_from_path(fn):
     return PkgFile(
         pkgname=pkgname,
         version=version,
-        root=py.path.local(fn).parts()[1].strpath,  # noqa pylint: disable=no-member
+        root=py.path.local(fn)
+        .parts()[1]
+        .strpath,  # noqa pylint: disable=no-member
         fn=fn,
     )
 
@@ -147,7 +149,9 @@ def test_pip_cmd_update():
         destdir,
         "{}=={}".format(pkg_name, pkg_version),
     )
-    assert exp_cmd == tuple(PipCmd.update(cmd_root, destdir, pkg_name, pkg_version))
+    assert exp_cmd == tuple(
+        PipCmd.update(cmd_root, destdir, pkg_name, pkg_version)
+    )
 
 
 def test_pip_cmd_update_index_overridden():

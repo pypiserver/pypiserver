@@ -2,7 +2,12 @@
 Test module for . . .
 """
 # Standard library imports
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 import logging
 from os.path import abspath, dirname, join, realpath
 from sys import path
@@ -38,10 +43,14 @@ import pypiserver
 )
 def test_paste_app_factory(conf_options, monkeypatch):
     """Test the paste_app_factory method"""
-    monkeypatch.setattr("pypiserver.core.configure", lambda **x: (x, [x.keys()]))
+    monkeypatch.setattr(
+        "pypiserver.core.configure", lambda **x: (x, [x.keys()])
+    )
     pypiserver.paste_app_factory({}, **conf_options)
 
 
 def test_app_factory(monkeypatch):
-    monkeypatch.setattr("pypiserver.core.configure", lambda **x: (x, [x.keys()]))
+    monkeypatch.setattr(
+        "pypiserver.core.configure", lambda **x: (x, [x.keys()])
+    )
     assert pypiserver.app() is not pypiserver.app()

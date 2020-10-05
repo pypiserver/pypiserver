@@ -38,7 +38,11 @@ files = [
     ("package-20000101.zip", "package", "20000101"),
     ("flup-123-1.0.3.dev-20110405.tar.gz", "flup-123", "1.0.3.dev-20110405"),
     ("package-123-1.0.0-alpha.1.zip", "package-123", "1.0.0-alpha.1"),
-    ("package-123-1.3.7+build.11.e0f985a.zip", "package-123", "1.3.7+build.11.e0f985a"),
+    (
+        "package-123-1.3.7+build.11.e0f985a.zip",
+        "package-123",
+        "1.3.7+build.11.e0f985a",
+    ),
     ("package-123-v1.1_3-8.1.zip", "package-123-v1.1_3", "8.1"),
     ("package-123-2013.02.17.dev123.zip", "package-123", "2013.02.17.dev123"),
     ("package-123-20000101.zip", "package-123", "20000101"),
@@ -51,15 +55,31 @@ files = [
     ("pywin32-217-55-cp27-none-win32.whl", "pywin32", "217-55"),
     ("pywin32-217.1-cp27-none-win32.whl", "pywin32", "217.1"),
     ("package.zip", "package", ""),
-    ("package-name-0.0.1.dev0.linux-x86_64.tar.gz", "package-name", "0.0.1.dev0"),
-    ("package-name-0.0.1.dev0.macosx-10.10-intel.tar.gz", "package-name", "0.0.1.dev0"),
-    ("package-name-0.0.1.alpha.1.win-amd64-py3.2.exe", "package-name", "0.0.1.alpha.1"),
+    (
+        "package-name-0.0.1.dev0.linux-x86_64.tar.gz",
+        "package-name",
+        "0.0.1.dev0",
+    ),
+    (
+        "package-name-0.0.1.dev0.macosx-10.10-intel.tar.gz",
+        "package-name",
+        "0.0.1.dev0",
+    ),
+    (
+        "package-name-0.0.1.alpha.1.win-amd64-py3.2.exe",
+        "package-name",
+        "0.0.1.alpha.1",
+    ),
     ("pkg-3!1.0-0.1.tgz", "pkg", "3!1.0-0.1"),  # TO BE FIXED
     ("pkg-3!1+.0-0.1.tgz", "pkg", "3!1+.0-0.1"),  # TO BE FIXED
     ("pkg.zip", "pkg", ""),
     ("foo/pkg.zip", "pkg", ""),
     ("foo/pkg-1b.zip", "pkg", "1b"),
-    ("package-name-0.0.1.alpha.1.win-amd64-py3.2.exe", "package-name", "0.0.1.alpha.1"),
+    (
+        "package-name-0.0.1.alpha.1.win-amd64-py3.2.exe",
+        "package-name",
+        "0.0.1.alpha.1",
+    ),
 ]
 
 
@@ -103,12 +123,18 @@ def test_read_lines(tmpdir):
     f = tmpdir.join(filename).ensure()
     f.write(file_contents)
 
-    assert core.read_lines(f.strpath) == ["my_private_pkg", "my_other_private_pkg"]
+    assert core.read_lines(f.strpath) == [
+        "my_private_pkg",
+        "my_other_private_pkg",
+    ]
 
 
 hashes = (
     # empty-sha256
-    ("sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+    (
+        "sha256",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ),
     # empty-md5
     ("md5", "d41d8cd98f00b204e9800998ecf8427e"),
 )
@@ -142,4 +168,6 @@ def test_redirect_prefix_encodes_newlines():
 
 def test_normalize_pkgname_for_url_encodes_newlines():
     """Ensure newlines are url encoded in package names for urls."""
-    assert "\n" not in core.normalize_pkgname_for_url("/\nSet-Cookie:malicious=1;")
+    assert "\n" not in core.normalize_pkgname_for_url(
+        "/\nSet-Cookie:malicious=1;"
+    )

@@ -70,7 +70,9 @@ def configure(**kwds):
             with io.open(c.welcome_file, "r", encoding="utf-8") as fd:
                 c.welcome_msg = fd.read()
     except Exception:
-        log.warning("Could not load welcome-file(%s)!", c.welcome_file, exc_info=1)
+        log.warning(
+            "Could not load welcome-file(%s)!", c.welcome_file, exc_info=1
+        )
 
     if c.fallback_url is None:
         c.fallback_url = "https://pypi.org/simple"
@@ -218,7 +220,9 @@ class PkgFile(object):
         "replaces",
     ]
 
-    def __init__(self, pkgname, version, fn=None, root=None, relfn=None, replaces=None):
+    def __init__(
+        self, pkgname, version, fn=None, root=None, relfn=None, replaces=None
+    ):
         self.pkgname = pkgname
         self.pkgname_norm = normalize_pkgname(pkgname)
         self.version = version

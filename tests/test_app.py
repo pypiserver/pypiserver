@@ -126,7 +126,9 @@ def test_root_count(root, testapp):
 
 def test_root_hostname(testapp):
     resp = testapp.get("/", headers={"Host": "systemexit.de"})
-    resp.mustcontain("easy_install --index-url http://systemexit.de/simple/ PACKAGE")
+    resp.mustcontain(
+        "easy_install --index-url http://systemexit.de/simple/ PACKAGE"
+    )
     # go("http://systemexit.de/")
 
 
@@ -307,18 +309,24 @@ def test_simple_index_case(root, testapp):
 
 def test_nonroot_root(testpriv):
     resp = testpriv.get("/priv/", headers={"Host": "nonroot"})
-    resp.mustcontain("easy_install --index-url http://nonroot/priv/simple/ PACKAGE")
+    resp.mustcontain(
+        "easy_install --index-url http://nonroot/priv/simple/ PACKAGE"
+    )
 
 
 def test_nonroot_root_with_x_forwarded_host(testapp):
     resp = testapp.get("/", headers={"X-Forwarded-Host": "forward.ed/priv/"})
-    resp.mustcontain("easy_install --index-url http://forward.ed/priv/simple/ PACKAGE")
+    resp.mustcontain(
+        "easy_install --index-url http://forward.ed/priv/simple/ PACKAGE"
+    )
     resp.mustcontain("""<a href="/priv/packages/">here</a>""")
 
 
 def test_nonroot_root_with_x_forwarded_host_without_trailing_slash(testapp):
     resp = testapp.get("/", headers={"X-Forwarded-Host": "forward.ed/priv"})
-    resp.mustcontain("easy_install --index-url http://forward.ed/priv/simple/ PACKAGE")
+    resp.mustcontain(
+        "easy_install --index-url http://forward.ed/priv/simple/ PACKAGE"
+    )
     resp.mustcontain("""<a href="/priv/packages/">here</a>""")
 
 
@@ -350,7 +358,9 @@ def test_nonroot_simple_packages(root, testpriv):
 
 def test_nonroot_simple_packages_with_x_forwarded_host(root, testapp):
     root.join("foobar-1.0.zip").write("123")
-    resp = testapp.get("/packages/", headers={"X-Forwarded-Host": "forwarded/priv/"})
+    resp = testapp.get(
+        "/packages/", headers={"X-Forwarded-Host": "forwarded/priv/"}
+    )
     links = resp.html("a")
     assert len(links) == 1
     assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
@@ -467,7 +477,9 @@ def test_upload_with_signature(package, root, testapp):
     assert "%s.asc" % package.lower() in uploaded_pkgs
 
 
-@pytest.mark.parametrize("package", [f[0] for f in test_core.files if f[1] is None])
+@pytest.mark.parametrize(
+    "package", [f[0] for f in test_core.files if f[1] is None]
+)
 def test_upload_badFilename(package, root, testapp):
     resp = testapp.post(
         "/",
@@ -573,7 +585,9 @@ class TestRemovePkg:
             "other-1.0-py2-py3-none-any.whl",
         ),
     )
-    def test_remove_pkg_only_targeted(self, root, testapp, pkg, name, ver, other):
+    def test_remove_pkg_only_targeted(
+        self, root, testapp, pkg, name, ver, other
+    ):
         """Only the targeted package is removed."""
         root.join(pkg).write("")
         root.join(other).write("")

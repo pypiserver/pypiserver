@@ -38,7 +38,9 @@ else:
             return _http_connection(self.proxy)
 
         def send_request(self, connection, handler, request_body):
-            connection.putrequest("POST", "http://%s%s" % (self.realhost, handler))
+            connection.putrequest(
+                "POST", "http://%s%s" % (self.realhost, handler)
+            )
 
         def send_host(self, connection, host):
             connection.putheader("Host", self.realhost)
@@ -47,7 +49,9 @@ else:
         http_proxy_url = urllib.getproxies().get("http", "")
 
         if http_proxy_url:
-            http_proxy_spec = urllib.splithost(urllib.splittype(http_proxy_url)[1])[0]
+            http_proxy_spec = urllib.splithost(
+                urllib.splittype(http_proxy_url)[1]
+            )[0]
             transport = ProxiedTransport()
             transport.set_proxy(http_proxy_spec)
         else:
@@ -134,7 +138,8 @@ def find_updates(pkgset, stable_only=True):
 
     if no_releases:
         sys.stdout.write(
-            "no releases found on pypi for %s\n\n" % (", ".join(sorted(no_releases)),)
+            "no releases found on pypi for %s\n\n"
+            % (", ".join(sorted(no_releases)),)
         )
 
     return need_update
@@ -154,7 +159,11 @@ class PipCmd(object):
 
     @staticmethod
     def update(
-        cmd_root, destdir, pkg_name, pkg_version, index="https://pypi.org/simple"
+        cmd_root,
+        destdir,
+        pkg_name,
+        pkg_version,
+        index="https://pypi.org/simple",
     ):
         """Yield an update command for pip."""
         for part in cmd_root:
@@ -167,7 +176,8 @@ class PipCmd(object):
 def update_package(pkg, destdir, dry_run=False):
     """Print and optionally execute a package update."""
     print(
-        "# update {0.pkgname} from {0.replaces.version} to " "{0.version}".format(pkg)
+        "# update {0.pkgname} from {0.replaces.version} to "
+        "{0.version}".format(pkg)
     )
 
     cmd = tuple(
