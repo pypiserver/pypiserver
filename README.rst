@@ -9,14 +9,17 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
 |pypi-ver| |travis-status| |dependencies| |python-ver| |proj-license|
 
-:Version:     1.3.2
-:Date:        2020-01-11
+:Version:     1.4.0
+:Date:        2020-10-03
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.org/project/pypiserver/
 :Travis:      https://travis-ci.org/pypiserver/pypiserver
 :Maintainers: Kostis Anagnostopoulos <ankostis@gmail.com>,
               Matthew Planchard <mplanchard@gmail.com>
 :License:     zlib/libpng + MIT
+:Community:   https://pypiserver.zulipchat.com
+
+Chat with us on `Zulip <https://pypiserver.zulipchat.com>`_!
 
 ``pypiserver`` is a minimal PyPI_ compatible server for ``pip`` or ``easy_install``.
 It is based on bottle_ and serves packages from regular directories.
@@ -43,9 +46,12 @@ with ``scp``.
 Quickstart: Installation and Usage
 ==================================
 
-``pypiserver`` > 1.2.x works with Python 2.7 and 3.5+ or PyPy.
+``pypiserver`` works with Python 3.6+ and PyPy3.
+
 Older Python versions may still work, but they are not tested.
-For legacy Python versions, use ``pypiserver-1.1.x`` series.
+
+For legacy Python versions, use ``pypiserver-1.x`` series. Note that these are
+not officially supported, and will not receive bugfixes or new features.
 
 .. Tip::
    The commands below work on a unix-like operating system with a posix shell.
@@ -406,29 +412,6 @@ You can even install the latest ``pypiserver`` directly from *github* with the
 following command, assuming you have *git* installed on your ``PATH``::
 
   pip install git+git://github.com/pypiserver/pypiserver.git
-
-Installing It As Standalone Script
-----------------------------------
-
-The git repository contains a ``pypi-server-standalone.py`` script,
-which is a single python file that can be executed without any other
-dependencies.
-
-Run the following commands to download the script with ``wget``::
-
-  wget https://raw.github.com/pypiserver/pypiserver/standalone/pypi-server-standalone.py
-  chmod +x pypi-server-standalone.py
-
-or with ``curl``::
-
-  curl -O https://raw.github.com/pypiserver/pypiserver/standalone/pypi-server-standalone.py
-  chmod +x pypi-server-standalone.py
-
-You can then start-up the server with::
-
-  ./pypi-server-standalone.py
-
-Feel free to rename the script and move it into your ``$PATH``.
 
 Running on Heroku/Dotcloud
 --------------------------

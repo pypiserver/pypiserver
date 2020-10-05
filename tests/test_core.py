@@ -12,7 +12,7 @@ from tests.doubles import Namespace
 
 ## Enable logging to detect any problems with it
 ##
-__main__.init_logging(level=logging.NOTSET)
+__main__.init_logging()
 
 
 files = [
