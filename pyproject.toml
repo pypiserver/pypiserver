@@ -18,6 +18,7 @@ exclude =  '''
     | _build
     | build
     | dist
+    | venv
     | pypiserver/bottle.py
   )
 )
