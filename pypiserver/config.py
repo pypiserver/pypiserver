@@ -1,5 +1,8 @@
 """Pypiserver configuration management.
 
+NOTE: THIS CONFIG IS NOT YET IN USE. It is the intended replacement for
+the current config logic, but has not yet been integrated.
+
 To add a config option:
 
 - If it should be available for all subcommands (run, update), add it to

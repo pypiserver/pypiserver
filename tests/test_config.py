@@ -589,3 +589,19 @@ def test_config(
         assert exp_config_values["_test"](conf)
 
     assert conf == conf_legacy
+
+
+def test_argv_conf():
+    """Config uses argv if no args are provided."""
+    orig_args = list(sys.argv)
+
+    sys.argv = [sys.argv[0], "run", "-v", "--disable-fallback"]
+
+    try:
+        conf = Config.from_args()
+        assert isinstance(conf, RunConfig)
+        assert conf.verbosity == 1
+        assert conf.disable_fallback is True
+    finally:
+        sys.argv = orig_args
+
