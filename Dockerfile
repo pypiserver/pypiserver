@@ -51,6 +51,9 @@ COPY --from=builder_dependencies /install /usr/local
 COPY --from=builder_gosu /usr/local/bin/gosu /usr/local/bin/gosu
 COPY entrypoint.sh /entrypoint.sh
 
+# Use a consistent user and group ID so that linux users
+# can create a corresponding system user and set permissions
+# if desired.
 RUN addgroup -S -g 9898 pypiserver \
     && adduser -S -u 9898 -G pypiserver pypiserver \
     && mkdir -p /data/packages \
