@@ -1,8 +1,12 @@
 Changelog
 =========
 
-v2.0.0 (tbd)
-------------
+1.4.1 (2020-10-05)
+------------------
+
+- FIX: The entrypoint for the Dockerfile no longer tries to `chown` the
+  entire `/data` directory, instead limiting itself just to `/data/packages`
+  as before (reported by @stephen-dexda in #341, thanks!).
 
 1.4.0 (2020-10-03)
 ------------------

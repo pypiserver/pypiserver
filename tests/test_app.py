@@ -126,7 +126,9 @@ def test_root_count(root, testapp):
 
 def test_root_hostname(testapp):
     resp = testapp.get("/", headers={"Host": "systemexit.de"})
-    resp.mustcontain("easy_install --index-url http://systemexit.de/simple/ PACKAGE")
+    resp.mustcontain(
+        "easy_install --index-url http://systemexit.de/simple/ PACKAGE"
+    )
     # go("http://systemexit.de/")
 
 
@@ -307,18 +309,24 @@ def test_simple_index_case(root, testapp):
 
 def test_nonroot_root(testpriv):
     resp = testpriv.get("/priv/", headers={"Host": "nonroot"})
-    resp.mustcontain("easy_install --index-url http://nonroot/priv/simple/ PACKAGE")
+    resp.mustcontain(
+        "easy_install --index-url http://nonroot/priv/simple/ PACKAGE"
+    )
 
 
 def test_nonroot_root_with_x_forwarded_host(testapp):
     resp = testapp.get("/", headers={"X-Forwarded-Host": "forward.ed/priv/"})
-    resp.mustcontain("easy_install --index-url http://forward.ed/priv/simple/ PACKAGE")
+    resp.mustcontain(
+        "easy_install --index-url http://forward.ed/priv/simple/ PACKAGE"
+    )
     resp.mustcontain("""<a href="/priv/packages/">here</a>""")
 
 
 def test_nonroot_root_with_x_forwarded_host_without_trailing_slash(testapp):
     resp = testapp.get("/", headers={"X-Forwarded-Host": "forward.ed/priv"})
-    resp.mustcontain("easy_install --index-url http://forward.ed/priv/simple/ PACKAGE")
+    resp.mustcontain(
+        "easy_install --index-url http://forward.ed/priv/simple/ PACKAGE"
+    )
     resp.mustcontain("""<a href="/priv/packages/">here</a>""")
 
 
