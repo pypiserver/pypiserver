@@ -45,13 +45,13 @@ import docopt
 
 my_dir = osp.dirname(__file__)
 
-VFILE = osp.join(my_dir, '..', 'pypiserver', '__init__.py')
+VFILE = osp.join(my_dir, "..", "pypiserver", "__init__.py")
 VFILE_regex_v = re.compile(r'version *= *__version__ *= *"([^"]+)"')
 VFILE_regex_d = re.compile(r'__updated__ *= *"([^"]+)"')
 
-RFILE = osp.join(my_dir, '..', 'README.rst')
+RFILE = osp.join(my_dir, "..", "README.rst")
 
-PYTEST_ARGS = [osp.join('tests', 'test_docs.py')]
+PYTEST_ARGS = [osp.join("tests", "test_docs.py")]
 
 
 class CmdException(Exception):
@@ -60,7 +60,7 @@ class CmdException(Exception):
 
 @fnt.lru_cache()
 def read_txtfile(fpath):
-    with open(fpath, 'rt', encoding='utf-8') as fp:
+    with open(fpath, "rt", encoding="utf-8") as fp:
         return fp.read()
 
 
@@ -75,9 +75,10 @@ def extract_file_regexes(fpath, regexes):
     matches = [regex.search(txt) for regex in regexes]
 
     if not all(matches):
-        raise CmdException("Failed extracting current versions with: %s"
-                           "\n  matches: %s" %
-                           (regexes, matches))
+        raise CmdException(
+            "Failed extracting current versions with: %s"
+            "\n  matches: %s" % (regexes, matches)
+        )
 
     return [m.group(1) for m in matches]
 
@@ -96,8 +97,7 @@ def replace_substrings(files, subst_pairs):
 
 def format_syscmd(cmd):
     if isinstance(cmd, (list, tuple)):
-        cmd = ' '.join('"%s"' % s if ' ' in s else s
-                       for s in cmd)
+        cmd = " ".join('"%s"' % s if " " in s else s for s in cmd)
     else:
         assert isinstance(cmd, str), cmd
 
@@ -107,7 +107,7 @@ def format_syscmd(cmd):
 def strip_ver2_commonprefix(ver1, ver2):
     cprefix = osp.commonprefix([ver1, ver2])
     if cprefix:
-        striplen = cprefix.rfind('.')
+        striplen = cprefix.rfind(".")
         if striplen > 0:
             striplen += 1
         else:
@@ -123,7 +123,8 @@ def run_testcases():
     retcode = pytest.main(PYTEST_ARGS)
     if retcode:
         raise CmdException(
-            "Doc TCs failed(%s), probably version-bumping has failed!" % retcode)
+            "Doc TCs failed(%s), probably version-bumping has failed!" % retcode
+        )
 
 
 def exec_cmd(cmd):
@@ -137,14 +138,14 @@ def exec_cmd(cmd):
 def do_commit(new_ver, old_ver, dry_run, amend, ver_files):
     import pathlib
 
-    #new_ver = strip_ver2_commonprefix(old_ver, new_ver)
-    cmt_msg = 'chore(ver): bump %s-->%s' % (old_ver, new_ver)
+    # new_ver = strip_ver2_commonprefix(old_ver, new_ver)
+    cmt_msg = "chore(ver): bump %s-->%s" % (old_ver, new_ver)
 
     ver_files = [pathlib.Path(f).as_posix() for f in ver_files]
-    git_add = ['git', 'add'] + ver_files
-    git_cmt = ['git', 'commit', '-m', cmt_msg]
+    git_add = ["git", "add"] + ver_files
+    git_cmt = ["git", "commit", "-m", cmt_msg]
     if amend:
-        git_cmt.append('--amend')
+        git_cmt.append("--amend")
     commands = [git_add, git_cmt]
 
     for cmd in commands:
@@ -157,9 +158,9 @@ def do_commit(new_ver, old_ver, dry_run, amend, ver_files):
 
 
 def do_tag(tag, tag_msg, dry_run, force):
-    cmd = ['git', 'tag', tag, '-s', '-m', tag_msg]
+    cmd = ["git", "tag", tag, "-s", "-m", tag_msg]
     if force:
-        cmd.append('--force')
+        cmd.append("--force")
     cmd_str = format_syscmd(cmd)
     if dry_run:
         yield "DRYRUN: %s" % cmd_str
@@ -168,15 +169,16 @@ def do_tag(tag, tag_msg, dry_run, force):
         exec_cmd(cmd)
 
 
-def bumpver(new_ver, dry_run=False, force=False, amend=False,
-            tag_name_or_commit=None):
+def bumpver(
+    new_ver, dry_run=False, force=False, amend=False, tag_name_or_commit=None
+):
     """
     :param tag_name_or_commit:
         if true, do `git commit`, if string, also `git tag` with that as msg.
     """
     if amend:
         ## Restore previous version before extracting it.
-        cmd = 'git checkout HEAD~ --'.split()
+        cmd = "git checkout HEAD~ --".split()
         cmd.append(VFILE)
         cmd.append(RFILE)
         exec_cmd(cmd)
@@ -199,7 +201,7 @@ def bumpver(new_ver, dry_run=False, force=False, amend=False,
 
         from datetime import datetime
 
-        new_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S%z')
+        new_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S%z")
 
         ver_files = [osp.normpath(f) for f in [VFILE, RFILE]]
         subst_pairs = [(old_ver, new_ver), (old_date, new_date)]
@@ -208,12 +210,12 @@ def bumpver(new_ver, dry_run=False, force=False, amend=False,
             new_txt, fpath, replacements = repl
 
             if not dry_run:
-                with open(fpath, 'wt', encoding='utf-8') as fp:
+                with open(fpath, "wt", encoding="utf-8") as fp:
                     fp.write(new_txt)
 
-            yield '%s: ' % fpath
+            yield "%s: " % fpath
             for old, new, nrepl in replacements:
-                yield '  %i x (%24s --> %s)' % (nrepl, old, new)
+                yield "  %i x (%24s --> %s)" % (nrepl, old, new)
 
         yield "...now launching DocTCs..."
         run_testcases()
@@ -222,20 +224,21 @@ def bumpver(new_ver, dry_run=False, force=False, amend=False,
             yield from do_commit(new_ver, old_ver, dry_run, amend, ver_files)
 
             if isinstance(tag_name_or_commit, str):
-                tag = 'v%s' % new_ver
+                tag = "v%s" % new_ver
                 yield from do_tag(tag, tag_name_or_commit, dry_run, force)
 
 
 def main(*args):
     opts = docopt.docopt(__doc__, argv=args)
 
-    new_ver = opts['<new-ver>']
+    new_ver = opts["<new-ver>"]
 
-    assert not new_ver or new_ver[0] != 'v', (
-        "Version '%s' must NOT start with `v`!" % new_ver)
+    assert not new_ver or new_ver[0] != "v", (
+        "Version '%s' must NOT start with `v`!" % new_ver
+    )
 
-    commit = opts['--commit']
-    tag = opts['--tag']
+    commit = opts["--commit"]
+    tag = opts["--tag"]
     if tag:
         tag_name_or_commit = tag
     elif commit:
@@ -244,11 +247,13 @@ def main(*args):
         tag_name_or_commit = None
 
     try:
-        for i in bumpver(new_ver,
-                         opts['--dry-run'],
-                         opts['--force'],
-                         opts['--amend'],
-                         tag_name_or_commit):
+        for i in bumpver(
+            new_ver,
+            opts["--dry-run"],
+            opts["--force"],
+            opts["--amend"],
+            tag_name_or_commit,
+        ):
             print(i)
     except CmdException as ex:
         sys.exit(str(ex))
@@ -256,5 +261,5 @@ def main(*args):
         raise ex
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(*sys.argv[1:])

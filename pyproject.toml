@@ -1,0 +1,27 @@
+[build-system]
+# Minimum requirements for the build system to execute.
+requires = ["setuptools", "wheel"]  # PEP 508 specifications.
+
+
+[tool.black]
+# Configuration for the Black autoformatter
+line-length = 80
+target-version = ['py36']
+exclude =  '''
+(
+  /(
+      \.direnv
+    | \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | \.vscode
+    | _build
+    | build
+    | dist
+    | venv
+    | pypiserver/bottle.py
+  )
+)
+'''

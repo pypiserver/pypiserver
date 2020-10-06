@@ -174,7 +174,7 @@ def file_upload():
     ):
         raise HTTPError(
             400,
-            "Unrelated signature %r for package %r!" % (ufiles.sig, ufiles.pkg)
+            "Unrelated signature %r for package %r!" % (ufiles.sig, ufiles.pkg),
         )
 
     for uf in ufiles:
