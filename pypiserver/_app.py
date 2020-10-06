@@ -41,7 +41,7 @@ config = None
 app = Bottle()
 
 
-class auth(object):
+class auth:
     """decorator to apply authentication if specified for the decorated method & action"""
 
     def __init__(self, action):

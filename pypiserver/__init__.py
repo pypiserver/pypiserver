@@ -11,7 +11,7 @@ __summary__ = "A minimal PyPI server for use with pip/easy_install."
 __uri__ = "https://github.com/pypiserver/pypiserver"
 
 
-class Configuration(object):
+class Configuration:
     """
     .. see:: config-options: :func:`pypiserver.configure()`
     """

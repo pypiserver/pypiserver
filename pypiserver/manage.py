@@ -145,7 +145,7 @@ def find_updates(pkgset, stable_only=True):
     return need_update
 
 
-class PipCmd(object):
+class PipCmd:
     """Methods for generating pip commands."""
 
     @staticmethod

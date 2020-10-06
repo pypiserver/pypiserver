@@ -9,7 +9,7 @@ except ImportError:
     import mock
 
 
-class main_wrapper(object):
+class main_wrapper:
     def __init__(self):
         self.run_kwargs = None
         self.pkgdir = None

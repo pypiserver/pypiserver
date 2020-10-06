@@ -205,7 +205,7 @@ def is_allowed_path(path_part):
     return not (p.startswith(".") or "/." in p)
 
 
-class PkgFile(object):
+class PkgFile:
 
     __slots__ = [
         "fn",
