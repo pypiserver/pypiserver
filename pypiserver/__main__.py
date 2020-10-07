@@ -216,7 +216,7 @@ def main(argv=None):
         )
     except getopt.GetoptError:
         err = sys.exc_info()[1]
-        sys.exit("usage error: %s" % (err,))
+        sys.exit(f"usage error: {err}")
 
     for k, v in opts:
         if k in ("-p", "--port"):
@@ -224,7 +224,7 @@ def main(argv=None):
                 c.port = int(v)
             except Exception:
                 err = sys.exc_info()[1]
-                sys.exit("Invalid port(%r) due to: %s" % (v, err))
+                sys.exit(f"Invalid port({v!r}) due to: {err}")
         elif k in ("-a", "--authenticate"):
             c.authenticated = [
                 a.lower() for a in re.split("[, ]+", v.strip(" ,")) if a
@@ -235,8 +235,11 @@ def main(argv=None):
                 actions = ("list", "download", "update")
                 for a in c.authenticated:
                     if a not in actions:
-                        errmsg = "Action '%s' for option `%s` not one of %s!"
-                        sys.exit(errmsg % (a, k, actions))
+                        errmsg = (
+                            f"Action '{a}' for option `{k}`"
+                            f" not one of {actions}!"
+                        )
+                        sys.exit(errmsg)
         elif k in ("-i", "--interface"):
             c.host = v
         elif k in ("-r", "--root"):
@@ -250,7 +253,7 @@ def main(argv=None):
         elif k == "--welcome":
             c.welcome_file = v
         elif k == "--version":
-            print("pypiserver %s\n" % pypiserver.__version__)
+            print(f"pypiserver {pypiserver.__version__}\n")
             return
         elif k == "-U":
             command = "update"
@@ -294,8 +297,10 @@ def main(argv=None):
         or c.authenticated
         and c.password_file == "."
     ):
-        auth_err = "When auth-ops-list is empty (-a=.), password-file (-P=%r) must also be empty ('.')!"
-        sys.exit(auth_err % c.password_file)
+        sys.exit(
+            "When auth-ops-list is empty (-a=.), password-file"
+            f" (-P={c.password_file!r}) must also be empty ('.')!"
+        )
 
     if len(roots) == 0:
         roots.append(os.path.expanduser("~/packages"))
@@ -314,8 +319,8 @@ def main(argv=None):
     valid_streams = {"none": None, "stderr": sys.stderr, "stdout": sys.stdout}
     if c.log_stream not in valid_streams:
         sys.exit(
-            "invalid log stream %s. choose one of %s"
-            % (c.log_stream, ", ".join(valid_streams.keys()))
+            f"Invalid log stream {c.log_stream}."
+            f" Choose one of {', '.join(valid_streams.keys())}"
         )
 
     init_logging(
@@ -349,8 +354,8 @@ def main(argv=None):
 
     if c.server not in bottle.server_names:
         sys.exit(
-            "unknown server %r. choose one of %s"
-            % (c.server, ", ".join(bottle.server_names.keys()))
+            f"Unknown server {c.server}."
+            f" Choose one of {', '.join(bottle.server_names.keys())}"
         )
 
     bottle.debug(c.verbosity > 1)

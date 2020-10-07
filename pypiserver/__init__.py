@@ -20,11 +20,11 @@ class Configuration:
         vars(self).update(kwds)
 
     def __repr__(self, *args, **kwargs):
-        return "Configuration(**%s)" % vars(self)
+        return f"Configuration(**{vars(self)})"
 
     def __str__(self, *args, **kwargs):
-        return "Configuration:\n%s" % "\n".join(
-            "%20s = %s" % (k, v) for k, v in sorted(vars(self).items())
+        return "Configuration:\n" + "\n".join(
+            f"{k:>20} = {v}" for k, v in sorted(vars(self).items())
         )
 
     def update(self, props):

@@ -18,7 +18,7 @@ except ImportError:  # PY2
 
 import pkg_resources
 
-from . import Configuration
+from pypiserver import Configuration
 
 
 log = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def configure(**kwds):
     :return: a 2-tuple (Configure, package-list)
     """
     c = Configuration(**kwds)
-    log.info("+++Pypiserver invoked with: %s", c)
+    log.info(f"+++Pypiserver invoked with: {c}")
 
     if c.root is None:
         c.root = os.path.expanduser("~/packages")
@@ -40,8 +40,7 @@ def configure(**kwds):
             os.listdir(r)
         except OSError:
             err = sys.exc_info()[1]
-            msg = "Error: while trying to list root(%s): %s"
-            sys.exit(msg % (r, err))
+            sys.exit(f"Error: while trying to list root({r}): {err}")
 
     packages = lambda: itertools.chain(*[listdir(r) for r in roots])
     packages.root = roots[0]
@@ -71,7 +70,7 @@ def configure(**kwds):
                 c.welcome_msg = fd.read()
     except Exception:
         log.warning(
-            "Could not load welcome-file(%s)!", c.welcome_file, exc_info=1
+            f"Could not load welcome-file({c.welcome_file})!", exc_info=True
         )
 
     if c.fallback_url is None:
@@ -84,9 +83,9 @@ def configure(**kwds):
             halgos = ["md5", "sha1", "sha224", "sha256", "sha384", "sha512"]
 
         if c.hash_algo not in halgos:
-            sys.exit("Hash-algorithm %s not one of: %s" % (c.hash_algo, halgos))
+            sys.exit(f"Hash-algorithm {c.hash_algo} not one of: {halgos}")
 
-    log.info("+++Pypiserver started with: %s", c)
+    log.info(f"+++Pypiserver started with: {c}")
 
     return c, packages
 
@@ -234,11 +233,11 @@ class PkgFile:
         self.replaces = replaces
 
     def __repr__(self):
-        return "%s(%s)" % (
+        return "{}({})".format(
             self.__class__.__name__,
             ", ".join(
                 [
-                    "%s=%r" % (k, getattr(self, k, "AttributeError"))
+                    f"{k}={getattr(self, k, 'AttributeError')!r}"
                     for k in sorted(self.__slots__)
                 ]
             ),
@@ -247,10 +246,9 @@ class PkgFile:
     def fname_and_hash(self, hash_algo):
         if not hasattr(self, "_fname_and_hash"):
             if hash_algo:
-                self._fname_and_hash = "%s#%s=%s" % (
-                    self.relfn_unix,
-                    hash_algo,
-                    digest_file(self.fn, hash_algo),
+                self._fname_and_hash = (
+                    f"{self.relfn_unix}#{hash_algo}="
+                    f"{digest_file(self.fn, hash_algo)}"
                 )
             else:
                 self._fname_and_hash = self.relfn_unix
@@ -296,8 +294,8 @@ def read_lines(filename):
             ]
     except Exception:
         log.error(
-            'Failed to read package blacklist file "%s". '
-            "Aborting server startup, please fix this." % filename
+            f'Failed to read package blacklist file "{filename}". '
+            "Aborting server startup, please fix this."
         )
         raise
 

@@ -428,7 +428,7 @@ def test_cache_control_set(root):
     root.join("foo_bar-1.0.tar.gz").write("")
     resp = app_with_cache.get("/packages/foo_bar-1.0.tar.gz")
     assert "Cache-Control" in resp.headers
-    assert resp.headers["Cache-Control"] == "public, max-age=%s" % AGE
+    assert resp.headers["Cache-Control"] == f"public, max-age={AGE}"
 
 
 def test_upload_noAction(root, testapp):
@@ -467,14 +467,14 @@ def test_upload_with_signature(package, root, testapp):
         params={":action": "file_upload"},
         upload_files=[
             ("content", package, b""),
-            ("gpg_signature", "%s.asc" % package, b""),
+            ("gpg_signature", f"{package}.asc", b""),
         ],
     )
     assert resp.status_int == 200
     uploaded_pkgs = [f.basename.lower() for f in root.listdir()]
     assert len(uploaded_pkgs) == 2
     assert package.lower() in uploaded_pkgs
-    assert "%s.asc" % package.lower() in uploaded_pkgs
+    assert f"{package.lower()}.asc" in uploaded_pkgs
 
 
 @pytest.mark.parametrize(
@@ -488,7 +488,7 @@ def test_upload_badFilename(package, root, testapp):
         expect_errors=1,
     )
     assert resp.status == "400 Bad Request"
-    assert "Bad filename: %s" % package in resp.text
+    assert f"Bad filename: {package}" in resp.text
 
 
 @pytest.mark.parametrize(
@@ -628,13 +628,13 @@ class TestRemovePkg:
         ],
     )
     def test_remove_pkg_missingNaveVersion(self, name, version, root, testapp):
-        msg = "Missing 'name'/'version' fields: name=%s, version=%s"
+        msg = f"Missing 'name'/'version' fields: name={name}, version={version}"
         params = {":action": "remove_pkg", "name": name, "version": version}
         params = dict((k, v) for k, v in params.items() if v is not None)
         resp = testapp.post("/", expect_errors=1, params=params)
 
         assert resp.status == "400 Bad Request"
-        assert msg % (name, version) in unescape(resp.text)
+        assert msg in unescape(resp.text)
 
     def test_remove_pkg_notFound(self, root, testapp):
         resp = testapp.post(

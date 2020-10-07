@@ -15,18 +15,18 @@ class main_wrapper:
         self.pkgdir = None
 
     def __call__(self, argv):
-        sys.stdout.write("Running %s\n" % (argv,))
+        sys.stdout.write(f"Running {argv}\n")
         __main__.main(["pypi-server"] + argv)
         return self.run_kwargs
 
 
 @pytest.fixture()
-def main(request, monkeypatch):
+def main(monkeypatch):
 
     main = main_wrapper()
 
     def run(**kwargs):
-        sys.stdout.write("RUN: %s\n" % kwargs)
+        sys.stdout.write(f"RUN: {kwargs}\n")
         app = kwargs.pop("app")
         main.app = app
         main.run_kwargs = kwargs
