@@ -34,6 +34,7 @@ import contextlib
 import hashlib
 import io
 import pkg_resources
+import re
 import textwrap
 import sys
 import typing as t
@@ -134,41 +135,16 @@ def log_stream_arg(arg: str) -> t.Optional[t.IO]:
     )
 
 
-def get_parser() -> argparse.ArgumentParser:
-    """Return an ArgumentParser."""
-    parser = argparse.ArgumentParser(
-        description=textwrap.dedent(
-            """\
-            start PyPI compatible package server serving packages from
-            PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
-            command line, it uses the default ~/packages. pypiserver scans
-            this directory recursively for packages. It skips packages and
-            directories starting with a dot. Multiple package directories
-            may be specified."""
-        ),
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        epilog=(
-            "Visit https://github.com/pypiserver/pypiserver "
-            "for more information"
-        ),
-    )
-
-    global_args = argparse.ArgumentParser(add_help=False)
-
-    global_args.add_argument(
-        "package_directory",
-        default=DEFAULTS.PACKAGE_DIRECTORIES,
-        nargs="*",
-        help="The directory from which to serve packages.",
-    )
-    global_args.add_argument(
+def add_common_args(parser: argparse.ArgumentParser) -> None:
+    """Add common arguments to a parser."""
+    parser.add_argument(
         "-v",
         "--verbose",
         action="count",
         default=0,
         help="Enable verbose logging; repeat for more verbosity.",
     )
-    global_args.add_argument(
+    parser.add_argument(
         "--log-file",
         metavar="FILE",
         help=(
@@ -176,7 +152,7 @@ def get_parser() -> argparse.ArgumentParser:
             "stderr, if configured."
         ),
     )
-    global_args.add_argument(
+    parser.add_argument(
         "--log-stream",
         metavar="STREAM",
         default=DEFAULTS.LOG_STREAM,
@@ -186,7 +162,7 @@ def get_parser() -> argparse.ArgumentParser:
             "stderr, and none"
         ),
     )
-    global_args.add_argument(
+    parser.add_argument(
         "--log-frmt",
         metavar="FORMAT",
         default=DEFAULTS.LOG_FRMT,
@@ -195,15 +171,50 @@ def get_parser() -> argparse.ArgumentParser:
             "standard python library)"
         ),
     )
-    global_args.add_argument(
+    parser.add_argument(
         "--version",
         action="version",
         version=__version__,
     )
 
-    subparsers = parser.add_subparsers(help="subcommands", dest="cmd")
 
-    run_parser = subparsers.add_parser("run", parents=[global_args])
+def get_parser() -> argparse.ArgumentParser:
+    """Return an ArgumentParser."""
+    parser = argparse.ArgumentParser(
+        description=(
+            "start PyPI compatible package server serving packages from "
+            "PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the "
+            "command line, it uses the default ~/packages. pypiserver scans "
+            "this directory recursively for packages. It skips packages and "
+            "directories starting with a dot. Multiple package directories "
+            "may be specified."
+        ),
+        # formatter_class=argparse.RawTextHelpFormatter,
+        formatter_class=PreserveWhitespaceRawTextHelpFormatter,
+        epilog=(
+            "Visit https://github.com/pypiserver/pypiserver "
+            "for more information\n \n"
+        ),
+    )
+
+    add_common_args(parser)
+
+    subparsers = parser.add_subparsers(dest="cmd")
+
+    run_parser = subparsers.add_parser(
+        "run",
+        formatter_class=PreserveWhitespaceRawTextHelpFormatter,
+        help="Run pypiserver, serving packages from PACKAGES_DIRECTORY",
+    )
+
+    add_common_args(run_parser)
+
+    run_parser.add_argument(
+        "package_directory",
+        default=DEFAULTS.PACKAGE_DIRECTORIES,
+        nargs="*",
+        help="The directory from which to serve packages.",
+    )
 
     run_parser.add_argument(
         "-p",
@@ -223,29 +234,39 @@ def get_parser() -> argparse.ArgumentParser:
         "--authenticate",
         default=DEFAULTS.AUTHENTICATE,
         type=auth_arg,
-        help=textwrap.dedent(
-            """\
-            Comma-separated list of (case-insensitive) actions to authenticate
-            (options: download, list, update, default: update). Use `.` for
-            no authentication, e.g. `pypi-server -a . -P .`
-
-            See the `-P` option for configuring users and passwords.
-
-            Note that when uploads are not protected, the `register` command
-            is not necessary, but `~/.pypirc` still needs username and
-            password fields, even if bogus."""
+        help=(
+            "Comma-separated list of (case-insensitive) actions to "
+            "authenticate (options: download, list, update; default: update)."
+            "\n\n "
+            "Any actions not specified are not authenticated, so to "
+            "authenticate downloads and updates, but allow unauthenticated "
+            "viewing of the package list, you would use: "
+            "\n\n"
+            "  pypi-server -a 'download, update' -P ./my_passwords.htaccess"
+            "\n\n"
+            "To disable authentication, use:"
+            "\n\n"
+            "  pypi-server -a . -P ."
+            "\n\n"
+            "See the `-P` option for configuring users and passwords. "
+            "\n\n"
+            "Note that when uploads are not protected, the `register` command "
+            "is not necessary, but `~/.pypirc` still needs username and "
+            "password fields, even if bogus."
         ),
     )
     run_parser.add_argument(
         "-P",
         "--passwords",
         metavar="PASSWORD_FILE",
-        help=textwrap.dedent(
-            """\
-            Use an apache htpasswd file PASSWORD_FILE to set usernames and
-            passwords for authentication. To allow unauthorized access, use:
-            `pypi-server -a . -P .`
-            """
+        help=(
+            "Use an apache htpasswd file PASSWORD_FILE to set usernames and "
+            "passwords for authentication."
+            "\n\n"
+            "To allow unauthorized access, use:"
+            "\n\n"
+            "  pypi-server -a . -P ."
+            "\n\n"
         ),
     )
     run_parser.add_argument(
@@ -278,13 +299,11 @@ def get_parser() -> argparse.ArgumentParser:
             "wsgiref",
         ),
         type=str.lower,
-        help=textwrap.dedent(
-            """\
-            Use METHOD to run th eserver. Valid values include paste, cherrypy,
-            twisted, gunicorn, gevent, wsgiref, and auto. The default is to
-            use "auto", which chooses one of paste, cherrypy, twisted, or
-            wsgiref.
-            """
+        help=(
+            "Use METHOD to run th eserver. Valid values include paste, "
+            "cherrypy, twisted, gunicorn, gevent, wsgiref, and auto. The "
+            "default is to use \"auto\", which chooses one of paste, cherrypy, "
+            "twisted, or wsgiref."
         ),
     )
     run_parser.add_argument(
@@ -297,11 +316,9 @@ def get_parser() -> argparse.ArgumentParser:
         "--hash-algo",
         default=DEFAULTS.HASH_ALGO,
         choices=hashlib.algorithms_available,
-        help=textwrap.dedent(
-            """\
-           Any `hashlib` available algorithm to use for generating fragments on
-           package links. Can be disabled with one of (0, no, off, false).
-           """
+        help=(
+           "Any `hashlib` available algorithm to use for generating fragments "
+           "on package links. Can be disabled with one of (0, no, off, false)."
         ),
     )
     run_parser.add_argument(
@@ -357,16 +374,23 @@ def get_parser() -> argparse.ArgumentParser:
 
     update_parser = subparsers.add_parser(
         "update",
-        parents=[global_args],
         help=textwrap.dedent(
-            """\
-            Handle updates of packages managed by pypiserver. By default,
-            a pip command to update the packages is printed to stdout for
-            introspection or pipelining. See the `-x` option for updating
-            packages directly.
-            """
+            "Handle updates of packages managed by pypiserver. By default, "
+            "a pip command to update the packages is printed to stdout for "
+            "introspection or pipelining. See the `-x` option for updating "
+            "packages directly."
         ),
     )
+
+    add_common_args(update_parser)
+
+    update_parser.add_argument(
+        "package_directory",
+        default=DEFAULTS.PACKAGE_DIRECTORIES,
+        nargs="*",
+        help="The directory from which to serve packages.",
+    )
+
     update_parser.add_argument(
         "-x",
         "--execute",
@@ -376,12 +400,10 @@ def get_parser() -> argparse.ArgumentParser:
     update_parser.add_argument(
         "-d",
         "--download-directory",
-        help=textwrap.dedent(
-            """\
-            Specify a directory where packages updates will be downloaded.
-            The default behavior is to use the directory which contains
-            the package being updated.
-            """
+        help=(
+            "Specify a directory where packages updates will be downloaded. "
+            "The default behavior is to use the directory which contains "
+            "the package being updated."
         ),
     )
     update_parser.add_argument(
@@ -398,16 +420,14 @@ def get_parser() -> argparse.ArgumentParser:
         dest="ignorelist_file",
         default="pypiserver/no-ignores",
         type=ignorelist_file_arg,
-        help=textwrap.dedent(
-            """\
-            Don't update packages listed in this file (one package name per
-            line, without versions, '#' comments honored). This can be useful
-            if you upload private packages into pypiserver, but also keep a
-            mirror of public packages that you regularly update. Attempting
-            to pull an update of a private package from `pypi.org` might pose
-            a security risk - e.g. a malicious user might publish a higher
-            version of the private package, containing arbitrary code.
-            """
+        help=(
+            "Don't update packages listed in this file (one package name per "
+            "line, without versions, '#' comments honored). This can be useful "
+            "if you upload private packages into pypiserver, but also keep a "
+            "mirror of public packages that you regularly update. Attempting "
+            "to pull an update of a private package from `pypi.org` might pose "
+            "a security risk - e.g. a malicious user might publish a higher "
+            "version of the private package, containing arbitrary code."
         ),
     )
     return parser
@@ -489,57 +509,70 @@ class Config:
         cls, args: t.Sequence[str] = None
     ) -> t.Union[RunConfig, UpdateConfig]:
         """Construct a Config from the passed args or sys.argv."""
+        # If pulling args from sys.argv (commandline arguments), argv[0] will
+        # be the program name, (i.e. pypi-server), so we don't need to
+        # worry about it.
         args = args if args is not None else sys.argv[1:]
         parser = get_parser()
+
         try:
-            # The parser prints regardless of whether we're catching the
-            # error or not, so we redirect sdout for this first run.
-            # However, we'll _keep_ the output and print it if the second
-            # run fails, since the first run will give the user feedback
-            # related to what they actually put in.
             with capture_stderr() as cap:
-                try:
-                    parsed = parser.parse_args(args)
-                finally:
-                    cap.seek(0)
-                    orig_err = cap.read()
+                parsed = parser.parse_args(args)
+            # There's a special case we need to handle where no arguments
+            # whatsoever were provided. Because we need to introspect
+            # what subcommand is called, via the `add_subparsers(dest='cmd')`
+            # call, calling with no subparser is _not_ an error. We will
+            # treat it as such, so that we then trigger the legacy argument
+            # handling logic.
             if parsed.cmd is None:
-                # No command was found, which happens if no arguments were
-                # provided. We will raise a SystemExit so we get the same
-                # deprecated argument handling functionality as we do for
-                # a failed parse.
-                orig_err = None
-                raise SystemExit
-        except SystemExit:
-            # argparse could not parse the arguments. Perhaps they are
-            # old-style arguments, so we'll try adjusting and re-parsing.
-            err_msg = (
-                orig_err if orig_err is not None else parser.format_usage()
-            )
-            try:
-                # Prevent showing the error for the adjusted args, since
-                # we want to show the captured error from the user's
-                # actually provided args.
-                with capture_stderr():
-                    parsed = parser.parse_args(cls._adjust_old_args(args))
-            except SystemExit:
-                # Here we could not parse our adjusted arguments either,
-                # So we'll print the original error message and rethrow
-                # the exit.
-                print(err_msg, file=sys.stderr)
+                sys.exit(1)
+        except SystemExit as exc:
+            # A SystemExit is raised in some non-error cases, like
+            # printing the help or the version. Reraise in those cases.
+            cap.seek(0)
+            first_txt = cap.read()
+            if not exc.code or exc.code == 0:
+                # There usually won't have been any error text in these
+                # cases, but if there was, print it.
+                if first_txt:
+                    print(first_txt, file=sys.stderr)
                 raise
-            else:
-                # Here on the other hand we _were_ able to parse the adjusted
-                # arguments, which means the user is using a deprecated form.
-                # Print out a warning, along with our original error or
-                # usage string.
+            # Otherwise, it's possible they're using the older, non-subcommand
+            # form of the CLI. In this case, attempt to parse with adjusted
+            # arguments. If the parse is successful, warn them about using
+            # deprecated arguments and continue. If this parse _also_ fails,
+            # show them the parsing error for their original arguments,
+            # not for the adjusted arguments.
+            try:
+                with capture_stderr() as cap:
+                    parsed = parser.parse_args(cls._adjust_old_args(args))
                 print(
-                    "Warning: you are using deprecated cmdline arguments. "
-                    "Please see the usage message below, and update your "
-                    "cmdline arguments.\n",
-                    file=sys.stderr,
+                    "WARNING: You are using deprecated arguments to pypiserver.\n\n"
+                    "Please run `pypi-server --help` and update your command "
+                    "to align with the current interface.\n\n"
+                    "In most cases, this will be as simple as just using\n\n"
+                    "  pypi-server run [args]\n\n"
+                    "instead of\n\n"
+                    "  pypi-server [args]\n",
+                    file=sys.stderr
                 )
-                print(err_msg, file=sys.stderr)
+            except SystemExit:
+                cap.seek(0)
+                second_txt = cap.read()
+                if not exc.code or exc.code == 0:
+                    # Again, usually nothing to stderr in these cases,
+                    # but if there was, print it and re-raise.
+                    if second_txt:
+                        print(second_txt, file=sys.stderr)
+                    raise
+                # Otherwise, we print the original error text instead of
+                # the error text from the call with our adjusted args,
+                # and then raise. Showing the original error text will
+                # provide a usage error for the new argument form, which
+                # should help folks to upgrade.
+                if first_txt:
+                    print(first_txt, file=sys.stderr)
+                raise
 
         if parsed.cmd == "run":
             return RunConfig(parsed)
@@ -597,3 +630,35 @@ def capture_stderr() -> t.Iterator[t.IO]:
         yield cap
     finally:
         sys.stderr = orig
+
+
+# Note: this is adapted from this StackOverflow answer:
+# https://stackoverflow.com/a/35925919 -- the normal "raw" help
+# text formatters provided with the argparse library don't do
+# a great job of maintaining whitespace while still keeping
+# subsequent lines properly intended.
+class PreserveWhitespaceRawTextHelpFormatter(
+    argparse.RawDescriptionHelpFormatter
+):
+    """A help text formatter allowing more customization of newlines."""
+
+    def __add_whitespace(self, idx: int, iWSpace: int, text: str) -> str:
+        if idx == 0:
+            return text
+        return (" " * iWSpace) + text
+
+    def _split_lines(self, text: str, width: int) -> t.List[str]:
+        textRows = text.splitlines()
+        for idx, line in enumerate(textRows):
+            search = re.search(r"\s*[0-9\-]{0,}\.?\s*", line)
+            if line.strip() == "":
+                textRows[idx] = " "
+            elif search:
+                lWSpace = search.end()
+                lines = [
+                    self.__add_whitespace(i, lWSpace, x)
+                    for i, x in enumerate(textwrap.wrap(line, width))
+                ]
+                textRows[idx] = lines  # type: ignore
+
+        return [item for sublist in textRows for item in sublist]
