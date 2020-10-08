@@ -12,51 +12,11 @@ import pip
 
 from . import core
 
-if sys.version_info >= (3, 0):
-    from xmlrpc.client import Server
-
-    def make_pypi_client(url):
-        return Server(url)
+from xmlrpc.client import Server
 
 
-else:
-    from xmlrpclib import Transport  # @UnresolvedImport
-    from xmlrpclib import ServerProxy
-    import httplib  # @UnresolvedImport
-    import urllib
-
-    class ProxiedTransport(Transport):
-        def set_proxy(self, proxy):
-            self.proxy = proxy
-
-        def make_connection(self, host):
-            self.realhost = host
-            if sys.hexversion < 0x02070000:
-                _http_connection = httplib.HTTP
-            else:
-                _http_connection = httplib.HTTPConnection
-            return _http_connection(self.proxy)
-
-        def send_request(self, connection, handler, request_body):
-            connection.putrequest(
-                "POST", "http://%s%s" % (self.realhost, handler)
-            )
-
-        def send_host(self, connection, host):
-            connection.putheader("Host", self.realhost)
-
-    def make_pypi_client(url):
-        http_proxy_url = urllib.getproxies().get("http", "")
-
-        if http_proxy_url:
-            http_proxy_spec = urllib.splithost(
-                urllib.splittype(http_proxy_url)[1]
-            )[0]
-            transport = ProxiedTransport()
-            transport.set_proxy(http_proxy_spec)
-        else:
-            transport = None
-        return ServerProxy(url, transport=transport)
+def make_pypi_client(url):
+    return Server(url)
 
 
 def is_stable_version(pversion):
@@ -109,7 +69,7 @@ def find_updates(pkgset, stable_only=True):
     latest_pkgs = frozenset(filter_latest_pkgs(pkgset))
 
     sys.stdout.write(
-        "checking %s packages for newer version\n" % len(latest_pkgs),
+        f"checking {len(latest_pkgs)} packages for newer version\n"
     )
     need_update = set()
 
@@ -138,14 +98,13 @@ def find_updates(pkgset, stable_only=True):
 
     if no_releases:
         sys.stdout.write(
-            "no releases found on pypi for %s\n\n"
-            % (", ".join(sorted(no_releases)),)
+            f"no releases found on pypi for {', '.join(sorted(no_releases))}\n\n"
         )
 
     return need_update
 
 
-class PipCmd(object):
+class PipCmd:
     """Methods for generating pip commands."""
 
     @staticmethod

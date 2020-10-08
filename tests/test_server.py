@@ -21,6 +21,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from pathlib import Path
 from shlex import split
 from subprocess import Popen
 from textwrap import dedent
@@ -63,15 +64,8 @@ def _run_server(packdir, port, authed, other_cli=""):
     }
     pswd_opts = pswd_opt_choices[authed]
     cmd = (
-        "%s -m pypiserver.__main__ -vvv --overwrite -i 127.0.0.1 "
-        "-p %s %s %s %s"
-        % (
-            sys.executable,
-            port,
-            pswd_opts,
-            other_cli,
-            packdir,
-        )
+        f"{sys.executable} -m pypiserver.__main__ -vvv --overwrite -i 127.0.0.1 "
+        f"-p {port} {pswd_opts} {other_cli} {packdir}"
     )
     proc = subprocess.Popen(cmd.split(), bufsize=_BUFF_SIZE)
     time.sleep(SLEEP_AFTER_SRV)
@@ -81,7 +75,7 @@ def _run_server(packdir, port, authed, other_cli=""):
 
 
 def _kill_server(srv):
-    print("Killing %s" % (srv,))
+    print(f"Killing {srv}")
     try:
         srv.proc.terminate()
         time.sleep(1)
@@ -109,8 +103,7 @@ def chdir(d):
 
 
 def _run_python(cmd):
-    ncmd = "%s %s" % (sys.executable, cmd)
-    return os.system(ncmd)
+    return os.system(f"{sys.executable} {cmd}")
 
 
 @pytest.fixture(scope="module")
@@ -179,16 +172,16 @@ def empty_packdir(tmpdir):
 
 
 def _build_url(port, user="", pswd=""):
-    auth = "%s:%s@" % (user, pswd) if user or pswd else ""
-    return "http://%slocalhost:%s" % (auth, port)
+    auth = f"{user}:{pswd}@" if user or pswd else ""
+    return f"http://{auth}localhost:{port}"
 
 
 def _run_pip(cmd):
     ncmd = (
         "pip --no-cache-dir --disable-pip-version-check "
-        "--retries 0 --timeout 5 --no-input %s"
-    ) % cmd
-    print("PIP: %s" % ncmd)
+        f"--retries 0 --timeout 5 --no-input {cmd}"
+    )
+    print(f"PIP: {ncmd}")
     proc = Popen(split(ncmd))
     proc.communicate()
     return proc.returncode
@@ -196,9 +189,7 @@ def _run_pip(cmd):
 
 def _run_pip_install(cmd, port, install_dir, user=None, pswd=None):
     url = _build_url(port, user, pswd)
-    # ncmd = '-vv install --download %s -i %s %s' % (install_dir, url, cmd)
-    ncmd = "-vv download -d %s -i %s %s" % (install_dir, url, cmd)
-    return _run_pip(ncmd)
+    return _run_pip(f"-vv download -d {install_dir} -i {url} {cmd}")
 
 
 @pytest.fixture
@@ -211,21 +202,20 @@ def pypirc_tmpfile(port, user, password):
     """Create a temporary pypirc file."""
     fd, filepath = tempfile.mkstemp()
     os.close(fd)
-    with open(filepath, "w") as rcfile:
-        rcfile.writelines(
-            "\n".join(
-                (
-                    "[distutils]",
-                    "index-servers: test",
-                    "" "[test]",
-                    "repository: {}".format(_build_url(port)),
-                    "username: {}".format(user),
-                    "password: {}".format(password),
-                )
+    Path(filepath).write_text(
+        "\n".join(
+            (
+                "[distutils]",
+                "index-servers: test",
+                "" "[test]",
+                f"repository: {_build_url(port)}",
+                f"username: {user}",
+                f"password: {password}",
             )
         )
-    with open(filepath) as rcfile:
-        print(rcfile.read())
+    )
+
+    print(Path(filepath).read_text())
     yield filepath
     os.remove(filepath)
 
@@ -322,23 +312,22 @@ def test_setuptoolsUpload_open(empty_packdir, port, project, package, pkg_frmt):
     url = _build_url(port, None, None)
     with pypirc_file(
         dedent(
-            """\
+            f"""\
                 [distutils]
                 index-servers: test
 
                 [test]
-                repository: %s
+                repository: {url}
                 username: ''
                 password: ''
             """
-            % url
         )
     ):
         with new_server(empty_packdir, port):
             with chdir(project.strpath):
-                cmd = "setup.py -vvv %s upload -r %s" % (pkg_frmt, url)
+                cmd = f"setup.py -vvv {pkg_frmt} upload -r {url}"
                 for i in range(5):
-                    print("++Attempt #%s" % i)
+                    print(f"++Attempt #{i}")
                     assert _run_python(cmd) == 0
                 time.sleep(SLEEP_AFTER_SRV)
     assert len(empty_packdir.listdir()) == 1
@@ -351,26 +340,24 @@ def test_setuptoolsUpload_authed(
     url = _build_url(port)
     with pypirc_file(
         dedent(
-            """\
+            f"""\
                 [distutils]
                 index-servers: test
 
                 [test]
-                repository: %s
+                repository: {url}
                 username: a
                 password: a
             """
-            % url
         )
     ):
         with new_server(empty_packdir, port, authed=True):
             with chdir(project.strpath):
                 cmd = (
-                    "setup.py -vvv %s register -r "
-                    "test upload -r test" % pkg_frmt
+                    f"setup.py -vvv {pkg_frmt} register -r test upload -r test"
                 )
                 for i in range(5):
-                    print("++Attempt #%s" % i)
+                    print(f"++Attempt #{i}")
                     assert _run_python(cmd) == 0
             time.sleep(SLEEP_AFTER_SRV)
     assert len(empty_packdir.listdir()) == 1
@@ -384,26 +371,24 @@ def test_setuptools_upload_partial_authed(
     url = _build_url(port)
     with pypirc_file(
         dedent(
-            """\
+            f"""\
                 [distutils]
                 index-servers: test
 
                 [test]
-                repository: %s
+                repository: {url}
                 username: a
                 password: a
             """
-            % url
         )
     ):
         with new_server(empty_packdir, port, authed="partial"):
             with chdir(project.strpath):
                 cmd = (
-                    "setup.py -vvv %s register -r test upload -r test"
-                    % pkg_frmt
+                    f"setup.py -vvv {pkg_frmt} register -r test upload -r test"
                 )
                 for i in range(5):
-                    print("++Attempt #%s" % i)
+                    print(f"++Attempt #{i}")
                     assert _run_python(cmd) == 0
             time.sleep(SLEEP_AFTER_SRV)
     assert len(empty_packdir.listdir()) == 1
