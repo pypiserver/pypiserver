@@ -9,7 +9,7 @@ from watchdog.observers import Observer
 import threading
 
 
-class CacheManager(object):
+class CacheManager:
     """
     A naive cache implementation for listdir and digest_file
 
@@ -87,7 +87,7 @@ class CacheManager(object):
         self.observer.schedule(_EventHandler(self, root), root, recursive=True)
 
 
-class _EventHandler(object):
+class _EventHandler:
     def __init__(self, cache, root):
         self.cache = cache
         self.root = root

@@ -41,7 +41,7 @@ config = None
 app = Bottle()
 
 
-class auth(object):
+class auth:
     """decorator to apply authentication if specified for the decorated method & action"""
 
     def __init__(self, action):
@@ -145,8 +145,8 @@ def remove_pkg():
     name = request.forms.get("name")
     version = request.forms.get("version")
     if not name or not version:
-        msg = "Missing 'name'/'version' fields: name=%s, version=%s"
-        raise HTTPError(400, msg % (name, version))
+        msg = f"Missing 'name'/'version' fields: name={name}, version={version}"
+        raise HTTPError(400, msg)
     pkgs = list(
         filter(
             lambda pkg: pkg.pkgname == name and pkg.version == version,
@@ -154,7 +154,7 @@ def remove_pkg():
         )
     )
     if len(pkgs) == 0:
-        raise HTTPError(404, "%s (%s) not found" % (name, version))
+        raise HTTPError(404, f"{name} ({version}) not found")
     for pkg in pkgs:
         os.unlink(pkg.fn)
 
@@ -170,11 +170,11 @@ def file_upload():
         raise HTTPError(400, "Missing 'content' file-field!")
     if (
         ufiles.sig
-        and "%s.asc" % ufiles.pkg.raw_filename != ufiles.sig.raw_filename
+        and f"{ufiles.pkg.raw_filename}.asc" != ufiles.sig.raw_filename
     ):
         raise HTTPError(
             400,
-            "Unrelated signature %r for package %r!" % (ufiles.sig, ufiles.pkg),
+            f"Unrelated signature {ufiles.sig!r} for package {ufiles.pkg!r}!",
         )
 
     for uf in ufiles:
@@ -184,19 +184,17 @@ def file_upload():
             not is_valid_pkg_filename(uf.raw_filename)
             or core.guess_pkgname_and_version(uf.raw_filename) is None
         ):
-            raise HTTPError(400, "Bad filename: %s" % uf.raw_filename)
+            raise HTTPError(400, f"Bad filename: {uf.raw_filename}")
 
         if not config.overwrite and core.exists(packages.root, uf.raw_filename):
-            log.warn(
-                "Cannot upload %r since it already exists! \n"
-                "  You may start server with `--overwrite` option. ",
-                uf.raw_filename,
+            log.warning(
+                f"Cannot upload {uf.raw_filename!r} since it already exists! \n"
+                "  You may start server with `--overwrite` option. "
             )
             raise HTTPError(
                 409,
-                "Package %r already exists!\n"
-                "  You may start server with `--overwrite` option."
-                % uf.raw_filename,
+                f"Package {uf.raw_filename!r} already exists!\n"
+                "  You may start server with `--overwrite` option.",
             )
 
         core.store(packages.root, uf.raw_filename, uf.save)
@@ -204,7 +202,7 @@ def file_upload():
             user = request.auth[0]
         else:
             user = "anon"
-        log.info("User %r stored %r.", user, uf.raw_filename)
+        log.info(f"User {user!r} stored {uf.raw_filename!r}.")
 
 
 @app.post("/")
@@ -216,7 +214,7 @@ def update():
         raise HTTPError(400, "Missing ':action' field!")
 
     if action in ("verify", "submit"):
-        log.warning("Ignored ':action': %s", action)
+        log.warning(f"Ignored ':action': {action}")
     elif action == "doc_upload":
         doc_upload()
     elif action == "remove_pkg":
@@ -224,7 +222,7 @@ def update():
     elif action == "file_upload":
         file_upload()
     else:
-        raise HTTPError(400, "Unsupported ':action' field: %s" % action)
+        raise HTTPError(400, f"Unsupported ':action' field: {action}")
 
     return ""
 
@@ -247,7 +245,7 @@ def handle_rpc():
         .childNodes[0]
         .wholeText.strip()
     )
-    log.info("Processing RPC2 request for '%s'", methodname)
+    log.info(f"Processing RPC2 request for '{methodname}'")
     if methodname == "search":
         value = (
             parser.getElementsByTagName("string")[0]
@@ -308,18 +306,14 @@ def simple(prefix=""):
     )
     if not files:
         if config.redirect_to_fallback:
-            return redirect(
-                "%s/%s/" % (config.fallback_url.rstrip("/"), prefix)
-            )
-        return HTTPError(404, "Not Found (%s does not exist)\n\n" % normalized)
+            return redirect(f"{config.fallback_url.rstrip('/')}/{prefix}/")
+        return HTTPError(404, f"Not Found ({normalized} does not exist)\n\n")
 
     fp = request.custom_fullpath
     links = [
         (
             os.path.basename(f.relfn),
-            urljoin(
-                fp, "../../packages/%s" % f.fname_and_hash(config.hash_algo)
-            ),
+            urljoin(fp, f"../../packages/{f.fname_and_hash(config.hash_algo)}"),
         )
         for f in files
     ]
@@ -381,11 +375,11 @@ def server_static(filename):
             )
             if config.cache_control:
                 response.set_header(
-                    "Cache-Control", "public, max-age=%s" % config.cache_control
+                    "Cache-Control", f"public, max-age={config.cache_control}"
                 )
             return response
 
-    return HTTPError(404, "Not Found (%s does not exist)\n\n" % filename)
+    return HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
 
 
 @app.route("/:prefix")

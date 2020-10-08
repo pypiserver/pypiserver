@@ -100,7 +100,7 @@ def test_guess_pkgname_and_version(filename, pkgname, version):
 @pytest.mark.parametrize(("filename", "pkgname", "version"), files)
 def test_guess_pkgname_and_version_asc(filename, pkgname, version):
     exp = (pkgname, version)
-    filename = "%s.asc" % filename
+    filename = f"{filename}.asc"
     assert core.guess_pkgname_and_version(filename) == exp
 
 
