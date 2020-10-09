@@ -302,7 +302,7 @@ def get_parser() -> argparse.ArgumentParser:
         help=(
             "Use METHOD to run th eserver. Valid values include paste, "
             "cherrypy, twisted, gunicorn, gevent, wsgiref, and auto. The "
-            "default is to use \"auto\", which chooses one of paste, cherrypy, "
+            'default is to use "auto", which chooses one of paste, cherrypy, '
             "twisted, or wsgiref."
         ),
     )
@@ -317,8 +317,8 @@ def get_parser() -> argparse.ArgumentParser:
         default=DEFAULTS.HASH_ALGO,
         choices=hashlib.algorithms_available,
         help=(
-           "Any `hashlib` available algorithm to use for generating fragments "
-           "on package links. Can be disabled with one of (0, no, off, false)."
+            "Any `hashlib` available algorithm to use for generating fragments "
+            "on package links. Can be disabled with one of (0, no, off, false)."
         ),
     )
     run_parser.add_argument(
@@ -554,7 +554,7 @@ class Config:
                     "  pypi-server run [args]\n\n"
                     "instead of\n\n"
                     "  pypi-server [args]\n",
-                    file=sys.stderr
+                    file=sys.stderr,
                 )
             except SystemExit:
                 cap.seek(0)

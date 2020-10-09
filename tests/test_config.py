@@ -604,4 +604,3 @@ def test_argv_conf():
         assert conf.disable_fallback is True
     finally:
         sys.argv = orig_args
-
