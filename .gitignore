@@ -28,7 +28,7 @@ __pycache__/
 /.tox/
 /*.egg-info/
 /.standalone
-/.coverage
+/.coverage*
 /htmlcov/
 /.installed.cfg
 /develop-eggs/
