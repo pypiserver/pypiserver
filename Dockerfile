@@ -31,7 +31,12 @@ RUN apk add --no-cache --virtual .build-deps \
 
 FROM base AS builder_dependencies
 
-COPY . /code
+COPY pypiserver /code/pypiserver
+COPY requirements /code/requirements
+COPY docker-requirements.txt /code
+COPY setup.cfg /code
+COPY setup.py /code
+COPY README.rst /code
 
 RUN apk add --no-cache --virtual .build-deps \
         build-base \
@@ -39,11 +44,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && mkdir /install \
     && python -m pip install --no-warn-script-location \
                 --prefix=/install \
-                /code --requirement /code/docker-requirements.txt \
-    && apk del --no-cache \
-        .build-deps \
-    && rm -rf /var/cache/apk/* \
-    && rm -rf /tmp/*
+                /code --requirement /code/docker-requirements.txt
 
 FROM base
 # Copy the libraries installed via pip
@@ -51,8 +52,14 @@ COPY --from=builder_dependencies /install /usr/local
 COPY --from=builder_gosu /usr/local/bin/gosu /usr/local/bin/gosu
 COPY entrypoint.sh /entrypoint.sh
 
-RUN addgroup -S -g 9898 pypiserver \
-    && adduser -S -u 9898 -G pypiserver pypiserver \
+# Use a consistent user and group ID so that linux users
+# can create a corresponding system user and set permissions
+# if desired.
+RUN apk add bash \
+    && rm -rf /var/cache/apk/* \
+    && rm -rf /tmp/* \
+    && addgroup -S -g 9898 pypiserver \
+    && adduser -S -u 9898 -G pypiserver pypiserver --home /data\
     && mkdir -p /data/packages \
     && chmod +x /entrypoint.sh
 
