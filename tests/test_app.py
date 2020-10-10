@@ -4,19 +4,9 @@
 import logging
 import os
 
+from html import unescape
+import xmlrpc.client as xmlrpclib
 
-try:  # python 3
-    from html.parser import HTMLParser
-    from html import unescape
-except ImportError:
-    from HTMLParser import HTMLParser
-
-    unescape = HTMLParser().unescape
-
-try:
-    import xmlrpc.client as xmlrpclib
-except ImportError:
-    import xmlrpclib  # legacy Python
 
 # Third party imports
 import pytest
@@ -24,7 +14,7 @@ import webtest
 
 
 # Local Imports
-from pypiserver import __main__, bottle
+from pypiserver import __main__, bottle, backend
 
 import tests.test_core as test_core
 

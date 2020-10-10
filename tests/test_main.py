@@ -1,7 +1,7 @@
 #! /usr/bin/env py.test
 
 import sys, os, pytest, logging
-from pypiserver import __main__
+from pypiserver import __main__, core
 
 try:
     from unittest import mock
@@ -66,13 +66,13 @@ def test_server(main):
 
 def test_root(main):
     main(["--root", "."])
-    assert main.app.module.packages.root == os.path.abspath(".")
+    assert core.packages.root == os.path.abspath(".")
     assert main.pkgdir == os.path.abspath(".")
 
 
 def test_root_r(main):
     main(["-r", "."])
-    assert main.app.module.packages.root == os.path.abspath(".")
+    assert core.packages.root == os.path.abspath(".")
     assert main.pkgdir == os.path.abspath(".")
 
 

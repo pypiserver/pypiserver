@@ -7,12 +7,13 @@ import os
 import sys
 from distutils.version import LooseVersion
 from subprocess import call
+from xmlrpc.client import Server
 
 import pip
 
-from . import core
-
-from xmlrpc.client import Server
+from .backend import PkgFile, listdir
+from .core import log
+from .pkg_utils import normalize_pkgname, parse_version
 
 
 def make_pypi_client(url):
@@ -41,7 +42,7 @@ def filter_latest_pkgs(pkgs):
     pkgname2latest = {}
 
     for x in pkgs:
-        pkgname = core.normalize_pkgname(x.pkgname)
+        pkgname = normalize_pkgname(x.pkgname)
 
         if pkgname not in pkgname2latest:
             pkgname2latest[pkgname] = x
@@ -53,9 +54,9 @@ def filter_latest_pkgs(pkgs):
 
 def build_releases(pkg, versions):
     for x in versions:
-        parsed_version = core.parse_version(x)
+        parsed_version = parse_version(x)
         if parsed_version > pkg.parsed_version:
-            yield core.PkgFile(pkgname=pkg.pkgname, version=x, replaces=pkg)
+            yield PkgFile(pkgname=pkg.pkgname, version=x, replaces=pkg)
 
 
 def find_updates(pkgset, stable_only=True):
@@ -171,11 +172,11 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
 def update_all_packages(
     roots, destdir=None, dry_run=False, stable_only=True, blacklist_file=None
 ):
-    all_packages = itertools.chain(*[core.listdir(r) for r in roots])
+    all_packages = itertools.chain(*[listdir(r) for r in roots])
 
     skip_packages = set()
     if blacklist_file:
-        skip_packages = set(core.read_lines(blacklist_file))
+        skip_packages = set(read_lines(blacklist_file))
         print(
             'Skipping update of blacklisted packages (listed in "{}"): {}'.format(
                 blacklist_file, ", ".join(sorted(skip_packages))
@@ -187,3 +188,26 @@ def update_all_packages(
     )
 
     update(packages, destdir, dry_run, stable_only)
+
+
+def read_lines(filename):
+    """
+    Read the contents of `filename`, stripping empty lines and '#'-comments.
+    Return a list of strings, containing the lines of the file.
+    """
+
+    try:
+        with open(filename) as f:
+            lines = [
+                line
+                for line in (ln.strip() for ln in f.readlines())
+                if line and not line.startswith("#")
+            ]
+    except Exception:
+        log.error(
+            f'Failed to read package blacklist file "{filename}". '
+            "Aborting server startup, please fix this."
+        )
+        raise
+
+    return lines

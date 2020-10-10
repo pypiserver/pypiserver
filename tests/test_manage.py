@@ -1,22 +1,17 @@
 #!/usr/bin/env py.test
 """Tests for manage.py."""
 
-from __future__ import absolute_import, print_function, unicode_literals
 
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
+import pypiserver.manage
+from unittest.mock import Mock
+
 
 import py
 import pytest
 
 from pypiserver import manage
-from pypiserver.core import (
-    PkgFile,
-    guess_pkgname_and_version,
-    parse_version,
-)
+from pypiserver.pkg_utils import parse_version, guess_pkgname_and_version
+from pypiserver.backend import PkgFile
 from pypiserver.manage import (
     PipCmd,
     build_releases,
@@ -220,8 +215,8 @@ def test_update_all_packages(monkeypatch):
     def core_listdir_mock(directory):
         return roots_mock.get(directory, [])
 
-    monkeypatch.setattr(manage.core, "listdir", core_listdir_mock)
-    monkeypatch.setattr(manage.core, "read_lines", Mock(return_value=[]))
+    monkeypatch.setattr(manage, "listdir", core_listdir_mock)
+    monkeypatch.setattr(manage, "read_lines", Mock(return_value=[]))
     monkeypatch.setattr(manage, "update", Mock(return_value=None))
 
     destdir = None
@@ -237,7 +232,7 @@ def test_update_all_packages(monkeypatch):
         blacklist_file=blacklist_file,
     )
 
-    manage.core.read_lines.assert_not_called()  # pylint: disable=no-member
+    pypiserver.manage.read_lines.assert_not_called()  # pylint: disable=no-member
     manage.update.assert_called_once_with(  # pylint: disable=no-member
         frozenset([public_pkg_1, public_pkg_2, private_pkg_1, private_pkg_2]),
         destdir,
@@ -264,9 +259,9 @@ def test_update_all_packages_with_blacklist(monkeypatch):
     def core_listdir_mock(directory):
         return roots_mock.get(directory, [])
 
-    monkeypatch.setattr(manage.core, "listdir", core_listdir_mock)
+    monkeypatch.setattr(manage, "listdir", core_listdir_mock)
     monkeypatch.setattr(
-        manage.core,
+        manage,
         "read_lines",
         Mock(return_value=["my_private_pkg", "my_other_private_pkg"]),
     )
@@ -288,6 +283,6 @@ def test_update_all_packages_with_blacklist(monkeypatch):
     manage.update.assert_called_once_with(  # pylint: disable=no-member
         frozenset([public_pkg_1, public_pkg_2]), destdir, dry_run, stable_only
     )
-    manage.core.read_lines.assert_called_once_with(
+    pypiserver.manage.read_lines.assert_called_once_with(
         blacklist_file
     )  # pylint: disable=no-member

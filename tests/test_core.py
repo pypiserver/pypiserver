@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from pypiserver import __main__, core
+from pypiserver import __main__, core, backend, pkg_utils, manage
 from tests.doubles import Namespace
 
 
@@ -93,20 +93,20 @@ def _capitalize_ext(fpath):
 @pytest.mark.parametrize(("filename", "pkgname", "version"), files)
 def test_guess_pkgname_and_version(filename, pkgname, version):
     exp = (pkgname, version)
-    assert core.guess_pkgname_and_version(filename) == exp
-    assert core.guess_pkgname_and_version(_capitalize_ext(filename)) == exp
+    assert pkg_utils.guess_pkgname_and_version(filename) == exp
+    assert pkg_utils.guess_pkgname_and_version(_capitalize_ext(filename)) == exp
 
 
 @pytest.mark.parametrize(("filename", "pkgname", "version"), files)
 def test_guess_pkgname_and_version_asc(filename, pkgname, version):
     exp = (pkgname, version)
     filename = f"{filename}.asc"
-    assert core.guess_pkgname_and_version(filename) == exp
+    assert pkg_utils.guess_pkgname_and_version(filename) == exp
 
 
 def test_listdir_bad_name(tmpdir):
     tmpdir.join("foo.whl").ensure()
-    res = list(core.listdir(tmpdir.strpath))
+    res = list(backend.listdir(tmpdir.strpath))
     assert res == []
 
 
@@ -123,7 +123,7 @@ def test_read_lines(tmpdir):
     f = tmpdir.join(filename).ensure()
     f.write(file_contents)
 
-    assert core.read_lines(f.strpath) == [
+    assert manage.read_lines(f.strpath) == [
         "my_private_pkg",
         "my_other_private_pkg",
     ]
@@ -144,7 +144,7 @@ hashes = (
 def test_hashfile(tmpdir, algo, digest):
     f = tmpdir.join("empty")
     f.ensure()
-    assert core.digest_file(f.strpath, algo) == digest
+    assert backend.digest_file(f.strpath, algo) == digest
 
 
 @pytest.mark.parametrize("hash_algo", ("md5", "sha256", "sha512"))
@@ -152,7 +152,7 @@ def test_fname_and_hash(tmpdir, hash_algo):
     """Ensure we are returning the expected hashes for files."""
     f = tmpdir.join("tmpfile")
     f.ensure()
-    pkgfile = core.PkgFile("tmp", "1.0.0", f.strpath, f.dirname, f.basename)
+    pkgfile = backend.PkgFile("tmp", "1.0.0", f.strpath, f.dirname, f.basename)
     assert pkgfile.fname_and_hash(hash_algo) == "{}#{}={}".format(
         f.basename, hash_algo, str(f.computehash(hashtype=hash_algo))
     )
@@ -168,6 +168,6 @@ def test_redirect_prefix_encodes_newlines():
 
 def test_normalize_pkgname_for_url_encodes_newlines():
     """Ensure newlines are url encoded in package names for urls."""
-    assert "\n" not in core.normalize_pkgname_for_url(
+    assert "\n" not in pkg_utils.normalize_pkgname_for_url(
         "/\nSet-Cookie:malicious=1;"
     )

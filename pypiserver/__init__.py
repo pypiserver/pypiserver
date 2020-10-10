@@ -131,9 +131,8 @@ def app(**kwds):
     sys.modules.pop("pypiserver._app", None)
 
     kwds = default_config(**kwds)
-    config, packages = core.configure(**kwds)
+    config = core.configure(**kwds)
     _app.config = config
-    _app.packages = packages
     _app.app.module = _app  # HACK for testing.
 
     return _app.app

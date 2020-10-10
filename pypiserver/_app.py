@@ -1,10 +1,13 @@
-from collections import namedtuple
 import logging
 import mimetypes
 import os
 import re
-import zipfile
 import xml.dom.minidom
+import xmlrpc.client as xmlrpclib
+import zipfile
+from collections import namedtuple
+from io import BytesIO
+from urllib.parse import urljoin, urlparse
 
 from . import __version__
 from . import core
@@ -17,25 +20,9 @@ from .bottle import (
     Bottle,
     template,
 )
-
-try:
-    import xmlrpc.client as xmlrpclib  # py3
-except ImportError:
-    import xmlrpclib  # py2
-
-try:
-    from io import BytesIO
-except ImportError:
-    from StringIO import StringIO as BytesIO
-
-try:  # PY3
-    from urllib.parse import urljoin, urlparse
-except ImportError:  # PY2
-    from urlparse import urljoin, urlparse
-
+from .pkg_utils import guess_pkgname_and_version, normalize_pkgname_for_url
 
 log = logging.getLogger(__name__)
-packages = None
 config = None
 
 app = Bottle()
@@ -104,7 +91,7 @@ def root():
     fp = request.custom_fullpath
 
     try:
-        numpkgs = len(list(packages()))
+        numpkgs = len(list(core.packages()))
     except:
         numpkgs = 0
 
@@ -150,7 +137,7 @@ def remove_pkg():
     pkgs = list(
         filter(
             lambda pkg: pkg.pkgname == name and pkg.version == version,
-            core.find_packages(packages()),
+            core.find_packages(),
         )
     )
     if len(pkgs) == 0:
@@ -182,11 +169,11 @@ def file_upload():
             continue
         if (
             not is_valid_pkg_filename(uf.raw_filename)
-            or core.guess_pkgname_and_version(uf.raw_filename) is None
+            or guess_pkgname_and_version(uf.raw_filename) is None
         ):
             raise HTTPError(400, f"Bad filename: {uf.raw_filename}")
 
-        if not config.overwrite and core.exists(packages.root, uf.raw_filename):
+        if not config.overwrite and core.exists(uf.raw_filename):
             log.warning(
                 f"Cannot upload {uf.raw_filename!r} since it already exists! \n"
                 "  You may start server with `--overwrite` option. "
@@ -197,7 +184,7 @@ def file_upload():
                 "  You may start server with `--overwrite` option.",
             )
 
-        core.store(packages.root, uf.raw_filename, uf.save)
+        core.store(uf.raw_filename, uf.save)
         if request.auth:
             user = request.auth[0]
         else:
@@ -254,7 +241,7 @@ def handle_rpc():
         )
         response = []
         ordering = 0
-        for p in packages():
+        for p in core.packages():
             if p.pkgname.count(value) > 0:
                 # We do not presently have any description/summary, returning
                 # version instead
@@ -275,7 +262,7 @@ def handle_rpc():
 @app.route("/simple/")
 @auth("list")
 def simpleindex():
-    links = sorted(core.get_prefixes(packages()))
+    links = sorted(core.get_prefixes())
     tmpl = """\
     <html>
         <head>
@@ -296,12 +283,12 @@ def simpleindex():
 @auth("list")
 def simple(prefix=""):
     # PEP 503: require normalized prefix
-    normalized = core.normalize_pkgname_for_url(prefix)
+    normalized = normalize_pkgname_for_url(prefix)
     if prefix != normalized:
         return redirect("/simple/{0}/".format(normalized), 301)
 
     files = sorted(
-        core.find_packages(packages(), prefix=prefix),
+        core.find_packages(prefix=prefix),
         key=lambda x: (x.parsed_version, x.relfn),
     )
     if not files:
@@ -338,7 +325,7 @@ def simple(prefix=""):
 def list_packages():
     fp = request.custom_fullpath
     files = sorted(
-        core.find_packages(packages()),
+        core.find_packages(),
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
     )
     links = [
@@ -364,7 +351,7 @@ def list_packages():
 @app.route("/packages/:filename#.*#")
 @auth("download")
 def server_static(filename):
-    entries = core.find_packages(packages())
+    entries = core.find_packages()
     for x in entries:
         f = x.relfn_unix
         if f == filename:
