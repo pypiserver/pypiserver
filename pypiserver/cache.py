@@ -4,9 +4,12 @@
 #
 
 from os.path import dirname
+from typing import Iterable
 
 from watchdog.observers import Observer
 import threading
+
+from pypiserver.backend import PkgFile
 
 
 class CacheManager:
@@ -46,7 +49,7 @@ class CacheManager:
         self.digest_lock = threading.Lock()
         self.listdir_lock = threading.Lock()
 
-    def listdir(self, root, impl_fn):
+    def listdir(self, root, impl_fn) -> Iterable[PkgFile]:
         with self.listdir_lock:
             try:
                 return self.listdir_cache[root]

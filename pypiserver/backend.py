@@ -1,7 +1,8 @@
 import hashlib
+import itertools
 import os
-from pathlib import Path
-from typing import List, Union
+import typing as t
+from pathlib import Path, PurePath
 
 from .pkg_helpers import (
     normalize_pkgname,
@@ -10,27 +11,7 @@ from .pkg_helpers import (
     guess_pkgname_and_version,
 )
 
-
-class Backend:
-    def find_packages(self):
-        raise NotImplementedError
-
-    def find_package(self, name, version):
-        raise NotImplementedError
-
-    def add_package(self, pkg):
-        raise NotImplementedError
-
-    def remove_package(self):
-        raise NotImplementedError
-
-    def digest_file(self):
-        raise NotImplementedError
-
-
-class SimpleFileBackend(Backend):
-    def __init__(self, roots: List[Union[str, Path]] = None):
-        self.roots = roots
+PathLike = t.Union[str, bytes, Path, PurePath]
 
 
 class PkgFile:
@@ -84,7 +65,97 @@ class PkgFile:
         return self._fname_and_hash
 
 
-def _listdir(root):
+class Backend:
+    def get_all_packages(self) -> t.Iterable[PkgFile]:
+        """Implement this method to return an Iterable of all packages (as PkgFile objects) that
+        are available in the Backend.
+        """
+        raise NotImplementedError
+
+    def add_package(self, filename: str, fh: t.BinaryIO) -> PkgFile:
+        """Add a package to the Backend. `filename` is the package's filename (without any
+        directory parts). It is just a name, there is no file by that name (yet). `fh` is an open
+        file object that can be used to read the file's content. To convert the package into an
+        actual file on disk, run `as_file(filename, fh)`. This method should return a PkgFile
+        object representing the newly added package
+        """
+        raise NotImplementedError
+
+    def remove_package(self, pkg: PkgFile):
+        """Remove a package from the Backend"""
+        raise NotImplementedError
+
+    def digest(self, pkg: PkgFile, hash_algo):
+        """Calculate a package's digest"""
+        raise NotImplementedError
+
+    def exists(self, filename) -> bool:
+        """Does a package by the given name exist?"""
+        raise NotImplementedError
+
+    def get_prefixes(self) -> t.Iterable[str]:
+        """Return an iterable of all (unique) PkgFile.pkgname_norm available in the store. When
+        implementing a Backend class, either use this method as is, or override it with a more
+        performant version.
+        """
+        normalized_pkgnames = set()
+        for x in self.get_all_packages():
+            if x.pkgname:
+                normalized_pkgnames.add(x.pkgname_norm)
+        return normalized_pkgnames
+
+    def find_prefix(self, prefix) -> t.Iterable[PkgFile]:
+        """Find all packages by a given prefix. A prefix is a package's PkgFile.pkgname_norm. When
+        implementing a Backend class, either use this method as is, or override it with a more
+        performant version."""
+        prefix = normalize_pkgname(prefix)
+        for x in self.get_all_packages():
+            if prefix and x.pkgname_norm != prefix:
+                continue
+            yield x
+
+    def find_version(self, name, version) -> t.Iterable[PkgFile]:
+        """Return all packages that match PkgFile.pkgname == name and PkgFile.version == version`
+        When implementing a Backend class, either use this method as is, or override it with a more
+        performant version.
+        """
+        return filter(
+            lambda pkg: pkg.pkgname == name and pkg.version == version,
+            self.get_all_packages(),
+        )
+
+
+def as_file(fh: t.BinaryIO, destination: PathLike):
+    # taken from bottle.FileUpload
+    chunk_size = 2 ** 16  # 64 KB
+    read, offset = fh.read, fh.tell()
+    with open(destination, "wb") as dest:
+        while True:
+            buf = read(chunk_size)
+            if not buf:
+                break
+            dest.write(buf)
+    fh.seek(offset)
+
+
+class SimpleFileBackend(Backend):
+    def __init__(self, roots: t.List[PathLike] = None):
+        self.roots = [Path(root).resolve() for root in roots]
+
+    def add_package(self, filename: str, fh: t.BinaryIO):
+        as_file(fh, self.roots[0].joinpath(filename))
+
+    def remove_package(self, pkg: PkgFile):
+        os.remove(pkg.fn)
+
+    def exists(self, filename):
+        return any(root.joinpath(filename).exists() for root in self.roots)
+
+    def get_all_packages(self):
+        return itertools.chain(*[listdir(r) for r in self.roots])
+
+
+def _listdir(root: PathLike) -> t.Iterable[PkgFile]:
     root = os.path.abspath(root)
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [x for x in dirnames if is_allowed_path(x)]
@@ -94,7 +165,7 @@ def _listdir(root):
                 continue
             res = guess_pkgname_and_version(x)
             if not res:
-                # #Seems the current file isn't a proper package
+                # Seems the current file isn't a proper package
                 continue
             pkgname, version = res
             if pkgname:
@@ -127,18 +198,15 @@ def _digest_file(fpath, hash_algo):
 try:
     from .cache import cache_manager
 
-    def listdir(root):
+    def listdir(root: PathLike) -> t.Iterable[PkgFile]:
         # root must be absolute path
         return cache_manager.listdir(root, _listdir)
 
-    def digest_file(fpath, hash_algo):
+    def digest_file(fpath: PathLike, hash_algo):
         # fpath must be absolute path
         return cache_manager.digest_file(fpath, hash_algo, _digest_file)
 
 
 except ImportError:
-    pass
-
-
-listdir = _listdir
-digest_file = _digest_file
+    listdir = _listdir
+    digest_file = _digest_file

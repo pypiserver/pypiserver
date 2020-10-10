@@ -1,6 +1,8 @@
 #! /usr/bin/env py.test
 
 import sys, os, pytest, logging
+from pathlib import Path
+
 from pypiserver import __main__, core
 
 try:
@@ -66,13 +68,13 @@ def test_server(main):
 
 def test_root(main):
     main(["--root", "."])
-    assert core.packages.root == os.path.abspath(".")
+    assert core.backend.roots[0] == Path(".").resolve()
     assert main.pkgdir == os.path.abspath(".")
 
 
 def test_root_r(main):
     main(["-r", "."])
-    assert core.packages.root == os.path.abspath(".")
+    assert core.backend.roots[0] == Path(".").resolve()
     assert main.pkgdir == os.path.abspath(".")
 
 

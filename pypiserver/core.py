@@ -4,30 +4,30 @@
 import functools
 import hashlib
 import io
-import itertools
 import logging
 import mimetypes
 import os
 import sys
+import typing as t
 from typing import Optional
 from urllib.parse import quote
 
 import pkg_resources
 
 from pypiserver import Configuration
-from .backend import listdir
-from .pkg_helpers import normalize_pkgname
+from .backend import Backend, SimpleFileBackend, PkgFile
 
 log = logging.getLogger(__name__)
 
-packages: Optional[callable] = None
+backend: Optional[Backend] = None
 
 
 def configure(**kwds):
     """
-    :return: a 2-tuple (Configure, package-list)
+    :return: Configure
     """
-    global packages
+    global backend
+
     c = Configuration(**kwds)
     log.info(f"+++Pypiserver invoked with: {c}")
 
@@ -42,8 +42,7 @@ def configure(**kwds):
             err = sys.exc_info()[1]
             sys.exit(f"Error: while trying to list root({r}): {err}")
 
-    packages = lambda: itertools.chain(*[listdir(r) for r in roots])
-    packages.root = roots[0]
+    backend = SimpleFileBackend(roots)
 
     if not c.authenticated:
         c.authenticated = []
@@ -102,39 +101,6 @@ mimetypes.add_type("application/octet-stream", ".whl")
 mimetypes.add_type("text/plain", ".asc")
 
 
-def find_packages(pkgs=None, prefix=""):
-    if pkgs is None:
-        pkgs = packages()
-    prefix = normalize_pkgname(prefix)
-    for x in pkgs:
-        if prefix and x.pkgname_norm != prefix:
-            continue
-        yield x
-
-
-def get_prefixes():
-    pkgs = packages()
-    normalized_pkgnames = set()
-    for x in pkgs:
-        if x.pkgname:
-            normalized_pkgnames.add(x.pkgname_norm)
-    return normalized_pkgnames
-
-
-def exists(filename):
-    root = packages.root
-    assert "/" not in filename
-    dest_fn = os.path.join(root, filename)
-    return os.path.exists(dest_fn)
-
-
-def store(filename, save_method):
-    root = packages.root
-    assert "/" not in filename
-    dest_fn = os.path.join(root, filename)
-    save_method(dest_fn, overwrite=True)  # Overwite check earlier.
-
-
 def get_bad_url_redirect_path(request, prefix):
     """Get the path for a bad root url."""
     p = request.custom_fullpath
@@ -146,4 +112,31 @@ def get_bad_url_redirect_path(request, prefix):
     return p
 
 
+def get_all_packages():
+    return backend.get_all_packages()
 
+
+def find_prefix(prefix):
+    return backend.find_prefix(prefix)
+
+
+def find_version(name: str, version: str):
+    return backend.find_version(name, version)
+
+
+def get_prefixes():
+    return backend.get_prefixes()
+
+
+def exists(filename: str):
+    assert "/" not in filename
+    return backend.exists(filename)
+
+
+def add_package(filename, fh: t.BinaryIO):
+    assert "/" not in filename
+    return backend.add_package(filename, fh)
+
+
+def remove_package(pkg: PkgFile):
+    return backend.remove_package(pkg)

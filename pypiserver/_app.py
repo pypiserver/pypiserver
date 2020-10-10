@@ -91,7 +91,7 @@ def root():
     fp = request.custom_fullpath
 
     try:
-        numpkgs = len(list(core.packages()))
+        numpkgs = len(list(core.get_all_packages()))
     except:
         numpkgs = 0
 
@@ -134,16 +134,13 @@ def remove_pkg():
     if not name or not version:
         msg = f"Missing 'name'/'version' fields: name={name}, version={version}"
         raise HTTPError(400, msg)
-    pkgs = list(
-        filter(
-            lambda pkg: pkg.pkgname == name and pkg.version == version,
-            core.find_packages(),
-        )
-    )
-    if len(pkgs) == 0:
+
+    pkgs = list(core.find_version(name, version))
+    if not pkgs:
         raise HTTPError(404, f"{name} ({version}) not found")
+
     for pkg in pkgs:
-        os.unlink(pkg.fn)
+        core.remove_package(pkg)
 
 
 Upload = namedtuple("Upload", "pkg sig")
@@ -184,7 +181,7 @@ def file_upload():
                 "  You may start server with `--overwrite` option.",
             )
 
-        core.store(uf.raw_filename, uf.save)
+        core.add_package(uf.raw_filename, uf.file)
         if request.auth:
             user = request.auth[0]
         else:
@@ -241,7 +238,7 @@ def handle_rpc():
         )
         response = []
         ordering = 0
-        for p in core.packages():
+        for p in core.get_all_packages():
             if p.pkgname.count(value) > 0:
                 # We do not presently have any description/summary, returning
                 # version instead
@@ -288,7 +285,7 @@ def simple(prefix=""):
         return redirect("/simple/{0}/".format(normalized), 301)
 
     files = sorted(
-        core.find_packages(prefix=prefix),
+        core.find_prefix(prefix),
         key=lambda x: (x.parsed_version, x.relfn),
     )
     if not files:
@@ -325,7 +322,7 @@ def simple(prefix=""):
 def list_packages():
     fp = request.custom_fullpath
     files = sorted(
-        core.find_packages(),
+        core.get_all_packages(),
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
     )
     links = [
@@ -351,7 +348,7 @@ def list_packages():
 @app.route("/packages/:filename#.*#")
 @auth("download")
 def server_static(filename):
-    entries = core.find_packages()
+    entries = core.get_all_packages()
     for x in entries:
         f = x.relfn_unix
         if f == filename:
