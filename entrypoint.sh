@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -8,12 +8,4 @@ set -euo pipefail
 # write access to that directory
 chown -R pypiserver:pypiserver /data/packages
 
-if [ "$@" = "" ]; then
-    # No arguments were provided, use the default.
-    echo "Set default option '/data/packages'"
-    set -- " /data/packages"
-else
-    # Use whatever was provided
-    echo "Using custom CMD: $@"
-fi
 exec gosu pypiserver pypi-server -p "$PORT" $@
