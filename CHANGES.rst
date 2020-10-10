@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.4.2 (2020-10-10)
+------------------
+
+- FIX: The entrypoint for the Dockerfile was failing when called with no
+  arguments (#344, thanks @elfjes!)
+
 1.4.1 (2020-10-05)
 ------------------
 
