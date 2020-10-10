@@ -6,7 +6,8 @@ import os
 
 import pytest
 
-from pypiserver import __main__, core, backend, pkg_utils, manage
+from pypiserver import __main__, core, backend, manage
+from pypiserver.pkg_helpers import guess_pkgname_and_version, normalize_pkgname_for_url
 from tests.doubles import Namespace
 
 
@@ -93,15 +94,15 @@ def _capitalize_ext(fpath):
 @pytest.mark.parametrize(("filename", "pkgname", "version"), files)
 def test_guess_pkgname_and_version(filename, pkgname, version):
     exp = (pkgname, version)
-    assert pkg_utils.guess_pkgname_and_version(filename) == exp
-    assert pkg_utils.guess_pkgname_and_version(_capitalize_ext(filename)) == exp
+    assert guess_pkgname_and_version(filename) == exp
+    assert guess_pkgname_and_version(_capitalize_ext(filename)) == exp
 
 
 @pytest.mark.parametrize(("filename", "pkgname", "version"), files)
 def test_guess_pkgname_and_version_asc(filename, pkgname, version):
     exp = (pkgname, version)
     filename = f"{filename}.asc"
-    assert pkg_utils.guess_pkgname_and_version(filename) == exp
+    assert guess_pkgname_and_version(filename) == exp
 
 
 def test_listdir_bad_name(tmpdir):
@@ -168,6 +169,6 @@ def test_redirect_prefix_encodes_newlines():
 
 def test_normalize_pkgname_for_url_encodes_newlines():
     """Ensure newlines are url encoded in package names for urls."""
-    assert "\n" not in pkg_utils.normalize_pkgname_for_url(
+    assert "\n" not in normalize_pkgname_for_url(
         "/\nSet-Cookie:malicious=1;"
     )

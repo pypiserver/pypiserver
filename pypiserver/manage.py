@@ -13,7 +13,7 @@ import pip
 
 from .backend import PkgFile, listdir
 from .core import log
-from .pkg_utils import normalize_pkgname, parse_version
+from .pkg_helpers import normalize_pkgname, parse_version
 
 
 def make_pypi_client(url):

@@ -20,7 +20,7 @@ from .bottle import (
     Bottle,
     template,
 )
-from .pkg_utils import guess_pkgname_and_version, normalize_pkgname_for_url
+from .pkg_helpers import guess_pkgname_and_version, normalize_pkgname_for_url
 
 log = logging.getLogger(__name__)
 config = None

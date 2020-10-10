@@ -16,7 +16,7 @@ import pkg_resources
 
 from pypiserver import Configuration
 from .backend import listdir
-from .pkg_utils import normalize_pkgname
+from .pkg_helpers import normalize_pkgname
 
 log = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import List, Union
 
-from .pkg_utils import (
+from .pkg_helpers import (
     normalize_pkgname,
     parse_version,
     is_allowed_path,

@@ -10,7 +10,7 @@ import py
 import pytest
 
 from pypiserver import manage
-from pypiserver.pkg_utils import parse_version, guess_pkgname_and_version
+from pypiserver.pkg_helpers import parse_version, guess_pkgname_and_version
 from pypiserver.backend import PkgFile
 from pypiserver.manage import (
     PipCmd,
