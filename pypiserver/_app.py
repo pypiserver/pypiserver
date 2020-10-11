@@ -284,23 +284,25 @@ def simple(project):
     if project != normalized:
         return redirect(f"/simple/{normalized}/", 301)
 
-    files = sorted(
+    packages = sorted(
         core.find_project_packages(project),
         key=lambda x: (x.parsed_version, x.relfn),
     )
-    if not files:
+    if not packages:
         if config.redirect_to_fallback:
             return redirect(f"{config.fallback_url.rstrip('/')}/{project}/")
         return HTTPError(404, f"Not Found ({normalized} does not exist)\n\n")
 
-    fp = request.custom_fullpath
+    current_uri = request.custom_fullpath
+
     links = [
         (
-            os.path.basename(f.relfn),
-            urljoin(fp, f"../../packages/{f.fname_and_hash(config.hash_algo)}"),
+            os.path.basename(pkg.relfn),
+            urljoin(current_uri, f"../../packages/{pkg.fname_and_hash}"),
         )
-        for f in files
+        for pkg in packages
     ]
+
     tmpl = """\
     <html>
         <head>
@@ -321,14 +323,15 @@ def simple(project):
 @auth("list")
 def list_packages():
     fp = request.custom_fullpath
-    files = sorted(
+    packages = sorted(
         core.get_all_packages(),
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
     )
+
     links = [
-        (f.relfn_unix, urljoin(fp, f.fname_and_hash(config.hash_algo)))
-        for f in files
+        (pkg.relfn_unix, urljoin(fp, pkg.fname_and_hash)) for pkg in packages
     ]
+
     tmpl = """\
     <html>
         <head>

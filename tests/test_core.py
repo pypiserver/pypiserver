@@ -1,15 +1,15 @@
 #! /usr/bin/env py.test
 # -*- coding: utf-8 -*-
-
-import logging
 import os
 
 import pytest
 
 from pypiserver import __main__, core, backend, manage
-from pypiserver.pkg_helpers import guess_pkgname_and_version, normalize_pkgname_for_url
+from pypiserver.pkg_helpers import (
+    guess_pkgname_and_version,
+    normalize_pkgname_for_url,
+)
 from tests.doubles import Namespace
-
 
 ## Enable logging to detect any problems with it
 ##
@@ -105,13 +105,13 @@ def test_guess_pkgname_and_version_asc(filename, pkgname, version):
     assert guess_pkgname_and_version(filename) == exp
 
 
-def test_listdir_bad_name(tmpdir):
-    tmpdir.join("foo.whl").ensure()
-    res = list(backend.listdir(tmpdir.strpath))
+def test_listdir_bad_name(tmp_path):
+    tmp_path.joinpath("foo.whl").touch()
+    res = list(backend.listdir(str(tmp_path)))
     assert res == []
 
 
-def test_read_lines(tmpdir):
+def test_read_lines(tmp_path):
     filename = "pkg_blacklist"
     file_contents = (
         "# Names of private packages that we don't want to upgrade\n"
@@ -121,10 +121,11 @@ def test_read_lines(tmpdir):
         " my_other_private_pkg"
     )
 
-    f = tmpdir.join(filename).ensure()
-    f.write(file_contents)
+    f = tmp_path.joinpath(filename)
+    f.touch()
+    f.write_text(file_contents)
 
-    assert manage.read_lines(f.strpath) == [
+    assert manage.read_lines(str(f)) == [
         "my_private_pkg",
         "my_other_private_pkg",
     ]
@@ -142,21 +143,27 @@ hashes = (
 
 
 @pytest.mark.parametrize(("algo", "digest"), hashes)
-def test_hashfile(tmpdir, algo, digest):
-    f = tmpdir.join("empty")
-    f.ensure()
-    assert backend.digest_file(f.strpath, algo) == digest
+def test_hashfile(tmp_path, algo, digest):
+    f = tmp_path.joinpath("empty")
+    f.touch()
+    assert backend.digest_file(str(f), algo) == f"{algo}={digest}"
 
 
 @pytest.mark.parametrize("hash_algo", ("md5", "sha256", "sha512"))
-def test_fname_and_hash(tmpdir, hash_algo):
+def test_fname_and_hash(tmp_path, hash_algo):
     """Ensure we are returning the expected hashes for files."""
-    f = tmpdir.join("tmpfile")
-    f.ensure()
-    pkgfile = backend.PkgFile("tmp", "1.0.0", f.strpath, f.dirname, f.basename)
-    assert pkgfile.fname_and_hash(hash_algo) == "{}#{}={}".format(
-        f.basename, hash_algo, str(f.computehash(hashtype=hash_algo))
-    )
+
+    def digester(pkg):
+        digest = backend._digest_file(pkg.fn, hash_algo)
+        pkg.digest = digest
+        return digest
+
+    f = tmp_path.joinpath("tmpfile")
+    f.touch()
+    pkgfile = backend.PkgFile("tmp", "1.0.0", str(f), f.parent, f.name)
+    pkgfile.digester = digester
+
+    assert pkgfile.fname_and_hash == f"{f.name}#{digester(pkgfile)}"
 
 
 def test_redirect_project_encodes_newlines():
@@ -169,6 +176,4 @@ def test_redirect_project_encodes_newlines():
 
 def test_normalize_pkgname_for_url_encodes_newlines():
     """Ensure newlines are url encoded in package names for urls."""
-    assert "\n" not in normalize_pkgname_for_url(
-        "/\nSet-Cookie:malicious=1;"
-    )
+    assert "\n" not in normalize_pkgname_for_url("/\nSet-Cookie:malicious=1;")

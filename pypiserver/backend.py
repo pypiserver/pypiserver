@@ -15,18 +15,18 @@ PathLike = t.Union[str, bytes, Path, PurePath]
 
 
 class PkgFile:
-
     __slots__ = [
-        "fn",
-        "root",
-        "_fname_and_hash",
-        "relfn",
-        "relfn_unix",
-        "pkgname_norm",
-        "pkgname",
-        "version",
-        "parsed_version",
-        "replaces",
+        "pkgname",  # The projects/package name with possible capitailization
+        "version",  # The packag version as a string
+        "fn",  # The full file path
+        "root",  # An optional root directory of the file
+        "relfn",  # The file path relative to the root
+        "replaces",  # The previous version of the package (used by manage.py)
+        "pkgname_norm",  # The PEP503 normalized project name
+        "digest",  # Thee file digest in the form of <algo>=<hash>
+        "relfn_unix",  # Thee relative file path in unix notation
+        "parsed_version",  # The package version as a tuple of parts
+        "digester",  # a function that calculates the digest for the package
     ]
 
     def __init__(
@@ -41,6 +41,7 @@ class PkgFile:
         self.relfn = relfn
         self.relfn_unix = None if relfn is None else relfn.replace("\\", "/")
         self.replaces = replaces
+        self.digest = None
 
     def __repr__(self):
         return "{}({})".format(
@@ -53,19 +54,18 @@ class PkgFile:
             ),
         )
 
-    def fname_and_hash(self, hash_algo):
-        if not hasattr(self, "_fname_and_hash"):
-            if hash_algo:
-                self._fname_and_hash = (
-                    f"{self.relfn_unix}#{hash_algo}="
-                    f"{digest_file(self.fn, hash_algo)}"
-                )
-            else:
-                self._fname_and_hash = self.relfn_unix
-        return self._fname_and_hash
+    @property
+    def fname_and_hash(self):
+        if self.digest is None:
+            self.digester(self)
+        hashpart = f"#{self.digest}" if self.digest else ""
+        return self.relfn_unix + hashpart
 
 
 class Backend:
+    def __init__(self, hash_algo: t.Optional[str] = None):
+        self.hash_algo = hash_algo
+
     def get_all_packages(self) -> t.Iterable[PkgFile]:
         """Implement this method to return an Iterable of all packages (as
         PkgFile objects) that are available in the Backend.
@@ -86,9 +86,12 @@ class Backend:
         """Remove a package from the Backend"""
         raise NotImplementedError
 
-    def digest(self, pkg: PkgFile, hash_algo):
-        """Calculate a package's digest"""
-        raise NotImplementedError
+    def digest(self, pkg: PkgFile):
+        if self.hash_algo is None:
+            return None
+        digest = _digest_file(pkg.fn, self.hash_algo)
+        pkg.digest = digest
+        return digest
 
     def exists(self, filename) -> bool:
         """Does a package by the given name exist?"""
@@ -131,20 +134,24 @@ class Backend:
 
 
 def as_file(fh: t.BinaryIO, destination: PathLike):
-    # taken from bottle.FileUpload
-    chunk_size = 2 ** 16  # 64 KB
-    read, offset = fh.read, fh.tell()
-    with open(destination, "wb") as dest:
-        while True:
-            buf = read(chunk_size)
-            if not buf:
-                break
-            dest.write(buf)
-    fh.seek(offset)
+    """write a byte stream into a destination file. Writes are chunked to reduce
+    the memory footprint
+    """
+    chunk_size = 2 ** 20  # 1 MB
+    offset = fh.tell()
+    try:
+        with open(destination, "wb") as dest:
+            for chunk in iter(lambda: fh.read(chunk_size), b""):
+                dest.write(chunk)
+    finally:
+        fh.seek(offset)
 
 
 class SimpleFileBackend(Backend):
-    def __init__(self, roots: t.List[PathLike] = None):
+    def __init__(
+        self, roots: t.List[PathLike], hash_algo: t.Optional[str] = None
+    ):
+        super().__init__(hash_algo)
         self.roots = [Path(root).resolve() for root in roots]
 
     def add_package(self, filename: str, fh: t.BinaryIO):
@@ -183,11 +190,11 @@ def _listdir(root: PathLike) -> t.Iterable[PkgFile]:
                 )
 
 
-def _digest_file(fpath, hash_algo):
+def _digest_file(fpath, hash_algo: str):
     """
     Reads and digests a file according to specified hashing-algorith.
 
-    :param str sha256: any algo contained in :mod:`hashlib`
+    :param hash_algo: any algo contained in :mod:`hashlib`
     :return: <hash_algo>=<hex_digest>
 
     From http://stackoverflow.com/a/21565932/548792
@@ -197,7 +204,7 @@ def _digest_file(fpath, hash_algo):
     with open(fpath, "rb") as f:
         for block in iter(lambda: f.read(blocksize), b""):
             digester.update(block)
-    return digester.hexdigest()
+    return f"{hash_algo}={digester.hexdigest()}"
 
 
 try:

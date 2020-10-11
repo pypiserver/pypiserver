@@ -1,12 +1,11 @@
 #!/usr/bin/env py.test
 """Tests for manage.py."""
-
+from pathlib import Path
 
 import pypiserver.manage
 from unittest.mock import Mock
 
 
-import py
 import pytest
 
 from pypiserver import manage
@@ -23,20 +22,12 @@ from pypiserver.manage import (
 )
 
 
-def touch_files(root, files):
-    root = py.path.local(root)  # pylint: disable=no-member
-    for f in files:
-        root.join(f).ensure()
-
-
 def pkgfile_from_path(fn):
     pkgname, version = guess_pkgname_and_version(fn)
     return PkgFile(
         pkgname=pkgname,
         version=version,
-        root=py.path.local(fn)
-        .parts()[1]
-        .strpath,  # noqa pylint: disable=no-member
+        root=str(Path(fn).parent),
         fn=fn,
     )
 

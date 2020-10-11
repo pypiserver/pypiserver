@@ -42,7 +42,7 @@ def configure(**kwds):
             err = sys.exc_info()[1]
             sys.exit(f"Error: while trying to list root({r}): {err}")
 
-    backend = SimpleFileBackend(roots)
+    backend = SimpleFileBackend(roots, c.hash_algo)
 
     if not c.authenticated:
         c.authenticated = []
@@ -112,23 +112,36 @@ def get_bad_url_redirect_path(request, project):
     return uri
 
 
-def get_all_packages():
+def with_digester(func: t.Callable[..., t.Iterable[PkgFile]]):
+    @functools.wraps(func)
+    def add_digester_method(*args, **kwargs):
+        packages = func(*args, **kwargs)
+        for package in packages:
+            package.digester = backend.digest
+            yield package
+
+    return add_digester_method
+
+
+@with_digester
+def get_all_packages() -> t.Iterable[PkgFile]:
     return backend.get_all_packages()
 
 
-def find_project_packages(project):
+@with_digester
+def find_project_packages(project) -> t.Iterable[PkgFile]:
     return backend.find_project_packages(project)
 
 
-def find_version(name: str, version: str):
+def find_version(name: str, version: str) -> t.Iterable[PkgFile]:
     return backend.find_version(name, version)
 
 
-def get_projects():
+def get_projects() -> t.Iterable[str]:
     return backend.get_projects()
 
 
-def exists(filename: str):
+def exists(filename: str) -> bool:
     assert "/" not in filename
     return backend.exists(filename)
 
@@ -140,3 +153,7 @@ def add_package(filename, fh: t.BinaryIO):
 
 def remove_package(pkg: PkgFile):
     return backend.remove_package(pkg)
+
+
+def digest(pkg: PkgFile) -> str:
+    return backend.digest(pkg)
