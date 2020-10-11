@@ -32,14 +32,22 @@ into a dict by the argument parser.
 import argparse
 import contextlib
 import hashlib
+import itertools
 import io
 import pkg_resources
 import re
 import textwrap
 import sys
 import typing as t
+from distutils.util import strtobool as strtoint
 
 from pypiserver import __version__
+
+
+# The "strtobool" function in distutils does a nice job at parsing strings,
+# but returns an integer. This just wraps it in a boolean call so that we
+# get a bool.
+strtobool: t.Callable[[str], bool] = lambda val: bool(strtoint(val))
 
 
 # Specify defaults here so that we can use them in tests &c. and not need
@@ -74,21 +82,37 @@ def auth_arg(arg: str) -> t.List[str]:
         )
     # The "no authentication" option must be specified in isolation.
     if "." in items and len(items) > 1:
-        raise ValueError(
+        raise argparse.ArgumentTypeError(
             "Invalid authentication options. `.` (no authentication) "
             "must be specified alone."
         )
     return items
 
 
-def hash_algo_arg(arg: str) -> t.Callable:
+def hash_algo_arg(arg: str) -> t.Optional[str]:
     """Parse a hash algorithm from the string."""
-    if arg not in hashlib.algorithms_available:
-        raise ValueError(
-            f"Hash algorithm {arg} is not available. Please select one "
-            f"of {hashlib.algorithms_available}"
-        )
-    return getattr(hashlib, arg)
+    # The standard hashing algorithms are all made available via fully
+    # lowercase names, along with (sometimes) variously cased versions
+    # as well.
+    arg = arg.lower()
+    if arg in hashlib.algorithms_available:
+        return arg
+    try:
+        if not strtobool(arg):
+            return None
+    except ValueError:
+        # strtobool raises if the string doesn't seem like a truthiness-
+        # indicating string. We do want to raise in this case, but we want
+        # to raise our own custom message rather than raising the ValueError
+        # raised by strtobool.
+        pass
+    # At this point we either had an invalid hash algorithm or a truthy string
+    # like 'yes' or 'true'. In either case, we want to throw an error.
+    raise argparse.ArgumentTypeError(
+        f"Hash algorithm '{arg}' is not available. Please select one "
+        f"of {hashlib.algorithms_available}, or turn off hashing by "
+        "setting --hash-algo to 'off', '0', or 'false'"
+    )
 
 
 def html_file_arg(arg: t.Optional[str]) -> str:
@@ -129,7 +153,7 @@ def log_stream_arg(arg: str) -> t.Optional[t.IO]:
         return sys.stdout
     if val == "stderr":
         return _ORIG_STDERR
-    raise ValueError(
+    raise argparse.ArgumentTypeError(
         "Invalid option for --log-stream. Value must be one of stdout, "
         "stderr, or none."
     )
@@ -315,7 +339,7 @@ def get_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--hash-algo",
         default=DEFAULTS.HASH_ALGO,
-        choices=hashlib.algorithms_available,
+        type=hash_algo_arg,
         help=(
             "Any `hashlib` available algorithm to use for generating fragments "
             "on package links. Can be disabled with one of (0, no, off, false)."
@@ -481,7 +505,7 @@ class RunConfig(_ConfigCommon):
         self.fallback_url: str = namespace.fallback_url
         self.server_method: str = namespace.server
         self.overwrite: bool = namespace.overwrite
-        self.hash_algo: t.Callable = namespace.hash_algo
+        self.hash_algo: t.Optional[str] = namespace.hash_algo
         self.welcome_msg: str = namespace.welcome
         self.cache_control: t.Optional[int] = namespace.cache_control
         self.log_req_frmt: str = namespace.log_req_frmt
