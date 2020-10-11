@@ -380,6 +380,16 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         )
         for algo in hashlib.algorithms_available
     ),
+    *(
+        ConfigTestCase(
+            case="Run: hash-algo disabled",
+            args=["run", "--hash-algo", off_value],
+            legacy_args=["--hash-algo", off_value],
+            exp_config_type=RunConfig,
+            exp_config_values={"hash_algo": None},
+        )
+        for off_value in ("0", "off", "false", "no", "NO")
+    ),
     # welcome file
     ConfigTestCase(
         case="Run: welcome file unspecified",
@@ -559,6 +569,36 @@ CONFIG_TEST_PARAMS = (i[1:] for i in _CONFIG_TEST_PARAMS)
 CONFIG_TEST_IDS = (i.case for i in _CONFIG_TEST_PARAMS)
 
 
+class ConfigErrorCase(t.NamedTuple):
+    """Configuration arguments that should cause errors.
+
+    The cases include a case descrpition, a list of arguments,
+    and, if desired, expected text that should be part of what
+    is printed out to stderr. If no text is provided, the content
+    of stderr will not be checked.
+    """
+
+    case: str
+    args: t.List[str]
+    exp_txt: t.Optional[str]
+
+
+_CONFIG_ERROR_CASES = (
+    *(
+        ConfigErrorCase(
+            case=f"Invalid hash algo: {val}",
+            args=["run", "--hash-algo", val],
+            exp_txt=f"Hash algorithm '{val}' is not available",
+        )
+        for val in ("true", "foo", "1", "md6")
+    ),
+)
+# pylint: disable=unsubscriptable-object
+CONFIG_ERROR_PARAMS = (i[1:] for i in _CONFIG_ERROR_CASES)
+# pylint: enable=unsubscriptable-object
+CONFIG_ERROR_IDS = (i.case for i in _CONFIG_ERROR_CASES)
+
+
 @pytest.mark.parametrize(
     "args, legacy_args, exp_config_type, exp_config_values",
     CONFIG_TEST_PARAMS,
@@ -589,6 +629,27 @@ def test_config(
         assert exp_config_values["_test"](conf)
 
     assert conf == conf_legacy
+
+
+@pytest.mark.parametrize(
+    "args, exp_txt",
+    CONFIG_ERROR_PARAMS,
+    ids=CONFIG_TEST_IDS,
+)
+def test_config_error(
+    args: t.List[str],
+    exp_txt: t.Optional[str],
+    capsys,
+) -> None:
+    """Validate error cases."""
+    with pytest.raises(SystemExit):
+        Config.from_args(args)
+    # Unfortunatley the error text is printed before the SystemExit is
+    # raised, rather than being raised _with_ the systemexit, so we
+    # need to capture stderr and check it for our expected text, if
+    # any was specified in the test case.
+    if exp_txt is not None:
+        assert exp_txt in capsys.readouterr().err
 
 
 def test_argv_conf():
