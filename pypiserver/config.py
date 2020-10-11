@@ -145,7 +145,19 @@ def ignorelist_file_arg(arg: t.Optional[str]) -> t.List[str]:
 
 def package_directory_arg(arg: str) -> pathlib.Path:
     """Convert any package directory argument into its absolute path."""
-    return pathlib.Path(arg).expanduser().resolve()
+    pkg_dir = pathlib.Path(arg).expanduser().resolve()
+    try:
+        # Attempt to grab the first item from the directory. The directory may
+        # be empty, in which case we'll get back None, but if the directory does
+        # not exist or we do not have permission to read it, we can catch th
+        # OSError and exit with a useful message.
+        next(pkg_dir.iterdir(), None)
+    except OSError as exc:
+        raise argparse.ArgumentTypeError(
+            "Error: while trying to access package directory "
+            f"({pkg_dir}): {exc}"
+        )
+    return pkg_dir
 
 
 # We need to capture this at compile time, because we replace sys.stderr

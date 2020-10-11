@@ -108,35 +108,35 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
     ),
     *generate_subcommand_test_cases(
         case="single package directory specified",
-        extra_args=["foo"],
-        exp_config_values={"roots": [pathlib.Path("foo").resolve()]},
+        extra_args=[str(FILE_DIR)],
+        exp_config_values={"roots": [FILE_DIR]},
     ),
     *generate_subcommand_test_cases(
         case="multiple package directory specified",
-        extra_args=["foo", "bar"],
+        extra_args=[str(FILE_DIR), str(FILE_DIR.parent)],
         exp_config_values={
             "roots": [
-                pathlib.Path("foo").resolve(),
-                pathlib.Path("bar").resolve(),
+                FILE_DIR,
+                FILE_DIR.parent,
             ]
         },
     ),
     ConfigTestCase(
         case="update with package directory (out-of-order legacy order)",
-        args=["update", "foo"],
-        legacy_args=["foo", "-U"],
+        args=["update", str(FILE_DIR)],
+        legacy_args=[str(FILE_DIR), "-U"],
         exp_config_type=UpdateConfig,
-        exp_config_values={"roots": [pathlib.Path("foo").resolve()]},
+        exp_config_values={"roots": [FILE_DIR]},
     ),
     ConfigTestCase(
         case="update with multiple package directories (weird ordering)",
-        args=["update", "foo", "bar"],
-        legacy_args=["foo", "-U", "bar"],
+        args=["update", str(FILE_DIR), str(FILE_DIR.parent)],
+        legacy_args=[str(FILE_DIR), "-U", str(FILE_DIR.parent)],
         exp_config_type=UpdateConfig,
         exp_config_values={
             "roots": [
-                pathlib.Path("foo").resolve(),
-                pathlib.Path("bar").resolve(),
+                FILE_DIR,
+                FILE_DIR.parent,
             ]
         },
     ),
