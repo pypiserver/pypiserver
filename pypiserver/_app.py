@@ -212,10 +212,10 @@ def update():
 
 
 @app.route("/simple")
-@app.route("/simple/:prefix")
+@app.route("/simple/:project")
 @app.route("/packages")
 @auth("list")
-def pep_503_redirects(prefix=None):
+def pep_503_redirects(project=None):
     return redirect(request.custom_fullpath + "/", 301)
 
 
@@ -259,7 +259,7 @@ def handle_rpc():
 @app.route("/simple/")
 @auth("list")
 def simpleindex():
-    links = sorted(core.get_prefixes())
+    links = sorted(core.get_projects())
     tmpl = """\
     <html>
         <head>
@@ -276,21 +276,21 @@ def simpleindex():
     return template(tmpl, links=links)
 
 
-@app.route("/simple/:prefix/")
+@app.route("/simple/:project/")
 @auth("list")
-def simple(prefix=""):
-    # PEP 503: require normalized prefix
-    normalized = normalize_pkgname_for_url(prefix)
-    if prefix != normalized:
-        return redirect("/simple/{0}/".format(normalized), 301)
+def simple(project):
+    # PEP 503: require normalized project
+    normalized = normalize_pkgname_for_url(project)
+    if project != normalized:
+        return redirect(f"/simple/{normalized}/", 301)
 
     files = sorted(
-        core.find_prefix(prefix),
+        core.find_project_packages(project),
         key=lambda x: (x.parsed_version, x.relfn),
     )
     if not files:
         if config.redirect_to_fallback:
-            return redirect(f"{config.fallback_url.rstrip('/')}/{prefix}/")
+            return redirect(f"{config.fallback_url.rstrip('/')}/{project}/")
         return HTTPError(404, f"Not Found ({normalized} does not exist)\n\n")
 
     fp = request.custom_fullpath
@@ -304,17 +304,17 @@ def simple(prefix=""):
     tmpl = """\
     <html>
         <head>
-            <title>Links for {{prefix}}</title>
+            <title>Links for {{project}}</title>
         </head>
         <body>
-            <h1>Links for {{prefix}}</h1>
+            <h1>Links for {{project}}</h1>
             % for file, href in links:
                  <a href="{{href}}">{{file}}</a><br>
             % end
         </body>
     </html>
     """
-    return template(tmpl, prefix=prefix, links=links)
+    return template(tmpl, project=project, links=links)
 
 
 @app.route("/packages/")
@@ -366,8 +366,8 @@ def server_static(filename):
     return HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
 
 
-@app.route("/:prefix")
-@app.route("/:prefix/")
-def bad_url(prefix):
+@app.route("/:project")
+@app.route("/:project/")
+def bad_url(project):
     """Redirect unknown root URLs to /simple/."""
-    return redirect(core.get_bad_url_redirect_path(request, prefix))
+    return redirect(core.get_bad_url_redirect_path(request, project))

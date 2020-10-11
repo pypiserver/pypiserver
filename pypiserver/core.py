@@ -101,31 +101,31 @@ mimetypes.add_type("application/octet-stream", ".whl")
 mimetypes.add_type("text/plain", ".asc")
 
 
-def get_bad_url_redirect_path(request, prefix):
+def get_bad_url_redirect_path(request, project):
     """Get the path for a bad root url."""
-    p = request.custom_fullpath
-    if p.endswith("/"):
-        p = p[:-1]
-    p = p.rsplit("/", 1)[0]
-    prefix = quote(prefix)
-    p += "/simple/{}/".format(prefix)
-    return p
+    uri = request.custom_fullpath
+    if uri.endswith("/"):
+        uri = uri[:-1]
+    uri = uri.rsplit("/", 1)[0]
+    project = quote(project)
+    uri += f"/simple/{project}/"
+    return uri
 
 
 def get_all_packages():
     return backend.get_all_packages()
 
 
-def find_prefix(prefix):
-    return backend.find_prefix(prefix)
+def find_project_packages(project):
+    return backend.find_project_packages(project)
 
 
 def find_version(name: str, version: str):
     return backend.find_version(name, version)
 
 
-def get_prefixes():
-    return backend.get_prefixes()
+def get_projects():
+    return backend.get_projects()
 
 
 def exists(filename: str):

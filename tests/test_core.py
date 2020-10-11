@@ -159,11 +159,11 @@ def test_fname_and_hash(tmpdir, hash_algo):
     )
 
 
-def test_redirect_prefix_encodes_newlines():
+def test_redirect_project_encodes_newlines():
     """Ensure raw newlines are url encoded in the generated redirect."""
     request = Namespace(custom_fullpath="/\nSet-Cookie:malicious=1;")
-    prefix = "\nSet-Cookie:malicious=1;"
-    newpath = core.get_bad_url_redirect_path(request, prefix)
+    project = "\nSet-Cookie:malicious=1;"
+    newpath = core.get_bad_url_redirect_path(request, project)
     assert "\n" not in newpath
 
 

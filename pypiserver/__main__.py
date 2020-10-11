@@ -1,7 +1,5 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """Entrypoint for pypiserver."""
-
-from __future__ import print_function
 
 import getopt
 import logging

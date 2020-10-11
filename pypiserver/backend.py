@@ -67,17 +67,18 @@ class PkgFile:
 
 class Backend:
     def get_all_packages(self) -> t.Iterable[PkgFile]:
-        """Implement this method to return an Iterable of all packages (as PkgFile objects) that
-        are available in the Backend.
+        """Implement this method to return an Iterable of all packages (as
+        PkgFile objects) that are available in the Backend.
         """
         raise NotImplementedError
 
     def add_package(self, filename: str, fh: t.BinaryIO) -> PkgFile:
-        """Add a package to the Backend. `filename` is the package's filename (without any
-        directory parts). It is just a name, there is no file by that name (yet). `fh` is an open
-        file object that can be used to read the file's content. To convert the package into an
-        actual file on disk, run `as_file(filename, fh)`. This method should return a PkgFile
-        object representing the newly added package
+        """Add a package to the Backend. `filename` is the package's filename
+        (without any directory parts). It is just a name, there is no file by
+        that name (yet). `fh` is an open file object that can be used to read
+        the file's content. To convert the package into an actual file on disk,
+        run `as_file(filename, fh)`. This method should return a PkgFile object
+        representing the newly added package
         """
         raise NotImplementedError
 
@@ -93,10 +94,11 @@ class Backend:
         """Does a package by the given name exist?"""
         raise NotImplementedError
 
-    def get_prefixes(self) -> t.Iterable[str]:
-        """Return an iterable of all (unique) PkgFile.pkgname_norm available in the store. When
-        implementing a Backend class, either use this method as is, or override it with a more
-        performant version.
+    def get_projects(self) -> t.Iterable[str]:
+        """Return an iterable of all (unique) projects available in the store
+        in their PEP503 normalized form. When implementing a Backend class,
+        either use this method as is, or override it with a more performant
+        version.
         """
         normalized_pkgnames = set()
         for x in self.get_all_packages():
@@ -104,20 +106,23 @@ class Backend:
                 normalized_pkgnames.add(x.pkgname_norm)
         return normalized_pkgnames
 
-    def find_prefix(self, prefix) -> t.Iterable[PkgFile]:
-        """Find all packages by a given prefix. A prefix is a package's PkgFile.pkgname_norm. When
-        implementing a Backend class, either use this method as is, or override it with a more
-        performant version."""
-        prefix = normalize_pkgname(prefix)
-        for x in self.get_all_packages():
-            if prefix and x.pkgname_norm != prefix:
-                continue
-            yield x
+    def find_project_packages(self, project: str) -> t.Iterable[PkgFile]:
+        """Find all packages from a given project. The project may be given
+        as either the normalized or canonical name. When implementing a
+        Backend class, either use this method as is, or override it with a
+        more performant version.
+        """
+        return (
+            x
+            for x in self.get_all_packages()
+            if normalize_pkgname(project) == x.pkgname_norm
+        )
 
     def find_version(self, name, version) -> t.Iterable[PkgFile]:
-        """Return all packages that match PkgFile.pkgname == name and PkgFile.version == version`
-        When implementing a Backend class, either use this method as is, or override it with a more
-        performant version.
+        """Return all packages that match PkgFile.pkgname == name and
+        PkgFile.version == version` When implementing a Backend class,
+        either use this method as is, or override it with a more performant
+        version.
         """
         return filter(
             lambda pkg: pkg.pkgname == name and pkg.version == version,

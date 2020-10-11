@@ -1,7 +1,5 @@
 """Management operations for pypiserver."""
 
-from __future__ import absolute_import, print_function, unicode_literals
-
 import itertools
 import os
 import sys
@@ -99,7 +97,8 @@ def find_updates(pkgset, stable_only=True):
 
     if no_releases:
         sys.stdout.write(
-            f"no releases found on pypi for {', '.join(sorted(no_releases))}\n\n"
+            f"no releases found on pypi for"
+            f" {', '.join(sorted(no_releases))}\n\n"
         )
 
     return need_update
@@ -111,7 +110,6 @@ class PipCmd:
     @staticmethod
     def update_root(pip_version):
         """Yield an appropriate root command depending on pip version."""
-        # legacy_pip = StrictVersion(pip_version) < StrictVersion('10.0')
         legacy_pip = LooseVersion(pip_version) < LooseVersion("10.0")
         for part in ("pip", "-q"):
             yield part
@@ -136,8 +134,7 @@ class PipCmd:
 def update_package(pkg, destdir, dry_run=False):
     """Print and optionally execute a package update."""
     print(
-        "# update {0.pkgname} from {0.replaces.version} to "
-        "{0.version}".format(pkg)
+        f"# update {pkg.pkgname} from {pkg.replaces.version} to {pkg.version}"
     )
 
     cmd = tuple(
@@ -149,7 +146,7 @@ def update_package(pkg, destdir, dry_run=False):
         )
     )
 
-    print("{}\n".format(" ".join(cmd)))
+    print(" ".join(cmd), end="\n\n")
     if not dry_run:
         call(cmd)
 
