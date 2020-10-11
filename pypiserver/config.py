@@ -34,12 +34,20 @@ import contextlib
 import hashlib
 import itertools
 import io
+import pathlib
 import pkg_resources
 import re
 import textwrap
 import sys
 import typing as t
 from distutils.util import strtobool as strtoint
+
+# The `passlib` requirement is optional, so we need to verify its import here.
+
+try:
+    from passlib.apache import HtpasswdFile
+except ImportError:
+    HtpasswdFile = None
 
 from pypiserver import __version__
 
@@ -64,7 +72,7 @@ class DEFAULTS:
     LOG_REQ_FRMT = "%(bottle.request)s"
     LOG_RES_FRMT = "%(status)s"
     LOG_STREAM = sys.stdout
-    PACKAGE_DIRECTORIES = ["~/packages"]
+    PACKAGE_DIRECTORIES = [pathlib.Path("~/packages").expanduser().resolve()]
     PORT = 8080
     SERVER_METHOD = "auto"
 
@@ -133,6 +141,11 @@ def ignorelist_file_arg(arg: t.Optional[str]) -> t.List[str]:
     with open(arg) as f:
         stripped_lines = (ln.strip() for ln in f.readlines())
         return [ln for ln in stripped_lines if ln and not ln.startswith("#")]
+
+
+def package_directory_arg(arg: str) -> pathlib.Path:
+    """Convert any package directory argument into its absolute path."""
+    return pathlib.Path(arg).expanduser().resolve()
 
 
 # We need to capture this at compile time, because we replace sys.stderr
@@ -237,6 +250,7 @@ def get_parser() -> argparse.ArgumentParser:
         "package_directory",
         default=DEFAULTS.PACKAGE_DIRECTORIES,
         nargs="*",
+        type=package_directory_arg,
         help="The directory from which to serve packages.",
     )
 
@@ -412,6 +426,7 @@ def get_parser() -> argparse.ArgumentParser:
         "package_directory",
         default=DEFAULTS.PACKAGE_DIRECTORIES,
         nargs="*",
+        type=package_directory_arg,
         help="The directory from which to serve packages.",
     )
 
@@ -457,6 +472,9 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
+TConf = t.TypeVar("TConf", bound="_ConfigCommon")
+
+
 class _ConfigCommon:
     def __init__(self, namespace: argparse.Namespace) -> None:
         """Construct a RuntimeConfig."""
@@ -465,7 +483,16 @@ class _ConfigCommon:
         self.log_file: t.Optional[str] = namespace.log_file
         self.log_stream: t.Optional[t.IO] = namespace.log_stream
         self.log_frmt: str = namespace.log_frmt
-        self.roots: t.List[str] = namespace.package_directory
+        self.roots: t.List[pathlib.Path] = namespace.package_directory
+
+        # Derived properties are directly based on other properties and are not
+        # included in equality checks.
+        self._derived_properties: t.Tuple[str, ...] = ()
+
+    @classmethod
+    def from_kwargs(cls: t.Type[TConf], **kwargs: t.Any) -> TConf:
+        """Construct a config from keyword arguments"""
+        return cls(argparse.Namespace(**kwargs))
 
     def __repr__(self) -> str:
         """A string representation indicating the class and its properties."""
@@ -482,9 +509,13 @@ class _ConfigCommon:
         """Configs are equal if their public values are equal."""
         if not isinstance(other, self.__class__):
             return False
-        return all(getattr(other, k) == v for k, v in self)  # type: ignore
+        return all(
+            getattr(other, k) == v
+            for k, v in self
+            if not k in self._derived_properties
+        )
 
-    def __iter__(self) -> t.Iterable[t.Tuple[str, t.Any]]:
+    def __iter__(self) -> t.Iterator[t.Tuple[str, t.Any]]:
         """Iterate over config (k, v) pairs."""
         yield from (
             (k, v) for k, v in vars(self).items() if not k.startswith("_")
@@ -511,6 +542,52 @@ class RunConfig(_ConfigCommon):
         self.log_req_frmt: str = namespace.log_req_frmt
         self.log_res_frmt: str = namespace.log_res_frmt
         self.log_err_frmt: str = namespace.log_err_frmt
+
+        # Derived properties
+        self._derived_properties = ("auther",)
+        self.auther = self.get_auther(getattr(namespace, "auther", None))
+
+    def get_auther(
+        self, passed_auther: t.Optional[t.Callable[[str, str], bool]]
+    ) -> t.Callable[[str, str], bool]:
+        """Create or retrieve an authentication function."""
+        # The auther may be specified directly as a kwarg in the API interface
+        if passed_auther:
+            return passed_auther
+        # Otherwise we check to see if we need to authenticate
+        if self.password_file == "." or self.authenticate == ["."]:
+            # It's illegal to specify no authentication without also specifying
+            # no password file, and vice-versa.
+            if self.password_file != "." or self.authenticate != ["."]:
+                sys.exit(
+                    "When auth-ops-list is empty (-a=.), password-file"
+                    f" (-P={self.password_file!r}) must also be empty ('.')!"
+                )
+            # Return an auther that always returns true.
+            return lambda _uname, _pw: True
+        # Now, if there was no password file specified, we can return an auther
+        # that always returns False, since there is no way to authenticate.
+        if self.password_file is None:
+            return lambda _uname, _pw: False
+        # Finally, if a password file was specified, we'll load it up with
+        # Htpasswd and return a callable that checks it.
+        if HtpasswdFile is None:
+            sys.exit(
+                "apache.passlib library is not available. You must install "
+                "pypiserver with the optional 'passlib' dependency (`pip "
+                "install pypiserer['passlib']`) in order to use password "
+                "authentication"
+            )
+
+        loaded_pw_file = HtpasswdFile(self.password_file)
+
+        # Construct a local closure over the loaded PW file and return as our
+        # authentication function.
+        def auther(uname: str, pw: str) -> bool:
+            loaded_pw_file.load_if_changed()
+            return loaded_pw_file.check_password(uname, pw)
+
+        return auther
 
 
 class UpdateConfig(_ConfigCommon):
