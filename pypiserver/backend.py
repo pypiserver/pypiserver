@@ -74,13 +74,12 @@ class Backend:
         """
         raise NotImplementedError
 
-    def add_package(self, filename: str, fh: t.BinaryIO) -> PkgFile:
+    def add_package(self, filename: str, fh: t.BinaryIO):
         """Add a package to the Backend. `filename` is the package's filename
         (without any directory parts). It is just a name, there is no file by
         that name (yet). `fh` is an open file object that can be used to read
         the file's content. To convert the package into an actual file on disk,
-        run `as_file(filename, fh)`. This method should return a PkgFile object
-        representing the newly added package
+        run `as_file(filename, fh)`.
         """
         raise NotImplementedError
 
@@ -133,20 +132,6 @@ class Backend:
         )
 
 
-def as_file(fh: t.BinaryIO, destination: PathLike):
-    """write a byte stream into a destination file. Writes are chunked to reduce
-    the memory footprint
-    """
-    chunk_size = 2 ** 20  # 1 MB
-    offset = fh.tell()
-    try:
-        with open(destination, "wb") as dest:
-            for chunk in iter(lambda: fh.read(chunk_size), b""):
-                dest.write(chunk)
-    finally:
-        fh.seek(offset)
-
-
 class SimpleFileBackend(Backend):
     def __init__(self, config: Configuration, roots: t.List[PathLike]):
         super().__init__(config)
@@ -155,9 +140,8 @@ class SimpleFileBackend(Backend):
     def get_all_packages(self):
         return itertools.chain.from_iterable(listdir(r) for r in self.roots)
 
-    def add_package(self, filename: str, fh: t.BinaryIO) -> PkgFile:
+    def add_package(self, filename: str, fh: t.BinaryIO):
         as_file(fh, self.roots[0].joinpath(filename))
-        # TODO: return a PkgFile
 
     def remove_package(self, pkg: PkgFile):
         os.remove(pkg.fn)
@@ -184,6 +168,20 @@ class CachingFileBackend(SimpleFileBackend):
         return self.cache_manager.digest_file(
             pkg.fn, self.hash_algo, digest_file
         )
+
+
+def as_file(fh: t.BinaryIO, destination: PathLike):
+    """write a byte stream into a destination file. Writes are chunked to reduce
+    the memory footprint
+    """
+    chunk_size = 2 ** 20  # 1 MB
+    offset = fh.tell()
+    try:
+        with open(destination, "wb") as dest:
+            for chunk in iter(lambda: fh.read(chunk_size), b""):
+                dest.write(chunk)
+    finally:
+        fh.seek(offset)
 
 
 def listdir(root: PathLike) -> t.Iterable[PkgFile]:

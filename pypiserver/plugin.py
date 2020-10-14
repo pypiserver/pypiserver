@@ -1,6 +1,8 @@
-"""Plugins are callable setuptools entrypoints that are invoked at startup that
+""" NOT YET IMPLEMENTED
+
+Plugins are callable setuptools entrypoints that are invoked at startup that
 a developer may use to extend the behaviour of pypiserver. A plugin for example
-may add an additional Backend to the system. A plugin is currently called
+may add an additional Backend to the system. A plugin will be called
 with the following keyword arguments
 
 * app: the Bottle App object
@@ -15,41 +17,25 @@ with the following keyword arguments
 
 In the future, the plugin callable may be called with additional keyword
 arguments, so a plugin should accept a **kwargs variadic keyword argument.
-An example plugin is given below that enables two custom backends.
 """
-from pypiserver.backend import Backend
+from pypiserver.backend import SimpleFileBackend, CachingFileBackend
+from pypiserver.core import get_file_backend
 
-
-class MySpecialBackend(Backend):
-    def __init__(self, config, frobnicate):
-        super().__init__(config)
-        self.frobnicate = frobnicate
-
-    @classmethod
-    def from_config(cls, config):
-        # Do some additional logic
-        ...
-
-        return cls(config, config.frobnicate)
-
-    # Implement the required Backend methods here
-    ...
-
-
-class MyOtherBackend(Backend):
-    pass
+DEFAULS_PACKAGE_DIRECTORIES = ["~/packages"]
 
 
 # register this as a setuptools entrypoint under the 'pypiserver.plugin' key
 def my_plugin(add_argument, backends, **_):
     add_argument(
-        "--frobnicate",
-        action="store_true",
-        help="Frobnicate for my special backend",
+        "package_directory",
+        default=DEFAULS_PACKAGE_DIRECTORIES,
+        nargs="*",
+        help="The directory from which to serve packages.",
     )
     backends.update(
         {
-            "my-special-backend": MySpecialBackend.from_config,
-            "my-other-backend": MyOtherBackend,
+            "auto": get_file_backend,
+            "simple-directory": SimpleFileBackend,
+            "cached-directory": CachingFileBackend,
         }
     )
