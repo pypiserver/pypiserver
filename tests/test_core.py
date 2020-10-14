@@ -154,7 +154,7 @@ def test_fname_and_hash(tmp_path, hash_algo):
     """Ensure we are returning the expected hashes for files."""
 
     def digester(pkg):
-        digest = backend._digest_file(pkg.fn, hash_algo)
+        digest = backend.digest_file(pkg.fn, hash_algo)
         pkg.digest = digest
         return digest
 

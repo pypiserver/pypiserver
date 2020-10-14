@@ -5,6 +5,7 @@ import typing as t
 from pathlib import Path, PurePath
 
 from . import Configuration
+from .cache import ENABLE_CACHING, CacheManager
 from .pkg_helpers import (
     normalize_pkgname,
     parse_version,
@@ -90,7 +91,7 @@ class Backend:
     def digest(self, pkg: PkgFile):
         if self.hash_algo is None:
             return None
-        digest = _digest_file(pkg.fn, self.hash_algo)
+        digest = digest_file(pkg.fn, self.hash_algo)
         pkg.digest = digest
         return digest
 
@@ -172,25 +173,24 @@ class CachingFileBackend(SimpleFileBackend):
         self, config: Configuration, roots: t.List[PathLike], cache_manager
     ):
         super().__init__(config, roots)
-        try:
-            import pypiserver.cache
-        except ImportError:
+        if not ENABLE_CACHING:
             raise RuntimeError(
                 "Please install the extra cache requirements by running 'pip "
                 "install pypiserver[cache]' to use the CachingFileBackend"
-            ) from None
-        self.cache_manager = cache_manager
+            )
+
+        self.cache_manager: CacheManager = cache_manager
 
     def get_all_packages(self):
         return itertools.chain.from_iterable(
-            self.cache_manager.listdir(r, _listdir) for r in self.roots
+            self.cache_manager.listdir(r, listdir) for r in self.roots
         )
 
     def digest(self, pkg: PkgFile):
-        self.cache_manager.digest_file(pkg.fn, self.hash_algo, _digest_file)
+        self.cache_manager.digest_file(pkg.fn, self.hash_algo, digest_file)
 
 
-def _listdir(root: PathLike) -> t.Iterable[PkgFile]:
+def listdir(root: PathLike) -> t.Iterable[PkgFile]:
     root = Path(root).resolve()
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [x for x in dirnames if is_allowed_path(x)]
@@ -213,7 +213,7 @@ def _listdir(root: PathLike) -> t.Iterable[PkgFile]:
                 )
 
 
-def _digest_file(fpath, hash_algo: str):
+def digest_file(fpath, hash_algo: str):
     """
     Reads and digests a file according to specified hashing-algorith.
 
@@ -228,20 +228,3 @@ def _digest_file(fpath, hash_algo: str):
         for block in iter(lambda: f.read(blocksize), b""):
             digester.update(block)
     return f"{hash_algo}={digester.hexdigest()}"
-
-
-try:
-    from .cache import cache_manager
-
-    def listdir(root: PathLike) -> t.Iterable[PkgFile]:
-        # root must be absolute path
-        return cache_manager.listdir(root, _listdir)
-
-    def digest_file(fpath: PathLike, hash_algo):
-        # fpath must be absolute path
-        return cache_manager.digest_file(fpath, hash_algo, _digest_file)
-
-
-except ImportError:
-    listdir = _listdir
-    digest_file = _digest_file

@@ -4,12 +4,25 @@
 #
 
 from os.path import dirname
-from typing import Iterable
-
-from watchdog.observers import Observer
+from pathlib import Path
+import typing as t
 import threading
 
-from pypiserver.backend import PkgFile
+try:
+    from watchdog.observers import Observer
+
+    ENABLE_CACHING = True
+
+except ImportError:
+
+    from unittest.mock import Mock
+
+    Observer = Mock()
+
+    ENABLE_CACHING = False
+
+if t.TYPE_CHECKING:
+    from pypiserver.backend import PkgFile
 
 
 class CacheManager:
@@ -49,7 +62,10 @@ class CacheManager:
         self.digest_lock = threading.Lock()
         self.listdir_lock = threading.Lock()
 
-    def listdir(self, root, impl_fn) -> Iterable[PkgFile]:
+    def listdir(
+        self, root: t.Union[Path, str], impl_fn
+    ) -> t.Iterable["PkgFile"]:
+        root = str(root)
         with self.listdir_lock:
             try:
                 return self.listdir_cache[root]
@@ -85,13 +101,17 @@ class CacheManager:
             cache[fpath] = v
             return v
 
-    def _watch(self, root):
+    def _watch(self, root: str):
         self.watched.add(root)
         self.observer.schedule(_EventHandler(self, root), root, recursive=True)
 
+    def invalidate_root_cache(self, root: t.Union[Path, str]):
+        with self.listdir_lock:
+            self.listdir_cache.pop(str(root), None)
+
 
 class _EventHandler:
-    def __init__(self, cache, root):
+    def __init__(self, cache: CacheManager, root: str):
         self.cache = cache
         self.root = root
 
@@ -104,8 +124,7 @@ class _EventHandler:
             return
 
         # Lazy: just invalidate the whole cache
-        with cache.listdir_lock:
-            cache.listdir_cache.pop(self.root, None)
+        cache.invalidate_root_cache(self.root)
 
         # Digests are more expensive: invalidate specific paths
         paths = []
@@ -120,6 +139,3 @@ class _EventHandler:
             for _, subcache in cache.digest_cache.items():
                 for path in paths:
                     subcache.pop(path, None)
-
-
-cache_manager = CacheManager()

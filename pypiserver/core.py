@@ -16,6 +16,7 @@ import pkg_resources
 
 from pypiserver import Configuration
 from .backend import Backend, SimpleFileBackend, PkgFile, CachingFileBackend
+from .cache import ENABLE_CACHING, CacheManager
 
 log = logging.getLogger(__name__)
 
@@ -88,12 +89,9 @@ def auth_by_htpasswd_file(htPsswdFile, username, password):
 
 def get_file_backend(config) -> SimpleFileBackend:
     roots = parse_roots(config)
-    try:
-        from .cache import cache_manager
-
-        return CachingFileBackend(roots, cache_manager, config)
-    except ImportError:
-        return SimpleFileBackend(roots, config)
+    if ENABLE_CACHING:
+        return CachingFileBackend(config, roots, CacheManager())
+    return SimpleFileBackend(config, roots)
 
 
 def parse_roots(config) -> t.List[str]:

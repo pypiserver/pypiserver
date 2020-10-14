@@ -1,5 +1,5 @@
-"""Plugins are setuptools entrypoints that are invoked at startup that a
-developer may use to extend the behaviour of pypiserver. A plugin for example
+"""Plugins are callable setuptools entrypoints that are invoked at startup that
+a developer may use to extend the behaviour of pypiserver. A plugin for example
 may add an additional Backend to the system. A plugin is currently called
 with the following keyword arguments
 
@@ -21,21 +21,23 @@ from pypiserver.backend import Backend
 
 
 class MySpecialBackend(Backend):
-    def __init__(self, hash_algo, frobnicate):
-        super().__init__(hash_algo)
+    def __init__(self, config, frobnicate):
+        super().__init__(config)
         self.frobnicate = frobnicate
 
     @classmethod
     def from_config(cls, config):
-        return cls(config.hash_algo, config.frobnicate)
+        # Do some additional logic
+        ...
+
+        return cls(config, config.frobnicate)
 
     # Implement the required Backend methods here
     ...
 
 
 class MyOtherBackend(Backend):
-    def __init__(self, config):
-        super().__init__(hash_algo=config.hash_algo)
+    pass
 
 
 # register this as a setuptools entrypoint under the 'pypiserver.plugin' key
