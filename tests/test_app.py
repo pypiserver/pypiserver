@@ -333,22 +333,17 @@ def test_nonroot_root_with_x_forwarded_host_without_trailing_slash(testapp):
     resp.mustcontain("""<a href="/priv/packages/">here</a>""")
 
 
-@pytest.mark.xfail(
-    ENABLE_CACHING, reason="race condition when caching is enabled"
-)
 def test_nonroot_simple_index(root, testpriv):
-    root.join("foobar-1.0.zip").write("")
+    add_file_to_root(root, "foobar-1.0.zip", "123")
     resp = testpriv.get("/priv/simple/foobar/")
     links = resp.html("a")
     assert len(links) == 1
     assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
 
 
-@pytest.mark.xfail(
-    ENABLE_CACHING, reason="race condition when caching is enabled"
-)
 def test_nonroot_simple_index_with_x_forwarded_host(root, testapp):
-    root.join("foobar-1.0.zip").write("")
+    add_file_to_root(root, "foobar-1.0.zip", "123")
+
     resp = testapp.get(
         "/simple/foobar/", headers={"X-Forwarded-Host": "forwarded.ed/priv/"}
     )
@@ -357,28 +352,23 @@ def test_nonroot_simple_index_with_x_forwarded_host(root, testapp):
     assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
 
 
-@pytest.mark.xfail(
-    ENABLE_CACHING, reason="race condition when caching is enabled"
-)
 def test_nonroot_simple_packages(root, testpriv):
     add_file_to_root(root, "foobar-1.0.zip", "123")
     resp = testpriv.get("/priv/packages/")
     links = resp.html("a")
     assert len(links) == 1
-    assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
+    assert "/priv/packages/foobar-1.0.zip#" in links[0]["href"]
 
 
-@pytest.mark.xfail(
-    ENABLE_CACHING, reason="race condition when caching is enabled"
-)
 def test_nonroot_simple_packages_with_x_forwarded_host(root, testapp):
-    root.join("foobar-1.0.zip").write("123")
+    add_file_to_root(root, "foobar-1.0.zip", "123")
+
     resp = testapp.get(
         "/packages/", headers={"X-Forwarded-Host": "forwarded/priv/"}
     )
     links = resp.html("a")
     assert len(links) == 1
-    assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
+    assert "/priv/packages/foobar-1.0.zip#" in links[0]["href"]
 
 
 def test_root_no_relative_paths(testpriv):

@@ -59,7 +59,7 @@ class PkgFile:
     @property
     def fname_and_hash(self):
         if self.digest is None:
-            self.digester(self)
+            self.digest = self.digester(self)
         hashpart = f"#{self.digest}" if self.digest else ""
         return self.relfn_unix + hashpart
 
@@ -88,16 +88,14 @@ class Backend:
         """Remove a package from the Backend"""
         raise NotImplementedError
 
-    def digest(self, pkg: PkgFile):
-        if self.hash_algo is None:
-            return None
-        digest = digest_file(pkg.fn, self.hash_algo)
-        pkg.digest = digest
-        return digest
-
     def exists(self, filename) -> bool:
         """Does a package by the given name exist?"""
         raise NotImplementedError
+
+    def digest(self, pkg: PkgFile):
+        if self.hash_algo is None:
+            return None
+        return digest_file(pkg.fn, self.hash_algo)
 
     def get_projects(self) -> t.Iterable[str]:
         """Return an iterable of all (unique) projects available in the store
@@ -157,8 +155,9 @@ class SimpleFileBackend(Backend):
     def get_all_packages(self):
         return itertools.chain.from_iterable(listdir(r) for r in self.roots)
 
-    def add_package(self, filename: str, fh: t.BinaryIO):
+    def add_package(self, filename: str, fh: t.BinaryIO) -> PkgFile:
         as_file(fh, self.roots[0].joinpath(filename))
+        # TODO: return a PkgFile
 
     def remove_package(self, pkg: PkgFile):
         os.remove(pkg.fn)
@@ -173,11 +172,6 @@ class CachingFileBackend(SimpleFileBackend):
         self, config: Configuration, roots: t.List[PathLike], cache_manager
     ):
         super().__init__(config, roots)
-        if not ENABLE_CACHING:
-            raise RuntimeError(
-                "Please install the extra cache requirements by running 'pip "
-                "install pypiserver[cache]' to use the CachingFileBackend"
-            )
 
         self.cache_manager: CacheManager = cache_manager
 
@@ -187,7 +181,9 @@ class CachingFileBackend(SimpleFileBackend):
         )
 
     def digest(self, pkg: PkgFile):
-        self.cache_manager.digest_file(pkg.fn, self.hash_algo, digest_file)
+        return self.cache_manager.digest_file(
+            pkg.fn, self.hash_algo, digest_file
+        )
 
 
 def listdir(root: PathLike) -> t.Iterable[PkgFile]:

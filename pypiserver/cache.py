@@ -15,9 +15,7 @@ try:
 
 except ImportError:
 
-    from unittest.mock import Mock
-
-    Observer = Mock()
+    Observer = None
 
     ENABLE_CACHING = False
 
@@ -42,6 +40,11 @@ class CacheManager:
     """
 
     def __init__(self):
+        if not ENABLE_CACHING:
+            raise RuntimeError(
+                "Please install the extra cache requirements by running 'pip "
+                "install pypiserver[cache]' to use the CachingFileBackend"
+            )
 
         # Cache for listdir output
         self.listdir_cache = {}
