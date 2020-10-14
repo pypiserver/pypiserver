@@ -4,6 +4,7 @@ import os
 import typing as t
 from pathlib import Path, PurePath
 
+from . import Configuration
 from .pkg_helpers import (
     normalize_pkgname,
     parse_version,
@@ -17,7 +18,7 @@ PathLike = t.Union[str, bytes, Path, PurePath]
 class PkgFile:
     __slots__ = [
         "pkgname",  # The projects/package name with possible capitailization
-        "version",  # The packag version as a string
+        "version",  # The package version as a string
         "fn",  # The full file path
         "root",  # An optional root directory of the file
         "relfn",  # The file path relative to the root
@@ -63,8 +64,8 @@ class PkgFile:
 
 
 class Backend:
-    def __init__(self, hash_algo: t.Optional[str] = None):
-        self.hash_algo = hash_algo
+    def __init__(self, config: Configuration):
+        self.hash_algo = config.hash_algo
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
         """Implement this method to return an Iterable of all packages (as
@@ -148,11 +149,12 @@ def as_file(fh: t.BinaryIO, destination: PathLike):
 
 
 class SimpleFileBackend(Backend):
-    def __init__(
-        self, roots: t.List[PathLike], hash_algo: t.Optional[str] = None
-    ):
-        super().__init__(hash_algo)
+    def __init__(self, config: Configuration, roots: t.List[PathLike]):
+        super().__init__(config)
         self.roots = [Path(root).resolve() for root in roots]
+
+    def get_all_packages(self):
+        return itertools.chain.from_iterable(listdir(r) for r in self.roots)
 
     def add_package(self, filename: str, fh: t.BinaryIO):
         as_file(fh, self.roots[0].joinpath(filename))
@@ -161,19 +163,40 @@ class SimpleFileBackend(Backend):
         os.remove(pkg.fn)
 
     def exists(self, filename):
+        # TODO: Also look in subdirectories?
         return any(root.joinpath(filename).exists() for root in self.roots)
 
+
+class CachingFileBackend(SimpleFileBackend):
+    def __init__(
+        self, config: Configuration, roots: t.List[PathLike], cache_manager
+    ):
+        super().__init__(config, roots)
+        try:
+            import pypiserver.cache
+        except ImportError:
+            raise RuntimeError(
+                "Please install the extra cache requirements by running 'pip "
+                "install pypiserver[cache]' to use the CachingFileBackend"
+            ) from None
+        self.cache_manager = cache_manager
+
     def get_all_packages(self):
-        return itertools.chain(*[listdir(r) for r in self.roots])
+        return itertools.chain.from_iterable(
+            self.cache_manager.listdir(r, _listdir) for r in self.roots
+        )
+
+    def digest(self, pkg: PkgFile):
+        self.cache_manager.digest_file(pkg.fn, self.hash_algo, _digest_file)
 
 
 def _listdir(root: PathLike) -> t.Iterable[PkgFile]:
-    root = os.path.abspath(root)
+    root = Path(root).resolve()
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [x for x in dirnames if is_allowed_path(x)]
         for x in filenames:
             fn = os.path.join(root, dirpath, x)
-            if not is_allowed_path(x) or not os.path.isfile(fn):
+            if not is_allowed_path(x) or not Path(fn).is_file():
                 continue
             res = guess_pkgname_and_version(x)
             if not res:
@@ -186,7 +209,7 @@ def _listdir(root: PathLike) -> t.Iterable[PkgFile]:
                     version=version,
                     fn=fn,
                     root=root,
-                    relfn=fn[len(root) + 1 :],
+                    relfn=fn[len(str(root)) + 1 :],
                 )
 
 

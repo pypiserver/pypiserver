@@ -15,7 +15,7 @@ from urllib.parse import quote
 import pkg_resources
 
 from pypiserver import Configuration
-from .backend import Backend, SimpleFileBackend, PkgFile
+from .backend import Backend, SimpleFileBackend, PkgFile, CachingFileBackend
 
 log = logging.getLogger(__name__)
 
@@ -28,65 +28,55 @@ def configure(**kwds):
     """
     global backend
 
-    c = Configuration(**kwds)
-    log.info(f"+++Pypiserver invoked with: {c}")
+    config = Configuration(**kwds)
+    log.info(f"+++Pypiserver invoked with: {config}")
 
-    if c.root is None:
-        c.root = os.path.expanduser("~/packages")
-    roots = c.root if isinstance(c.root, (list, tuple)) else [c.root]
-    roots = [os.path.abspath(r) for r in roots]
-    for r in roots:
-        try:
-            os.listdir(r)
-        except OSError:
-            err = sys.exc_info()[1]
-            sys.exit(f"Error: while trying to list root({r}): {err}")
-
-    backend = SimpleFileBackend(roots, c.hash_algo)
-
-    if not c.authenticated:
-        c.authenticated = []
-    if not callable(c.auther):
-        if c.password_file and c.password_file != ".":
+    if not config.authenticated:
+        config.authenticated = []
+    if not callable(config.auther):
+        if config.password_file and config.password_file != ".":
             from passlib.apache import HtpasswdFile
 
-            htPsswdFile = HtpasswdFile(c.password_file)
+            htPsswdFile = HtpasswdFile(config.password_file)
         else:
-            c.password_file = htPsswdFile = None
-        c.auther = functools.partial(auth_by_htpasswd_file, htPsswdFile)
+            config.password_file = htPsswdFile = None
+        config.auther = functools.partial(auth_by_htpasswd_file, htPsswdFile)
 
     # Read welcome-msg from external file or failback to the embedded-msg
     try:
-        if not c.welcome_file:
-            c.welcome_file = "welcome.html"
-            c.welcome_msg = pkg_resources.resource_string(  # @UndefinedVariable
-                __name__, "welcome.html"
-            ).decode(
-                "utf-8"
+        if not config.welcome_file:
+            config.welcome_file = "welcome.html"
+            config.welcome_msg = (
+                pkg_resources.resource_string(  # @UndefinedVariable
+                    __name__, "welcome.html"
+                ).decode("utf-8")
             )  # @UndefinedVariable
         else:
-            with io.open(c.welcome_file, "r", encoding="utf-8") as fd:
-                c.welcome_msg = fd.read()
+            with io.open(config.welcome_file, "r", encoding="utf-8") as fd:
+                config.welcome_msg = fd.read()
     except Exception:
         log.warning(
-            f"Could not load welcome-file({c.welcome_file})!", exc_info=True
+            f"Could not load welcome-file({config.welcome_file})!",
+            exc_info=True,
         )
 
-    if c.fallback_url is None:
-        c.fallback_url = "https://pypi.org/simple"
+    if config.fallback_url is None:
+        config.fallback_url = "https://pypi.org/simple"
 
-    if c.hash_algo:
+    if config.hash_algo:
         try:
             halgos = hashlib.algorithms_available
         except AttributeError:
             halgos = ["md5", "sha1", "sha224", "sha256", "sha384", "sha512"]
 
-        if c.hash_algo not in halgos:
-            sys.exit(f"Hash-algorithm {c.hash_algo} not one of: {halgos}")
+        if config.hash_algo not in halgos:
+            sys.exit(f"Hash-algorithm {config.hash_algo} not one of: {halgos}")
 
-    log.info(f"+++Pypiserver started with: {c}")
+    backend = get_file_backend(config)
 
-    return c
+    log.info(f"+++Pypiserver started with: {config}")
+
+    return config
 
 
 def auth_by_htpasswd_file(htPsswdFile, username, password):
@@ -94,6 +84,32 @@ def auth_by_htpasswd_file(htPsswdFile, username, password):
     if htPsswdFile is not None:
         htPsswdFile.load_if_changed()
         return htPsswdFile.check_password(username, password)
+
+
+def get_file_backend(config) -> SimpleFileBackend:
+    roots = parse_roots(config)
+    try:
+        from .cache import cache_manager
+
+        return CachingFileBackend(roots, cache_manager, config)
+    except ImportError:
+        return SimpleFileBackend(roots, config)
+
+
+def parse_roots(config) -> t.List[str]:
+    if config.root is None:
+        config.root = os.path.expanduser("~/packages")
+    roots = (
+        config.root if isinstance(config.root, (list, tuple)) else [config.root]
+    )
+    roots = [os.path.abspath(r) for r in roots]
+    for r in roots:
+        try:
+            os.listdir(r)
+        except OSError:
+            err = sys.exc_info()[1]
+            sys.exit(f"Error: while trying to list root({r}): {err}")
+    return roots
 
 
 mimetypes.add_type("application/octet-stream", ".egg")
