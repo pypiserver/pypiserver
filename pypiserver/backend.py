@@ -18,15 +18,15 @@ PathLike = t.Union[str, bytes, Path, PurePath]
 
 class PkgFile:
     __slots__ = [
-        "pkgname",  # The projects/package name with possible capitailization
+        "pkgname",  # The projects/package name with possible capitalization
         "version",  # The package version as a string
         "fn",  # The full file path
         "root",  # An optional root directory of the file
         "relfn",  # The file path relative to the root
         "replaces",  # The previous version of the package (used by manage.py)
         "pkgname_norm",  # The PEP503 normalized project name
-        "digest",  # Thee file digest in the form of <algo>=<hash>
-        "relfn_unix",  # Thee relative file path in unix notation
+        "digest",  # The file digest in the form of <algo>=<hash>
+        "relfn_unix",  # The relative file path in unix notation
         "parsed_version",  # The package version as a tuple of parts
         "digester",  # a function that calculates the digest for the package
     ]
