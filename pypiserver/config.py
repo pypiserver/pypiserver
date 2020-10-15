@@ -545,7 +545,7 @@ class _ConfigCommon:
         The current config is used as a base. Any properties not specified in
         keyword arguments will remain unchanged.
         """
-        return self.__class__(**dict(self), **kwargs)
+        return self.__class__(**{**dict(self), **kwargs})
 
     def __repr__(self) -> str:
         """A string representation indicating the class and its properties."""
@@ -571,7 +571,9 @@ class _ConfigCommon:
     def __iter__(self) -> t.Iterator[t.Tuple[str, t.Any]]:
         """Iterate over config (k, v) pairs."""
         yield from (
-            (k, v) for k, v in vars(self).items() if not k.startswith("_")
+            (k, v)
+            for k, v in vars(self).items()
+            if not k.startswith("_") and k not in self._derived_properties
         )
 
 
@@ -581,7 +583,7 @@ class RunConfig(_ConfigCommon):
     def __init__(
         self,
         port: int,
-        interface: str,
+        host: str,
         authenticate: t.List[str],
         password_file: t.Optional[str],
         disable_fallback: bool,
@@ -600,7 +602,7 @@ class RunConfig(_ConfigCommon):
         """Construct a RuntimeConfig."""
         super().__init__(**kwargs)
         self.port = port
-        self.interface = interface
+        self.host = host
         self.authenticate = authenticate
         self.password_file = password_file
         self.disable_fallback = disable_fallback
@@ -626,7 +628,7 @@ class RunConfig(_ConfigCommon):
         return {
             **super(RunConfig, cls).kwargs_from_namespace(namespace),
             "port": namespace.port,
-            "interface": namespace.interface,
+            "host": namespace.interface,
             "authenticate": namespace.authenticate,
             "password_file": namespace.passwords,
             "disable_fallback": namespace.disable_fallback,

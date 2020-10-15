@@ -1,6 +1,9 @@
-import os
+import pathlib
 import re as _re
 import sys
+import typing as t
+
+from pypiserver.config import Config, RunConfig, strtobool
 
 version = __version__ = "2.0.0dev1"
 __version_info__ = tuple(_re.split("[.-]", __version__))
@@ -11,180 +14,133 @@ __summary__ = "A minimal PyPI server for use with pip/easy_install."
 __uri__ = "https://github.com/pypiserver/pypiserver"
 
 
-class Configuration:
-    """
-    .. see:: config-options: :func:`pypiserver.configure()`
-    """
+identity = lambda x: x
 
-    def __init__(self, **kwds):
-        vars(self).update(kwds)
 
-    def __repr__(self, *args, **kwargs):
-        return f"Configuration(**{vars(self)})"
-
-    def __str__(self, *args, **kwargs):
-        return "Configuration:\n" + "\n".join(
-            f"{k:>20} = {v}" for k, v in sorted(vars(self).items())
+def backwards_compat_kwargs(kwargs: dict) -> dict:
+    backwards_compat = {
+        "root": (
+            "roots",
+            lambda root: [pathlib.Path(r).expanduser().resolve() for r in root],
+        ),
+        "server": ("server_method", identity),
+        "redirect_to_fallback": (
+            "disable_fallback",
+            lambda redirect: not redirect,
+        ),
+        "authenticated": ("authenticate", identity),
+        "welcome_file": (
+            "welcome_msg",
+            lambda p: pathlib.Path(p).expanduser().resolve().read_text(),
+        ),
+    }
+    rv_iter = (
+        (
+            (k, v)
+            if k not in backwards_compat
+            else (backwards_compat[k][0], backwards_compat[k][1](v))
         )
-
-    def update(self, props):
-        d = props if isinstance(props, dict) else vars(props)
-        vars(self).update(d)
-
-
-DEFAULT_SERVER = "auto"
+        for k, v in kwargs.items()
+    )
+    return dict(rv_iter)
 
 
-def default_config(
-    root=None,
-    host="0.0.0.0",
-    port=8080,
-    server=DEFAULT_SERVER,
-    redirect_to_fallback=True,
-    fallback_url=None,
-    authenticated=["update"],
-    password_file=None,
-    overwrite=False,
-    hash_algo="md5",
-    verbosity=1,
-    log_file=None,
-    log_stream="stderr",
-    log_frmt="%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s",
-    log_req_frmt="%(bottle.request)s",
-    log_res_frmt="%(status)s",
-    log_err_frmt="%(body)s: %(exception)s \n%(traceback)s",
-    welcome_file=None,
-    cache_control=None,
-    auther=None,
-    VERSION=__version__,
-):
-    """
-    Fetch default-opts with overridden kwds, capable of starting-up pypiserver.
-
-    Does not validate overridden options.
-    Example usage::
-
-        kwds = pypiserver.default_config(<override_kwds> ...)
-        ## More modifications on kwds.
-        pypiserver.app(**kwds)``.
-
-    Kwds correspond to same-named cmd-line opts, with '-' --> '_' substitution.
-    Non standard args are described below:
-
-    :param return_defaults_only:
-            When `True`, returns defaults, otherwise,
-            configures "runtime" attributes and returns also the "packages"
-            found in the roots.
-    :param root:
-            A list of paths, derived from the packages specified on cmd-line.
-            If `None`, defaults to '~/packages'.
-    :param redirect_to_fallback:
-            see :option:`--disable-fallback`
-    :param authenticated:
-            see :option:`--authenticate`
-    :param password_file:
-            see :option:`--passwords`
-    :param log_file:
-            see :option:`--log-file`
-            Not used, passed here for logging it.
-    :param log_frmt:
-            see :option:`--log-frmt`
-            Not used, passed here for logging it.
-    :param callable auther:
-            An API-only options that if it evaluates to a callable,
-            it is invoked to allow access to protected operations
-            (instead of htpaswd mechanism) like that::
-
-                auther(username, password): bool
-
-            When defined, `password_file` is ignored.
-    :param host:
-            see :option:`--interface`
-            Not used, passed here for logging it.
-    :param port:
-            see :option:`--port`
-            Not used, passed here for logging it.
-    :param server:
-            see :option:`--server`
-            Not used, passed here for logging it.
-    :param verbosity:
-            see :option:`-v`
-            Not used, passed here for logging it.
-    :param VERSION:
-            Not used, passed here for logging it.
-
-    :return: a dict of defaults
-
-    """
-    return locals()
-
-
-def app(**kwds):
+def app(**kwargs):
     """
     :param dict kwds: Any overrides for defaults, as fetched by
         :func:`default_config()`. Check the docstring of this function
         for supported kwds.
     """
-    from . import core
+    config = Config.default_with_updates(**backwards_compat_kwargs(kwargs))
+    return app_from_config(config)
 
+
+def app_from_config(config: RunConfig):
     _app = __import__("_app", globals(), locals(), ["."], 1)
     sys.modules.pop("pypiserver._app", None)
-
-    kwds = default_config(**kwds)
-    config, packages = core.configure(**kwds)
     _app.config = config
-    _app.packages = packages
+    _app.iter_packages = config.iter_packages
+    _app.package_root = config.package_root
     _app.app.module = _app  # HACK for testing.
-
     return _app.app
 
 
-def str2bool(s, default):
-    if s is not None and s != "":
-        return s.lower() not in ("no", "off", "0", "false")
-    return default
-
-
-def _str_strip(string):
-    """Provide a generic strip method to pass as a callback."""
-    return string.strip()
+T = t.TypeVar("T")
 
 
 def paste_app_factory(global_config, **local_conf):
-    """Parse a paste config and return an app."""
+    """Parse a paste config and return an app.
 
-    def upd_conf_with_bool_item(conf, attr, sdict):
-        conf[attr] = str2bool(sdict.pop(attr, None), conf[attr])
+    The paste config is entirely strings, so we need to parse those
+    strings into values usable for the config, if they're present.
+    """
 
-    def upd_conf_with_str_item(conf, attr, sdict):
-        value = sdict.pop(attr, None)
-        if value is not None:
-            conf[attr] = value
+    def to_bool(val: t.Optional[str]) -> t.Optional[bool]:
+        return val if val is None else strtobool(val)
 
-    def upd_conf_with_int_item(conf, attr, sdict):
-        value = sdict.pop(attr, None)
-        if value is not None:
-            conf[attr] = int(value)
+    def to_int(val: t.Optional[str]) -> t.Optional[int]:
+        return val if val is None else int(val)
 
-    def upd_conf_with_list_item(conf, attr, sdict, sep=" ", parse=_str_strip):
-        values = sdict.pop(attr, None)
-        if values:
-            conf[attr] = list(filter(None, map(parse, values.split(sep))))
+    def to_list(
+        val: str, sep: str = " ", transform: t.Callable[[str], T] = str.strip
+    ) -> t.Optional[t.List[T]]:
+        if val is None:
+            return val
+        return list(filter(None, map(transform, val.split(sep))))
 
-    def _make_root(root):
-        root = root.strip()
-        if root.startswith("~"):
-            return os.path.expanduser(root)
-        return root
+    def _make_root(root: str) -> pathlib.Path:
+        return pathlib.Path(root.strip()).expanduser().resolve()
 
-    c = default_config()
+    deprecated_args = {
+        "redirect_to_fallback": "disable_fallback",
+        "authenticated": "authenticate",
+        "root": "roots",
+    }
 
-    upd_conf_with_bool_item(c, "overwrite", local_conf)
-    upd_conf_with_bool_item(c, "redirect_to_fallback", local_conf)
-    upd_conf_with_list_item(c, "authenticated", local_conf, sep=" ")
-    upd_conf_with_list_item(c, "root", local_conf, sep="\n", parse=_make_root)
-    upd_conf_with_int_item(c, "verbosity", local_conf)
-    str_items = [
+    if any(k in local_conf for k in deprecated_args):
+        replacements_strs = (
+            f"{k} with {deprecated_args[k]}"
+            for k in (k for k in deprecated_args if k in local_conf)
+        )
+        warn_str = (
+            "You are using deprecated arguments. Please replace the following: \n"
+            "  {', '.join(replacement_strs)}"
+        )
+        print(warn_str, file=sys.stderr)
+
+    _config_updates = {
+        "cache_control": to_int(local_conf.get("cache_control")),
+        "overwrite": to_bool(local_conf.get("overwrite")),
+        "disable_fallback": (
+            to_bool(local_conf["disable_fallback"])
+            if "disable_fallback" in local_conf
+            # Support old-style config arguments
+            else (
+                # Because we need to negate this, don't juse pass the
+                # .get("redirect_to_fallback") to `to_bool`, because we want
+                # to retain the `None` if it's abasent, rather than negating
+                # it and turning it into a True
+                not to_bool(local_conf["redirect_to_fallback"])
+                if "disable_fallback" in local_conf
+                else None
+            )
+        ),
+        "authenticate": to_list(
+            # Support old-style config arguments
+            local_conf.get("authenticate", local_conf.get("authenticated")),
+            sep=" ",
+        ),
+        "roots": to_list(
+            # Support old-style config arguments
+            local_conf.get("roots", local_conf.get("root")),
+            sep="\n",
+            transform=_make_root,
+        ),
+        "verbosity": to_int(local_conf.get("verbosity")),
+    }
+
+    # Items requiring no tranformation
+    str_items = (
         "fallback_url",
         "hash_algo",
         "log_err_frmt",
@@ -194,13 +150,19 @@ def paste_app_factory(global_config, **local_conf):
         "log_res_frmt",
         "password_file",
         "welcome_file",
-    ]
-    for str_item in str_items:
-        upd_conf_with_str_item(c, str_item, local_conf)
+    )
+
+    _config_updates = {
+        **_config_updates,
+        **{k: local_conf.get(k) for k in str_items},
+    }
+
+    config_updates = {k: v for k, v in _config_updates.items() if v is not None}
+
     # cache_control is undocumented; don't know what type is expected:
     # upd_conf_with_str_item(c, 'cache_control', local_conf)
 
-    return app(**c)
+    return app(**config_updates)
 
 
 def _logwrite(logger, level, msg):

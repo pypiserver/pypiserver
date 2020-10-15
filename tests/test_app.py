@@ -3,6 +3,7 @@
 # Builtin imports
 import logging
 import os
+import pathlib
 
 
 try:  # python 3
@@ -43,7 +44,7 @@ def _app(app):
 def app(tmpdir):
     from pypiserver import app
 
-    return app(root=tmpdir.strpath, authenticated=[])
+    return app(roots=[pathlib.Path(tmpdir.strpath)], authenticate=[])
 
 
 @pytest.fixture
@@ -193,13 +194,13 @@ def test_favicon(testapp):
 
 
 def test_fallback(root, _app, testapp):
-    assert _app.config.redirect_to_fallback
+    assert not _app.config.disable_fallback
     resp = testapp.get("/simple/pypiserver/", status=302)
     assert resp.headers["Location"] == "https://pypi.org/simple/pypiserver/"
 
 
 def test_no_fallback(root, _app, testapp):
-    _app.config.redirect_to_fallback = False
+    _app.config.disable_fallback = True
     testapp.get("/simple/pypiserver/", status=404)
 
 
