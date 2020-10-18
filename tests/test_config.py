@@ -228,21 +228,35 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         args=["run"],
         legacy_args=[],
         exp_config_type=RunConfig,
-        exp_config_values={"interface": DEFAULTS.INTERFACE},
+        exp_config_values={"host": DEFAULTS.INTERFACE},
     ),
     ConfigTestCase(
         case="Run: interface specified",
         args=["run", "-i", "1.1.1.1"],
         legacy_args=["-i", "1.1.1.1"],
         exp_config_type=RunConfig,
-        exp_config_values={"interface": "1.1.1.1"},
+        exp_config_values={"host": "1.1.1.1"},
     ),
     ConfigTestCase(
         case="Run: interface specified (long form)",
         args=["run", "--interface", "1.1.1.1"],
         legacy_args=["--interface", "1.1.1.1"],
         exp_config_type=RunConfig,
-        exp_config_values={"interface": "1.1.1.1"},
+        exp_config_values={"host": "1.1.1.1"},
+    ),
+    ConfigTestCase(
+        case="Run: host specified",
+        args=["run", "-H", "1.1.1.1"],
+        legacy_args=["-H", "1.1.1.1"],
+        exp_config_type=RunConfig,
+        exp_config_values={"host": "1.1.1.1"},
+    ),
+    ConfigTestCase(
+        case="Run: host specified (long form)",
+        args=["run", "--host", "1.1.1.1"],
+        legacy_args=["--host", "1.1.1.1"],
+        exp_config_type=RunConfig,
+        exp_config_values={"host": "1.1.1.1"},
     ),
     # authenticate
     ConfigTestCase(

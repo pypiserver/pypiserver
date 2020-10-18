@@ -35,7 +35,6 @@ import hashlib
 import itertools
 import io
 import pathlib
-from typing import Optional
 import pkg_resources
 import re
 import textwrap
@@ -49,6 +48,8 @@ try:
     from passlib.apache import HtpasswdFile
 except ImportError:
     HtpasswdFile = None
+
+from pypiserver import core
 
 
 # The "strtobool" function in distutils does a nice job at parsing strings,
@@ -277,7 +278,10 @@ def get_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument(
         "-i",
+        "-H",
         "--interface",
+        "--host",
+        dest="host",
         default=DEFAULTS.INTERFACE,
         help="Listen on interface INTERFACE (default: 0.0.0.0)",
     )
@@ -513,9 +517,9 @@ class _ConfigCommon:
             "package_root",
         )
         # Iterate over files in specified package roots.
-        self.iter_packages = lambda: itertools.chain.from_iterable(
-            r.iterdir() for r in self.roots
-        )
+        # self.iter_packages = lambda: itertools.chain.from_iterable(
+        #     r.iterdir() for r in self.roots
+        # )
         # The first package directory is considered the root.
         # TODO: does anything use this?
         self.package_root = self.roots[0]
@@ -537,6 +541,14 @@ class _ConfigCommon:
             log_stream=namespace.log_stream,
             log_frmt=namespace.log_frmt,
             roots=namespace.package_directory,
+        )
+
+    def iter_packages(self) -> t.Iterator[core.PkgFile]:
+        """Iterate over packages in root directories."""
+        yield from (
+            itertools.chain.from_iterable(
+                core._listdir(str(r)) for r in self.roots
+            )
         )
 
     def with_updates(self: TConf, **kwargs: t.Any) -> TConf:
@@ -628,7 +640,7 @@ class RunConfig(_ConfigCommon):
         return {
             **super(RunConfig, cls).kwargs_from_namespace(namespace),
             "port": namespace.port,
-            "host": namespace.interface,
+            "host": namespace.host,
             "authenticate": namespace.authenticate,
             "password_file": namespace.passwords,
             "disable_fallback": namespace.disable_fallback,

@@ -1,3 +1,4 @@
+import functools
 import pathlib
 import re as _re
 import sys
@@ -17,23 +18,38 @@ __uri__ = "https://github.com/pypiserver/pypiserver"
 identity = lambda x: x
 
 
-def backwards_compat_kwargs(kwargs: dict) -> dict:
+def backwards_compat_kwargs(kwargs: dict, warn: bool = True) -> dict:
     backwards_compat = {
+        "authenticated": ("authenticate", identity),
+        "passwords": ("password_file", identity),
         "root": (
             "roots",
-            lambda root: [pathlib.Path(r).expanduser().resolve() for r in root],
+            lambda root: [
+                pathlib.Path(r).expanduser().resolve()
+                for r in ([root] if isinstance(root, str) else root)
+            ],
         ),
-        "server": ("server_method", identity),
         "redirect_to_fallback": (
             "disable_fallback",
             lambda redirect: not redirect,
         ),
-        "authenticated": ("authenticate", identity),
+        "server": ("server_method", identity),
         "welcome_file": (
             "welcome_msg",
             lambda p: pathlib.Path(p).expanduser().resolve().read_text(),
         ),
     }
+    if warn and any(k in backwards_compat for k in kwargs):
+        replacement_strs = (
+            f"{k} with {backwards_compat[k][0]}"
+            for k in filter(lambda k: k in kwargs, backwards_compat)
+        )
+        warn_str = (
+            "You are using deprecated arguments. Please replace the following: \n"
+            f"  {', '.join(replacement_strs)}"
+        )
+        print(warn_str, file=sys.stderr)
+
     rv_iter = (
         (
             (k, v)
@@ -68,7 +84,7 @@ def app_from_config(config: RunConfig):
 T = t.TypeVar("T")
 
 
-def paste_app_factory(global_config, **local_conf):
+def paste_app_factory(_global_config, **local_conf):
     """Parse a paste config and return an app.
 
     The paste config is entirely strings, so we need to parse those
@@ -82,7 +98,9 @@ def paste_app_factory(global_config, **local_conf):
         return val if val is None else int(val)
 
     def to_list(
-        val: str, sep: str = " ", transform: t.Callable[[str], T] = str.strip
+        val: t.Optional[str],
+        sep: str = " ",
+        transform: t.Callable[[str], T] = str.strip,
     ) -> t.Optional[t.List[T]]:
         if val is None:
             return val
@@ -91,78 +109,27 @@ def paste_app_factory(global_config, **local_conf):
     def _make_root(root: str) -> pathlib.Path:
         return pathlib.Path(root.strip()).expanduser().resolve()
 
-    deprecated_args = {
-        "redirect_to_fallback": "disable_fallback",
-        "authenticated": "authenticate",
-        "root": "roots",
+    maps = {
+        "cache_control": to_int,
+        "roots": functools.partial(to_list, sep="\n", transform=_make_root),
+        # root is a deprecated argument for roots
+        "root": functools.partial(to_list, sep="\n", transform=_make_root),
+        "disable_fallback": to_bool,
+        # redirect_to_fallback is a deprecated argument for disable_fallback
+        "redirect_to_fallback": to_bool,
+        "overwrite": to_bool,
+        "authenticate": functools.partial(to_list, sep=" "),
+        # authenticated is a deprecated argument for authenticate
+        "authenticated": functools.partial(to_list, sep=" "),
+        "verbosity": to_int,
     }
 
-    if any(k in local_conf for k in deprecated_args):
-        replacements_strs = (
-            f"{k} with {deprecated_args[k]}"
-            for k in (k for k in deprecated_args if k in local_conf)
-        )
-        warn_str = (
-            "You are using deprecated arguments. Please replace the following: \n"
-            "  {', '.join(replacement_strs)}"
-        )
-        print(warn_str, file=sys.stderr)
-
-    _config_updates = {
-        "cache_control": to_int(local_conf.get("cache_control")),
-        "overwrite": to_bool(local_conf.get("overwrite")),
-        "disable_fallback": (
-            to_bool(local_conf["disable_fallback"])
-            if "disable_fallback" in local_conf
-            # Support old-style config arguments
-            else (
-                # Because we need to negate this, don't juse pass the
-                # .get("redirect_to_fallback") to `to_bool`, because we want
-                # to retain the `None` if it's abasent, rather than negating
-                # it and turning it into a True
-                not to_bool(local_conf["redirect_to_fallback"])
-                if "disable_fallback" in local_conf
-                else None
-            )
-        ),
-        "authenticate": to_list(
-            # Support old-style config arguments
-            local_conf.get("authenticate", local_conf.get("authenticated")),
-            sep=" ",
-        ),
-        "roots": to_list(
-            # Support old-style config arguments
-            local_conf.get("roots", local_conf.get("root")),
-            sep="\n",
-            transform=_make_root,
-        ),
-        "verbosity": to_int(local_conf.get("verbosity")),
+    mapped_conf = {
+        k: maps.get(k, lambda i: i)(v) for k, v in local_conf.items()
     }
+    updated_conf = backwards_compat_kwargs(mapped_conf)
 
-    # Items requiring no tranformation
-    str_items = (
-        "fallback_url",
-        "hash_algo",
-        "log_err_frmt",
-        "log_file",
-        "log_frmt",
-        "log_req_frmt",
-        "log_res_frmt",
-        "password_file",
-        "welcome_file",
-    )
-
-    _config_updates = {
-        **_config_updates,
-        **{k: local_conf.get(k) for k in str_items},
-    }
-
-    config_updates = {k: v for k, v in _config_updates.items() if v is not None}
-
-    # cache_control is undocumented; don't know what type is expected:
-    # upd_conf_with_str_item(c, 'cache_control', local_conf)
-
-    return app(**config_updates)
+    return app(**updated_conf)
 
 
 def _logwrite(logger, level, msg):
