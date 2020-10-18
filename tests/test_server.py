@@ -59,7 +59,7 @@ def _run_server(packdir, port, authed, other_cli=""):
     """Run a server, optionally with partial auth enabled."""
     pswd_opt_choices = {
         True: "-Ptests/htpasswd.a.a -a update,download",
-        False: "-P . -a .",
+        False: "-P. -a.",
         "partial": "-Ptests/htpasswd.a.a -a update",
     }
     pswd_opts = pswd_opt_choices[authed]

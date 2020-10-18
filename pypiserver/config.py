@@ -584,7 +584,7 @@ class _ConfigCommon:
         The current config is used as a base. Any properties not specified in
         keyword arguments will remain unchanged.
         """
-        return self.__class__(**{**dict(self), **kwargs})
+        return self.__class__(**{**dict(self), **kwargs})  # type: ignore
 
     def __repr__(self) -> str:
         """A string representation indicating the class and its properties."""
@@ -636,7 +636,7 @@ class RunConfig(_ConfigCommon):
         log_res_frmt: str,
         log_err_frmt: str,
         auther: t.Callable[[str, str], bool] = None,
-        **kwargs,
+        **kwargs: t.Any,
     ) -> None:
         """Construct a RuntimeConfig."""
         super().__init__(**kwargs)
@@ -720,7 +720,7 @@ class RunConfig(_ConfigCommon):
         # authentication function.
         def auther(uname: str, pw: str) -> bool:
             loaded_pw_file.load_if_changed()
-            return loaded_pw_file.check_password(uname, pw)  # type: ignore
+            return loaded_pw_file.check_password(uname, pw)
 
         return auther
 
@@ -734,7 +734,7 @@ class UpdateConfig(_ConfigCommon):
         download_directory: t.Optional[str],
         allow_unstable: bool,
         ignorelist: t.List[str],
-        **kwargs,
+        **kwargs: t.Any,
     ) -> None:
         """Construct an UpdateConfig."""
         super().__init__(**kwargs)
@@ -760,7 +760,7 @@ class Config:
     """Config constructor for building a config from args."""
 
     @classmethod
-    def default_with_updates(cls, **kwargs) -> RunConfig:
+    def default_with_updates(cls, **kwargs: t.Any) -> RunConfig:
         default_config = cls.from_args(["run"])
         assert isinstance(default_config, RunConfig)
         return default_config.with_updates(**kwargs)

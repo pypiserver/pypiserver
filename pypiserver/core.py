@@ -1,22 +1,13 @@
 #! /usr/bin/env python
 """minimal PyPI like server for use with pip/easy_install"""
 
-import functools
 import hashlib
-import io
-import itertools
 import logging
 import mimetypes
 import os
 import re
-import sys
-
-try:  # PY3
-    from urllib.parse import quote
-except ImportError:  # PY2
-    from urllib import quote
-
-import pkg_resources
+import typing as t
+from urllib.parse import quote
 
 
 log = logging.getLogger(__name__)
@@ -180,7 +171,7 @@ class PkgFile:
         return self._fname_and_hash
 
 
-def _listdir(root):
+def _listdir(root: str) -> t.Iterator[PkgFile]:
     root = os.path.abspath(root)
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [x for x in dirnames if is_allowed_path(x)]
