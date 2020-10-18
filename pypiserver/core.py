@@ -203,30 +203,6 @@ def _listdir(root):
                 )
 
 
-def read_lines(filename):
-    """
-    Read the contents of `filename`, stripping empty lines and '#'-comments.
-    Return a list of strings, containing the lines of the file.
-    """
-    lines = []
-
-    try:
-        with open(filename) as f:
-            lines = [
-                line
-                for line in (ln.strip() for ln in f.readlines())
-                if line and not line.startswith("#")
-            ]
-    except Exception:
-        log.error(
-            f'Failed to read package blacklist file "{filename}". '
-            "Aborting server startup, please fix this."
-        )
-        raise
-
-    return lines
-
-
 def find_packages(pkgs, prefix=""):
     prefix = normalize_pkgname(prefix)
     for x in pkgs:

@@ -44,7 +44,11 @@ def _app(app):
 def app(tmpdir):
     from pypiserver import app
 
-    return app(roots=[pathlib.Path(tmpdir.strpath)], authenticate=[])
+    return app(
+        roots=[pathlib.Path(tmpdir.strpath)],
+        authenticate=[],
+        password_file=".",
+    )
 
 
 @pytest.fixture

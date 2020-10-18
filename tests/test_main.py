@@ -1,22 +1,38 @@
-#! /usr/bin/env py.test
+import logging
+import os
+import pathlib
+import sys
+import typing as t
+from unittest import mock
 
-import sys, os, pytest, logging
+import pytest
+
 from pypiserver import __main__
+from pypiserver.bottle import Bottle
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+
+THIS_DIR = pathlib.Path(__file__).parent
+HTPASS_FILE = THIS_DIR / "htpasswd.a.a"
+IGNORELIST_FILE = THIS_DIR / "test-ignorelist"
 
 
 class main_wrapper:
+    app: t.Optional[Bottle]
+    run_kwargs: t.Optional[dict]
+    update_args: t.Optional[tuple]
+    update_kwargs: t.Optional[dict]
+
     def __init__(self):
+        self.app = None
         self.run_kwargs = None
-        self.pkgdir = None
+        self.update_args = None
+        self.update_kwargs = None
 
     def __call__(self, argv):
         sys.stdout.write(f"Running {argv}\n")
-        __main__.main(["pypi-server"] + argv)
+        # always sets the package directory to this directory, regardless of
+        # other passed args.
+        __main__.main([str(THIS_DIR)] + argv)
         return self.run_kwargs
 
 
@@ -31,24 +47,25 @@ def main(monkeypatch):
         main.app = app
         main.run_kwargs = kwargs
 
-    def listdir(pkgdir):
-        main.pkgdir = pkgdir
-        return []
+    def update(*args, **kwargs):
+        main.update_args = args
+        main.update_kwargs = kwargs
 
     monkeypatch.setattr("pypiserver.bottle.run", run)
-    monkeypatch.setattr("os.listdir", listdir)
+    monkeypatch.setattr("pypiserver.manage.update_all_packages", update)
 
     return main
 
 
 def test_default_pkgdir(main):
     main([])
-    assert os.path.normpath(main.pkgdir) == os.path.normpath(
-        os.path.expanduser("~/packages")
-    )
+    assert main.app._pypiserver_config.roots == [THIS_DIR]
 
 
 def test_noargs(main):
+    # Assert we're calling with the default host, port, and server, and
+    # assume that we've popped `app` off of the bottle args in our `main`
+    # fixture.
     assert main([]) == {"host": "0.0.0.0", "port": 8080, "server": "auto"}
 
 
@@ -64,59 +81,53 @@ def test_server(main):
     assert main(["--server", "cherrypy"])["server"] == "cherrypy"
 
 
-def test_root(main):
-    main(["--root", "."])
-    assert main.app.module.packages.root == os.path.abspath(".")
-    assert main.pkgdir == os.path.abspath(".")
-
-
-def test_root_r(main):
-    main(["-r", "."])
-    assert main.app.module.packages.root == os.path.abspath(".")
-    assert main.pkgdir == os.path.abspath(".")
-
-
-# def test_root_multiple(main):
-#     pytest.raises(SystemExit, main, [".", "."])
-#     pytest.raises(SystemExit, main, ["-r", ".", "."])
+def test_root_multiple(main):
+    # Remember we're already setting THIS_DIR as a root in the `main` fixture
+    main([str(THIS_DIR.parent)])
+    assert main.app._pypiserver_config.roots == [
+        THIS_DIR,
+        THIS_DIR.parent,
+    ]
 
 
 def test_fallback_url(main):
     main(["--fallback-url", "https://pypi.mirror/simple"])
-    assert main.app.module.config.fallback_url == "https://pypi.mirror/simple"
+    assert (
+        main.app._pypiserver_config.fallback_url == "https://pypi.mirror/simple"
+    )
 
 
 def test_fallback_url_default(main):
     main([])
-    assert main.app.module.config.fallback_url == "https://pypi.org/simple"
+    assert (
+        main.app._pypiserver_config.fallback_url == "https://pypi.org/simple/"
+    )
 
 
 def test_hash_algo_default(main):
     main([])
-    assert main.app.module.config.hash_algo == "md5"
+    assert main.app._pypiserver_config.hash_algo == "md5"
 
 
 def test_hash_algo(main):
     main(["--hash-algo=sha256"])
-    assert main.app.module.config.hash_algo == "sha256"
+    assert main.app._pypiserver_config.hash_algo == "sha256"
 
 
 def test_hash_algo_off(main):
     main(["--hash-algo=off"])
-    assert main.app.module.config.hash_algo is None
+    assert main.app._pypiserver_config.hash_algo is None
     main(["--hash-algo=0"])
-    assert main.app.module.config.hash_algo is None
+    assert main.app._pypiserver_config.hash_algo is None
     main(["--hash-algo=no"])
-    assert main.app.module.config.hash_algo is None
+    assert main.app._pypiserver_config.hash_algo is None
     main(["--hash-algo=false"])
-    assert main.app.module.config.hash_algo is None
+    assert main.app._pypiserver_config.hash_algo is None
 
 
 def test_hash_algo_BAD(main):
     with pytest.raises(SystemExit) as excinfo:
         main(["--hash-algo BAD"])
-    # assert excinfo.value.message == 'some info'     main(['--hash-algo BAD'])
-    print(excinfo)
 
 
 def test_logging(main, tmpdir):
@@ -187,7 +198,7 @@ def test_password_without_auth_list(main, monkeypatch):
     sysexit = mock.MagicMock(side_effect=ValueError("BINGO"))
     monkeypatch.setattr("sys.exit", sysexit)
     with pytest.raises(ValueError) as ex:
-        main(["-P", "pswd-file", "-a", ""])
+        main(["-P", str(HTPASS_FILE), "-a", ""])
     assert ex.value.args[0] == "BINGO"
 
     with pytest.raises(ValueError) as ex:
@@ -205,16 +216,13 @@ def test_password_without_auth_list(main, monkeypatch):
 def test_password_alone(main, monkeypatch):
     monkeypatch.setitem(sys.modules, "passlib", mock.MagicMock())
     monkeypatch.setitem(sys.modules, "passlib.apache", mock.MagicMock())
-    main(["-P", "pswd-file"])
-    assert main.app.module.config.authenticated == ["update"]
+    main(["-P", str(HTPASS_FILE)])
+    assert main.app.module.config.authenticate == ["update"]
 
 
 def test_dot_password_without_auth_list(main, monkeypatch):
-    main(["-P", ".", "-a", ""])
-    assert main.app.module.config.authenticated == []
-
     main(["-P", ".", "-a", "."])
-    assert main.app.module.config.authenticated == []
+    assert main.app.module.config.authenticate == []
 
 
 def test_blacklist_file(main):
@@ -222,5 +230,5 @@ def test_blacklist_file(main):
     Test that calling the app with the --blacklist-file argument does not
     throw a getopt error
     """
-    blacklist_file = "/root/pkg_blacklist"
-    main(["--blacklist-file", blacklist_file])
+    main(["-U", "--blacklist-file", str(IGNORELIST_FILE)])
+    assert main.update_kwargs["ignorelist"] == ["mypiserver", "something"]

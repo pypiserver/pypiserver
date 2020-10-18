@@ -34,6 +34,7 @@ import contextlib
 import hashlib
 import itertools
 import io
+import logging
 import pathlib
 import pkg_resources
 import re
@@ -94,7 +95,10 @@ def auth_arg(arg: str) -> t.List[str]:
             "Invalid authentication options. `.` (no authentication) "
             "must be specified alone."
         )
-    return items
+
+    # The "." is just an indicator for no auth, so we return an empty auth list
+    # if it was present.
+    return [i for i in items if not i == "."]
 
 
 def hash_algo_arg(arg: str) -> t.Optional[str]:
@@ -138,9 +142,18 @@ def ignorelist_file_arg(arg: t.Optional[str]) -> t.List[str]:
     """Parse the ignorelist and return the list of ignored files."""
     if arg is None or arg == "pypiserver/no-ignores":
         return []
-    with open(arg) as f:
-        stripped_lines = (ln.strip() for ln in f.readlines())
-        return [ln for ln in stripped_lines if ln and not ln.startswith("#")]
+
+    fpath = pathlib.Path(arg)
+    if not fpath.exists():
+        raise argparse.ArgumentTypeError(f"No such ignorelist-file '{arg}'")
+
+    try:
+        lines = (ln.strip() for ln in fpath.read_text().splitlines())
+        return [ln for ln in lines if ln and not ln.startswith("#")]
+    except Exception as exc:
+        raise argparse.ArgumentTypeError(
+            f"Could not parse ignorelist-file '{arg}': {exc}"
+        ) from exc
 
 
 def package_directory_arg(arg: str) -> pathlib.Path:
@@ -543,6 +556,20 @@ class _ConfigCommon:
             roots=namespace.package_directory,
         )
 
+    @property
+    def log_level(self) -> int:
+        """Return an appropriate log-level for the config's verbosity."""
+        levels = {
+            0: logging.WARNING,
+            1: logging.INFO,
+            2: logging.DEBUG,
+            3: logging.NOTSET,
+        }
+        # Return a log-level from warning through not set (log all messages).
+        # If we've specified more than 3 levels of verbosity, just return
+        # not set.
+        return levels.get(self.verbosity, logging.NOTSET)
+
     def iter_packages(self) -> t.Iterator[core.PkgFile]:
         """Iterate over packages in root directories."""
         yield from (
@@ -663,10 +690,10 @@ class RunConfig(_ConfigCommon):
         if passed_auther:
             return passed_auther
         # Otherwise we check to see if we need to authenticate
-        if self.password_file == "." or self.authenticate == ["."]:
+        if self.password_file == "." or self.authenticate == []:
             # It's illegal to specify no authentication without also specifying
             # no password file, and vice-versa.
-            if self.password_file != "." or self.authenticate != ["."]:
+            if self.password_file != "." or self.authenticate != []:
                 sys.exit(
                     "When auth-ops-list is empty (-a=.), password-file"
                     f" (-P={self.password_file!r}) must also be empty ('.')!"
@@ -832,26 +859,26 @@ class Config:
 
         # Don't actually update the passed list, in case it was the global
         # sys.argv.
-        args = list(args)
+        updated_args = list(args)
 
         # Find the update index. For "reasons", python's index search throws
         # if the value isn't found, so manually wrap in the usual "return -1
         # if not found" standard
         try:
-            update_idx = args.index("-U")
+            update_idx = updated_args.index("-U")
         except ValueError:
             update_idx = -1
 
         if update_idx == -1:
             # We were a "run" command.
-            args.insert(insertion_idx, "run")
+            updated_args.insert(insertion_idx, "run")
         else:
             # Remove the -U from the args and add the "update" command at the
             # start of the arg list.
-            args.pop(update_idx)
-            args.insert(insertion_idx, "update")
+            updated_args.pop(update_idx)
+            updated_args.insert(insertion_idx, "update")
 
-        return args
+        return updated_args
 
 
 @contextlib.contextmanager

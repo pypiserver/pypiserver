@@ -19,11 +19,10 @@ def init_logging(
     level=logging.NOTSET,
     frmt=None,
     filename=None,
-    stream: t.IO = None,
+    stream: t.Optional[t.IO] = sys.stderr,
     logger=None,
 ):
     logger = logger or logging.getLogger()
-    stream = stream or sys.stderr
     logger.setLevel(level)
 
     formatter = logging.Formatter(frmt)
@@ -42,30 +41,12 @@ def main(argv=None):
     import pypiserver
 
     if argv is None:
-        argv = sys.argv
+        argv = sys.argv[1:]
 
     config = Config.from_args(argv)
 
-    # roots = [os.path.abspath(x) for x in roots]
-    # c.root = roots
-
-    verbose_levels = [
-        logging.WARNING,
-        logging.INFO,
-        logging.DEBUG,
-        logging.NOTSET,
-    ]
-    log_level = list(zip(verbose_levels, range(config.verbosity)))[-1][0]
-
-    valid_streams = {"none": None, "stderr": sys.stderr, "stdout": sys.stdout}
-    if config.log_stream not in valid_streams:
-        sys.exit(
-            f"Invalid log stream {c.log_stream}."
-            f" Choose one of {', '.join(valid_streams.keys())}"
-        )
-
     init_logging(
-        level=log_level,
+        level=config.log_level,
         filename=config.log_file,
         frmt=config.log_frmt,
         stream=config.log_stream,
@@ -79,7 +60,7 @@ def main(argv=None):
             config.download_directory,
             dry_run=not config.execute,
             stable_only=config.allow_unstable,
-            blacklist_file=config.ignorelist,
+            ignorelist=config.ignorelist,
         )
         return
 
@@ -104,9 +85,10 @@ def main(argv=None):
         pypiserver._logwrite, logging.getLogger(bottle.__name__), logging.INFO
     )
     app = pypiserver.app_from_config(config)
+    app._pypiserver_config = config
     bottle.run(
         app=app,
-        host=config.interface,
+        host=config.host,
         port=config.port,
         server=config.server_method,
     )

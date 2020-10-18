@@ -287,7 +287,7 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         legacy_args=["-a", ".", "-P", "."],
         exp_config_type=RunConfig,
         exp_config_values={
-            "authenticate": ["."],
+            "authenticate": [],
             "_test": lambda conf: bool(conf.auther("foo", "bar")) is True,
         },
     ),
