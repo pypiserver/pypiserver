@@ -103,10 +103,6 @@ def auth_arg(arg: str) -> t.List[str]:
 
 def hash_algo_arg(arg: str) -> t.Optional[str]:
     """Parse a hash algorithm from the string."""
-    # The standard hashing algorithms are all made available via fully
-    # lowercase names, along with (sometimes) variously cased versions
-    # as well.
-    arg = arg.lower()
     if arg in hashlib.algorithms_available:
         return arg
     try:
