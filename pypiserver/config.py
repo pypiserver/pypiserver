@@ -525,12 +525,8 @@ class _ConfigCommon:
             "iter_packages",
             "package_root",
         )
-        # Iterate over files in specified package roots.
-        # self.iter_packages = lambda: itertools.chain.from_iterable(
-        #     r.iterdir() for r in self.roots
-        # )
-        # The first package directory is considered the root.
-        # TODO: does anything use this?
+        # The first package directory is considered the root. This is used
+        # for uploads.
         self.package_root = self.roots[0]
 
     @classmethod
