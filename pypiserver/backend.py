@@ -74,7 +74,7 @@ class Backend:
         """
         raise NotImplementedError
 
-    def add_package(self, filename: str, fh: t.BinaryIO):
+    def add_package(self, filename: str, fh: t.BinaryIO) -> None:
         """Add a package to the Backend. `filename` is the package's filename
         (without any directory parts). It is just a name, there is no file by
         that name (yet). `fh` is an open file object that can be used to read
@@ -87,7 +87,7 @@ class Backend:
         """Remove a package from the Backend"""
         raise NotImplementedError
 
-    def exists(self, filename) -> bool:
+    def exists(self, filename: str) -> bool:
         """Does a package by the given name exist?"""
         raise NotImplementedError
 
@@ -217,7 +217,7 @@ def digest_file(fpath, hash_algo: str):
     From http://stackoverflow.com/a/21565932/548792
     """
     blocksize = 2 ** 16
-    digester = getattr(hashlib, hash_algo)()
+    digester = hashlib.new(hash_algo)
     with open(fpath, "rb") as f:
         for block in iter(lambda: f.read(blocksize), b""):
             digester.update(block)

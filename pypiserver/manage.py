@@ -169,7 +169,7 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
 def update_all_packages(
     roots, destdir=None, dry_run=False, stable_only=True, blacklist_file=None
 ):
-    all_packages = itertools.chain(*[listdir(r) for r in roots])
+    all_packages = itertools.chain.from_iterable(listdir(r) for r in roots)
 
     skip_packages = set()
     if blacklist_file:
