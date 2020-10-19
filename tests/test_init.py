@@ -1,5 +1,5 @@
 """
-Test module for . . .
+Test module for app initialization
 """
 # Standard library imports
 from __future__ import (
@@ -10,8 +10,6 @@ from __future__ import (
 )
 import logging
 import pathlib
-from os.path import abspath, dirname, join, realpath
-from sys import path
 
 # Third party imports
 import pytest
@@ -43,14 +41,8 @@ HTPASS_FILE = TEST_DIR / "htpasswd.a.a"
 )
 def test_paste_app_factory(conf_options):
     """Test the paste_app_factory method"""
-    # monkeypatch.setattr(
-    #     "pypiserver.core.configure", lambda **x: (x, [x.keys()])
-    # )
     pypiserver.paste_app_factory({}, **conf_options)
 
 
 def test_app_factory():
-    # monkeypatch.setattr(
-    #     "pypiserver.core.configure", lambda **x: (x, [x.keys()])
-    # )
     assert pypiserver.app() is not pypiserver.app()
