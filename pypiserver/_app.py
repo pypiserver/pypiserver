@@ -90,18 +90,13 @@ def favicon():
 def root():
     fp = request.custom_fullpath
 
-    try:
-        numpkgs = len(list(core.get_all_packages()))
-    except:
-        numpkgs = 0
-
     # Ensure template() does not consider `msg` as filename!
     msg = config.welcome_msg + "\n"
     return template(
         msg,
         URL=request.url.rstrip("/") + "/",
         VERSION=__version__,
-        NUMPKGS=numpkgs,
+        NUMPKGS=core.package_count(),
         PACKAGES=fp.rstrip("/") + "/packages/",
         SIMPLE=fp.rstrip("/") + "/simple/",
     )

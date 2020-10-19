@@ -126,9 +126,7 @@ def get_bad_url_redirect_path(request, project):
     return uri
 
 
-PkgFunc = t.TypeVar(
-    "PkgFunc", bound=t.Callable[..., t.Iterable[PkgFile]]
-)
+PkgFunc = t.TypeVar("PkgFunc", bound=t.Callable[..., t.Iterable[PkgFile]])
 
 
 def with_digester(func: PkgFunc) -> PkgFunc:
@@ -163,6 +161,10 @@ def get_projects() -> t.Iterable[str]:
 def exists(filename: str) -> bool:
     assert "/" not in filename
     return backend.exists(filename)
+
+
+def package_count() -> int:
+    return backend.package_count()
 
 
 def add_package(filename, fh: t.BinaryIO):

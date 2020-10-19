@@ -106,6 +106,13 @@ class Backend:
             return None
         return digest_file(pkg.fn, self.hash_algo)
 
+    def package_count(self) -> int:
+        """Return a count of all available packages. When implementing a Backend
+        class, either use this method as is, or override it with a more
+        performant version.
+        """
+        return sum(1 for _ in self.get_all_packages())
+
     def get_projects(self) -> t.Iterable[str]:
         """Return an iterable of all (unique) projects available in the store
         in their PEP503 normalized form. When implementing a Backend class,
