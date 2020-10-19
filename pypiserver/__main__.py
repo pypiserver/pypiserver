@@ -37,9 +37,17 @@ def init_logging(
 
 
 def main(argv=None):
+    """Application entrypoint for pypiserver.
+
+    This function drives the application (as opposed to the library)
+    implementation of pypiserver. Usage from the commandline will result in
+    this function being called.
+    """
     import pypiserver
 
     if argv is None:
+        # The first item in sys.argv is the name of the python file being
+        # executed, which we don't need
         argv = sys.argv[1:]
 
     config = Config.from_args(argv)
@@ -51,6 +59,8 @@ def main(argv=None):
         stream=config.log_stream,
     )
 
+    # Check to see if we were asked to run an update command instead of running
+    # the server
     if isinstance(config, UpdateConfig):
         from pypiserver.manage import update_all_packages
 
@@ -73,16 +83,13 @@ def main(argv=None):
 
     from pypiserver import bottle
 
-    if config.server_method not in bottle.server_names:
-        sys.exit(
-            f"Unknown server {c.server}."
-            f" Choose one of {', '.join(bottle.server_names.keys())}"
-        )
-
     bottle.debug(config.verbosity > 1)
     bottle._stderr = ft.partial(
         _logwrite, logging.getLogger(bottle.__name__), logging.INFO
     )
+
+    # Here `app` is a Bottle instance, which we pass to bottle.run() to run
+    # the server
     app = pypiserver.app_from_config(config)
     bottle.run(
         app=app,
