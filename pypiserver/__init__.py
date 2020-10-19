@@ -99,7 +99,7 @@ def app(**kwargs: t.Any) -> Bottle:
     :param kwds: Any overrides for defaults. Any property of RunConfig
         (or its base), defined in `pypiserver.config`, may be overridden.
     """
-    config = Config.default_with_updates(**backwards_compat_kwargs(kwargs))
+    config = Config.default_with_overrides(**backwards_compat_kwargs(kwargs))
     return app_from_config(config)
 
 

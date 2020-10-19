@@ -6,40 +6,44 @@ the current config logic, but has not yet been integrated.
 To add a config option:
 
 - If it should be available for all subcommands (run, update), add it to
-  the `global_args` parser.
+  the `add_common_args()` function
 - If it should only be available for the `run` command, add it to the
-  `run_parser`.
+  `run_parser` in the `get_parser()` function.
 - If it should only be available for the `update` command, add it to the
-  `update_parser`.
+  `update_parser` in the `get_parser() function`.
 - Add it to the appropriate Config class, `_ConfigCommon` for global options,
   `RunConfig` for `run` options, and `UpdateConfig` for `update` options.
+  - This requires addit it as an `__init__()` kwarg, setting it as an instance
+    attribute in `__init__()`, and ensuring it will be parsed from the argparse
+    namespace in the `kwargs_from_namespace()` method
 - Ensure your config option is tested in `tests/test_config.py`.
 
-The `Config` class provides a `.from_args()` static method, which returns
-either a `RunConfig` or an `UpdateConfig`, depending on which subcommand
-is specified in the args.
+The `Config` class is a factory class only. Config objects do not inherit from
+it, but from `_ConfigCommon`. The `Config` provides the following constructors:
+
+- `default_with_overrides(**overrides: Any)`: construct a `RunConfig` (since
+  run is the default pypiserver action) with default values, applying any
+  specified overrides
+- `from_args(args: Optional[Sequence[str]])`: construct a config from the
+  provided arguments. Depending on arguments, the config will be either a
+  `RunConfig` or an `UpdateConfig`
 
 Legacy commandline arguments did not require a subcommand. This form is
 still supported, but deprecated. A warning is printing to stderr if
 the legacy commandline format is used.
-
-Command line arguments should be parsed as early as possible, using
-custom functions like the `auth_*` functions below if needed. For example,
-if an option were to take JSON as an argument, that JSON should be parsed
-into a dict by the argument parser.
 """
 
 import argparse
 import contextlib
 import hashlib
-import itertools
 import io
+import itertools
 import logging
 import pathlib
 import pkg_resources
 import re
-import textwrap
 import sys
+import textwrap
 import typing as t
 from distutils.util import strtobool as strtoint
 
@@ -540,6 +544,7 @@ class _ConfigCommon:
     def kwargs_from_namespace(
         namespace: argparse.Namespace,
     ) -> t.Dict[str, t.Any]:
+        """Convert a namespace into __init__ kwargs for this class."""
         return dict(
             verbosity=namespace.verbose,
             log_file=namespace.log_file,
@@ -655,7 +660,7 @@ class RunConfig(_ConfigCommon):
     def kwargs_from_namespace(
         cls, namespace: argparse.Namespace
     ) -> t.Dict[str, t.Any]:
-        """Retrieve kwargs from the passed namespace."""
+        """Convert a namespace into __init__ kwargs for this class."""
         return {
             **super(RunConfig, cls).kwargs_from_namespace(namespace),
             "port": namespace.port,
@@ -739,6 +744,7 @@ class UpdateConfig(_ConfigCommon):
     def kwargs_from_namespace(
         cls, namespace: argparse.Namespace
     ) -> t.Dict[str, t.Any]:
+        """Convert a namespace into __init__ kwargs for this class."""
         return {
             **super(UpdateConfig, cls).kwargs_from_namespace(namespace),
             "execute": namespace.execute,
@@ -752,10 +758,15 @@ class Config:
     """Config constructor for building a config from args."""
 
     @classmethod
-    def default_with_updates(cls, **kwargs: t.Any) -> RunConfig:
+    def default_with_overrides(cls, **overrides: t.Any) -> RunConfig:
+        """Construct a RunConfig with default arguments, plus overrides.
+
+        Overrides must be valid arguments to the `__init__()` function
+        of `RunConfig`.
+        """
         default_config = cls.from_args(["run"])
         assert isinstance(default_config, RunConfig)
-        return default_config.with_updates(**kwargs)
+        return default_config.with_updates(**overrides)
 
     @classmethod
     def from_args(
