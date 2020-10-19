@@ -126,7 +126,12 @@ def get_bad_url_redirect_path(request, project):
     return uri
 
 
-def with_digester(func: t.Callable[..., t.Iterable[PkgFile]]):
+PkgFunc = t.TypeVar(
+    "PkgFunc", bound=t.Callable[..., t.Iterable[PkgFile]]
+)
+
+
+def with_digester(func: PkgFunc) -> PkgFunc:
     @functools.wraps(func)
     def add_digester_method(*args, **kwargs):
         packages = func(*args, **kwargs)

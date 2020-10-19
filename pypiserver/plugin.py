@@ -21,14 +21,14 @@ arguments, so a plugin should accept a **kwargs variadic keyword argument.
 from pypiserver.backend import SimpleFileBackend, CachingFileBackend
 from pypiserver.core import get_file_backend
 
-DEFAULS_PACKAGE_DIRECTORIES = ["~/packages"]
+DEFAULT_PACKAGE_DIRECTORIES = ["~/packages"]
 
 
 # register this as a setuptools entrypoint under the 'pypiserver.plugin' key
 def my_plugin(add_argument, backends, **_):
     add_argument(
         "package_directory",
-        default=DEFAULS_PACKAGE_DIRECTORIES,
+        default=DEFAULT_PACKAGE_DIRECTORIES,
         nargs="*",
         help="The directory from which to serve packages.",
     )

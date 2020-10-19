@@ -3,12 +3,12 @@ import re
 from urllib.parse import quote
 
 
-def normalize_pkgname(name):
+def normalize_pkgname(name: str) -> str:
     """Perform PEP 503 normalization"""
     return re.sub(r"[-_.]+", "-", name).lower()
 
 
-def normalize_pkgname_for_url(name):
+def normalize_pkgname_for_url(name: str) -> str:
     """Perform PEP 503 normalization and ensure the value is safe for URLs."""
     return quote(normalize_pkgname(name))
 
@@ -34,7 +34,7 @@ def _parse_version_parts(s):
     yield "*final"  # ensure that alpha/beta/candidate are before final
 
 
-def parse_version(s):
+def parse_version(s: str) -> tuple:
     parts = []
     for part in _parse_version_parts(s.lower()):
         if part.startswith("*"):
@@ -49,7 +49,7 @@ def parse_version(s):
 # ### -- End of distribute's code.
 
 
-def is_allowed_path(path_part):
+def is_allowed_path(path_part: str) -> bool:
     p = path_part.replace("\\", "/")
     return not (p.startswith(".") or "/." in p)
 

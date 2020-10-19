@@ -2,10 +2,10 @@ import hashlib
 import itertools
 import os
 import typing as t
-from pathlib import Path, PurePath
+from pathlib import Path
 
 from . import Configuration
-from .cache import ENABLE_CACHING, CacheManager
+from .cache import CacheManager
 from .pkg_helpers import (
     normalize_pkgname,
     parse_version,
@@ -13,7 +13,7 @@ from .pkg_helpers import (
     guess_pkgname_and_version,
 )
 
-PathLike = t.Union[str, bytes, Path, PurePath]
+PathLike = t.Union[str, os.PathLike]
 
 
 class PkgFile:
@@ -30,14 +30,24 @@ class PkgFile:
         "parsed_version",  # The package version as a tuple of parts
         "digester",  # a function that calculates the digest for the package
     ]
+    digest: t.Optional[str]
+    digester: t.Optional[t.Callable[["PkgFile"], t.Optional[str]]]
+    parsed_version: tuple
+    relfn_unix: t.Optional[str]
 
     def __init__(
-        self, pkgname, version, fn=None, root=None, relfn=None, replaces=None
+        self,
+        pkgname: str,
+        version: str,
+        fn: t.Optional[str] = None,
+        root: t.Optional[str] = None,
+        relfn: t.Optional[str] = None,
+        replaces: t.Optional["PkgFile"] = None,
     ):
         self.pkgname = pkgname
         self.pkgname_norm = normalize_pkgname(pkgname)
         self.version = version
-        self.parsed_version = parse_version(version)
+        self.parsed_version: tuple = parse_version(version)
         self.fn = fn
         self.root = root
         self.relfn = relfn
@@ -45,7 +55,7 @@ class PkgFile:
         self.replaces = replaces
         self.digest = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "{}({})".format(
             self.__class__.__name__,
             ", ".join(
@@ -57,16 +67,16 @@ class PkgFile:
         )
 
     @property
-    def fname_and_hash(self):
-        if self.digest is None:
+    def fname_and_hash(self) -> str:
+        if self.digest is None and self.digester is not None:
             self.digest = self.digester(self)
         hashpart = f"#{self.digest}" if self.digest else ""
-        return self.relfn_unix + hashpart
+        return self.relfn_unix + hashpart  # type: ignore
 
 
 class Backend:
     def __init__(self, config: Configuration):
-        self.hash_algo = config.hash_algo
+        self.hash_algo = config.hash_algo  # type: ignore
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
         """Implement this method to return an Iterable of all packages (as
@@ -74,7 +84,7 @@ class Backend:
         """
         raise NotImplementedError
 
-    def add_package(self, filename: str, fh: t.BinaryIO) -> None:
+    def add_package(self, filename: str, stream: t.BinaryIO) -> None:
         """Add a package to the Backend. `filename` is the package's filename
         (without any directory parts). It is just a name, there is no file by
         that name (yet). `fh` is an open file object that can be used to read
@@ -83,7 +93,7 @@ class Backend:
         """
         raise NotImplementedError
 
-    def remove_package(self, pkg: PkgFile):
+    def remove_package(self, pkg: PkgFile) -> None:
         """Remove a package from the Backend"""
         raise NotImplementedError
 
@@ -91,8 +101,8 @@ class Backend:
         """Does a package by the given name exist?"""
         raise NotImplementedError
 
-    def digest(self, pkg: PkgFile):
-        if self.hash_algo is None:
+    def digest(self, pkg: PkgFile) -> t.Optional[str]:
+        if self.hash_algo is None or pkg.fn is None:
             return None
         return digest_file(pkg.fn, self.hash_algo)
 
@@ -120,7 +130,7 @@ class Backend:
             if normalize_pkgname(project) == x.pkgname_norm
         )
 
-    def find_version(self, name, version) -> t.Iterable[PkgFile]:
+    def find_version(self, name: str, version: str) -> t.Iterable[PkgFile]:
         """Return all packages that match PkgFile.pkgname == name and
         PkgFile.version == version` When implementing a Backend class,
         either use this method as is, or override it with a more performant
@@ -137,40 +147,46 @@ class SimpleFileBackend(Backend):
         super().__init__(config)
         self.roots = [Path(root).resolve() for root in roots]
 
-    def get_all_packages(self):
+    def get_all_packages(self) -> t.Iterable[PkgFile]:
         return itertools.chain.from_iterable(listdir(r) for r in self.roots)
 
-    def add_package(self, filename: str, fh: t.BinaryIO):
-        as_file(fh, self.roots[0].joinpath(filename))
+    def add_package(self, filename: str, stream: t.BinaryIO) -> None:
+        write_file(stream, self.roots[0].joinpath(filename))
 
-    def remove_package(self, pkg: PkgFile):
-        os.remove(pkg.fn)
+    def remove_package(self, pkg: PkgFile) -> None:
+        if pkg.fn is not None:
+            os.remove(pkg.fn)
 
-    def exists(self, filename):
+    def exists(self, filename: str) -> bool:
         # TODO: Also look in subdirectories?
         return any(root.joinpath(filename).exists() for root in self.roots)
 
 
 class CachingFileBackend(SimpleFileBackend):
     def __init__(
-        self, config: Configuration, roots: t.List[PathLike], cache_manager
+        self,
+        config: Configuration,
+        roots: t.List[PathLike],
+        cache_manager: CacheManager,
     ):
         super().__init__(config, roots)
 
-        self.cache_manager: CacheManager = cache_manager
+        self.cache_manager = cache_manager
 
-    def get_all_packages(self):
+    def get_all_packages(self) -> t.Iterable[PkgFile]:
         return itertools.chain.from_iterable(
             self.cache_manager.listdir(r, listdir) for r in self.roots
         )
 
-    def digest(self, pkg: PkgFile):
+    def digest(self, pkg: PkgFile) -> t.Optional[str]:
+        if pkg.fn is None:
+            return None
         return self.cache_manager.digest_file(
             pkg.fn, self.hash_algo, digest_file
         )
 
 
-def as_file(fh: t.BinaryIO, destination: PathLike):
+def write_file(fh: t.BinaryIO, destination: PathLike) -> None:
     """write a byte stream into a destination file. Writes are chunked to reduce
     the memory footprint
     """
@@ -202,15 +218,16 @@ def listdir(root: PathLike) -> t.Iterable[PkgFile]:
                     pkgname=pkgname,
                     version=version,
                     fn=fn,
-                    root=root,
+                    root=str(root),
                     relfn=fn[len(str(root)) + 1 :],
                 )
 
 
-def digest_file(fpath, hash_algo: str):
+def digest_file(file_path: PathLike, hash_algo: str) -> str:
     """
     Reads and digests a file according to specified hashing-algorith.
 
+    :param file_path: path to a file on disk
     :param hash_algo: any algo contained in :mod:`hashlib`
     :return: <hash_algo>=<hex_digest>
 
@@ -218,7 +235,7 @@ def digest_file(fpath, hash_algo: str):
     """
     blocksize = 2 ** 16
     digester = hashlib.new(hash_algo)
-    with open(fpath, "rb") as f:
+    with open(file_path, "rb") as f:
         for block in iter(lambda: f.read(blocksize), b""):
             digester.update(block)
     return f"{hash_algo}={digester.hexdigest()}"

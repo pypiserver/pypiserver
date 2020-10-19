@@ -66,7 +66,9 @@ class CacheManager:
         self.listdir_lock = threading.Lock()
 
     def listdir(
-        self, root: t.Union[Path, str], impl_fn
+        self,
+        root: t.Union[Path, str],
+        impl_fn: t.Callable[[t.Union[Path, str]], t.Iterable["PkgFile"]],
     ) -> t.Iterable["PkgFile"]:
         root = str(root)
         with self.listdir_lock:
@@ -82,7 +84,9 @@ class CacheManager:
                 self.listdir_cache[root] = v
                 return v
 
-    def digest_file(self, fpath, hash_algo, impl_fn):
+    def digest_file(
+        self, fpath: str, hash_algo: str, impl_fn: t.Callable[[str, str], str]
+    ) -> str:
         with self.digest_lock:
             try:
                 cache = self.digest_cache[hash_algo]
