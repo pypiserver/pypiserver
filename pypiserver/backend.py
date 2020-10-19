@@ -119,11 +119,7 @@ class Backend:
         either use this method as is, or override it with a more performant
         version.
         """
-        normalized_pkgnames = set()
-        for x in self.get_all_packages():
-            if x.pkgname:
-                normalized_pkgnames.add(x.pkgname_norm)
-        return normalized_pkgnames
+        return set(package.pkgname_norm for package in self.get_all_packages())
 
     def find_project_packages(self, project: str) -> t.Iterable[PkgFile]:
         """Find all packages from a given project. The project may be given
