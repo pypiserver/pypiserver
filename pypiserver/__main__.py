@@ -81,16 +81,25 @@ def main(argv=None):
 
     bottle.debug(config.verbosity > 1)
     bottle._stderr = ft.partial(
-        pypiserver._logwrite, logging.getLogger(bottle.__name__), logging.INFO
+        _logwrite, logging.getLogger(bottle.__name__), logging.INFO
     )
     app = pypiserver.app_from_config(config)
-    app._pypiserver_config = config
     bottle.run(
         app=app,
         host=config.host,
         port=config.port,
         server=config.server_method,
     )
+
+
+def _logwrite(logger, level, msg):
+    if msg:
+        line_endings = ["\r\n", "\n\r", "\n"]
+        for le in line_endings:
+            if msg.endswith(le):
+                msg = msg[: -len(le)]
+        if msg:
+            logger.log(level, msg)
 
 
 if __name__ == "__main__":

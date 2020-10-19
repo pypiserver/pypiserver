@@ -181,13 +181,3 @@ def paste_app_factory(_global_config, **local_conf):
     updated_conf = backwards_compat_kwargs(mapped_conf)
 
     return app(**updated_conf)
-
-
-def _logwrite(logger, level, msg):
-    if msg:
-        line_endings = ["\r\n", "\n\r", "\n"]
-        for le in line_endings:
-            if msg.endswith(le):
-                msg = msg[: -len(le)]
-        if msg:
-            logger.log(level, msg)
