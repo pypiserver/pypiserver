@@ -87,9 +87,9 @@ class Backend:
     def add_package(self, filename: str, stream: t.BinaryIO) -> None:
         """Add a package to the Backend. `filename` is the package's filename
         (without any directory parts). It is just a name, there is no file by
-        that name (yet). `fh` is an open file object that can be used to read
-        the file's content. To convert the package into an actual file on disk,
-        run `as_file(filename, fh)`.
+        that name (yet). `stream` is an open file-like object that can be used
+        to read the file's content. To convert the package into an actual file
+        on disk, run `write_file(filename, stream)`.
         """
         raise NotImplementedError
 
@@ -203,7 +203,7 @@ def write_file(fh: t.BinaryIO, destination: PathLike) -> None:
         fh.seek(offset)
 
 
-def listdir(root: PathLike) -> t.Iterable[PkgFile]:
+def listdir(root: PathLike) -> t.Iterator[PkgFile]:
     root = Path(root).resolve()
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [x for x in dirnames if is_allowed_path(x)]
@@ -224,7 +224,6 @@ def listdir(root: PathLike) -> t.Iterable[PkgFile]:
                     root=str(root),
                     relfn=fn[len(str(root)) + 1 :],
                 )
-
 
 def digest_file(file_path: PathLike, hash_algo: str) -> str:
     """

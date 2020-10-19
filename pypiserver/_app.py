@@ -290,13 +290,13 @@ def simple(project):
 
     current_uri = request.custom_fullpath
 
-    links = [
+    links = (
         (
             os.path.basename(pkg.relfn),
             urljoin(current_uri, f"../../packages/{pkg.fname_and_hash}"),
         )
         for pkg in packages
-    ]
+    )
 
     tmpl = """\
     <html>
