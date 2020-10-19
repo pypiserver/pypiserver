@@ -171,7 +171,7 @@ class PkgFile:
         return self._fname_and_hash
 
 
-def _listdir(root: str) -> t.Iterator[PkgFile]:
+def _listdir(root: str) -> t.Iterable[PkgFile]:
     root = os.path.abspath(root)
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [x for x in dirnames if is_allowed_path(x)]
@@ -253,7 +253,7 @@ def _digest_file(fpath, hash_algo):
 try:
     from .cache import cache_manager
 
-    def listdir(root):
+    def listdir(root: str) -> t.Iterable[PkgFile]:
         # root must be absolute path
         return cache_manager.listdir(root, _listdir)
 
