@@ -160,6 +160,9 @@ def paste_app_factory(_global_config, **local_conf):
         """Convert a specified string root into an absolute Path instance."""
         return pathlib.Path(root.strip()).expanduser().resolve()
 
+    # A map of config keys we expect in the paste config to the appropriate
+    # function to parse the string config value. This map includes both
+    # current and legacy keys.
     maps = {
         "cache_control": to_int,
         "roots": functools.partial(to_list, sep="\n", transform=_make_root),
@@ -175,9 +178,10 @@ def paste_app_factory(_global_config, **local_conf):
         "verbosity": to_int,
     }
 
-    mapped_conf = {
-        k: maps.get(k, lambda i: i)(v) for k, v in local_conf.items()
-    }
+    # First, convert values from strings to whatever types we need, or leave
+    # them as strings if there's no mapping function available for them.
+    mapped_conf = {k: maps.get(k, identity)(v) for k, v in local_conf.items()}
+    # Convert any legacy key/value pairs into their modern form.
     updated_conf = backwards_compat_kwargs(mapped_conf)
 
     return app(**updated_conf)
