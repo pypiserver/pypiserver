@@ -566,7 +566,7 @@ class _ConfigCommon:
         """Iterate over packages in root directories."""
         yield from (
             itertools.chain.from_iterable(
-                core._listdir(str(r)) for r in self.roots
+                core.listdir(str(r)) for r in self.roots
             )
         )
 
