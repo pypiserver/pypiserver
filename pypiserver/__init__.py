@@ -4,6 +4,7 @@ import re as _re
 import sys
 import typing as t
 
+from pypiserver.bottle import Bottle
 from pypiserver.config import Config, RunConfig, strtobool
 
 version = __version__ = "2.0.0dev1"
@@ -19,29 +20,54 @@ identity = lambda x: x
 
 
 def backwards_compat_kwargs(kwargs: dict, warn: bool = True) -> dict:
+    """Return a dict with deprecated kwargs converted to new kwargs.
+
+    :param kwargs: the incoming kwargs to convert
+    :param warn: whether to output a warning to stderr if there are deprecated
+        kwargs found in the incoming kwargs
+    """
+    # A mapping of deprecated kwargs to a 2-tuple of their corresponding updated
+    # kwarg and a function to convert the value of the deprecated kwarg to a
+    # value for the new kwarg. `identity` is just a function that returns
+    # whatever it is passed and is used in cases where the only change from
+    # a legacy kwarg is its name.
     backwards_compat = {
         "authenticated": ("authenticate", identity),
         "passwords": ("password_file", identity),
+        # `root` could be a string or an array of strings. Handle both cases,
+        # converting strings to Path instances.
         "root": (
             "roots",
             lambda root: [
+                # Convert strings to absolute Path instances
                 pathlib.Path(r).expanduser().resolve()
                 for r in ([root] if isinstance(root, str) else root)
             ],
         ),
+        # `redirect_to_fallback` was changed to `disable_fallback` for clearer
+        # use as a flag to disable the default behavior. Since its behavior
+        # is the opposite, we negate it.
         "redirect_to_fallback": (
             "disable_fallback",
             lambda redirect: not redirect,
         ),
         "server": ("server_method", identity),
+        # `welcome_msg` now is just provided as text, so that anyone using
+        # pypiserver as a library doesn't need to worry about distributing
+        # files if they don't need to. If we're still passed an old-style
+        # `welcome_file` argument, we go ahead and resolve it to an absolute
+        # path and read the text.
         "welcome_file": (
             "welcome_msg",
             lambda p: pathlib.Path(p).expanduser().resolve().read_text(),
         ),
     }
+    # Warn the user if they're using any deprecated arguments
     if warn and any(k in backwards_compat for k in kwargs):
+        # Make nice instructions like `Please replace the following:
+        # 'authenticated' with 'authenticate'` and print to stderr.
         replacement_strs = (
-            f"{k} with {backwards_compat[k][0]}"
+            f"'{k}' with '{backwards_compat[k][0]}'"
             for k in filter(lambda k: k in kwargs, backwards_compat)
         )
         warn_str = (
@@ -50,6 +76,12 @@ def backwards_compat_kwargs(kwargs: dict, warn: bool = True) -> dict:
         )
         print(warn_str, file=sys.stderr)
 
+    # Create an iterable of 2-tuple to collect into the updated dictionary. Each
+    # item will either be the existing key-value pair from kwargs, or, if the
+    # keyword is a legacy keyword, the new key and potentially adjusted value
+    # for that keyword. Note that depending on the order the argument are
+    # specified, this _could_ mean an updated legacy keyword could override
+    # a new argument if that argument is also specified. For example,
     rv_iter = (
         (
             (k, v)
@@ -61,23 +93,32 @@ def backwards_compat_kwargs(kwargs: dict, warn: bool = True) -> dict:
     return dict(rv_iter)
 
 
-def app(**kwargs):
-    """
-    :param dict kwds: Any overrides for defaults, as fetched by
-        :func:`default_config()`. Check the docstring of this function
-        for supported kwds.
+def app(**kwargs: t.Any) -> Bottle:
+    """Construct a bottle app running pypiserver.
+
+    :param kwds: Any overrides for defaults. Any property of RunConfig
+        (or its base), defined in `pypiserver.config`, may be overridden.
     """
     config = Config.default_with_updates(**backwards_compat_kwargs(kwargs))
     return app_from_config(config)
 
 
-def app_from_config(config: RunConfig):
+def app_from_config(config: RunConfig) -> Bottle:
+    """Construct a bottle app from the provided RunConfig."""
+    # The _app module instantiates a Bottle instance directly when it is
+    # imported. That is `_app.app`. We directly mutate some global variables
+    # on the imported `_app` module so that its endpoints will behave as
+    # we expect.
     _app = __import__("_app", globals(), locals(), ["."], 1)
+    # Because we're about to mutate our import, we pop it out of the imported
+    # modules map, so that any future imports do not receive our mutated version
     sys.modules.pop("pypiserver._app", None)
     _app.config = config
     _app.iter_packages = config.iter_packages
     _app.package_root = config.package_root
-    _app.app.module = _app  # HACK for testing.
+    # Add a reference to our config on the Bottle app for easy access in testing
+    # and other contexts.
+    _app.app._pypiserver_config = config
     return _app.app
 
 
@@ -92,9 +133,11 @@ def paste_app_factory(_global_config, **local_conf):
     """
 
     def to_bool(val: t.Optional[str]) -> t.Optional[bool]:
+        """Convert a string value, if provided, to a bool."""
         return val if val is None else strtobool(val)
 
     def to_int(val: t.Optional[str]) -> t.Optional[int]:
+        """Convert a string value, if provided, to an int."""
         return val if val is None else int(val)
 
     def to_list(
@@ -102,11 +145,19 @@ def paste_app_factory(_global_config, **local_conf):
         sep: str = " ",
         transform: t.Callable[[str], T] = str.strip,
     ) -> t.Optional[t.List[T]]:
+        """Convert a string value, if provided, to a list.
+
+        :param sep: the separator between items in the string representation
+            of the list
+        :param transform: an optional function to call on each string item of
+            the list
+        """
         if val is None:
             return val
         return list(filter(None, map(transform, val.split(sep))))
 
     def _make_root(root: str) -> pathlib.Path:
+        """Convert a specified string root into an absolute Path instance."""
         return pathlib.Path(root.strip()).expanduser().resolve()
 
     maps = {

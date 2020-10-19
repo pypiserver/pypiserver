@@ -36,7 +36,7 @@ except ImportError:  # PY2
 
 
 log = logging.getLogger(__name__)
-config: RunConfig = None
+config: RunConfig
 
 app = Bottle()
 

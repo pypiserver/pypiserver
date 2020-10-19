@@ -186,12 +186,12 @@ def test_init_logging_with_none_stream_doesnt_add_stream_handler(dummy_logger):
 def test_welcome_file(main):
     sample_msg_file = os.path.join(os.path.dirname(__file__), "sample_msg.html")
     main(["--welcome", sample_msg_file])
-    assert "Hello pypiserver tester!" in main.app.module.config.welcome_msg
+    assert "Hello pypiserver tester!" in main.app._pypiserver_config.welcome_msg
 
 
 def test_welcome_file_default(main):
     main([])
-    assert "Welcome to pypiserver!" in main.app.module.config.welcome_msg
+    assert "Welcome to pypiserver!" in main.app._pypiserver_config.welcome_msg
 
 
 def test_password_without_auth_list(main, monkeypatch):
@@ -217,12 +217,12 @@ def test_password_alone(main, monkeypatch):
     monkeypatch.setitem(sys.modules, "passlib", mock.MagicMock())
     monkeypatch.setitem(sys.modules, "passlib.apache", mock.MagicMock())
     main(["-P", str(HTPASS_FILE)])
-    assert main.app.module.config.authenticate == ["update"]
+    assert main.app._pypiserver_config.authenticate == ["update"]
 
 
 def test_dot_password_without_auth_list(main, monkeypatch):
     main(["-P", ".", "-a", "."])
-    assert main.app.module.config.authenticate == []
+    assert main.app._pypiserver_config.authenticate == []
 
 
 def test_blacklist_file(main):
