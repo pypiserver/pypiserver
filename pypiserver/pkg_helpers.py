@@ -1,5 +1,6 @@
 import os
 import re
+import typing as t
 from urllib.parse import quote
 
 
@@ -71,10 +72,12 @@ _pkgname_parts_re = re.compile(
 )
 
 
-def _guess_pkgname_and_version_wheel(basename):
+def _guess_pkgname_and_version_wheel(
+    basename: str,
+) -> t.Optional[t.Tuple[str, str]]:
     m = wheel_file_re.match(basename)
     if not m:
-        return None, None
+        return None
     name = m.group("name")
     ver = m.group("ver")
     build = m.group("build")
@@ -84,14 +87,14 @@ def _guess_pkgname_and_version_wheel(basename):
         return name, ver
 
 
-def guess_pkgname_and_version(path: str):
+def guess_pkgname_and_version(path: str) -> t.Optional[t.Tuple[str, str]]:
     path = os.path.basename(path)
     if path.endswith(".asc"):
         path = path.rstrip(".asc")
     if path.endswith(".whl"):
         return _guess_pkgname_and_version_wheel(path)
     if not _archive_suffix_rx.search(path):
-        return
+        return None
     path = _archive_suffix_rx.sub("", path)
     if "-" not in path:
         pkgname, version = path, ""

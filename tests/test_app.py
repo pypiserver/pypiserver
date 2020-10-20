@@ -1,26 +1,18 @@
 #! /usr/bin/env py.test
 
 # Builtin imports
-import logging
 import os
-import time
-
-from html import unescape
 import xmlrpc.client as xmlrpclib
-
+from html import unescape
 
 # Third party imports
 import pytest
 import webtest
 
-
 # Local Imports
-from pypiserver import __main__, bottle, backend, core
+from tests.test_pkg_helpers import files
+from pypiserver import __main__, bottle, core
 from pypiserver.backend import CachingFileBackend
-from pypiserver.cache import ENABLE_CACHING
-
-import tests.test_core as test_core
-
 
 # Enable logging to detect any problems with it
 ##
@@ -449,7 +441,7 @@ def test_upload_badAction(root, testapp):
 
 
 @pytest.mark.parametrize(
-    "package", [f[0] for f in test_core.files if f[1] and "/" not in f[0]]
+    "package", [f[0] for f in files if f[1] and "/" not in f[0]]
 )
 def test_upload(package, root, testapp):
     resp = testapp.post(
@@ -464,7 +456,7 @@ def test_upload(package, root, testapp):
 
 
 @pytest.mark.parametrize(
-    "package", [f[0] for f in test_core.files if f[1] and "/" not in f[0]]
+    "package", [f[0] for f in files if f[1] and "/" not in f[0]]
 )
 def test_upload_with_signature(package, root, testapp):
     resp = testapp.post(
@@ -483,7 +475,7 @@ def test_upload_with_signature(package, root, testapp):
 
 
 @pytest.mark.parametrize(
-    "package", [f[0] for f in test_core.files if f[1] is None]
+    "package", [f[0] for f in files if f[1] is None]
 )
 def test_upload_badFilename(package, root, testapp):
     resp = testapp.post(
