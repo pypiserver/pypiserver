@@ -16,7 +16,7 @@ __main__.init_logging()
 
 def test_listdir_bad_name(tmp_path):
     tmp_path.joinpath("foo.whl").touch()
-    res = list(backend.listdir(str(tmp_path)))
+    res = list(backend.listdir(tmp_path))
     assert res == []
 
 

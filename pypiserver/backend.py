@@ -2,14 +2,14 @@ import hashlib
 import itertools
 import os
 import typing as t
-from pathlib import Path
+from pathlib import Path, PurePath
 
 from . import Configuration
 from .cache import CacheManager
 from .pkg_helpers import (
     normalize_pkgname,
     parse_version,
-    is_allowed_path,
+    is_listed_path,
     guess_pkgname_and_version,
 )
 
@@ -161,8 +161,11 @@ class SimpleFileBackend(Backend):
             os.remove(pkg.fn)
 
     def exists(self, filename: str) -> bool:
-        # TODO: Also look in subdirectories?
-        return any(root.joinpath(filename).exists() for root in self.roots)
+        return any(
+            filename == existing_file.name
+            for root in self.roots
+            for existing_file in all_listed_files(root)
+        )
 
 
 class CachingFileBackend(SimpleFileBackend):
@@ -203,27 +206,40 @@ def write_file(fh: t.BinaryIO, destination: PathLike) -> None:
         fh.seek(offset)
 
 
-def listdir(root: PathLike) -> t.Iterator[PkgFile]:
-    root = Path(root).resolve()
+def listdir(root: Path) -> t.Iterator[PkgFile]:
+    root = root.resolve()
+    files = all_listed_files(root)
+    yield from valid_packages(root, files)
+
+
+def all_listed_files(root: Path) -> t.Iterator[Path]:
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [x for x in dirnames if is_allowed_path(x)]
-        for x in filenames:
-            fn = os.path.join(root, dirpath, x)
-            if not is_allowed_path(x) or not Path(fn).is_file():
+        dirnames[:] = (
+            dirname for dirname in dirnames if is_listed_path(Path(dirname))
+        )
+        for filename in filenames:
+            if not is_listed_path(Path(filename)):
                 continue
-            res = guess_pkgname_and_version(x)
-            if not res:
-                # Seems the current file isn't a proper package
-                continue
+            filepath = root / dirpath / filename
+            if Path(filepath).is_file():
+                yield filepath
+
+
+def valid_packages(root: Path, files: t.Iterable[Path]) -> t.Iterator[PkgFile]:
+    for file in files:
+        res = guess_pkgname_and_version(str(file.name))
+        if res is not None:
             pkgname, version = res
-            if pkgname:
-                yield PkgFile(
-                    pkgname=pkgname,
-                    version=version,
-                    fn=fn,
-                    root=str(root),
-                    relfn=fn[len(str(root)) + 1 :],
-                )
+            fn = str(file)
+            root_name = str(root)
+            yield PkgFile(
+                pkgname=pkgname,
+                version=version,
+                fn=fn,
+                root=root_name,
+                relfn=fn[len(root_name) + 1 :],
+            )
+
 
 def digest_file(file_path: PathLike, hash_algo: str) -> str:
     """

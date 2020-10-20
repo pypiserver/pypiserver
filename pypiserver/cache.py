@@ -68,7 +68,7 @@ class CacheManager:
     def listdir(
         self,
         root: t.Union[Path, str],
-        impl_fn: t.Callable[[t.Union[Path, str]], t.Iterable["PkgFile"]],
+        impl_fn: t.Callable[[Path], t.Iterable["PkgFile"]],
     ) -> t.Iterable["PkgFile"]:
         root = str(root)
         with self.listdir_lock:
@@ -80,7 +80,7 @@ class CacheManager:
                     if root not in self.watched:
                         self._watch(root)
 
-                v = list(impl_fn(root))
+                v = list(impl_fn(Path(root)))
                 self.listdir_cache[root] = v
                 return v
 

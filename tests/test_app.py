@@ -10,7 +10,7 @@ import pytest
 import webtest
 
 # Local Imports
-from tests.test_pkg_helpers import files
+from tests.test_pkg_helpers import files, invalid_files
 from pypiserver import __main__, bottle, core
 from pypiserver.backend import CachingFileBackend
 
@@ -455,6 +455,21 @@ def test_upload(package, root, testapp):
     assert uploaded_pkgs[0].lower() == package.lower()
 
 
+def test_upload_conflict_on_existing(root, testapp):
+    package = "foo_bar-1.0.tar.gz"
+    root.join("foo_bar-1.0.tar.gz").write("")
+
+    resp = testapp.post(
+        "/",
+        params={":action": "file_upload"},
+        upload_files=[("content", package, b"")],
+        status=409,
+    )
+
+    assert resp.status_int == 409
+    assert "Package 'foo_bar-1.0.tar.gz' already exists!" in unescape(resp.text)
+
+
 @pytest.mark.parametrize(
     "package", [f[0] for f in files if f[1] and "/" not in f[0]]
 )
@@ -474,10 +489,9 @@ def test_upload_with_signature(package, root, testapp):
     assert f"{package.lower()}.asc" in uploaded_pkgs
 
 
-@pytest.mark.parametrize(
-    "package", [f[0] for f in files if f[1] is None]
-)
+@pytest.mark.parametrize("package", invalid_files)
 def test_upload_badFilename(package, root, testapp):
+
     resp = testapp.post(
         "/",
         params={":action": "file_upload"},

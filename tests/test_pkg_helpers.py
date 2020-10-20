@@ -1,8 +1,9 @@
 import os
+from pathlib import WindowsPath, PureWindowsPath
 
 import pytest
 
-from pypiserver.pkg_helpers import guess_pkgname_and_version
+from pypiserver.pkg_helpers import guess_pkgname_and_version, is_listed_path
 
 files = [
     ("pytz-2012b.tar.bz2", "pytz", "2012b"),
@@ -64,6 +65,7 @@ files = [
     ("pkg.zip", "pkg", ""),
     ("foo/pkg.zip", "pkg", ""),
     ("foo/pkg-1b.zip", "pkg", "1b"),
+    ("foo/pywin32-217.1-cp27-none-win32.whl", "pywin32", "217.1"),
     (
         "package-name-0.0.1.alpha.1.win-amd64-py3.2.exe",
         "package-name",
@@ -99,3 +101,16 @@ invalid_files = ["some_file", "some_file.ext", "some_wheel.whl"]
 @pytest.mark.parametrize("filename", invalid_files)
 def test_guess_pkgname_and_version_invalid_files(filename):
     assert guess_pkgname_and_version(filename) is None
+
+
+paths = [
+    ("/some/path", True),
+    (PureWindowsPath(r"c:\some\windows\path"), True),
+    ("/.hidden", False),
+    (PureWindowsPath(r"c:\.hidden\windows\path"), False),
+]
+
+
+@pytest.mark.parametrize(("pathname", "allowed"), paths)
+def test_allowed_path_check(pathname, allowed):
+    assert is_listed_path(pathname) == allowed

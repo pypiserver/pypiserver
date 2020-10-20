@@ -1,6 +1,7 @@
 import os
 import re
 import typing as t
+from pathlib import PurePath, Path
 from urllib.parse import quote
 
 
@@ -50,9 +51,10 @@ def parse_version(s: str) -> tuple:
 # ### -- End of distribute's code.
 
 
-def is_allowed_path(path_part: str) -> bool:
-    p = path_part.replace("\\", "/")
-    return not (p.startswith(".") or "/." in p)
+def is_listed_path(path_part: t.Union[PurePath, str]) -> bool:
+    if isinstance(path_part, str):
+        path_part = PurePath(path_part)
+    return not any(part.startswith(".") for part in path_part.parts)
 
 
 _archive_suffix_rx = re.compile(
