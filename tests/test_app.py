@@ -103,9 +103,6 @@ def add_file_to_root(root, filename, content=""):
         cache = core.backend.cache_manager.invalidate_root_cache(root)
 
 
-# @pytest.mark.xfail(
-#     ENABLE_CACHING, reason="race condition when caching is enabled"
-# )
 def test_root_count(root, testapp):
     """Test that the welcome page count updates with added packages
 
