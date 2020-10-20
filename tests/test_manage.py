@@ -196,15 +196,15 @@ def test_update_all_packages(monkeypatch):
     private_pkg_2 = PkgFile("my_other_private_pkg", "1.0")
 
     roots_mock = {
-        "/opt/pypi": [
+        Path("/opt/pypi"): [
             public_pkg_1,
             private_pkg_1,
         ],
-        "/data/pypi": [public_pkg_2, private_pkg_2],
+        Path("/data/pypi"): [public_pkg_2, private_pkg_2],
     }
 
-    def core_listdir_mock(directory):
-        return roots_mock.get(directory, [])
+    def core_listdir_mock(path):
+        return roots_mock.get(path, [])
 
     monkeypatch.setattr(manage, "listdir", core_listdir_mock)
     monkeypatch.setattr(manage, "read_lines", Mock(return_value=[]))
@@ -240,15 +240,15 @@ def test_update_all_packages_with_blacklist(monkeypatch):
     private_pkg_2 = PkgFile("my_other_private_pkg", "1.0")
 
     roots_mock = {
-        "/opt/pypi": [
+        Path("/opt/pypi"): [
             public_pkg_1,
             private_pkg_1,
         ],
-        "/data/pypi": [public_pkg_2, private_pkg_2],
+        Path("/data/pypi"): [public_pkg_2, private_pkg_2],
     }
 
-    def core_listdir_mock(directory):
-        return roots_mock.get(directory, [])
+    def core_listdir_mock(path):
+        return roots_mock.get(path, [])
 
     monkeypatch.setattr(manage, "listdir", core_listdir_mock)
     monkeypatch.setattr(
