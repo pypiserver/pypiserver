@@ -81,7 +81,10 @@ def backwards_compat_kwargs(kwargs: dict, warn: bool = True) -> dict:
     # keyword is a legacy keyword, the new key and potentially adjusted value
     # for that keyword. Note that depending on the order the argument are
     # specified, this _could_ mean an updated legacy keyword could override
-    # a new argument if that argument is also specified. For example,
+    # a new argument if that argument is also specified. However, in that
+    # case, our updated kwargs dictionary would have a different number of
+    # keys compared to our incoming dictionary, so we check for that case
+    # below.
     rv_iter = (
         (
             (k, v)
@@ -90,7 +93,25 @@ def backwards_compat_kwargs(kwargs: dict, warn: bool = True) -> dict:
         )
         for k, v in kwargs.items()
     )
-    return dict(rv_iter)
+    updated_kwargs = dict(rv_iter)
+
+    # If our dictionaries have different lengths, we must have gotten duplicate
+    # legacy/modern keys. Figure out which keys were dupes and throw an error.
+    if len(updated_kwargs) != len(kwargs):
+        legacy_to_modern = {k: v[0] for k, v in backwards_compat.items()}
+        dupes = [
+            (k, v)
+            for k, v in legacy_to_modern.items()
+            if k in kwargs and v in kwargs
+        ]
+        raise ValueError(
+            "Keyword arguments for pypiserver app() constructor contained "
+            "duplicate legacy and modern keys. Duplicates are shown below, in "
+            "the form (legacy_key, modern_key):\n"
+            f"{dupes}"
+        )
+
+    return updated_kwargs
 
 
 def app(**kwargs: t.Any) -> Bottle:
