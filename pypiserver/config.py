@@ -560,11 +560,9 @@ class _ConfigCommon:
             0: logging.WARNING,
             1: logging.INFO,
             2: logging.DEBUG,
-            3: logging.NOTSET,
         }
         # Return a log-level from warning through not set (log all messages).
-        # If we've specified more than 3 levels of verbosity, just return
-        # not set.
+        # If we've specified 3 or more levels of verbosity, just return not set.
         return levels.get(self.verbosity, logging.NOTSET)
 
     def iter_packages(self) -> t.Iterator[core.PkgFile]:
