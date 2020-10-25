@@ -13,7 +13,7 @@ To add a config option:
   `update_parser` in the `get_parser() function`.
 - Add it to the appropriate Config class, `_ConfigCommon` for global options,
   `RunConfig` for `run` options, and `UpdateConfig` for `update` options.
-  - This requires addit it as an `__init__()` kwarg, setting it as an instance
+  - This requires adding it as an `__init__()` kwarg, setting it as an instance
     attribute in `__init__()`, and ensuring it will be parsed from the argparse
     namespace in the `kwargs_from_namespace()` method
 - Ensure your config option is tested in `tests/test_config.py`.
