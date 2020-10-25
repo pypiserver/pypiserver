@@ -6,6 +6,7 @@ import re
 import zipfile
 import xml.dom.minidom
 
+from pypiserver.config import RunConfig
 from . import __version__
 from . import core
 from .bottle import (
@@ -35,8 +36,7 @@ except ImportError:  # PY2
 
 
 log = logging.getLogger(__name__)
-packages = None
-config = None
+config: RunConfig
 
 app = Bottle()
 
@@ -49,7 +49,7 @@ class auth:
 
     def __call__(self, method):
         def protector(*args, **kwargs):
-            if self.action in config.authenticated:
+            if self.action in config.authenticate:
                 if not request.auth or request.auth[1] is None:
                     raise HTTPError(
                         401, headers={"WWW-Authenticate": 'Basic realm="pypi"'}
@@ -104,8 +104,9 @@ def root():
     fp = request.custom_fullpath
 
     try:
-        numpkgs = len(list(packages()))
-    except:
+        numpkgs = len(list(config.iter_packages()))
+    except Exception as exc:
+        log.error(f"Could not list packages: {exc}")
         numpkgs = 0
 
     # Ensure template() does not consider `msg` as filename!
@@ -150,7 +151,7 @@ def remove_pkg():
     pkgs = list(
         filter(
             lambda pkg: pkg.pkgname == name and pkg.version == version,
-            core.find_packages(packages()),
+            core.find_packages(config.iter_packages()),
         )
     )
     if len(pkgs) == 0:
@@ -186,7 +187,9 @@ def file_upload():
         ):
             raise HTTPError(400, f"Bad filename: {uf.raw_filename}")
 
-        if not config.overwrite and core.exists(packages.root, uf.raw_filename):
+        if not config.overwrite and core.exists(
+            config.package_root, uf.raw_filename
+        ):
             log.warning(
                 f"Cannot upload {uf.raw_filename!r} since it already exists! \n"
                 "  You may start server with `--overwrite` option. "
@@ -197,7 +200,7 @@ def file_upload():
                 "  You may start server with `--overwrite` option.",
             )
 
-        core.store(packages.root, uf.raw_filename, uf.save)
+        core.store(config.package_root, uf.raw_filename, uf.save)
         if request.auth:
             user = request.auth[0]
         else:
@@ -254,7 +257,7 @@ def handle_rpc():
         )
         response = []
         ordering = 0
-        for p in packages():
+        for p in config.iter_packages():
             if p.pkgname.count(value) > 0:
                 # We do not presently have any description/summary, returning
                 # version instead
@@ -275,7 +278,7 @@ def handle_rpc():
 @app.route("/simple/")
 @auth("list")
 def simpleindex():
-    links = sorted(core.get_prefixes(packages()))
+    links = sorted(core.get_prefixes(config.iter_packages()))
     tmpl = """\
     <html>
         <head>
@@ -301,11 +304,11 @@ def simple(prefix=""):
         return redirect("/simple/{0}/".format(normalized), 301)
 
     files = sorted(
-        core.find_packages(packages(), prefix=prefix),
+        core.find_packages(config.iter_packages(), prefix=prefix),
         key=lambda x: (x.parsed_version, x.relfn),
     )
     if not files:
-        if config.redirect_to_fallback:
+        if not config.disable_fallback:
             return redirect(f"{config.fallback_url.rstrip('/')}/{prefix}/")
         return HTTPError(404, f"Not Found ({normalized} does not exist)\n\n")
 
@@ -338,7 +341,7 @@ def simple(prefix=""):
 def list_packages():
     fp = request.custom_fullpath
     files = sorted(
-        core.find_packages(packages()),
+        core.find_packages(config.iter_packages()),
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
     )
     links = [
@@ -364,7 +367,7 @@ def list_packages():
 @app.route("/packages/:filename#.*#")
 @auth("download")
 def server_static(filename):
-    entries = core.find_packages(packages())
+    entries = core.find_packages(config.iter_packages())
     for x in entries:
         f = x.relfn_unix
         if f == filename:

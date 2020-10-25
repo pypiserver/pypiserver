@@ -3,6 +3,7 @@
 # Builtin imports
 import logging
 import os
+import pathlib
 
 
 try:  # python 3
@@ -34,16 +35,15 @@ import tests.test_core as test_core
 __main__.init_logging()
 
 
-@pytest.fixture()
-def _app(app):
-    return app.module
-
-
 @pytest.fixture
 def app(tmpdir):
     from pypiserver import app
 
-    return app(root=tmpdir.strpath, authenticated=[])
+    return app(
+        roots=[pathlib.Path(tmpdir.strpath)],
+        authenticate=[],
+        password_file=".",
+    )
 
 
 @pytest.fixture
@@ -192,14 +192,14 @@ def test_favicon(testapp):
     testapp.get("/favicon.ico", status=404)
 
 
-def test_fallback(root, _app, testapp):
-    assert _app.config.redirect_to_fallback
+def test_fallback(testapp):
+    assert not testapp.app._pypiserver_config.disable_fallback
     resp = testapp.get("/simple/pypiserver/", status=302)
     assert resp.headers["Location"] == "https://pypi.org/simple/pypiserver/"
 
 
-def test_no_fallback(root, _app, testapp):
-    _app.config.redirect_to_fallback = False
+def test_no_fallback(testapp):
+    testapp.app._pypiserver_config.disable_fallback = True
     testapp.get("/simple/pypiserver/", status=404)
 
 
@@ -413,8 +413,8 @@ def test_simple_index_list_name_with_underscore_no_egg(root, testapp):
     assert hrefs == {"foo-bar/"}
 
 
-def test_no_cache_control_set(root, _app, testapp):
-    assert not _app.config.cache_control
+def test_no_cache_control_set(root, testapp):
+    assert not testapp.app._pypiserver_config.cache_control
     root.join("foo_bar-1.0.tar.gz").write("")
     resp = testapp.get("/packages/foo_bar-1.0.tar.gz")
     assert "Cache-Control" not in resp.headers
@@ -431,13 +431,13 @@ def test_cache_control_set(root):
     assert resp.headers["Cache-Control"] == f"public, max-age={AGE}"
 
 
-def test_upload_noAction(root, testapp):
+def test_upload_noAction(testapp):
     resp = testapp.post("/", expect_errors=1)
     assert resp.status == "400 Bad Request"
     assert "Missing ':action' field!" in unescape(resp.text)
 
 
-def test_upload_badAction(root, testapp):
+def test_upload_badAction(testapp):
     resp = testapp.post("/", params={":action": "BAD"}, expect_errors=1)
     assert resp.status == "400 Bad Request"
     assert "Unsupported ':action' field: BAD" in unescape(resp.text)
