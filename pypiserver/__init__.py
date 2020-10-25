@@ -135,8 +135,6 @@ def app_from_config(config: RunConfig) -> Bottle:
     # modules map, so that any future imports do not receive our mutated version
     sys.modules.pop("pypiserver._app", None)
     _app.config = config
-    _app.iter_packages = config.iter_packages
-    _app.package_root = config.package_root
     # Add a reference to our config on the Bottle app for easy access in testing
     # and other contexts.
     _app.app._pypiserver_config = config
