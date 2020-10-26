@@ -126,19 +126,11 @@ def app(**kwargs: t.Any) -> Bottle:
 
 def app_from_config(config: RunConfig) -> Bottle:
     """Construct a bottle app from the provided RunConfig."""
-    # The _app module instantiates a Bottle instance directly when it is
-    # imported. That is `_app.app`. We directly mutate some global variables
-    # on the imported `_app` module so that its endpoints will behave as
-    # we expect.
-    _app = __import__("_app", globals(), locals(), ["."], 1)
-    # Because we're about to mutate our import, we pop it out of the imported
-    # modules map, so that any future imports do not receive our mutated version
-    sys.modules.pop("pypiserver._app", None)
-    _app.config = config
-    # Add a reference to our config on the Bottle app for easy access in testing
-    # and other contexts.
-    _app.app._pypiserver_config = config
-    return _app.app
+    # Import here to avoid circult imports
+    from pypiserver.pypiserver_app import PypiserverApp
+
+    pypiserver = PypiserverApp(config, Bottle())
+    return pypiserver.app
 
 
 T = t.TypeVar("T")

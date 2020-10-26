@@ -1,0 +1,158 @@
+[MASTER]
+
+# Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
+# number of processors available to use.
+jobs=0
+
+# Control the amount of potential inferred values when inferring a single
+# object. This can help the performance when dealing with large functions or
+# complex, nested conditions.
+limit-inference-results=100
+
+# Pickle collected data for later comparisons.
+persistent=yes
+
+# When enabled, pylint would attempt to guess common misconfiguration and emit
+# user-friendly hints instead of false-positive error messages.
+suggestion-mode=yes
+
+
+[MESSAGES CONTROL]
+
+# Disable the message, report, category or checker with the given id(s). You
+# can either give multiple identifiers separated by comma (,) or put this
+# option multiple times (only on the command line, not in the configuration
+# file where it should appear only once). You can also use "--disable=all" to
+# disable everything first and then reenable specific checks. For example, if
+# you want to run only the similarities checker, you can use "--disable=all
+# --enable=similarities". If you want to run only the classes checker, but have
+# no Warning level messages displayed, use "--disable=all --enable=classes
+# --disable=W".
+disable=apply-builtin,
+        backtick,
+        bad-inline-option,
+        bad-python3-import,
+        basestring-builtin,
+        buffer-builtin,
+        cmp-builtin,
+        cmp-method,
+        coerce-builtin,
+        coerce-method,
+        comprehension-escape
+        delslice-method,
+        deprecated-itertools-function,
+        deprecated-operator-function,
+        deprecated-pragma,
+        deprecated-str-translate-call,
+        deprecated-string-function,
+        deprecated-sys-function,
+        deprecated-types-field,
+        deprecated-urllib-function,
+        dict-items-not-iterating,
+        dict-iter-method,
+        dict-keys-not-iterating,
+        dict-values-not-iterating,
+        dict-view-method,
+        div-method,
+        eq-without-hash,
+        exception-escape,
+        exception-message-attribute,
+        execfile-builtin,
+        file-builtin,
+        file-ignored,
+        filter-builtin-not-iterating,
+        getslice-method,
+        hex-method,
+        idiv-method,
+        import-star-module-level,
+        indexing-exception,
+        input-builtin,
+        intern-builtin,
+        invalid-str-codec,
+        locally-disabled,
+        logging-fstring-interpolation,
+        long-builtin,
+        long-suffix,
+        map-builtin-not-iterating,
+        metaclass-assignment,
+        next-method-called,
+        next-method-defined,
+        no-absolute-import,
+        non-ascii-bytes-literal,
+        nonzero-method,
+        oct-method,
+        old-division,
+        old-ne-operator,
+        old-octal-literal,
+        old-raise-syntax,
+        parameter-unpacking,
+        print-statement,
+        raising-string,
+        range-builtin-not-iterating,
+        raw-checker-failed,
+        raw_input-builtin,
+        rdiv-method,
+        reduce-builtin,
+        reload-builtin,
+        round-builtin,
+        setslice-method,
+        standarderror-builtin,
+        suppressed-message,
+        sys-max-int,
+        unichr-builtin,
+        unicode-builtin,
+        unpacking-in-except,
+        use-symbolic-message-instead,
+        useless-suppression,
+        using-cmp-argument,
+        xrange-builtin,
+        xreadlines-attribute,
+        zip-builtin-not-iterating,
+
+
+[REPORTS]
+
+# Python expression which should return a score less than or equal to 10. You
+# have access to the variables 'error', 'warning', 'refactor', and 'convention'
+# which contain the number of messages in each category, as well as 'statement'
+# which is the total number of statements analyzed. This score is used by the
+# global evaluation report (RP0004).
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+
+# Set the output format. Available formats are text, parseable, colorized, json
+# and msvs (visual studio). You can also give a reporter class, e.g.
+# mypackage.mymodule.MyReporterClass.
+output-format=text
+
+# Tells whether to display a full report or only the messages.
+reports=no
+
+# Activate the evaluation score.
+score=yes
+
+[BASIC]
+
+# Good variable names which should always be accepted, separated by a comma.
+good-names=e,
+           i,
+           j,
+           k,
+           t,
+           ex,
+           Run,
+           S,
+           T,
+           U,
+           V,
+           _
+
+[FORMAT]
+
+# Regexp for a line that is allowed to be longer than the limit.
+ignore-long-lines=^\s*(# )?<?https?://\S+>?$
+
+# Maximum number of characters on a single line.
+max-line-length=80
+
+# Maximum number of lines in a module.
+max-module-lines=5000

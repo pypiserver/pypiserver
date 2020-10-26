@@ -1,30 +1,19 @@
-#! /usr/bin/env py.test
-
 # Builtin imports
+from html.parser import HTMLParser
+from html import unescape
+
 import logging
 import os
 import pathlib
-
-
-try:  # python 3
-    from html.parser import HTMLParser
-    from html import unescape
-except ImportError:
-    from HTMLParser import HTMLParser
-
-    unescape = HTMLParser().unescape
-
-try:
-    import xmlrpc.client as xmlrpclib
-except ImportError:
-    import xmlrpclib  # legacy Python
+import xmlrpc.client as xmlrpclib
 
 # Third party imports
 import pytest
 import webtest
 
-
 # Local Imports
+from pypiserver.pypiserver_app import PypiserverApp
+from pypiserver.config import Config
 from pypiserver import __main__, bottle
 
 import tests.test_core as test_core
@@ -37,19 +26,20 @@ __main__.init_logging()
 
 @pytest.fixture
 def app(tmpdir):
-    from pypiserver import app
-
-    return app(
-        roots=[pathlib.Path(tmpdir.strpath)],
-        authenticate=[],
-        password_file=".",
+    return PypiserverApp(
+        Config.default_with_overrides(
+            roots=[pathlib.Path(tmpdir.strpath)],
+            authenticate=[],
+            password_file=".",
+        ),
+        bottle.Bottle(),
     )
 
 
 @pytest.fixture
-def testapp(app):
+def testapp(app: PypiserverApp):
     """Return a webtest TestApp initiated with pypiserver app"""
-    return webtest.TestApp(app)
+    return webtest.TestApp(app.app)
 
 
 @pytest.fixture
@@ -61,7 +51,7 @@ def root(tmpdir):
 @pytest.fixture
 def priv(app):
     b = bottle.Bottle()
-    b.mount("/priv/", app)
+    b.mount("/priv/", app.app)
     return b
 
 
@@ -192,14 +182,14 @@ def test_favicon(testapp):
     testapp.get("/favicon.ico", status=404)
 
 
-def test_fallback(testapp):
-    assert not testapp.app._pypiserver_config.disable_fallback
+def test_fallback(app, testapp):
+    assert not app.config.disable_fallback
     resp = testapp.get("/simple/pypiserver/", status=302)
     assert resp.headers["Location"] == "https://pypi.org/simple/pypiserver/"
 
 
-def test_no_fallback(testapp):
-    testapp.app._pypiserver_config.disable_fallback = True
+def test_no_fallback(app, testapp):
+    app.config.disable_fallback = True
     testapp.get("/simple/pypiserver/", status=404)
 
 
@@ -413,8 +403,8 @@ def test_simple_index_list_name_with_underscore_no_egg(root, testapp):
     assert hrefs == {"foo-bar/"}
 
 
-def test_no_cache_control_set(root, testapp):
-    assert not testapp.app._pypiserver_config.cache_control
+def test_no_cache_control_set(app, root, testapp):
+    assert not app.config.cache_control
     root.join("foo_bar-1.0.tar.gz").write("")
     resp = testapp.get("/packages/foo_bar-1.0.tar.gz")
     assert "Cache-Control" not in resp.headers
