@@ -2,7 +2,6 @@
 """minimal PyPI like server for use with pip/easy_install"""
 
 import functools
-import logging
 import mimetypes
 import typing as t
 from typing import Optional
@@ -17,27 +16,17 @@ from .backend import (
 )
 from .cache import ENABLE_CACHING, CacheManager
 
-log = logging.getLogger(__name__)
-
 backend: Optional[Backend] = None
 
-
-def auth_by_htpasswd_file(htPsswdFile, username, password):
-    """The default ``config.auther``."""
-    if htPsswdFile is not None:
-        htPsswdFile.load_if_changed()
-        return htPsswdFile.check_password(username, password)
+mimetypes.add_type("application/octet-stream", ".egg")
+mimetypes.add_type("application/octet-stream", ".whl")
+mimetypes.add_type("text/plain", ".asc")
 
 
 def get_file_backend(config) -> SimpleFileBackend:
     if ENABLE_CACHING:
         return CachingFileBackend(config, config.roots, CacheManager())
     return SimpleFileBackend(config, config.roots)
-
-
-mimetypes.add_type("application/octet-stream", ".egg")
-mimetypes.add_type("application/octet-stream", ".whl")
-mimetypes.add_type("text/plain", ".asc")
 
 
 def get_bad_url_redirect_path(request, project):

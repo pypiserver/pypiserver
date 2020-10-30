@@ -13,7 +13,6 @@ from xmlrpc.client import Server
 import pip
 
 from .backend import PkgFile, listdir
-from .core import log
 from .pkg_helpers import normalize_pkgname, parse_version
 
 

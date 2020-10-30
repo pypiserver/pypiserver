@@ -139,7 +139,7 @@ def remove_pkg():
     if not pkgs:
         raise HTTPError(404, f"{name} ({version}) not found")
     for pkg in pkgs:
-        os.unlink(pkg.fn)
+        backend.remove_package(pkg)
 
 
 Upload = namedtuple("Upload", "pkg sig")
@@ -327,9 +327,9 @@ def list_packages():
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
     )
 
-    links = [
+    links =(
         (pkg.relfn_unix, urljoin(fp, pkg.fname_and_hash)) for pkg in packages
-    ]
+    )
 
     tmpl = """\
     <html>

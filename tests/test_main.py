@@ -64,6 +64,9 @@ def test_default_pkgdir(main):
 
 
 def test_noargs(main):
+    # Assert we're calling with the default host, port, and server, and
+    # assume that we've popped `app` off of the bottle args in our `main`
+    # fixture.
     assert main([]) == {"host": "0.0.0.0", "port": 8080, "server": "auto"}
 
 

@@ -212,8 +212,8 @@ def test_update_all_packages(monkeypatch):
         Path("/data/pypi"): [public_pkg_2, private_pkg_2],
     }
 
-    def core_listdir_mock(directory):
-        return roots_mock.get(directory, [])
+    def core_listdir_mock(path: Path):
+        return roots_mock.get(path, [])
 
     monkeypatch.setattr(manage, "listdir", core_listdir_mock)
     monkeypatch.setattr(manage, "update", Mock(return_value=None))
@@ -253,7 +253,7 @@ def test_update_all_packages_with_blacklist(monkeypatch):
         Path("/data/pypi"): [public_pkg_2, private_pkg_2],
     }
 
-    def core_listdir_mock(path):
+    def core_listdir_mock(path: Path):
         return roots_mock.get(path, [])
 
     monkeypatch.setattr(manage, "listdir", core_listdir_mock)
