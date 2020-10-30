@@ -29,6 +29,7 @@ __pycache__/
 /*.egg-info/
 /.standalone
 /.coverage*
+!/.coveragerc
 /htmlcov/
 /.installed.cfg
 /develop-eggs/
