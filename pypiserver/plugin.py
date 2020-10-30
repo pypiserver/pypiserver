@@ -19,7 +19,7 @@ In the future, the plugin callable may be called with additional keyword
 arguments, so a plugin should accept a **kwargs variadic keyword argument.
 """
 from pypiserver.backend import SimpleFileBackend, CachingFileBackend
-from pypiserver.core import get_file_backend
+from pypiserver import get_file_backend
 
 DEFAULT_PACKAGE_DIRECTORIES = ["~/packages"]
 
@@ -35,7 +35,7 @@ def my_plugin(add_argument, backends, **_):
     backends.update(
         {
             "auto": get_file_backend,
-            "simple-directory": SimpleFileBackend,
-            "cached-directory": CachingFileBackend,
+            "simple-dir": SimpleFileBackend,
+            "cached-dir": CachingFileBackend,
         }
     )

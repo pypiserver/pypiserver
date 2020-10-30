@@ -1,80 +1,24 @@
 import abc
+import functools
 import hashlib
 import itertools
 import os
 import typing as t
-from abc import ABC
 from pathlib import Path
 
-from .cache import CacheManager
-from .config import RunConfig, UpdateConfig
+from .cache import CacheManager, ENABLE_CACHING
+from .core import PkgFile
 from .pkg_helpers import (
     normalize_pkgname,
-    parse_version,
     is_listed_path,
     guess_pkgname_and_version,
 )
 
+if t.TYPE_CHECKING:
+    from .config import Configuration
+
+
 PathLike = t.Union[str, os.PathLike]
-Configuration = RunConfig
-
-
-class PkgFile:
-    __slots__ = [
-        "pkgname",  # The projects/package name with possible capitalization
-        "version",  # The package version as a string
-        "fn",  # The full file path
-        "root",  # An optional root directory of the file
-        "relfn",  # The file path relative to the root
-        "replaces",  # The previous version of the package (used by manage.py)
-        "pkgname_norm",  # The PEP503 normalized project name
-        "digest",  # The file digest in the form of <algo>=<hash>
-        "relfn_unix",  # The relative file path in unix notation
-        "parsed_version",  # The package version as a tuple of parts
-        "digester",  # a function that calculates the digest for the package
-    ]
-    digest: t.Optional[str]
-    digester: t.Optional[t.Callable[["PkgFile"], t.Optional[str]]]
-    parsed_version: tuple
-    relfn_unix: t.Optional[str]
-
-    def __init__(
-        self,
-        pkgname: str,
-        version: str,
-        fn: t.Optional[str] = None,
-        root: t.Optional[str] = None,
-        relfn: t.Optional[str] = None,
-        replaces: t.Optional["PkgFile"] = None,
-    ):
-        self.pkgname = pkgname
-        self.pkgname_norm = normalize_pkgname(pkgname)
-        self.version = version
-        self.parsed_version: tuple = parse_version(version)
-        self.fn = fn
-        self.root = root
-        self.relfn = relfn
-        self.relfn_unix = None if relfn is None else relfn.replace("\\", "/")
-        self.replaces = replaces
-        self.digest = None
-
-    def __repr__(self) -> str:
-        return "{}({})".format(
-            self.__class__.__name__,
-            ", ".join(
-                [
-                    f"{k}={getattr(self, k, 'AttributeError')!r}"
-                    for k in sorted(self.__slots__)
-                ]
-            ),
-        )
-
-    @property
-    def fname_and_hash(self) -> str:
-        if self.digest is None and self.digester is not None:
-            self.digest = self.digester(self)
-        hashpart = f"#{self.digest}" if self.digest else ""
-        return self.relfn_unix + hashpart  # type: ignore
 
 
 class IBackend(abc.ABC):
@@ -116,7 +60,7 @@ class IBackend(abc.ABC):
 
 
 class Backend(IBackend, abc.ABC):
-    def __init__(self, config: RunConfig):
+    def __init__(self, config: "Configuration"):
         self.hash_algo = config.hash_algo
 
     @abc.abstractmethod
@@ -191,9 +135,9 @@ class Backend(IBackend, abc.ABC):
 
 
 class SimpleFileBackend(Backend):
-    def __init__(self, config: Configuration, roots: t.List[PathLike]):
+    def __init__(self, config: "Configuration"):
         super().__init__(config)
-        self.roots = [Path(root).resolve() for root in roots]
+        self.roots = [Path(root).resolve() for root in config.roots]
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
         return itertools.chain.from_iterable(listdir(r) for r in self.roots)
@@ -216,13 +160,12 @@ class SimpleFileBackend(Backend):
 class CachingFileBackend(SimpleFileBackend):
     def __init__(
         self,
-        config: Configuration,
-        roots: t.List[PathLike],
-        cache_manager: CacheManager,
+        config: "Configuration",
+        cache_manager: t.Optional[CacheManager] = None,
     ):
-        super().__init__(config, roots)
+        super().__init__(config)
 
-        self.cache_manager = cache_manager
+        self.cache_manager = cache_manager or CacheManager()
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
         return itertools.chain.from_iterable(
@@ -302,3 +245,59 @@ def digest_file(file_path: PathLike, hash_algo: str) -> str:
         for block in iter(lambda: f.read(blocksize), b""):
             digester.update(block)
     return f"{hash_algo}={digester.hexdigest()}"
+
+
+def get_file_backend(config) -> SimpleFileBackend:
+    if ENABLE_CACHING:
+        return CachingFileBackend(config)
+    return SimpleFileBackend(config)
+
+
+PkgFunc = t.TypeVar("PkgFunc", bound=t.Callable[..., t.Iterable[PkgFile]])
+
+
+def with_digester(func: PkgFunc) -> PkgFunc:
+    @functools.wraps(func)
+    def add_digester_method(self, *args, **kwargs):
+        packages = func(self, *args, **kwargs)
+        for package in packages:
+            package.digester = self.backend.digest
+            yield package
+
+    return add_digester_method
+
+
+class BackendProxy(IBackend):
+    def __init__(self, wraps: Backend):
+        self.backend = wraps
+
+    @with_digester
+    def get_all_packages(self) -> t.Iterable[PkgFile]:
+        return self.backend.get_all_packages()
+
+    @with_digester
+    def find_project_packages(self, project: str) -> t.Iterable[PkgFile]:
+        return self.backend.find_project_packages(project)
+
+    def find_version(self, name: str, version: str) -> t.Iterable[PkgFile]:
+        return self.backend.find_version(name, version)
+
+    def get_projects(self) -> t.Iterable[str]:
+        return self.backend.get_projects()
+
+    def exists(self, filename: str) -> bool:
+        assert "/" not in filename
+        return self.backend.exists(filename)
+
+    def package_count(self) -> int:
+        return self.backend.package_count()
+
+    def add_package(self, filename, fh: t.BinaryIO):
+        assert "/" not in filename
+        return self.backend.add_package(filename, fh)
+
+    def remove_package(self, pkg: PkgFile):
+        return self.backend.remove_package(pkg)
+
+    def digest(self, pkg: PkgFile) -> str:
+        return self.backend.digest(pkg)

@@ -14,7 +14,7 @@ import webtest
 # Local Imports
 from tests.test_pkg_helpers import files, invalid_files
 from pypiserver import __main__, bottle, core, Bottle
-from pypiserver.backend import CachingFileBackend
+from pypiserver.backend import CachingFileBackend, SimpleFileBackend
 
 # Enable logging to detect any problems with it
 ##
@@ -30,6 +30,7 @@ def app(tmpdir):
         roots=[pathlib.Path(tmpdir.strpath)],
         authenticate=[],
         password_file=".",
+        backend_cls=SimpleFileBackend,
     )
 
 
@@ -103,7 +104,7 @@ def welcome_file_all_vars(request, root):
 def add_file_to_root(app):
     def file_adder(root, filename, content=""):
         root.join(filename).write(content)
-        backend = app._pypiserver_backend.backend
+        backend = app.config.backend
         if isinstance(backend, CachingFileBackend):
             backend.cache_manager.invalidate_root_cache(root)
 
@@ -337,7 +338,9 @@ def test_nonroot_simple_index(root, testpriv, add_file_to_root):
     assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
 
 
-def test_nonroot_simple_index_with_x_forwarded_host(root, testapp, add_file_to_root):
+def test_nonroot_simple_index_with_x_forwarded_host(
+    root, testapp, add_file_to_root
+):
     add_file_to_root(root, "foobar-1.0.zip", "123")
 
     resp = testapp.get(
@@ -356,7 +359,9 @@ def test_nonroot_simple_packages(root, testpriv, add_file_to_root):
     assert "/priv/packages/foobar-1.0.zip#" in links[0]["href"]
 
 
-def test_nonroot_simple_packages_with_x_forwarded_host(root, testapp, add_file_to_root):
+def test_nonroot_simple_packages_with_x_forwarded_host(
+    root, testapp, add_file_to_root
+):
     add_file_to_root(root, "foobar-1.0.zip", "123")
 
     resp = testapp.get(

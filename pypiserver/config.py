@@ -37,18 +37,26 @@ import argparse
 import contextlib
 import hashlib
 import io
-import itertools
 import logging
 import pathlib
-import pkg_resources
 import re
 import sys
 import textwrap
 import typing as t
 from distutils.util import strtobool as strtoint
 
-# The `passlib` requirement is optional, so we need to verify its import here.
+import pkg_resources
 
+from pypiserver.backend import (
+    SimpleFileBackend,
+    CachingFileBackend,
+    Backend,
+    IBackend,
+    get_file_backend,
+    BackendProxy,
+)
+
+# The `passlib` requirement is optional, so we need to verify its import here.
 try:
     from passlib.apache import HtpasswdFile
 except ImportError:
@@ -78,6 +86,7 @@ class DEFAULTS:
     PACKAGE_DIRECTORIES = [pathlib.Path("~/packages").expanduser().resolve()]
     PORT = 8080
     SERVER_METHOD = "auto"
+    BACKEND = "auto"
 
 
 def auth_arg(arg: str) -> t.List[str]:
@@ -193,6 +202,22 @@ def log_stream_arg(arg: str) -> t.Optional[t.IO]:
         "Invalid option for --log-stream. Value must be one of stdout, "
         "stderr, or none."
     )
+
+
+BackendFactory = t.Callable[["Configuration"], Backend]
+
+
+def backend_arg(arg: str) -> BackendFactory:
+    available_backends: t.Dict[str, BackendFactory] = {
+        "auto": get_file_backend,
+        "simple-dir": SimpleFileBackend,
+        "cached-dir": CachingFileBackend,
+    }
+    if arg not in available_backends:
+        raise argparse.ArgumentTypeError(
+            f"Value must be one of {', '.join(available_backends.keys())}"
+        )
+    return available_backends[arg]
 
 
 def add_common_args(parser: argparse.ArgumentParser) -> None:
@@ -438,6 +463,17 @@ def get_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    run_parser.add_argument(
+        "--backend",
+        default=DEFAULTS.BACKEND,
+        choices=("auto", "simple-dir", "cached-dir"),
+        type=backend_arg,
+        dest="backend_cls",
+        help=(
+            "A backend implementation. Keep the default 'auto' to automatically"
+            " determine whether to activate caching or not"
+        ),
+    )
     update_parser = subparsers.add_parser(
         "update",
         help=textwrap.dedent(
@@ -504,6 +540,8 @@ TConf = t.TypeVar("TConf", bound="_ConfigCommon")
 
 
 class _ConfigCommon:
+    hash_algo: t.Optional[str] = None
+
     def __init__(
         self,
         roots: t.List[pathlib.Path],
@@ -619,6 +657,7 @@ class RunConfig(_ConfigCommon):
         log_req_frmt: str,
         log_res_frmt: str,
         log_err_frmt: str,
+        backend_cls: BackendFactory,
         auther: t.Callable[[str, str], bool] = None,
         **kwargs: t.Any,
     ) -> None:
@@ -638,10 +677,14 @@ class RunConfig(_ConfigCommon):
         self.log_req_frmt = log_req_frmt
         self.log_res_frmt = log_res_frmt
         self.log_err_frmt = log_err_frmt
-
+        self.backend_cls = backend_cls
         # Derived properties
-        self._derived_properties = self._derived_properties + ("auther",)
+        self._derived_properties = self._derived_properties + (
+            "auther",
+            "backend",
+        )
         self.auther = self.get_auther(auther)
+        self.backend = self.get_backend(backend_cls)
 
     @classmethod
     def kwargs_from_namespace(
@@ -664,6 +707,7 @@ class RunConfig(_ConfigCommon):
             "log_req_frmt": namespace.log_req_frmt,
             "log_res_frmt": namespace.log_res_frmt,
             "log_err_frmt": namespace.log_err_frmt,
+            "backend_cls": namespace.backend_cls,
         }
 
     def get_auther(
@@ -708,6 +752,9 @@ class RunConfig(_ConfigCommon):
 
         return auther
 
+    def get_backend(self, backend: BackendFactory) -> IBackend:
+        return BackendProxy(backend(self))
+
 
 class UpdateConfig(_ConfigCommon):
     """A config for the Update command."""
@@ -741,6 +788,9 @@ class UpdateConfig(_ConfigCommon):
         }
 
 
+Configuration = t.Union[RunConfig, UpdateConfig]
+
+
 class Config:
     """Config constructor for building a config from args."""
 
@@ -756,9 +806,7 @@ class Config:
         return default_config.with_updates(**overrides)
 
     @classmethod
-    def from_args(
-        cls, args: t.Sequence[str] = None
-    ) -> t.Union[RunConfig, UpdateConfig]:
+    def from_args(cls, args: t.Sequence[str] = None) -> Configuration:
         """Construct a Config from the passed args or sys.argv."""
         # If pulling args from sys.argv (commandline arguments), argv[0] will
         # be the program name, (i.e. pypi-server), so we don't need to

@@ -20,7 +20,7 @@ except ImportError:
     ENABLE_CACHING = False
 
 if t.TYPE_CHECKING:
-    from pypiserver.backend import PkgFile
+    from pypiserver.core import PkgFile
 
 
 class CacheManager:

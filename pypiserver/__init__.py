@@ -4,10 +4,8 @@ import re as _re
 import sys
 import typing as t
 
-from pypiserver.backend import IBackend
 from pypiserver.bottle import Bottle
 from pypiserver.config import Config, RunConfig, strtobool
-from pypiserver.core import get_file_backend, BackendProxy
 
 version = __version__ = "2.0.0dev1"
 __version_info__ = tuple(_re.split("[.-]", __version__))
@@ -137,17 +135,10 @@ def app_from_config(config: RunConfig) -> Bottle:
     # modules map, so that any future imports do not receive our mutated version
     sys.modules.pop("pypiserver._app", None)
     _app.config = config
-    _app.backend = backend_from_config(config)
     # Add a reference to our config on the Bottle app for easy access in testing
     # and other contexts.
     _app.app._pypiserver_config = config
-    _app.app._pypiserver_backend = _app.backend
     return _app.app
-
-
-def backend_from_config(config: RunConfig) -> IBackend:
-    backend = get_file_backend(config)
-    return BackendProxy(backend)
 
 
 T = t.TypeVar("T")

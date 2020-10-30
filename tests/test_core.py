@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from pypiserver import __main__, core, backend, manage
+from pypiserver import __main__, core, backend
 from pypiserver.pkg_helpers import (
     normalize_pkgname_for_url,
 )
@@ -53,7 +53,7 @@ def test_fname_and_hash(tmp_path, hash_algo):
 
     f = tmp_path.joinpath("tmpfile")
     f.touch()
-    pkgfile = backend.PkgFile("tmp", "1.0.0", str(f), f.parent, f.name)
+    pkgfile = core.PkgFile("tmp", "1.0.0", str(f), f.parent, f.name)
     pkgfile.digester = digester
 
     assert pkgfile.fname_and_hash == f"{f.name}#{digester(pkgfile)}"
