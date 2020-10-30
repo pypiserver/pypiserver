@@ -165,7 +165,7 @@ class CachingFileBackend(SimpleFileBackend):
     ):
         super().__init__(config)
 
-        self.cache_manager = cache_manager or CacheManager()
+        self.cache_manager = cache_manager or CacheManager()  # type: ignore
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
         return itertools.chain.from_iterable(
@@ -247,7 +247,7 @@ def digest_file(file_path: PathLike, hash_algo: str) -> str:
     return f"{hash_algo}={digester.hexdigest()}"
 
 
-def get_file_backend(config) -> SimpleFileBackend:
+def get_file_backend(config: Configuration) -> Backend:
     if ENABLE_CACHING:
         return CachingFileBackend(config)
     return SimpleFileBackend(config)
@@ -258,13 +258,15 @@ PkgFunc = t.TypeVar("PkgFunc", bound=t.Callable[..., t.Iterable[PkgFile]])
 
 def with_digester(func: PkgFunc) -> PkgFunc:
     @functools.wraps(func)
-    def add_digester_method(self, *args, **kwargs):
+    def add_digester_method(
+        self: BackendProxy, *args: t.Any, **kwargs: t.Any
+    ) -> t.Iterable[PkgFile]:
         packages = func(self, *args, **kwargs)
         for package in packages:
             package.digester = self.backend.digest
             yield package
 
-    return add_digester_method
+    return t.cast(PkgFunc, add_digester_method)
 
 
 class BackendProxy(IBackend):
@@ -292,12 +294,12 @@ class BackendProxy(IBackend):
     def package_count(self) -> int:
         return self.backend.package_count()
 
-    def add_package(self, filename, fh: t.BinaryIO):
+    def add_package(self, filename: str, fh: t.BinaryIO) -> None:
         assert "/" not in filename
         return self.backend.add_package(filename, fh)
 
-    def remove_package(self, pkg: PkgFile):
+    def remove_package(self, pkg: PkgFile) -> None:
         return self.backend.remove_package(pkg)
 
-    def digest(self, pkg: PkgFile) -> str:
+    def digest(self, pkg: PkgFile) -> t.Optional[str]:
         return self.backend.digest(pkg)
