@@ -30,7 +30,7 @@ def app(tmpdir):
         roots=[pathlib.Path(tmpdir.strpath)],
         authenticate=[],
         password_file=".",
-        backend_cls=SimpleFileBackend,
+        backend_arg='simple-dir',
     )
 
 

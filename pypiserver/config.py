@@ -204,22 +204,6 @@ def log_stream_arg(arg: str) -> t.Optional[t.IO]:
     )
 
 
-BackendFactory = t.Callable[["Configuration"], Backend]
-
-
-def backend_arg(arg: str) -> BackendFactory:
-    available_backends: t.Dict[str, BackendFactory] = {
-        "auto": get_file_backend,
-        "simple-dir": SimpleFileBackend,
-        "cached-dir": CachingFileBackend,
-    }
-    if arg not in available_backends:
-        raise argparse.ArgumentTypeError(
-            f"Value must be one of {', '.join(available_backends.keys())}"
-        )
-    return available_backends[arg]
-
-
 def add_common_args(parser: argparse.ArgumentParser) -> None:
     """Add common arguments to a parser."""
     # Don't update at top-level to avoid circular imports in __init__
@@ -467,8 +451,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--backend",
         default=DEFAULTS.BACKEND,
         choices=("auto", "simple-dir", "cached-dir"),
-        type=backend_arg,
-        dest="backend_cls",
+        dest="backend_arg",
         help=(
             "A backend implementation. Keep the default 'auto' to automatically"
             " determine whether to activate caching or not"
@@ -537,6 +520,7 @@ def get_parser() -> argparse.ArgumentParser:
 
 
 TConf = t.TypeVar("TConf", bound="_ConfigCommon")
+BackendFactory = t.Callable[["Configuration"], Backend]
 
 
 class _ConfigCommon:
@@ -657,7 +641,7 @@ class RunConfig(_ConfigCommon):
         log_req_frmt: str,
         log_res_frmt: str,
         log_err_frmt: str,
-        backend_cls: BackendFactory,
+        backend_arg: str,
         auther: t.Callable[[str, str], bool] = None,
         **kwargs: t.Any,
     ) -> None:
@@ -677,14 +661,14 @@ class RunConfig(_ConfigCommon):
         self.log_req_frmt = log_req_frmt
         self.log_res_frmt = log_res_frmt
         self.log_err_frmt = log_err_frmt
-        self.backend_cls = backend_cls
+        self.backend_arg = backend_arg
         # Derived properties
         self._derived_properties = self._derived_properties + (
             "auther",
             "backend",
         )
         self.auther = self.get_auther(auther)
-        self.backend = self.get_backend(backend_cls)
+        self.backend = self.get_backend(backend_arg)
 
     @classmethod
     def kwargs_from_namespace(
@@ -707,7 +691,7 @@ class RunConfig(_ConfigCommon):
             "log_req_frmt": namespace.log_req_frmt,
             "log_res_frmt": namespace.log_res_frmt,
             "log_err_frmt": namespace.log_err_frmt,
-            "backend_cls": namespace.backend_cls,
+            "backend_arg": namespace.backend_arg,
         }
 
     def get_auther(
@@ -752,7 +736,20 @@ class RunConfig(_ConfigCommon):
 
         return auther
 
-    def get_backend(self, backend: BackendFactory) -> IBackend:
+    def get_backend(self, arg: str) -> IBackend:
+
+        available_backends: t.Dict[str, BackendFactory] = {
+            "auto": get_file_backend,
+            "simple-dir": SimpleFileBackend,
+            "cached-dir": CachingFileBackend,
+        }
+        # if arg not in available_backends:
+        #     raise argparse.ArgumentTypeError(
+        #         f"Value must be one of {', '.join(available_backends.keys())}"
+        #     )
+
+        backend = available_backends[arg]
+
         return BackendProxy(backend(self))
 
 
