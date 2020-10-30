@@ -247,7 +247,7 @@ def digest_file(file_path: PathLike, hash_algo: str) -> str:
     return f"{hash_algo}={digester.hexdigest()}"
 
 
-def get_file_backend(config: Configuration) -> Backend:
+def get_file_backend(config: "Configuration") -> Backend:
     if ENABLE_CACHING:
         return CachingFileBackend(config)
     return SimpleFileBackend(config)
@@ -259,7 +259,7 @@ PkgFunc = t.TypeVar("PkgFunc", bound=t.Callable[..., t.Iterable[PkgFile]])
 def with_digester(func: PkgFunc) -> PkgFunc:
     @functools.wraps(func)
     def add_digester_method(
-        self: BackendProxy, *args: t.Any, **kwargs: t.Any
+        self: "BackendProxy", *args: t.Any, **kwargs: t.Any
     ) -> t.Iterable[PkgFile]:
         packages = func(self, *args, **kwargs)
         for package in packages:
