@@ -6,42 +6,53 @@ the current config logic, but has not yet been integrated.
 To add a config option:
 
 - If it should be available for all subcommands (run, update), add it to
-  the `global_args` parser.
+  the `add_common_args()` function
 - If it should only be available for the `run` command, add it to the
-  `run_parser`.
+  `run_parser` in the `get_parser()` function.
 - If it should only be available for the `update` command, add it to the
-  `update_parser`.
+  `update_parser` in the `get_parser() function`.
 - Add it to the appropriate Config class, `_ConfigCommon` for global options,
   `RunConfig` for `run` options, and `UpdateConfig` for `update` options.
+  - This requires adding it as an `__init__()` kwarg, setting it as an instance
+    attribute in `__init__()`, and ensuring it will be parsed from the argparse
+    namespace in the `kwargs_from_namespace()` method
 - Ensure your config option is tested in `tests/test_config.py`.
 
-The `Config` class provides a `.from_args()` static method, which returns
-either a `RunConfig` or an `UpdateConfig`, depending on which subcommand
-is specified in the args.
+The `Config` class is a factory class only. Config objects do not inherit from
+it, but from `_ConfigCommon`. The `Config` provides the following constructors:
+
+- `default_with_overrides(**overrides: Any)`: construct a `RunConfig` (since
+  run is the default pypiserver action) with default values, applying any
+  specified overrides
+- `from_args(args: Optional[Sequence[str]])`: construct a config from the
+  provided arguments. Depending on arguments, the config will be either a
+  `RunConfig` or an `UpdateConfig`
 
 Legacy commandline arguments did not require a subcommand. This form is
 still supported, but deprecated. A warning is printing to stderr if
 the legacy commandline format is used.
-
-Command line arguments should be parsed as early as possible, using
-custom functions like the `auth_*` functions below if needed. For example,
-if an option were to take JSON as an argument, that JSON should be parsed
-into a dict by the argument parser.
 """
 
 import argparse
 import contextlib
 import hashlib
-import itertools
 import io
+import itertools
+import logging
+import pathlib
 import pkg_resources
 import re
-import textwrap
 import sys
+import textwrap
 import typing as t
 from distutils.util import strtobool as strtoint
 
-from pypiserver import __version__
+# The `passlib` requirement is optional, so we need to verify its import here.
+
+try:
+    from passlib.apache import HtpasswdFile
+except ImportError:
+    HtpasswdFile = None
 
 
 # The "strtobool" function in distutils does a nice job at parsing strings,
@@ -64,7 +75,7 @@ class DEFAULTS:
     LOG_REQ_FRMT = "%(bottle.request)s"
     LOG_RES_FRMT = "%(status)s"
     LOG_STREAM = sys.stdout
-    PACKAGE_DIRECTORIES = ["~/packages"]
+    PACKAGE_DIRECTORIES = [pathlib.Path("~/packages").expanduser().resolve()]
     PORT = 8080
     SERVER_METHOD = "auto"
 
@@ -86,15 +97,14 @@ def auth_arg(arg: str) -> t.List[str]:
             "Invalid authentication options. `.` (no authentication) "
             "must be specified alone."
         )
-    return items
+
+    # The "." is just an indicator for no auth, so we return an empty auth list
+    # if it was present.
+    return [i for i in items if not i == "."]
 
 
 def hash_algo_arg(arg: str) -> t.Optional[str]:
     """Parse a hash algorithm from the string."""
-    # The standard hashing algorithms are all made available via fully
-    # lowercase names, along with (sometimes) variously cased versions
-    # as well.
-    arg = arg.lower()
     if arg in hashlib.algorithms_available:
         return arg
     try:
@@ -130,9 +140,35 @@ def ignorelist_file_arg(arg: t.Optional[str]) -> t.List[str]:
     """Parse the ignorelist and return the list of ignored files."""
     if arg is None or arg == "pypiserver/no-ignores":
         return []
-    with open(arg) as f:
-        stripped_lines = (ln.strip() for ln in f.readlines())
-        return [ln for ln in stripped_lines if ln and not ln.startswith("#")]
+
+    fpath = pathlib.Path(arg)
+    if not fpath.exists():
+        raise argparse.ArgumentTypeError(f"No such ignorelist-file '{arg}'")
+
+    try:
+        lines = (ln.strip() for ln in fpath.read_text().splitlines())
+        return [ln for ln in lines if ln and not ln.startswith("#")]
+    except Exception as exc:
+        raise argparse.ArgumentTypeError(
+            f"Could not parse ignorelist-file '{arg}': {exc}"
+        ) from exc
+
+
+def package_directory_arg(arg: str) -> pathlib.Path:
+    """Convert any package directory argument into its absolute path."""
+    pkg_dir = pathlib.Path(arg).expanduser().resolve()
+    try:
+        # Attempt to grab the first item from the directory. The directory may
+        # be empty, in which case we'll get back None, but if the directory does
+        # not exist or we do not have permission to read it, we can catch th
+        # OSError and exit with a useful message.
+        next(pkg_dir.iterdir(), None)
+    except OSError as exc:
+        raise argparse.ArgumentTypeError(
+            "Error: while trying to access package directory "
+            f"({pkg_dir}): {exc}"
+        )
+    return pkg_dir
 
 
 # We need to capture this at compile time, because we replace sys.stderr
@@ -161,6 +197,9 @@ def log_stream_arg(arg: str) -> t.Optional[t.IO]:
 
 def add_common_args(parser: argparse.ArgumentParser) -> None:
     """Add common arguments to a parser."""
+    # Don't update at top-level to avoid circular imports in __init__
+    from pypiserver import __version__
+
     parser.add_argument(
         "-v",
         "--verbose",
@@ -213,7 +252,6 @@ def get_parser() -> argparse.ArgumentParser:
             "directories starting with a dot. Multiple package directories "
             "may be specified."
         ),
-        # formatter_class=argparse.RawTextHelpFormatter,
         formatter_class=PreserveWhitespaceRawTextHelpFormatter,
         epilog=(
             "Visit https://github.com/pypiserver/pypiserver "
@@ -237,6 +275,7 @@ def get_parser() -> argparse.ArgumentParser:
         "package_directory",
         default=DEFAULTS.PACKAGE_DIRECTORIES,
         nargs="*",
+        type=package_directory_arg,
         help="The directory from which to serve packages.",
     )
 
@@ -249,7 +288,10 @@ def get_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument(
         "-i",
+        "-H",
         "--interface",
+        "--host",
+        dest="host",
         default=DEFAULTS.INTERFACE,
         help="Listen on interface INTERFACE (default: 0.0.0.0)",
     )
@@ -324,7 +366,7 @@ def get_parser() -> argparse.ArgumentParser:
         ),
         type=str.lower,
         help=(
-            "Use METHOD to run th eserver. Valid values include paste, "
+            "Use METHOD to run the server. Valid values include paste, "
             "cherrypy, twisted, gunicorn, gevent, wsgiref, and auto. The "
             'default is to use "auto", which chooses one of paste, cherrypy, '
             "twisted, or wsgiref."
@@ -412,6 +454,7 @@ def get_parser() -> argparse.ArgumentParser:
         "package_directory",
         default=DEFAULTS.PACKAGE_DIRECTORIES,
         nargs="*",
+        type=package_directory_arg,
         help="The directory from which to serve packages.",
     )
 
@@ -457,15 +500,75 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
+TConf = t.TypeVar("TConf", bound="_ConfigCommon")
+
+
 class _ConfigCommon:
-    def __init__(self, namespace: argparse.Namespace) -> None:
+    def __init__(
+        self,
+        roots: t.List[pathlib.Path],
+        verbosity: int,
+        log_frmt: str,
+        log_file: t.Optional[str],
+        log_stream: t.Optional[t.IO],
+    ) -> None:
         """Construct a RuntimeConfig."""
         # Global arguments
-        self.verbosity: int = namespace.verbose
-        self.log_file: t.Optional[str] = namespace.log_file
-        self.log_stream: t.Optional[t.IO] = namespace.log_stream
-        self.log_frmt: str = namespace.log_frmt
-        self.roots: t.List[str] = namespace.package_directory
+        self.verbosity = verbosity
+        self.log_file = log_file
+        self.log_stream = log_stream
+        self.log_frmt = log_frmt
+        self.roots = roots
+
+        # Derived properties are directly based on other properties and are not
+        # included in equality checks.
+        self._derived_properties: t.Tuple[str, ...] = (
+            "iter_packages",
+            "package_root",
+        )
+        # The first package directory is considered the root. This is used
+        # for uploads.
+        self.package_root = self.roots[0]
+
+    @classmethod
+    def from_namespace(
+        cls: t.Type[TConf], namespace: argparse.Namespace
+    ) -> TConf:
+        """Construct a config from an argparse namespace."""
+        return cls(**cls.kwargs_from_namespace(namespace))
+
+    @staticmethod
+    def kwargs_from_namespace(
+        namespace: argparse.Namespace,
+    ) -> t.Dict[str, t.Any]:
+        """Convert a namespace into __init__ kwargs for this class."""
+        return dict(
+            verbosity=namespace.verbose,
+            log_file=namespace.log_file,
+            log_stream=namespace.log_stream,
+            log_frmt=namespace.log_frmt,
+            roots=namespace.package_directory,
+        )
+
+    @property
+    def log_level(self) -> int:
+        """Return an appropriate log-level for the config's verbosity."""
+        levels = {
+            0: logging.WARNING,
+            1: logging.INFO,
+            2: logging.DEBUG,
+        }
+        # Return a log-level from warning through not set (log all messages).
+        # If we've specified 3 or more levels of verbosity, just return not set.
+        return levels.get(self.verbosity, logging.NOTSET)
+
+    def with_updates(self: TConf, **kwargs: t.Any) -> TConf:
+        """Create a new config with the specified updates.
+
+        The current config is used as a base. Any properties not specified in
+        keyword arguments will remain unchanged.
+        """
+        return self.__class__(**{**dict(self), **kwargs})  # type: ignore
 
     def __repr__(self) -> str:
         """A string representation indicating the class and its properties."""
@@ -482,51 +585,175 @@ class _ConfigCommon:
         """Configs are equal if their public values are equal."""
         if not isinstance(other, self.__class__):
             return False
-        return all(getattr(other, k) == v for k, v in self)  # type: ignore
+        return all(
+            getattr(other, k) == v
+            for k, v in self
+            if not k in self._derived_properties
+        )
 
-    def __iter__(self) -> t.Iterable[t.Tuple[str, t.Any]]:
+    def __iter__(self) -> t.Iterator[t.Tuple[str, t.Any]]:
         """Iterate over config (k, v) pairs."""
         yield from (
-            (k, v) for k, v in vars(self).items() if not k.startswith("_")
+            (k, v)
+            for k, v in vars(self).items()
+            if not k.startswith("_") and k not in self._derived_properties
         )
 
 
 class RunConfig(_ConfigCommon):
     """A config for the Run command."""
 
-    def __init__(self, namespace: argparse.Namespace) -> None:
+    def __init__(
+        self,
+        port: int,
+        host: str,
+        authenticate: t.List[str],
+        password_file: t.Optional[str],
+        disable_fallback: bool,
+        fallback_url: str,
+        server_method: str,
+        overwrite: bool,
+        hash_algo: t.Optional[str],
+        welcome_msg: str,
+        cache_control: t.Optional[int],
+        log_req_frmt: str,
+        log_res_frmt: str,
+        log_err_frmt: str,
+        auther: t.Callable[[str, str], bool] = None,
+        **kwargs: t.Any,
+    ) -> None:
         """Construct a RuntimeConfig."""
-        super().__init__(namespace)
-        self.port: int = namespace.port
-        self.interface: str = namespace.interface
-        self.authenticate: t.List[str] = namespace.authenticate
-        self.password_file: t.Optional[str] = namespace.passwords
-        self.disable_fallback: bool = namespace.disable_fallback
-        self.fallback_url: str = namespace.fallback_url
-        self.server_method: str = namespace.server
-        self.overwrite: bool = namespace.overwrite
-        self.hash_algo: t.Optional[str] = namespace.hash_algo
-        self.welcome_msg: str = namespace.welcome
-        self.cache_control: t.Optional[int] = namespace.cache_control
-        self.log_req_frmt: str = namespace.log_req_frmt
-        self.log_res_frmt: str = namespace.log_res_frmt
-        self.log_err_frmt: str = namespace.log_err_frmt
+        super().__init__(**kwargs)
+        self.port = port
+        self.host = host
+        self.authenticate = authenticate
+        self.password_file = password_file
+        self.disable_fallback = disable_fallback
+        self.fallback_url = fallback_url
+        self.server_method = server_method
+        self.overwrite = overwrite
+        self.hash_algo = hash_algo
+        self.welcome_msg = welcome_msg
+        self.cache_control = cache_control
+        self.log_req_frmt = log_req_frmt
+        self.log_res_frmt = log_res_frmt
+        self.log_err_frmt = log_err_frmt
+
+        # Derived properties
+        self._derived_properties = self._derived_properties + ("auther",)
+        self.auther = self.get_auther(auther)
+
+    @classmethod
+    def kwargs_from_namespace(
+        cls, namespace: argparse.Namespace
+    ) -> t.Dict[str, t.Any]:
+        """Convert a namespace into __init__ kwargs for this class."""
+        return {
+            **super(RunConfig, cls).kwargs_from_namespace(namespace),
+            "port": namespace.port,
+            "host": namespace.host,
+            "authenticate": namespace.authenticate,
+            "password_file": namespace.passwords,
+            "disable_fallback": namespace.disable_fallback,
+            "fallback_url": namespace.fallback_url,
+            "server_method": namespace.server,
+            "overwrite": namespace.overwrite,
+            "hash_algo": namespace.hash_algo,
+            "welcome_msg": namespace.welcome,
+            "cache_control": namespace.cache_control,
+            "log_req_frmt": namespace.log_req_frmt,
+            "log_res_frmt": namespace.log_res_frmt,
+            "log_err_frmt": namespace.log_err_frmt,
+        }
+
+    def get_auther(
+        self, passed_auther: t.Optional[t.Callable[[str, str], bool]]
+    ) -> t.Callable[[str, str], bool]:
+        """Create or retrieve an authentication function."""
+        # The auther may be specified directly as a kwarg in the API interface
+        if passed_auther:
+            return passed_auther
+        # Otherwise we check to see if we need to authenticate
+        if self.password_file == "." or self.authenticate == []:
+            # It's illegal to specify no authentication without also specifying
+            # no password file, and vice-versa.
+            if self.password_file != "." or self.authenticate != []:
+                sys.exit(
+                    "When auth-ops-list is empty (-a=.), password-file"
+                    f" (-P={self.password_file!r}) must also be empty ('.')!"
+                )
+            # Return an auther that always returns true.
+            return lambda _uname, _pw: True
+        # Now, if there was no password file specified, we can return an auther
+        # that always returns False, since there is no way to authenticate.
+        if self.password_file is None:
+            return lambda _uname, _pw: False
+        # Finally, if a password file was specified, we'll load it up with
+        # Htpasswd and return a callable that checks it.
+        if HtpasswdFile is None:
+            sys.exit(
+                "apache.passlib library is not available. You must install "
+                "pypiserver with the optional 'passlib' dependency (`pip "
+                "install pypiserver['passlib']`) in order to use password "
+                "authentication"
+            )
+
+        loaded_pw_file = HtpasswdFile(self.password_file)
+
+        # Construct a local closure over the loaded PW file and return as our
+        # authentication function.
+        def auther(uname: str, pw: str) -> bool:
+            loaded_pw_file.load_if_changed()
+            return loaded_pw_file.check_password(uname, pw)
+
+        return auther
 
 
 class UpdateConfig(_ConfigCommon):
     """A config for the Update command."""
 
-    def __init__(self, namespace: argparse.Namespace) -> None:
+    def __init__(
+        self,
+        execute: bool,
+        download_directory: t.Optional[str],
+        allow_unstable: bool,
+        ignorelist: t.List[str],
+        **kwargs: t.Any,
+    ) -> None:
         """Construct an UpdateConfig."""
-        super().__init__(namespace)
-        self.execute: bool = namespace.execute
-        self.download_directory: t.Optional[str] = namespace.download_directory
-        self.allow_unstable: bool = namespace.allow_unstable
-        self.ignorelist: t.List[str] = namespace.ignorelist_file
+        super().__init__(**kwargs)
+        self.execute = execute
+        self.download_directory = download_directory
+        self.allow_unstable = allow_unstable
+        self.ignorelist = ignorelist
+
+    @classmethod
+    def kwargs_from_namespace(
+        cls, namespace: argparse.Namespace
+    ) -> t.Dict[str, t.Any]:
+        """Convert a namespace into __init__ kwargs for this class."""
+        return {
+            **super(UpdateConfig, cls).kwargs_from_namespace(namespace),
+            "execute": namespace.execute,
+            "download_directory": namespace.download_directory,
+            "allow_unstable": namespace.allow_unstable,
+            "ignorelist": namespace.ignorelist_file,
+        }
 
 
 class Config:
     """Config constructor for building a config from args."""
+
+    @classmethod
+    def default_with_overrides(cls, **overrides: t.Any) -> RunConfig:
+        """Construct a RunConfig with default arguments, plus overrides.
+
+        Overrides must be valid arguments to the `__init__()` function
+        of `RunConfig`.
+        """
+        default_config = cls.from_args(["run"])
+        assert isinstance(default_config, RunConfig)
+        return default_config.with_updates(**overrides)
 
     @classmethod
     def from_args(
@@ -599,9 +826,9 @@ class Config:
                 raise
 
         if parsed.cmd == "run":
-            return RunConfig(parsed)
+            return RunConfig.from_namespace(parsed)
         if parsed.cmd == "update":
-            return UpdateConfig(parsed)
+            return UpdateConfig.from_namespace(parsed)
         raise SystemExit(parser.format_usage())
 
     @staticmethod
@@ -622,26 +849,26 @@ class Config:
 
         # Don't actually update the passed list, in case it was the global
         # sys.argv.
-        args = list(args)
+        updated_args = list(args)
 
         # Find the update index. For "reasons", python's index search throws
         # if the value isn't found, so manually wrap in the usual "return -1
         # if not found" standard
         try:
-            update_idx = args.index("-U")
+            update_idx = updated_args.index("-U")
         except ValueError:
             update_idx = -1
 
         if update_idx == -1:
             # We were a "run" command.
-            args.insert(insertion_idx, "run")
+            updated_args.insert(insertion_idx, "run")
         else:
             # Remove the -U from the args and add the "update" command at the
             # start of the arg list.
-            args.pop(update_idx)
-            args.insert(insertion_idx, "update")
+            updated_args.pop(update_idx)
+            updated_args.insert(insertion_idx, "update")
 
-        return args
+        return updated_args
 
 
 @contextlib.contextmanager

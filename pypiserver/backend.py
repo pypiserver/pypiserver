@@ -1,11 +1,13 @@
+import abc
 import hashlib
 import itertools
 import os
 import typing as t
-from pathlib import Path, PurePath
+from abc import ABC
+from pathlib import Path
 
-from . import Configuration
 from .cache import CacheManager
+from .config import RunConfig, UpdateConfig
 from .pkg_helpers import (
     normalize_pkgname,
     parse_version,
@@ -14,6 +16,7 @@ from .pkg_helpers import (
 )
 
 PathLike = t.Union[str, os.PathLike]
+Configuration = RunConfig
 
 
 class PkgFile:
@@ -74,16 +77,56 @@ class PkgFile:
         return self.relfn_unix + hashpart  # type: ignore
 
 
-class Backend:
-    def __init__(self, config: Configuration):
-        self.hash_algo = config.hash_algo  # type: ignore
+class IBackend(abc.ABC):
+    @abc.abstractmethod
+    def get_all_packages(self) -> t.Iterable[PkgFile]:
+        pass
 
+    @abc.abstractmethod
+    def find_project_packages(self, project: str) -> t.Iterable[PkgFile]:
+        pass
+
+    @abc.abstractmethod
+    def find_version(self, name: str, version: str) -> t.Iterable[PkgFile]:
+        pass
+
+    @abc.abstractmethod
+    def get_projects(self) -> t.Iterable[str]:
+        pass
+
+    @abc.abstractmethod
+    def exists(self, filename: str) -> bool:
+        pass
+
+    @abc.abstractmethod
+    def digest(self, pkg: PkgFile) -> t.Optional[str]:
+        pass
+
+    @abc.abstractmethod
+    def package_count(self) -> int:
+        pass
+
+    @abc.abstractmethod
+    def add_package(self, filename: str, stream: t.BinaryIO) -> None:
+        pass
+
+    @abc.abstractmethod
+    def remove_package(self, pkg: PkgFile) -> None:
+        pass
+
+
+class Backend(IBackend, abc.ABC):
+    def __init__(self, config: RunConfig):
+        self.hash_algo = config.hash_algo
+
+    @abc.abstractmethod
     def get_all_packages(self) -> t.Iterable[PkgFile]:
         """Implement this method to return an Iterable of all packages (as
         PkgFile objects) that are available in the Backend.
         """
-        raise NotImplementedError
+        pass
 
+    @abc.abstractmethod
     def add_package(self, filename: str, stream: t.BinaryIO) -> None:
         """Add a package to the Backend. `filename` is the package's filename
         (without any directory parts). It is just a name, there is no file by
@@ -91,15 +134,17 @@ class Backend:
         to read the file's content. To convert the package into an actual file
         on disk, run `write_file(filename, stream)`.
         """
-        raise NotImplementedError
+        pass
 
+    @abc.abstractmethod
     def remove_package(self, pkg: PkgFile) -> None:
         """Remove a package from the Backend"""
-        raise NotImplementedError
+        pass
 
+    @abc.abstractmethod
     def exists(self, filename: str) -> bool:
         """Does a package by the given name exist?"""
-        raise NotImplementedError
+        pass
 
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
         if self.hash_algo is None or pkg.fn is None:
@@ -185,7 +230,7 @@ class CachingFileBackend(SimpleFileBackend):
         )
 
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
-        if pkg.fn is None:
+        if self.hash_algo is None or pkg.fn is None:
             return None
         return self.cache_manager.digest_file(
             pkg.fn, self.hash_algo, digest_file

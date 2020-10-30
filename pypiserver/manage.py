@@ -1,5 +1,7 @@
 """Management operations for pypiserver."""
 
+from __future__ import absolute_import, print_function, unicode_literals
+
 import itertools
 import os
 import sys
@@ -111,6 +113,7 @@ class PipCmd:
     @staticmethod
     def update_root(pip_version):
         """Yield an appropriate root command depending on pip version."""
+        # legacy_pip = StrictVersion(pip_version) < StrictVersion('10.0')
         legacy_pip = LooseVersion(pip_version) < LooseVersion("10.0")
         for part in ("pip", "-q"):
             yield part
@@ -168,46 +171,16 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
 
 
 def update_all_packages(
-    roots, destdir=None, dry_run=False, stable_only=True, blacklist_file=None
+    roots, destdir=None, dry_run=False, stable_only=True, ignorelist=None
 ):
     all_packages = itertools.chain.from_iterable(
         listdir(Path(r)) for r in roots
     )
 
-    skip_packages = set()
-    if blacklist_file:
-        skip_packages = set(read_lines(blacklist_file))
-        print(
-            'Skipping update of blacklisted packages (listed in "{}"): {}'.format(
-                blacklist_file, ", ".join(sorted(skip_packages))
-            )
-        )
+    skip_packages = set(ignorelist or ())
 
     packages = frozenset(
         [pkg for pkg in all_packages if pkg.pkgname not in skip_packages]
     )
 
     update(packages, destdir, dry_run, stable_only)
-
-
-def read_lines(filename):
-    """
-    Read the contents of `filename`, stripping empty lines and '#'-comments.
-    Return a list of strings, containing the lines of the file.
-    """
-
-    try:
-        with open(filename) as f:
-            lines = [
-                line
-                for line in (ln.strip() for ln in f.readlines())
-                if line and not line.startswith("#")
-            ]
-    except Exception:
-        log.error(
-            f'Failed to read package blacklist file "{filename}". '
-            "Aborting server startup, please fix this."
-        )
-        raise
-
-    return lines

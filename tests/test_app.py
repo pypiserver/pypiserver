@@ -1,7 +1,9 @@
 #! /usr/bin/env py.test
 
 # Builtin imports
+import logging
 import os
+import pathlib
 import xmlrpc.client as xmlrpclib
 from html import unescape
 
@@ -11,7 +13,7 @@ import webtest
 
 # Local Imports
 from tests.test_pkg_helpers import files, invalid_files
-from pypiserver import __main__, bottle, core
+from pypiserver import __main__, bottle, core, Bottle
 from pypiserver.backend import CachingFileBackend
 
 # Enable logging to detect any problems with it
@@ -20,21 +22,21 @@ from pypiserver.backend import CachingFileBackend
 __main__.init_logging()
 
 
-@pytest.fixture()
-def _app(app):
-    return app.module
-
-
 @pytest.fixture
 def app(tmpdir):
     from pypiserver import app
 
-    return app(root=tmpdir.strpath, authenticated=[])
+    return app(
+        roots=[pathlib.Path(tmpdir.strpath)],
+        authenticate=[],
+        password_file=".",
+    )
 
 
 @pytest.fixture
 def testapp(app):
     """Return a webtest TestApp initiated with pypiserver app"""
+    bottle.debug(True)
     return webtest.TestApp(app)
 
 
@@ -97,13 +99,18 @@ def welcome_file_all_vars(request, root):
     return wfile
 
 
-def add_file_to_root(root, filename, content=""):
-    root.join(filename).write(content)
-    if isinstance(core.backend, CachingFileBackend):
-        cache = core.backend.cache_manager.invalidate_root_cache(root)
+@pytest.fixture
+def add_file_to_root(app):
+    def file_adder(root, filename, content=""):
+        root.join(filename).write(content)
+        backend = app._pypiserver_backend.backend
+        if isinstance(backend, CachingFileBackend):
+            backend.cache_manager.invalidate_root_cache(root)
+
+    return file_adder
 
 
-def test_root_count(root, testapp):
+def test_root_count(root, testapp, add_file_to_root):
     """Test that the welcome page count updates with added packages
 
     :param root: root temporary directory fixture
@@ -184,14 +191,14 @@ def test_favicon(testapp):
     testapp.get("/favicon.ico", status=404)
 
 
-def test_fallback(root, _app, testapp):
-    assert _app.config.redirect_to_fallback
+def test_fallback(testapp):
+    assert not testapp.app._pypiserver_config.disable_fallback
     resp = testapp.get("/simple/pypiserver/", status=302)
     assert resp.headers["Location"] == "https://pypi.org/simple/pypiserver/"
 
 
-def test_no_fallback(root, _app, testapp):
-    _app.config.redirect_to_fallback = False
+def test_no_fallback(testapp):
+    testapp.app._pypiserver_config.disable_fallback = True
     testapp.get("/simple/pypiserver/", status=404)
 
 
@@ -322,7 +329,7 @@ def test_nonroot_root_with_x_forwarded_host_without_trailing_slash(testapp):
     resp.mustcontain("""<a href="/priv/packages/">here</a>""")
 
 
-def test_nonroot_simple_index(root, testpriv):
+def test_nonroot_simple_index(root, testpriv, add_file_to_root):
     add_file_to_root(root, "foobar-1.0.zip", "123")
     resp = testpriv.get("/priv/simple/foobar/")
     links = resp.html("a")
@@ -330,7 +337,7 @@ def test_nonroot_simple_index(root, testpriv):
     assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
 
 
-def test_nonroot_simple_index_with_x_forwarded_host(root, testapp):
+def test_nonroot_simple_index_with_x_forwarded_host(root, testapp, add_file_to_root):
     add_file_to_root(root, "foobar-1.0.zip", "123")
 
     resp = testapp.get(
@@ -341,7 +348,7 @@ def test_nonroot_simple_index_with_x_forwarded_host(root, testapp):
     assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
 
 
-def test_nonroot_simple_packages(root, testpriv):
+def test_nonroot_simple_packages(root, testpriv, add_file_to_root):
     add_file_to_root(root, "foobar-1.0.zip", "123")
     resp = testpriv.get("/priv/packages/")
     links = resp.html("a")
@@ -349,7 +356,7 @@ def test_nonroot_simple_packages(root, testpriv):
     assert "/priv/packages/foobar-1.0.zip#" in links[0]["href"]
 
 
-def test_nonroot_simple_packages_with_x_forwarded_host(root, testapp):
+def test_nonroot_simple_packages_with_x_forwarded_host(root, testapp, add_file_to_root):
     add_file_to_root(root, "foobar-1.0.zip", "123")
 
     resp = testapp.get(
@@ -407,8 +414,8 @@ def test_simple_index_list_name_with_underscore_no_egg(root, testapp):
     assert hrefs == {"foo-bar/"}
 
 
-def test_no_cache_control_set(root, _app, testapp):
-    assert not _app.config.cache_control
+def test_no_cache_control_set(root, testapp):
+    assert not testapp.app._pypiserver_config.cache_control
     root.join("foo_bar-1.0.tar.gz").write("")
     resp = testapp.get("/packages/foo_bar-1.0.tar.gz")
     assert "Cache-Control" not in resp.headers
@@ -425,13 +432,13 @@ def test_cache_control_set(root):
     assert resp.headers["Cache-Control"] == f"public, max-age={AGE}"
 
 
-def test_upload_noAction(root, testapp):
+def test_upload_noAction(testapp):
     resp = testapp.post("/", expect_errors=1)
     assert resp.status == "400 Bad Request"
     assert "Missing ':action' field!" in unescape(resp.text)
 
 
-def test_upload_badAction(root, testapp):
+def test_upload_badAction(testapp):
     resp = testapp.post("/", params={":action": "BAD"}, expect_errors=1)
     assert resp.status == "400 Bad Request"
     assert "Unsupported ':action' field: BAD" in unescape(resp.text)
@@ -488,7 +495,6 @@ def test_upload_with_signature(package, root, testapp):
 
 @pytest.mark.parametrize("package", invalid_files)
 def test_upload_badFilename(package, root, testapp):
-
     resp = testapp.post(
         "/",
         params={":action": "file_upload"},

@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import re
 from pathlib import Path
 
 from setuptools import setup
@@ -22,8 +23,15 @@ def read_file(rel_path: str):
 
 def get_version():
     locals_ = {}
+    version_line = re.compile(
+        r'^[\w =]*__version__ = "\d+\.\d+\.\d+\.?\w*\d*"$'
+    )
     try:
-        exec(read_file("pypiserver/__init__.py"), locals_)
+        for ln in filter(
+            version_line.match,
+            read_file("pypiserver/__init__.py").splitlines(),
+        ):
+            exec(ln, locals_)
     except (ImportError, RuntimeError):
         pass
     return locals_["__version__"]

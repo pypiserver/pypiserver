@@ -10,6 +10,12 @@ import pytest
 
 from pypiserver.config import DEFAULTS, Config, RunConfig, UpdateConfig
 
+FILE_DIR = pathlib.Path(__file__).parent.resolve()
+
+# Username and password stored in the htpasswd.a.a test file.
+HTPASS_TEST_FILE = str(FILE_DIR / "htpasswd.a.a")
+HTPASS_TEST_USER = "a"
+HTPASS_TEST_PASS = "a"
 
 TEST_WELCOME_FILE = str(pathlib.Path(__file__).parent / "sample_msg.html")
 TEST_IGNORELIST_FILE = str(pathlib.Path(__file__).parent / "test-ignorelist")
@@ -26,7 +32,9 @@ class ConfigTestCase(t.NamedTuple):
     exp_config_type: t.Type
     # Expected values in the config. These don't necessarily need to be
     # exclusive. Instead, they should just look at the attributes relevant
-    # to the test case at hand.
+    # to the test case at hand. A special "_test" key, if present, should
+    # map to a function that takes the config as an argument. If this
+    # returns a falsey value, the test will be failed.
     exp_config_values: t.Dict[str, t.Any]
 
 
@@ -100,27 +108,37 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
     ),
     *generate_subcommand_test_cases(
         case="single package directory specified",
-        extra_args=["foo"],
-        exp_config_values={"roots": ["foo"]},
+        extra_args=[str(FILE_DIR)],
+        exp_config_values={"roots": [FILE_DIR]},
     ),
     *generate_subcommand_test_cases(
         case="multiple package directory specified",
-        extra_args=["foo", "bar"],
-        exp_config_values={"roots": ["foo", "bar"]},
+        extra_args=[str(FILE_DIR), str(FILE_DIR.parent)],
+        exp_config_values={
+            "roots": [
+                FILE_DIR,
+                FILE_DIR.parent,
+            ]
+        },
     ),
     ConfigTestCase(
         case="update with package directory (out-of-order legacy order)",
-        args=["update", "foo"],
-        legacy_args=["foo", "-U"],
+        args=["update", str(FILE_DIR)],
+        legacy_args=[str(FILE_DIR), "-U"],
         exp_config_type=UpdateConfig,
-        exp_config_values={"roots": ["foo"]},
+        exp_config_values={"roots": [FILE_DIR]},
     ),
     ConfigTestCase(
         case="update with multiple package directories (weird ordering)",
-        args=["update", "foo", "bar"],
-        legacy_args=["foo", "-U", "bar"],
+        args=["update", str(FILE_DIR), str(FILE_DIR.parent)],
+        legacy_args=[str(FILE_DIR), "-U", str(FILE_DIR.parent)],
         exp_config_type=UpdateConfig,
-        exp_config_values={"roots": ["foo", "bar"]},
+        exp_config_values={
+            "roots": [
+                FILE_DIR,
+                FILE_DIR.parent,
+            ]
+        },
     ),
     # verbosity
     *(
@@ -210,21 +228,35 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         args=["run"],
         legacy_args=[],
         exp_config_type=RunConfig,
-        exp_config_values={"interface": DEFAULTS.INTERFACE},
+        exp_config_values={"host": DEFAULTS.INTERFACE},
     ),
     ConfigTestCase(
         case="Run: interface specified",
         args=["run", "-i", "1.1.1.1"],
         legacy_args=["-i", "1.1.1.1"],
         exp_config_type=RunConfig,
-        exp_config_values={"interface": "1.1.1.1"},
+        exp_config_values={"host": "1.1.1.1"},
     ),
     ConfigTestCase(
         case="Run: interface specified (long form)",
         args=["run", "--interface", "1.1.1.1"],
         legacy_args=["--interface", "1.1.1.1"],
         exp_config_type=RunConfig,
-        exp_config_values={"interface": "1.1.1.1"},
+        exp_config_values={"host": "1.1.1.1"},
+    ),
+    ConfigTestCase(
+        case="Run: host specified",
+        args=["run", "-H", "1.1.1.1"],
+        legacy_args=["-H", "1.1.1.1"],
+        exp_config_type=RunConfig,
+        exp_config_values={"host": "1.1.1.1"},
+    ),
+    ConfigTestCase(
+        case="Run: host specified (long form)",
+        args=["run", "--host", "1.1.1.1"],
+        legacy_args=["--host", "1.1.1.1"],
+        exp_config_type=RunConfig,
+        exp_config_values={"host": "1.1.1.1"},
     ),
     # authenticate
     ConfigTestCase(
@@ -250,10 +282,14 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
     ),
     ConfigTestCase(
         case="Run: authenticate specified with dot",
-        args=["run", "-a", "."],
-        legacy_args=["-a", "."],
+        # both auth and pass must be specified as empty if one of them is empty.
+        args=["run", "-a", ".", "-P", "."],
+        legacy_args=["-a", ".", "-P", "."],
         exp_config_type=RunConfig,
-        exp_config_values={"authenticate": ["."]},
+        exp_config_values={
+            "authenticate": [],
+            "_test": lambda conf: bool(conf.auther("foo", "bar")) is True,
+        },
     ),
     # passwords
     ConfigTestCase(
@@ -265,17 +301,42 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
     ),
     ConfigTestCase(
         "Run: passwords file specified",
-        args=["run", "-P", "foo"],
-        legacy_args=["-P", "foo"],
+        args=["run", "-P", HTPASS_TEST_FILE],
+        legacy_args=["-P", HTPASS_TEST_FILE],
         exp_config_type=RunConfig,
-        exp_config_values={"password_file": "foo"},
+        exp_config_values={
+            "password_file": HTPASS_TEST_FILE,
+            "_test": lambda conf: (
+                bool(conf.auther("foo", "bar")) is False
+                and bool(conf.auther("a", "a")) is True
+            ),
+        },
     ),
     ConfigTestCase(
         "Run: passwords file specified (long-form)",
-        args=["run", "--passwords", "foo"],
-        legacy_args=["--passwords", "foo"],
+        args=["run", "--passwords", HTPASS_TEST_FILE],
+        legacy_args=["--passwords", HTPASS_TEST_FILE],
         exp_config_type=RunConfig,
-        exp_config_values={"password_file": "foo"},
+        exp_config_values={
+            "password_file": HTPASS_TEST_FILE,
+            "_test": (
+                lambda conf: (
+                    bool(conf.auther("foo", "bar")) is False
+                    and conf.auther("a", "a") is True
+                )
+            ),
+        },
+    ),
+    ConfigTestCase(
+        "Run: passwords file empty ('.')",
+        # both auth and pass must be specified as empty if one of them is empty.
+        args=["run", "-P", ".", "-a", "."],
+        legacy_args=["-P", ".", "-a", "."],
+        exp_config_type=RunConfig,
+        exp_config_values={
+            "password_file": ".",
+            "_test": lambda conf: bool(conf.auther("foo", "bar")) is True,
+        },
     ),
     # disable-fallback
     ConfigTestCase(

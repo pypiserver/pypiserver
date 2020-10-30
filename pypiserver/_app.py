@@ -5,12 +5,15 @@ import re
 import xml.dom.minidom
 import xmlrpc.client as xmlrpclib
 import zipfile
+
 from collections import namedtuple
 from io import BytesIO
 from urllib.parse import urljoin, urlparse
 
+from pypiserver.config import RunConfig
 from . import __version__
 from . import core
+from .backend import Backend
 from .bottle import (
     static_file,
     redirect,
@@ -20,11 +23,13 @@ from .bottle import (
     Bottle,
     template,
 )
+
+
 from .pkg_helpers import guess_pkgname_and_version, normalize_pkgname_for_url
 
 log = logging.getLogger(__name__)
-config = None
-
+config: RunConfig
+backend: Backend
 app = Bottle()
 
 
@@ -36,7 +41,7 @@ class auth:
 
     def __call__(self, method):
         def protector(*args, **kwargs):
-            if self.action in config.authenticated:
+            if self.action in config.authenticate:
                 if not request.auth or request.auth[1] is None:
                     raise HTTPError(
                         401, headers={"WWW-Authenticate": 'Basic realm="pypi"'}
@@ -96,7 +101,7 @@ def root():
         msg,
         URL=request.url.rstrip("/") + "/",
         VERSION=__version__,
-        NUMPKGS=core.package_count(),
+        NUMPKGS=backend.package_count(),
         PACKAGES=fp.rstrip("/") + "/packages/",
         SIMPLE=fp.rstrip("/") + "/simple/",
     )
@@ -130,12 +135,11 @@ def remove_pkg():
         msg = f"Missing 'name'/'version' fields: name={name}, version={version}"
         raise HTTPError(400, msg)
 
-    pkgs = list(core.find_version(name, version))
+    pkgs = list(backend.find_version(name, version))
     if not pkgs:
         raise HTTPError(404, f"{name} ({version}) not found")
-
     for pkg in pkgs:
-        core.remove_package(pkg)
+        os.unlink(pkg.fn)
 
 
 Upload = namedtuple("Upload", "pkg sig")
@@ -165,7 +169,7 @@ def file_upload():
         ):
             raise HTTPError(400, f"Bad filename: {uf.raw_filename}")
 
-        if not config.overwrite and core.exists(uf.raw_filename):
+        if not config.overwrite and backend.exists(uf.raw_filename):
             log.warning(
                 f"Cannot upload {uf.raw_filename!r} since it already exists! \n"
                 "  You may start server with `--overwrite` option. "
@@ -176,7 +180,7 @@ def file_upload():
                 "  You may start server with `--overwrite` option.",
             )
 
-        core.add_package(uf.raw_filename, uf.file)
+        backend.add_package(uf.raw_filename, uf.file)
         if request.auth:
             user = request.auth[0]
         else:
@@ -233,7 +237,7 @@ def handle_rpc():
         )
         response = []
         ordering = 0
-        for p in core.get_all_packages():
+        for p in backend.get_all_packages():
             if p.pkgname.count(value) > 0:
                 # We do not presently have any description/summary, returning
                 # version instead
@@ -254,7 +258,7 @@ def handle_rpc():
 @app.route("/simple/")
 @auth("list")
 def simpleindex():
-    links = sorted(core.get_projects())
+    links = sorted(backend.get_projects())
     tmpl = """\
     <html>
         <head>
@@ -280,11 +284,11 @@ def simple(project):
         return redirect(f"/simple/{normalized}/", 301)
 
     packages = sorted(
-        core.find_project_packages(project),
+        backend.find_project_packages(project),
         key=lambda x: (x.parsed_version, x.relfn),
     )
     if not packages:
-        if config.redirect_to_fallback:
+        if not config.disable_fallback:
             return redirect(f"{config.fallback_url.rstrip('/')}/{project}/")
         return HTTPError(404, f"Not Found ({normalized} does not exist)\n\n")
 
@@ -319,7 +323,7 @@ def simple(project):
 def list_packages():
     fp = request.custom_fullpath
     packages = sorted(
-        core.get_all_packages(),
+        backend.get_all_packages(),
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
     )
 
@@ -346,7 +350,7 @@ def list_packages():
 @app.route("/packages/:filename#.*#")
 @auth("download")
 def server_static(filename):
-    entries = core.get_all_packages()
+    entries = backend.get_all_packages()
     for x in entries:
         f = x.relfn_unix
         if f == filename:

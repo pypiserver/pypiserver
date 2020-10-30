@@ -1,6 +1,9 @@
 #! /usr/bin/env py.test
 # -*- coding: utf-8 -*-
 
+import logging
+import os
+
 import pytest
 
 from pypiserver import __main__, core, backend, manage
@@ -8,6 +11,7 @@ from pypiserver.pkg_helpers import (
     normalize_pkgname_for_url,
 )
 from tests.doubles import Namespace
+
 
 ## Enable logging to detect any problems with it
 ##
@@ -18,26 +22,6 @@ def test_listdir_bad_name(tmp_path):
     tmp_path.joinpath("foo.whl").touch()
     res = list(backend.listdir(tmp_path))
     assert res == []
-
-
-def test_read_lines(tmp_path):
-    filename = "pkg_blacklist"
-    file_contents = (
-        "# Names of private packages that we don't want to upgrade\n"
-        "\n"
-        "my_private_pkg \n"
-        " \t# This is a comment with starting space and tab\n"
-        " my_other_private_pkg"
-    )
-
-    f = tmp_path.joinpath(filename)
-    f.touch()
-    f.write_text(file_contents)
-
-    assert manage.read_lines(str(f)) == [
-        "my_private_pkg",
-        "my_other_private_pkg",
-    ]
 
 
 hashes = (

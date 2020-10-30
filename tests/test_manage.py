@@ -1,16 +1,17 @@
 #!/usr/bin/env py.test
 """Tests for manage.py."""
-from pathlib import Path
 
-import pypiserver.manage
+from __future__ import absolute_import, print_function, unicode_literals
+
+from pathlib import Path
 from unittest.mock import Mock
 
-
+import py
 import pytest
 
 from pypiserver import manage
-from pypiserver.pkg_helpers import parse_version, guess_pkgname_and_version
-from pypiserver.backend import PkgFile
+from pypiserver.core import PkgFile
+from pypiserver.pkg_helpers import guess_pkgname_and_version, parse_version
 from pypiserver.manage import (
     PipCmd,
     build_releases,
@@ -22,12 +23,20 @@ from pypiserver.manage import (
 )
 
 
+def touch_files(root, files):
+    root = py.path.local(root)  # pylint: disable=no-member
+    for f in files:
+        root.join(f).ensure()
+
+
 def pkgfile_from_path(fn):
     pkgname, version = guess_pkgname_and_version(fn)
     return PkgFile(
         pkgname=pkgname,
         version=version,
-        root=str(Path(fn).parent),
+        root=py.path.local(fn)
+        .parts()[1]
+        .strpath,  # noqa pylint: disable=no-member
         fn=fn,
     )
 
@@ -203,27 +212,24 @@ def test_update_all_packages(monkeypatch):
         Path("/data/pypi"): [public_pkg_2, private_pkg_2],
     }
 
-    def core_listdir_mock(path):
-        return roots_mock.get(path, [])
+    def core_listdir_mock(directory):
+        return roots_mock.get(directory, [])
 
     monkeypatch.setattr(manage, "listdir", core_listdir_mock)
-    monkeypatch.setattr(manage, "read_lines", Mock(return_value=[]))
     monkeypatch.setattr(manage, "update", Mock(return_value=None))
 
     destdir = None
     dry_run = False
     stable_only = True
-    blacklist_file = None
 
     update_all_packages(
         roots=list(roots_mock.keys()),
         destdir=destdir,
         dry_run=dry_run,
         stable_only=stable_only,
-        blacklist_file=blacklist_file,
+        ignorelist=None,
     )
 
-    pypiserver.manage.read_lines.assert_not_called()  # pylint: disable=no-member
     manage.update.assert_called_once_with(  # pylint: disable=no-member
         frozenset([public_pkg_1, public_pkg_2, private_pkg_1, private_pkg_2]),
         destdir,
@@ -251,29 +257,20 @@ def test_update_all_packages_with_blacklist(monkeypatch):
         return roots_mock.get(path, [])
 
     monkeypatch.setattr(manage, "listdir", core_listdir_mock)
-    monkeypatch.setattr(
-        manage,
-        "read_lines",
-        Mock(return_value=["my_private_pkg", "my_other_private_pkg"]),
-    )
     monkeypatch.setattr(manage, "update", Mock(return_value=None))
 
     destdir = None
     dry_run = False
     stable_only = True
-    blacklist_file = "/root/pkg_blacklist"
 
     update_all_packages(
         roots=list(roots_mock.keys()),
         destdir=destdir,
         dry_run=dry_run,
         stable_only=stable_only,
-        blacklist_file=blacklist_file,
+        ignorelist=["my_private_pkg", "my_other_private_pkg"],
     )
 
     manage.update.assert_called_once_with(  # pylint: disable=no-member
         frozenset([public_pkg_1, public_pkg_2]), destdir, dry_run, stable_only
     )
-    pypiserver.manage.read_lines.assert_called_once_with(
-        blacklist_file
-    )  # pylint: disable=no-member
