@@ -1,7 +1,7 @@
 """Test doubles."""
 
 
-class Namespace(object):
+class Namespace:
     """Simple namespace."""
 
     def __init__(self, **kwargs):

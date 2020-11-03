@@ -8,20 +8,21 @@ from os.path import dirname
 from watchdog.observers import Observer
 import threading
 
-class CacheManager(object):
+
+class CacheManager:
     """
-        A naive cache implementation for listdir and digest_file
+    A naive cache implementation for listdir and digest_file
 
-        The listdir_cache is just a giant list of PkgFile objects, and
-        for simplicity it is invalidated anytime a modification occurs
-        within the directory it represents. If we were smarter about
-        the way that the listdir data structure were created/stored,
-        then we could do more granular invalidation. In practice, this
-        is good enough for now.
+    The listdir_cache is just a giant list of PkgFile objects, and
+    for simplicity it is invalidated anytime a modification occurs
+    within the directory it represents. If we were smarter about
+    the way that the listdir data structure were created/stored,
+    then we could do more granular invalidation. In practice, this
+    is good enough for now.
 
-        The digest_cache exists on a per-file basis, because computing
-        hashes on large files can get expensive, and it's very easy to
-        invalidate specific filenames.
+    The digest_cache exists on a per-file basis, because computing
+    hashes on large files can get expensive, and it's very easy to
+    invalidate specific filenames.
     """
 
     def __init__(self):
@@ -85,8 +86,8 @@ class CacheManager(object):
         self.watched.add(root)
         self.observer.schedule(_EventHandler(self, root), root, recursive=True)
 
-class _EventHandler(object):
 
+class _EventHandler:
     def __init__(self, cache, root):
         self.cache = cache
         self.root = root
@@ -106,7 +107,7 @@ class _EventHandler(object):
         # Digests are more expensive: invalidate specific paths
         paths = []
 
-        if event.event_type == 'moved':
+        if event.event_type == "moved":
             paths.append(event.src_path)
             paths.append(event.dest_path)
         else:
@@ -116,5 +117,6 @@ class _EventHandler(object):
             for _, subcache in cache.digest_cache.items():
                 for path in paths:
                     subcache.pop(path, None)
+
 
 cache_manager = CacheManager()
