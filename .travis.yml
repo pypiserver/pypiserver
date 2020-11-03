@@ -25,4 +25,4 @@ jobs:
   include:
     - python: 3.8
       install: pip install -U black
-      script: black --check .
+      script: black --diff --check .
