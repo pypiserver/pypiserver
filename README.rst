@@ -9,14 +9,17 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
 |pypi-ver| |travis-status| |dependencies| |python-ver| |proj-license|
 
-:Version:     1.3.2
-:Date:        2020-01-11
+:Version:     2.0.0dev1
+:Date:        2020-10-10
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.org/project/pypiserver/
 :Travis:      https://travis-ci.org/pypiserver/pypiserver
 :Maintainers: Kostis Anagnostopoulos <ankostis@gmail.com>,
               Matthew Planchard <mplanchard@gmail.com>
 :License:     zlib/libpng + MIT
+:Community:   https://pypiserver.zulipchat.com
+
+Chat with us on `Zulip <https://pypiserver.zulipchat.com>`_!
 
 ``pypiserver`` is a minimal PyPI_ compatible server for ``pip`` or ``easy_install``.
 It is based on bottle_ and serves packages from regular directories.
@@ -24,6 +27,17 @@ Wheels, bdists, eggs and accompanying PGP-signatures can be uploaded
 either with ``pip``, ``setuptools``, ``twine``, ``pypi-uploader``, or simply copied
 with ``scp``.
 
+.. note::
+   The official software powering PyPI_ is Warehouse_. However, Warehouse_
+   is fairly specialized to be ``pypi.org``'s own software, and should not
+   be used in other contexts. In particular, it does not officially support
+   being used as a custom package index by users wishing to serve their own
+   packages.
+
+   ``pypiserver`` implements the same interfaces as `PyPI`_, allowing
+   standard Python packaging tooling such as ``pip`` and ``twine`` to
+   interact with it as a package index just as they would with PyPI_, while
+   making it much easier to get a running index server.
 
 .. contents:: Table of Contents
   :backlinks: top
@@ -32,9 +46,12 @@ with ``scp``.
 Quickstart: Installation and Usage
 ==================================
 
-``pypiserver`` > 1.2.x works with Python 2.7 and 3.4+ or PyPy.
+``pypiserver`` works with Python 3.6+ and PyPy3.
+
 Older Python versions may still work, but they are not tested.
-For legacy Python versions, use ``pypiserver-1.1.x`` series.
+
+For legacy Python versions, use ``pypiserver-1.x`` series. Note that these are
+not officially supported, and will not receive bugfixes or new features.
 
 .. Tip::
    The commands below work on a unix-like operating system with a posix shell.
@@ -396,29 +413,6 @@ following command, assuming you have *git* installed on your ``PATH``::
 
   pip install git+git://github.com/pypiserver/pypiserver.git
 
-Installing It As Standalone Script
-----------------------------------
-
-The git repository contains a ``pypi-server-standalone.py`` script,
-which is a single python file that can be executed without any other
-dependencies.
-
-Run the following commands to download the script with ``wget``::
-
-  wget https://raw.github.com/pypiserver/pypiserver/standalone/pypi-server-standalone.py
-  chmod +x pypi-server-standalone.py
-
-or with ``curl``::
-
-  curl -O https://raw.github.com/pypiserver/pypiserver/standalone/pypi-server-standalone.py
-  chmod +x pypi-server-standalone.py
-
-You can then start-up the server with::
-
-  ./pypi-server-standalone.py
-
-Feel free to rename the script and move it into your ``$PATH``.
-
 Running on Heroku/Dotcloud
 --------------------------
 
@@ -511,7 +505,8 @@ Managing Automated Startup
 
 There are a variety of options for handling the automated starting of
 pypiserver upon system startup. Two of the most common are *systemd* and
-*supervisor*.
+*supervisor* for linux systems. For windows creating services with scripts isn't
+an easy task without a third party tool such as *NSSM*.
 
 Running As a ``systemd`` Service
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -569,6 +564,46 @@ management. An example configuration file for ``supervisor`` is given below::
 
 From there, the process can be managed via ``supervisord`` using ``supervisorctl``.
 
+Running As a service with ``NSSM`` (Windows)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Download NSSM from https://nssm.cc unzip to a desired location such as Program Files. Decide whether you are going
+to use win32 or win64, and add that exe to environment PATH.
+
+Create a start_pypiserver.bat::
+
+    pypi-server -p 8080 C:\Path\To\Packages &
+
+Test the batch file by running it first before creating the service. Make sure you can access
+the server remotely, and install packages. If you can, proceed, if not troubleshoot until you can.
+This will ensure you know the server works, before adding NSSM into the mix.
+
+From the command prompt::
+
+    nssm install pypiserver
+
+This command will launch a NSSM gui application::
+
+    Path: C:\Path\To\start_pypiserver.bat
+    Startup directory: Auto generates when selecting path
+    Service name: pypiserver
+
+There are more tabs, but that is the basic setup. If the service needs to be running with a certain
+login credentials, make sure you enter those credentials in the logon tab.
+
+Start the service::
+
+    nssm start pypiserver
+
+Other useful commands::
+
+    nssm --help
+    nssm stop <servicename>
+    nssm restart <servicename>
+    nssm status <servicename>
+
+For detailed information please visit https://nssm.cc
+
 Using a Different WSGI Server
 -----------------------------
 
@@ -614,14 +649,14 @@ explained in `bottle's documentation <http://bottlepy.org/docs/dev/deployment.ht
 
         <Directory /yoursite/wsgi >
             Require all granted
-        </Directort>
+        </Directory>
 
    or if using older ``Apache < 2.4``, substitute the last part with this::
 
         <Directory /yoursite/wsgi >
             Order deny,allow
             Allow from all
-        </Directort>
+        </Directory>
 
 2. Then create the ``/yoursite/cfg/pypiserver.wsgi`` file and make sure that
    the ``user`` and ``group`` of the ``WSGIDaemonProcess`` directive
@@ -961,23 +996,39 @@ among the most popular alternatives:
   <https://pypi.org/project/devpi/>`_.
   (version: 2.1.4, access date: 8/3/2015)
 
+- Check this SO question: `How to roll my own pypi
+  <http://stackoverflow.com/questions/1235331/how-to-roll-my-own-pypi>`_
+
+
+Unmaintained or archived
+------------------------
+
+These projects were once alternatives to pypiserver but are now either unmaintained or archived.
+
 - `pip2pi <https://github.com/wolever/pip2pi>`_
   a simple cmd-line tool that builds a PyPI-compatible local folder from pip requirements
-  (version: 0.6.7, access date: 8/3/2015)
 
 - `flask-pypi-proxy <http://flask-pypi-proxy.readthedocs.org/>`_
   A proxy for PyPI that also enables also uploading custom packages.
 
-- `twine`_:
-  A command-line utility for interacting with PyPI or ``pypiserver``.
+
+Related Software
+================
+
+Though not direct alternatives for ``pypiserver``'s use as an index
+server, the following is a list of related software projects that you
+may want to familiarize with:
 
 - `pypi-uploader`_:
   A command-line utility to upload packages to your ``pypiserver`` from pypi without
   having to store them locally first.
 
-- Check this SO question: `How to roll my own pypi
-  <http://stackoverflow.com/questions/1235331/how-to-roll-my-own-pypi>`_
+- `twine`_:
+  A command-line utility for interacting with PyPI or ``pypiserver``.
 
+- `warehouse`_:
+  the software that powers PyPI_ itself. It is not generally intended to
+  be run by end-users.
 
 Licensing
 =========
@@ -988,7 +1039,9 @@ See the ``LICENSE.txt`` file.
 
 
 .. _bottle: http://bottlepy.org
+.. _PyPA: https://www.pypa.io/en/latest/
 .. _PyPI: https://pypi.org
+.. _Warehouse: https://github.com/pypa/warehouse/
 .. _twine: https://pypi.org/project/twine/
 .. _pypi-uploader: https://pypi.org/project/pypi-uploader/
 .. _python-pam: https://pypi.org/project/python-pam/

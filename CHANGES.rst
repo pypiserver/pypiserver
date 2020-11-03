@@ -1,13 +1,42 @@
 Changelog
 =========
 
-x.x.x (tbd)
+2.0.0 (tbd)
 -----------
 
-- ENH: Add official support and testing for Python 3.8
-- MAINT: Update bottle to [0.12.18](https://github.com/bottlepy/bottle/releases/tag/0.12.18)
-  for Python 3.8 compatibility
-- MAINT: bump version of passlib from 1.7.1 to 1.7.2 in Docker requirements
+1.4.2 (2020-10-10)
+------------------
+
+- FIX: The entrypoint for the Dockerfile was failing when called with no
+  arguments (#344, thanks @elfjes!)
+
+1.4.1 (2020-10-05)
+------------------
+
+- FIX: The entrypoint for the Dockerfile no longer tries to `chown` the
+  entire `/data` directory, instead limiting itself just to `/data/packages`
+  as before (reported by @stephen-dexda in #341, thanks!).
+
+1.4.0 (2020-10-03)
+------------------
+
+- DOC: Add docker-compose example with HTTPS configuration using Traefix (#295, thanks @Lauszus!)
+- DOC: Add link to zulip chat to README (aa2d78c)
+- DOC: Documentation for running as a service in windows (#316, thanks @kodaman2!)
+- DOC: Fix typo in README HTML (#303, thanks @Gerardwx!)
+- DOC: Moved flask-pypi-proxy and pip2pi to a new "Unmaintained or archived" section (#326, thanks @Luttik!)
+- DOC: Slightly clarify the relationship to warehouse. (#308, thanks @Julian!)
+- ENH: Add ignore list for the update command (#298, thanks @peter-slovak!)
+- ENH: Add official support and testing for Python 3.8 (#292) for Python 3.8 compatibility
+- ENH: Allow configuration of logging stream (#334, thanks @elfjes)
+- ENH: Include watchdog to enable caching in docker image (#323, thanks @johnchildren!)
+- FIX: Cherrypy import for newer versions of cherrypy in vendored bottle.py (#301, thanks @TiemenSch!)
+- FIX: Improved permissions management in Dockerfile (#330, thanks @normoes)
+- FIX: Usage of string formatting in HTTPError (#310, thanks @micahjsmith!)
+- MAINT: Update bottle to [0.12.18](https://github.com/bottlepy/bottle/releases/tag/0.12.18) (#290)
+- MAINT: Use Python 3.8 in Dockerfile (#330, thanks @normoes)
+- MAINT: bump version of passlib from 1.7.1 to 1.7.2 in Docker requirements (#293)
+- MAINT: drop official support for Python 3.4 (#321)
 
 1.3.2 (2020-01-11)
 ------------------

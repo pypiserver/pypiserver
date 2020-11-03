@@ -8,9 +8,6 @@ Files:
 
 - ``bumpver.py``             : Bump, commit and tag new project versions
 - ``check_readme.sh``        : Check that README has no RsT-syntactic errors.
-- ``commit-standalone.sh``   : Create an executable file and add it into `standalone` branch.
-- ``gen-standalone.sh``      : Invoked by `commit-standalone.sh`.
-- ``git-new-workdir``        : Invoked by `gen-standalone.sh`.
 - ``package.sh``             : Build deployable artifact (wheel) in ``/dist/`` folder.
 - ``README.rst``             : This file.
 
@@ -30,9 +27,7 @@ Release check-list:
 
 5. Generate package *wheel* with ``/bin/package.sh``.
 
-6. Upload to PyPi with ``twine upload -s -i <gpg-user> dist/*``:
-
-7. Run ``bin/commit-standalone.sh``.
+6. Upload to PyPi with ``twine upload -s -i <gpg-user> dist/*``
 
 7. Ensure that the new tag is built on hub.docker.com as ``latest`` and as a
    direct tag reference.
