@@ -1,0 +1,7 @@
+## Pip-dependencies for developing the app-engine plugin
+#
+# Install it with:
+#   pip install -r requirements/appengine.dev.pip
+
+-r appengine.exe.pip
+-r dev.pip

@@ -103,7 +103,7 @@ class SynchronizerPlugin:
         self.logger.info("Checking out newest remote state")
 
         self.storage_client.pull_remote_files()
-        self.storage_client.store_local_snapshot()
+        self.storage_client.store_local_files_snapshot()
 
         self.logger.debug(self.storage_client.get_local_contents())
         self.logger.info("Ready to process!")

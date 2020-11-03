@@ -2,8 +2,6 @@ import logging
 import os
 import shutil
 
-from google.cloud import storage
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -80,7 +78,7 @@ class BasicStorageClient:
     def get_local_contents(self):
         return set(self._file_storage.get_local_file_listing())
 
-    def store_local_snapshot(self):
+    def store_local_files_snapshot(self):
         self._current_local_contents = self.get_local_contents()
 
     def get_last_local_snapshot(self):
@@ -212,6 +210,7 @@ class LocalToGoogleFileStoreManager(BaseFileStoreManager):
         super().__init__(local_directory=local_directory,
                          remote_directory=remote_directory,
                          logger=logger)
+        from google.cloud import storage
         self._google_storage_client = storage.Client()
         self._bucket_name = bucket_name
 
