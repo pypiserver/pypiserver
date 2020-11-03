@@ -45,7 +45,11 @@ setup(
     package_data={"pypiserver": ["welcome.html"]},
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     setup_requires=setup_requires,
-    extras_require={"passlib": ["passlib>=1.6"], "cache": ["watchdog"]},
+    extras_require={
+        "passlib": ["passlib>=1.6"],
+        "cache": ["watchdog"],
+        "appengine": ["google-cloud-storage==1.26.0"]
+    },
     tests_require=tests_require,
     url="https://github.com/pypiserver/pypiserver",
     maintainer=(
