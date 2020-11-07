@@ -297,9 +297,7 @@ def test_pip_install_authed_fails(authed_server, pipdir):
     assert not list(pipdir.iterdir())
 
 
-def test_pip_install_authed_succeeds(
-        authed_server, hosted_wheel_file, pipdir
-):
+def test_pip_install_authed_succeeds(authed_server, hosted_wheel_file, pipdir):
     assert (
         pip_download(
             "centodeps", authed_server.port, pipdir, user="a", pswd="a"
