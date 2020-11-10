@@ -10,7 +10,8 @@ python:
   - pypy3
 
 install:
-  - pip install --use-feature 2020-resolver -U setuptools twine pip sphinx tox tox-travis
+  - pip install -U pip
+  - pip install --use-feature=2020-resolver -U setuptools twine sphinx tox tox-travis
 
 script:
   - tox
@@ -26,5 +27,7 @@ jobs:
       install: pip install -U black
       script: black --check .
     - python: 3.9
-      install: pip install --use-feature 2020-resolver -U pip twine
+      install: 
+       - pip install -U pip
+       - pip install --use-feature 2020-resolver -U twine
       script: ./bin/test-docker.sh
