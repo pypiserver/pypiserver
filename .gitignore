@@ -16,8 +16,8 @@
 .ropeproject
 ID
 __pycache__/
-/build/
-/dist/
+**/build/
+**/dist/
 /*.egg*
 /MANIFEST
 /README.html
@@ -26,7 +26,7 @@ __pycache__/
 /.pydevproject
 /.pytest_cache
 /.tox/
-/*.egg-info/
+**/*.egg-info/
 /.standalone
 /.coverage*
 !/.coveragerc

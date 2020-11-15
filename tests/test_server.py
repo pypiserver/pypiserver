@@ -11,169 +11,194 @@ The tests below are using 3 ways to startup pypi-servers:
 - "new_server": starting a new server with any configurations on each test.
 
 """
-from __future__ import print_function
-
-from collections import namedtuple
 import contextlib
-import functools
+import itertools
 import os
-import subprocess
+import shutil
+import socket
 import sys
-import tempfile
 import time
+from collections import namedtuple
 from pathlib import Path
 from shlex import split
 from subprocess import Popen
-from textwrap import dedent
+from urllib.error import URLError
+from urllib.request import urlopen
 
-try:
-    from urllib.request import urlopen
-except ImportError:
-    from urllib import urlopen
-
-from py import path  # @UnresolvedImport
 import pytest
-
 
 # ######################################################################
 # Fixtures & Helper Functions
 # ######################################################################
 
 
-_BUFF_SIZE = 2 ** 16
-_port = 8090
-SLEEP_AFTER_SRV = 3  # sec
+CURRENT_PATH = Path(__file__).parent
+ports = itertools.count(10000)
+Srv = namedtuple("Srv", ("port", "root"))
 
 
-@pytest.fixture
-def port():
-    global _port
-    _port += 1
-    return _port
-
-
-Srv = namedtuple("Srv", ("proc", "port", "package"))
-
-
-def _run_server(packdir, port, authed, other_cli=""):
+@contextlib.contextmanager
+def run_server(root, authed=False, other_cli=""):
     """Run a server, optionally with partial auth enabled."""
+    htpasswd = CURRENT_PATH.joinpath("htpasswd.a.a").expanduser().resolve()
     pswd_opt_choices = {
-        True: "-Ptests/htpasswd.a.a -a update,download",
+        True: f"-P {htpasswd} -a update,download",
         False: "-P. -a.",
-        "partial": "-Ptests/htpasswd.a.a -a update",
+        "partial": f"-P {htpasswd} -a update",
     }
     pswd_opts = pswd_opt_choices[authed]
+
+    port = next(ports)
     cmd = (
-        f"{sys.executable} -m pypiserver.__main__ -vvv --overwrite -i 127.0.0.1 "
-        f"-p {port} {pswd_opts} {other_cli} {packdir}"
+        f"{sys.executable} -m pypiserver.__main__ "
+        f"run -vvv --overwrite -i 127.0.0.1 "
+        f"-p {port} {pswd_opts} {other_cli} {root}"
     )
-    proc = subprocess.Popen(cmd.split(), bufsize=_BUFF_SIZE)
-    time.sleep(SLEEP_AFTER_SRV)
-    assert proc.poll() is None
-
-    return Srv(proc, int(port), packdir)
-
-
-def _kill_server(srv):
-    print(f"Killing {srv}")
+    proc = Popen(cmd.split(), bufsize=2 ** 16)
+    srv = Srv(port, root)
     try:
-        srv.proc.terminate()
-        time.sleep(1)
-    finally:
-        srv.proc.kill()
-
-
-@contextlib.contextmanager
-def new_server(packdir, port, authed=False, other_cli=""):
-    srv = _run_server(packdir, port, authed=authed, other_cli=other_cli)
-    try:
+        wait_until_ready(srv)
+        assert proc.poll() is None
         yield srv
     finally:
-        _kill_server(srv)
+        print(f"Killing {srv}")
+        _kill_proc(proc)
 
 
-@contextlib.contextmanager
-def chdir(d):
-    old_d = os.getcwd()
+def wait_until_ready(srv: Srv, n_tries=10):
+    for _ in range(n_tries):
+        if is_ready(srv):
+            return True
+        time.sleep(0.5)
+    raise TimeoutError
+
+
+def is_ready(srv: Srv):
     try:
-        os.chdir(d)
-        yield
+        return urlopen(build_url(srv.port), timeout=0.5).getcode() in (
+            200,
+            401,
+        )
+    except (URLError, socket.timeout):
+        return False
+
+
+def _kill_proc(proc):
+    proc.terminate()
+    try:
+        proc.wait(timeout=1)
     finally:
-        os.chdir(old_d)
+        proc.kill()
 
 
-def _run_python(cmd):
-    return os.system(f"{sys.executable} {cmd}")
+def build_url(port, user="", pswd=""):
+    auth = f"{user}:{pswd}@" if user or pswd else ""
+    return f"http://{auth}localhost:{port}"
+
+
+def run_setup_py(path: Path, arguments: str):
+    return os.system(f"{sys.executable} {path / 'setup.py'} {arguments}")
+
+
+# A test-distribution to check if
+#    bottle supports uploading 100's of packages,
+#    see: https://github.com/pypiserver/pypiserver/issues/82
+#
+# Has been run once `pip wheel .`, just to generate:
+#    ./wheelhouse/centodeps-0.0.0-cp34-none-win_amd64.whl
+#
+SETUP_PY = """\
+from setuptools import setup
+
+setup(
+    name="centodeps",
+    install_requires=["a==1.0"] * 200,
+    options={
+        "bdist_wheel": {"universal": True},
+    },
+)
+"""
 
 
 @pytest.fixture(scope="module")
-def project(request):
-    def fin():
-        tmpdir.remove(True)
-
-    tmpdir = path.local(tempfile.mkdtemp())
-    request.addfinalizer(fin)
-    src_setup_py = path.local().join("tests", "centodeps-setup.py")
-    assert src_setup_py.check()
-    projdir = tmpdir.join("centodeps")
-    projdir.mkdir()
-    dst_setup_py = projdir.join("setup.py")
-    src_setup_py.copy(dst_setup_py)
-    assert dst_setup_py.check()
-
+def project(tmp_path_factory):
+    projdir = tmp_path_factory.mktemp("project") / "centodeps"
+    projdir.mkdir(parents=True, exist_ok=True)
+    projdir.joinpath("setup.py").write_text(SETUP_PY)
     return projdir
 
 
-@pytest.fixture(scope="module")
-def package(project, request):
-    with chdir(project.strpath):
-        cmd = "setup.py bdist_wheel"
-        assert _run_python(cmd) == 0
-        pkgs = list(project.join("dist").visit("centodeps*.whl"))
-        assert len(pkgs) == 1
-        pkg = path.local(pkgs[0])
-        assert pkg.check()
-
-        return pkg
+@pytest.fixture(scope="session")
+def server_root(tmp_path_factory):
+    return tmp_path_factory.mktemp("root")
 
 
 @pytest.fixture(scope="module")
-def packdir(package):
-    return package.dirpath()
+def wheel_file(project, tmp_path_factory):
+    distdir = tmp_path_factory.mktemp("dist")
+    assert run_setup_py(project, f"bdist_wheel -d {distdir}") == 0
+    return list(distdir.glob("centodeps*.whl"))[0]
 
 
-open_port = 8081
+@pytest.fixture()
+def hosted_wheel_file(wheel_file, server_root):
+    dst = server_root / wheel_file.name
+    shutil.copy(wheel_file, dst)
+    yield dst
+    if dst.is_file():
+        dst.unlink()
+
+
+def clear_directory(root: Path):
+    for path in root.iterdir():
+        if path.is_file():
+            path.unlink()
 
 
 @pytest.fixture(scope="module")
-def open_server(packdir, request):
-    srv = _run_server(packdir, open_port, authed=False)
-    fin = functools.partial(_kill_server, srv)
-    request.addfinalizer(fin)
-
-    return srv
-
-
-protected_port = 8082
-
-
-@pytest.fixture(scope="module")
-def protected_server(packdir, request):
-    srv = _run_server(packdir, protected_port, authed=True)
-    fin = functools.partial(_kill_server, srv)
-    request.addfinalizer(fin)
-
-    return srv
+def _open_server(server_root):
+    with run_server(server_root, authed=False) as srv:
+        yield srv
 
 
 @pytest.fixture
-def empty_packdir(tmpdir):
-    return tmpdir.mkdir("dists")
+def open_server(_open_server: Srv):
+    yield _open_server
+    clear_directory(_open_server.root)
 
 
-def _build_url(port, user="", pswd=""):
-    auth = f"{user}:{pswd}@" if user or pswd else ""
-    return f"http://{auth}localhost:{port}"
+@pytest.fixture(scope="module")
+def _authed_server(server_root):
+    with run_server(server_root, authed=True) as srv:
+        yield srv
+
+
+@pytest.fixture
+def authed_server(_authed_server):
+    yield _authed_server
+    clear_directory(_authed_server.root)
+
+
+@pytest.fixture(scope="module")
+def _partial_auth_server(server_root):
+    with run_server(server_root, authed="partial") as srv:
+        yield srv
+
+
+@pytest.fixture
+def partial_authed_server(_partial_auth_server):
+    yield _partial_auth_server
+    clear_directory(_partial_auth_server.root)
+
+
+@pytest.fixture
+def empty_packdir(tmp_path_factory):
+    return tmp_path_factory.mktemp("dists")
+
+
+def pip_download(cmd, port, install_dir, user=None, pswd=None):
+    url = build_url(port, user, pswd)
+    return _run_pip(f"-vv download -d {install_dir} -i {url} {cmd}")
 
 
 def _run_pip(cmd):
@@ -187,281 +212,155 @@ def _run_pip(cmd):
     return proc.returncode
 
 
-def _run_pip_install(cmd, port, install_dir, user=None, pswd=None):
-    url = _build_url(port, user, pswd)
-    return _run_pip(f"-vv download -d {install_dir} -i {url} {cmd}")
-
-
 @pytest.fixture
-def pipdir(tmpdir):
-    return tmpdir.mkdir("pip")
+def pipdir(tmp_path_factory):
+    return tmp_path_factory.mktemp("pip")
 
 
 @contextlib.contextmanager
-def pypirc_tmpfile(port, user, password):
-    """Create a temporary pypirc file."""
-    fd, filepath = tempfile.mkstemp()
-    os.close(fd)
-    Path(filepath).write_text(
+def pypirc_file(repo, username="''", password="''"):
+    pypirc_path = Path.home() / ".pypirc"
+    old_pypirc = pypirc_path.read_text() if pypirc_path.is_file() else None
+    pypirc_path.write_text(
         "\n".join(
             (
                 "[distutils]",
                 "index-servers: test",
-                "" "[test]",
-                f"repository: {_build_url(port)}",
-                f"username: {user}",
+                "",
+                "[test]",
+                f"repository: {repo}",
+                f"username: {username}",
                 f"password: {password}",
             )
         )
     )
-
-    print(Path(filepath).read_text())
-    yield filepath
-    os.remove(filepath)
-
-
-@contextlib.contextmanager
-def pypirc_file(txt):
-    pypirc_path = path.local("~/.pypirc", expanduser=1)
-    old_pypirc = pypirc_path.read() if pypirc_path.check() else None
-    pypirc_path.write(txt)
     try:
-        yield
+        yield pypirc_path
     finally:
         if old_pypirc:
-            pypirc_path.write(old_pypirc)
+            pypirc_path.write_text(old_pypirc)
         else:
-            pypirc_path.remove()
+            pypirc_path.unlink()
 
 
-def twine_upload(
-    packages, repository="test", conf="pypirc", expect_failure=False
-):
-    """Call 'twine upload' with appropriate arguments"""
+@pytest.fixture
+def open_pypirc(open_server):
+    with pypirc_file(repo=build_url(open_server.port)) as path:
+        yield path
+
+
+@pytest.fixture
+def authed_pypirc(authed_server):
+    username, password = "a", "a"
+    with pypirc_file(
+        repo=build_url(authed_server.port),
+        username=username,
+        password=password,
+    ) as path:
+        yield path
+
+
+def run_twine(command, package, conf):
     proc = Popen(
-        (
-            "twine",
-            "upload",
-            "--repository",
-            repository,
-            "--config-file",
-            conf,
-            " ".join(packages),
+        split(
+            f"twine {command} --repository test --config-file {conf} {package}"
         )
     )
     proc.communicate()
-    if not expect_failure and proc.returncode:
-        assert False, "Twine upload failed. See stdout/err"
-
-
-def twine_register(
-    packages, repository="test", conf="pypirc", expect_failure=False
-):
-    """Call 'twine register' with appropriate args"""
-    proc = Popen(
-        (
-            "twine",
-            "register",
-            "--repository",
-            repository,
-            "--config-file",
-            conf,
-            " ".join(packages),
-        )
-    )
-    proc.communicate()
-    if not expect_failure and proc.returncode:
-        assert False, "Twine register failed. See stdout/err"
+    assert not proc.returncode, f"Twine {command} failed. See stdout/err"
 
 
 # ######################################################################
 # Tests
 # ######################################################################
 
-
-def test_pipInstall_packageNotFound(empty_packdir, port, pipdir, package):
-    with new_server(empty_packdir, port):
-        cmd = "centodeps"
-        assert _run_pip_install(cmd, port, pipdir) != 0
-        assert not pipdir.listdir()
-
-
-def test_pipInstall_openOk(open_server, package, pipdir):
-    cmd = "centodeps"
-    assert _run_pip_install(cmd, open_server.port, pipdir) == 0
-    assert pipdir.join(package.basename).check()
+all_servers = [
+    ("open_server", "open_pypirc"),
+    ("authed_server", "authed_pypirc"),
+    ("partial_authed_server", "authed_pypirc"),
+]
 
 
-def test_pipInstall_authedFails(protected_server, pipdir):
-    cmd = "centodeps"
-    assert _run_pip_install(cmd, protected_server.port, pipdir) != 0
-    assert not pipdir.listdir()
+def test_pip_install_package_not_found(open_server, pipdir):
+    assert pip_download("centodeps", open_server.port, pipdir) != 0
+    assert not list(pipdir.iterdir())
 
 
-def test_pipInstall_authedOk(protected_server, package, pipdir):
-    cmd = "centodeps"
+def test_pip_install_open_succeeds(open_server, hosted_wheel_file, pipdir):
+    assert pip_download("centodeps", open_server.port, pipdir) == 0
+    assert pipdir.joinpath(hosted_wheel_file.name).is_file()
+
+
+@pytest.mark.usefixtures("wheel_file")
+def test_pip_install_authed_fails(authed_server, pipdir):
+    assert pip_download("centodeps", authed_server.port, pipdir) != 0
+    assert not list(pipdir.iterdir())
+
+
+def test_pip_install_authed_succeeds(authed_server, hosted_wheel_file, pipdir):
     assert (
-        _run_pip_install(cmd, protected_server.port, pipdir, user="a", pswd="a")
+        pip_download(
+            "centodeps", authed_server.port, pipdir, user="a", pswd="a"
+        )
         == 0
     )
-    assert pipdir.join(package.basename).check()
+    assert pipdir.joinpath(hosted_wheel_file.name).is_file()
 
 
 @pytest.mark.parametrize("pkg_frmt", ["bdist", "bdist_wheel"])
-def test_setuptoolsUpload_open(empty_packdir, port, project, package, pkg_frmt):
-    url = _build_url(port, None, None)
-    with pypirc_file(
-        dedent(
-            f"""\
-                [distutils]
-                index-servers: test
-
-                [test]
-                repository: {url}
-                username: ''
-                password: ''
-            """
-        )
-    ):
-        with new_server(empty_packdir, port):
-            with chdir(project.strpath):
-                cmd = f"setup.py -vvv {pkg_frmt} upload -r {url}"
-                for i in range(5):
-                    print(f"++Attempt #{i}")
-                    assert _run_python(cmd) == 0
-                time.sleep(SLEEP_AFTER_SRV)
-    assert len(empty_packdir.listdir()) == 1
-
-
-@pytest.mark.parametrize("pkg_frmt", ["bdist", "bdist_wheel"])
-def test_setuptoolsUpload_authed(
-    empty_packdir, port, project, package, pkg_frmt, monkeypatch
+@pytest.mark.parametrize(["server_fixture", "pypirc_fixture"], all_servers)
+def test_setuptools_upload(
+    server_fixture, pypirc_fixture, project, pkg_frmt, server_root, request
 ):
-    url = _build_url(port)
-    with pypirc_file(
-        dedent(
-            f"""\
-                [distutils]
-                index-servers: test
+    request.getfixturevalue(server_fixture)
+    request.getfixturevalue(pypirc_fixture)
 
-                [test]
-                repository: {url}
-                username: a
-                password: a
-            """
-        )
-    ):
-        with new_server(empty_packdir, port, authed=True):
-            with chdir(project.strpath):
-                cmd = (
-                    f"setup.py -vvv {pkg_frmt} register -r test upload -r test"
-                )
-                for i in range(5):
-                    print(f"++Attempt #{i}")
-                    assert _run_python(cmd) == 0
-            time.sleep(SLEEP_AFTER_SRV)
-    assert len(empty_packdir.listdir()) == 1
+    assert len(list(server_root.iterdir())) == 0
+
+    for i in range(5):
+        print(f"++Attempt #{i}")
+        assert run_setup_py(project, f"-vvv {pkg_frmt} upload -r test") == 0
+    assert len(list(server_root.iterdir())) == 1
 
 
-@pytest.mark.parametrize("pkg_frmt", ["bdist", "bdist_wheel"])
-def test_setuptools_upload_partial_authed(
-    empty_packdir, port, project, pkg_frmt
-):
-    """Test uploading a package with setuptools with partial auth."""
-    url = _build_url(port)
-    with pypirc_file(
-        dedent(
-            f"""\
-                [distutils]
-                index-servers: test
-
-                [test]
-                repository: {url}
-                username: a
-                password: a
-            """
-        )
-    ):
-        with new_server(empty_packdir, port, authed="partial"):
-            with chdir(project.strpath):
-                cmd = (
-                    f"setup.py -vvv {pkg_frmt} register -r test upload -r test"
-                )
-                for i in range(5):
-                    print(f"++Attempt #{i}")
-                    assert _run_python(cmd) == 0
-            time.sleep(SLEEP_AFTER_SRV)
-    assert len(empty_packdir.listdir()) == 1
-
-
-def test_partial_authed_open_download(empty_packdir, port):
+def test_partial_authed_open_download(partial_authed_server):
     """Validate that partial auth still allows downloads."""
-    url = _build_url(port) + "/simple"
-    with new_server(empty_packdir, port, authed="partial"):
-        resp = urlopen(url)
-        assert resp.getcode() == 200
-
-
-def test_twine_upload_open(empty_packdir, port, package):
-    """Test twine upload with no authentication"""
-    user, pswd = "foo", "bar"
-    with new_server(empty_packdir, port):
-        with pypirc_tmpfile(port, user, pswd) as rcfile:
-            twine_upload([package.strpath], repository="test", conf=rcfile)
-        time.sleep(SLEEP_AFTER_SRV)
-
-    assert len(empty_packdir.listdir()) == 1
+    url = build_url(partial_authed_server.port) + "/simple"
+    resp = urlopen(url)
+    assert resp.getcode() == 200
 
 
 @pytest.mark.parametrize("hash_algo", ("md5", "sha256", "sha512"))
-def test_hash_algos(empty_packdir, port, package, pipdir, hash_algo):
+@pytest.mark.usefixtures("hosted_wheel_file")
+def test_hash_algos(server_root, pipdir, hash_algo):
     """Test twine upload with no authentication"""
-    user, pswd = "foo", "bar"
-    with new_server(
-        empty_packdir, port, other_cli="--hash-algo {}".format(hash_algo)
-    ):
-        with pypirc_tmpfile(port, user, pswd) as rcfile:
-            twine_upload([package.strpath], repository="test", conf=rcfile)
-        time.sleep(SLEEP_AFTER_SRV)
-
-        assert _run_pip_install("centodeps", port, pipdir) == 0
+    with run_server(
+        server_root, other_cli="--hash-algo {}".format(hash_algo)
+    ) as srv:
+        assert pip_download("centodeps", srv.port, pipdir) == 0
 
 
-def test_twine_upload_authed(empty_packdir, port, package):
-    """Test authenticated twine upload"""
-    user, pswd = "a", "a"
-    with new_server(empty_packdir, port, authed=False):
-        with pypirc_tmpfile(port, user, pswd) as rcfile:
-            twine_upload([package.strpath], repository="test", conf=rcfile)
-        time.sleep(SLEEP_AFTER_SRV)
-    assert len(empty_packdir.listdir()) == 1
+@pytest.mark.parametrize(["server_fixture", "pypirc_fixture"], all_servers)
+def test_twine_upload(
+    server_fixture, pypirc_fixture, server_root, wheel_file, request
+):
+    """Test twine upload with no authentication"""
+    assert len(list(server_root.iterdir())) == 0
+    request.getfixturevalue(server_fixture)
+    pypirc = request.getfixturevalue(pypirc_fixture)
 
-    assert empty_packdir.join(package.basename).check(), (
-        package.basename,
-        empty_packdir.listdir(),
+    run_twine("upload", wheel_file, conf=pypirc)
+
+    assert len(list(server_root.iterdir())) == 1
+    assert server_root.joinpath(wheel_file.name).is_file(), (
+        wheel_file.name,
+        list(server_root.iterdir()),
     )
 
 
-def test_twine_upload_partial_authed(empty_packdir, port, package):
-    """Test partially authenticated twine upload"""
-    user, pswd = "a", "a"
-    with new_server(empty_packdir, port, authed="partial"):
-        with pypirc_tmpfile(port, user, pswd) as rcfile:
-            twine_upload([package.strpath], repository="test", conf=rcfile)
-        time.sleep(SLEEP_AFTER_SRV)
-    assert len(empty_packdir.listdir()) == 1
-
-
-def test_twine_register_open(open_server, package):
+@pytest.mark.parametrize(["server_fixture", "pypirc_fixture"], all_servers)
+def test_twine_register(server_fixture, pypirc_fixture, wheel_file, request):
     """Test unauthenticated twine registration"""
-    srv = open_server
-    with pypirc_tmpfile(srv.port, "foo", "bar") as rcfile:
-        twine_register([package.strpath], repository="test", conf=rcfile)
-
-
-def test_twine_register_authed_ok(protected_server, package):
-    """Test authenticated twine registration"""
-    srv = protected_server
-    user, pswd = "a", "a"
-    with pypirc_tmpfile(srv.port, user, pswd) as rcfile:
-        twine_register([package.strpath], repository="test", conf=rcfile)
+    request.getfixturevalue(server_fixture)
+    pypirc = request.getfixturevalue(pypirc_fixture)
+    run_twine("register", wheel_file, conf=pypirc)
