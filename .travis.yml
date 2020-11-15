@@ -10,10 +10,10 @@ python:
   - pypy3
 
 install:
-  - pip install -U setuptools twine pip sphinx tox tox-travis
+  - pip install -U pip
+  - pip install --use-feature=2020-resolver -U setuptools twine sphinx tox tox-travis
 
 script:
-  - ./bin/test-docker.sh
   - tox
   - ./bin/check_readme.sh
 
@@ -23,6 +23,11 @@ branches:
 
 jobs:
   include:
-    - python: 3.8
+    - python: 3.9
       install: pip install -U black
       script: black --check .
+    - python: 3.9
+      install: 
+       - pip install -U pip
+       - pip install --use-feature 2020-resolver -U twine
+      script: ./bin/test-docker.sh
