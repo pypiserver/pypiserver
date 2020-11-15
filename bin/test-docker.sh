@@ -17,6 +17,7 @@ CONTAINER_ID=$(docker run \
     -d \
     -v "${DIR}/test.htpasswd:/data/.htpasswd" \
     -p 8080:8080 \
+    -e PORT=8080 \
     pypiserver:test -a "list,update,download" -P /data/.htpasswd packages)
 
 trap "docker container stop $CONTAINER_ID" EXIT
