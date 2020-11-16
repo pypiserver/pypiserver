@@ -1,0 +1,91 @@
+# Run tests
+
+name: Test
+
+on:
+  push:
+    # standalone is an old branch containing a fully functional pypiserver
+    # executable, from back in the day before docker & a better pip.
+    branches-ignore:
+      - standalone
+  pull_request: {}
+
+
+jobs:
+  test-cpython:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.6", "3.7", "3.8", "3.9"]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: pip install tox
+    - name: Run tests
+      # Create a tox env specification by stripping the dot out of the version
+      # specification and appending it to "py"
+      run: |
+        tox -e "py$(echo ${{ matrix.python-version }} | tr -d .)"
+
+  test-pypy:
+
+    # Run a a separate job so we don't need to mess with conditionally
+    # splitting the python version from the build matrix.
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: pypy3
+    - name: Install dependencies
+      run: pip install tox
+    - name: Run tests
+      run: tox -e pypy3
+
+  check:
+
+    # These checks only need to be done once, not for every python version we s
+    # upport
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        # Pretty much any python version will do
+        python-version: "3.9"
+    - name: Install dependencies
+      run: pip install -r "requirements/dev.pip"
+    - name: Check types
+      # individual mypy files for now, until we get the rest
+      # of the project typechecking
+      run: |
+        mypy \
+         pypiserver/config.py \
+         tests/test_init.py
+    - name: Check formatting
+      run: black --diff --check .
+    - name: Validate README
+      run: ./bin/check_readme.sh
+
+  # Full-flow docker tests, again not python version dependent
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        # Pretty much any python version will do
+        python-version: "3.9"
+    - name: Install dependencies
+      run: pip install --use-feature 2020-resolver -U twine
+    - name: Run tests
+      run: ./bin/test-docker.sh

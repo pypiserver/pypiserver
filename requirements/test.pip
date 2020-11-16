@@ -1,0 +1,13 @@
+# Just the absolutely necessary extra requirements for
+# running tests
+
+gevent>=1.1b4; python_version >= '3'
+pip>=7
+passlib>=1.6
+pytest>=2.3
+pytest-cov
+setuptools
+tox
+twine
+webtest
+wheel>=0.25.0
