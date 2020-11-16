@@ -4,17 +4,8 @@
 #   pip install -r requirements/dev.pip
 
 -r exe.pip
+-r test.pip
 
+black
 docopt  # For `/bin/bumpver.py`.
-gevent>=1.1b4; python_version >= '3'
 mypy; implementation_name == 'cpython'
-pip>=7
-passlib>=1.6
-pytest>=2.3
-pytest-cov
-setuptools
-setuptools-git>=0.3
-tox
-twine
-webtest
-wheel>=0.25.0
