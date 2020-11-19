@@ -769,7 +769,7 @@ reverse proxy config to enable changing the base URL. For example if you
 want to host pypiserver under a particular path on your server::
 
     upstream pypi {
-      server              locahost:8000;
+      server              localhost:8000;
     }
 
     server {
