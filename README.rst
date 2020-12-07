@@ -7,13 +7,13 @@
 ==============================================================================
 pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
-|pypi-ver| |travis-status| |dependencies| |python-ver| |proj-license|
+|pypi-ver| |test-status| |dependencies| |python-ver| |proj-license|
 
 :Version:     2.0.0dev1
 :Date:        2020-10-10
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.org/project/pypiserver/
-:Travis:      https://travis-ci.org/pypiserver/pypiserver
+:Tests:       https://github.com/pypiserver/pypiserver/actions
 :Maintainers: Kostis Anagnostopoulos <ankostis@gmail.com>,
               Matthew Planchard <mplanchard@gmail.com>
 :License:     zlib/libpng + MIT
@@ -769,7 +769,7 @@ reverse proxy config to enable changing the base URL. For example if you
 want to host pypiserver under a particular path on your server::
 
     upstream pypi {
-      server              locahost:8000;
+      server              localhost:8000;
     }
 
     server {
@@ -983,10 +983,10 @@ See the ``LICENSE.txt`` file.
 .. _twine: https://pypi.org/project/twine/
 .. _pypi-uploader: https://pypi.org/project/pypi-uploader/
 .. _python-pam: https://pypi.org/project/python-pam/
-.. |travis-status| image:: https://travis-ci.org/pypiserver/pypiserver.svg
-    :alt: Travis build status
+.. |test-status| image:: https://github.com/pypiserver/pypiserver/workflows/Test/badge.svg
+    :alt: test status
     :scale: 100%
-    :target: https://travis-ci.org/pypiserver/pypiserver
+    :target: https://github.com/pypiserver/pypiserver/actions?query=workflow%3ATest
 
 .. |pypi-ver| image::  https://img.shields.io/pypi/v/pypiserver.svg
     :target: https://pypi.org/project/pypiserver/
