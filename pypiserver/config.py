@@ -243,6 +243,28 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
             "standard python library)"
         ),
     )
+
+    parser.add_argument(
+        "--hash-algo",
+        default=DEFAULTS.HASH_ALGO,
+        type=hash_algo_arg,
+        help=(
+            "Any `hashlib` available algorithm to use for generating fragments "
+            "on package links. Can be disabled with one of (0, no, off, false)."
+        ),
+    )
+
+    parser.add_argument(
+        "--backend",
+        default=DEFAULTS.BACKEND,
+        choices=("auto", "simple-dir", "cached-dir"),
+        dest="backend_arg",
+        help=(
+            "A backend implementation. Keep the default 'auto' to automatically"
+            " determine whether to activate caching or not"
+        ),
+    )
+
     parser.add_argument(
         "--version",
         action="version",
@@ -388,15 +410,6 @@ def get_parser() -> argparse.ArgumentParser:
         help="Allow overwriting existing package files during upload.",
     )
     run_parser.add_argument(
-        "--hash-algo",
-        default=DEFAULTS.HASH_ALGO,
-        type=hash_algo_arg,
-        help=(
-            "Any `hashlib` available algorithm to use for generating fragments "
-            "on package links. Can be disabled with one of (0, no, off, false)."
-        ),
-    )
-    run_parser.add_argument(
         "--welcome",
         metavar="HTML_FILE",
         # we want to run our `html_file_arg` function to get our default value
@@ -447,16 +460,6 @@ def get_parser() -> argparse.ArgumentParser:
         ),
     )
 
-    run_parser.add_argument(
-        "--backend",
-        default=DEFAULTS.BACKEND,
-        choices=("auto", "simple-dir", "cached-dir"),
-        dest="backend_arg",
-        help=(
-            "A backend implementation. Keep the default 'auto' to automatically"
-            " determine whether to activate caching or not"
-        ),
-    )
     update_parser = subparsers.add_parser(
         "update",
         help=textwrap.dedent(
@@ -520,7 +523,7 @@ def get_parser() -> argparse.ArgumentParser:
 
 
 TConf = t.TypeVar("TConf", bound="_ConfigCommon")
-BackendFactory = t.Callable[["Configuration"], Backend]
+BackendFactory = t.Callable[["_ConfigCommon"], Backend]
 
 
 class _ConfigCommon:
@@ -533,6 +536,8 @@ class _ConfigCommon:
         log_frmt: str,
         log_file: t.Optional[str],
         log_stream: t.Optional[t.IO],
+        hash_algo: t.Optional[str],
+        backend_arg: str,
     ) -> None:
         """Construct a RuntimeConfig."""
         # Global arguments
@@ -540,17 +545,23 @@ class _ConfigCommon:
         self.log_file = log_file
         self.log_stream = log_stream
         self.log_frmt = log_frmt
+
         self.roots = roots
+        self.hash_algo = hash_algo
+        self.backend_arg = backend_arg
 
         # Derived properties are directly based on other properties and are not
         # included in equality checks.
         self._derived_properties: t.Tuple[str, ...] = (
             "iter_packages",
             "package_root",
+            "backend",
         )
         # The first package directory is considered the root. This is used
         # for uploads.
         self.package_root = self.roots[0]
+
+        self.backend = self.get_backend(backend_arg)
 
     @classmethod
     def from_namespace(
@@ -570,6 +581,8 @@ class _ConfigCommon:
             log_stream=namespace.log_stream,
             log_frmt=namespace.log_frmt,
             roots=namespace.package_directory,
+            hash_algo=namespace.hash_algo,
+            backend_arg=namespace.backend_arg,
         )
 
     @property
@@ -583,6 +596,22 @@ class _ConfigCommon:
         # Return a log-level from warning through not set (log all messages).
         # If we've specified 3 or more levels of verbosity, just return not set.
         return levels.get(self.verbosity, logging.NOTSET)
+
+    def get_backend(self, arg: str) -> IBackend:
+
+        available_backends: t.Dict[str, BackendFactory] = {
+            "auto": get_file_backend,
+            "simple-dir": SimpleFileBackend,
+            "cached-dir": CachingFileBackend,
+        }
+        # if arg not in available_backends:
+        #     raise argparse.ArgumentTypeError(
+        #         f"Value must be one of {', '.join(available_backends.keys())}"
+        #     )
+
+        backend = available_backends[arg]
+
+        return BackendProxy(backend(self))
 
     def with_updates(self: TConf, **kwargs: t.Any) -> TConf:
         """Create a new config with the specified updates.
@@ -635,13 +664,11 @@ class RunConfig(_ConfigCommon):
         fallback_url: str,
         server_method: str,
         overwrite: bool,
-        hash_algo: t.Optional[str],
         welcome_msg: str,
         cache_control: t.Optional[int],
         log_req_frmt: str,
         log_res_frmt: str,
         log_err_frmt: str,
-        backend_arg: str,
         auther: t.Callable[[str, str], bool] = None,
         **kwargs: t.Any,
     ) -> None:
@@ -655,20 +682,14 @@ class RunConfig(_ConfigCommon):
         self.fallback_url = fallback_url
         self.server_method = server_method
         self.overwrite = overwrite
-        self.hash_algo = hash_algo
         self.welcome_msg = welcome_msg
         self.cache_control = cache_control
         self.log_req_frmt = log_req_frmt
         self.log_res_frmt = log_res_frmt
         self.log_err_frmt = log_err_frmt
-        self.backend_arg = backend_arg
         # Derived properties
-        self._derived_properties = self._derived_properties + (
-            "auther",
-            "backend",
-        )
+        self._derived_properties = self._derived_properties + ("auther",)
         self.auther = self.get_auther(auther)
-        self.backend = self.get_backend(backend_arg)
 
     @classmethod
     def kwargs_from_namespace(
@@ -685,13 +706,11 @@ class RunConfig(_ConfigCommon):
             "fallback_url": namespace.fallback_url,
             "server_method": namespace.server,
             "overwrite": namespace.overwrite,
-            "hash_algo": namespace.hash_algo,
             "welcome_msg": namespace.welcome,
             "cache_control": namespace.cache_control,
             "log_req_frmt": namespace.log_req_frmt,
             "log_res_frmt": namespace.log_res_frmt,
             "log_err_frmt": namespace.log_err_frmt,
-            "backend_arg": namespace.backend_arg,
         }
 
     def get_auther(
@@ -735,22 +754,6 @@ class RunConfig(_ConfigCommon):
             return loaded_pw_file.check_password(uname, pw)
 
         return auther
-
-    def get_backend(self, arg: str) -> IBackend:
-
-        available_backends: t.Dict[str, BackendFactory] = {
-            "auto": get_file_backend,
-            "simple-dir": SimpleFileBackend,
-            "cached-dir": CachingFileBackend,
-        }
-        # if arg not in available_backends:
-        #     raise argparse.ArgumentTypeError(
-        #         f"Value must be one of {', '.join(available_backends.keys())}"
-        #     )
-
-        backend = available_backends[arg]
-
-        return BackendProxy(backend(self))
 
 
 class UpdateConfig(_ConfigCommon):

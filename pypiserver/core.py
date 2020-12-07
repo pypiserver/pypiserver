@@ -61,6 +61,7 @@ class PkgFile:
         self.relfn_unix = None if relfn is None else relfn.replace("\\", "/")
         self.replaces = replaces
         self.digest = None
+        self.digester = None
 
     def __repr__(self) -> str:
         return "{}({})".format(

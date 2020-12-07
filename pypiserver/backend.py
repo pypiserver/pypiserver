@@ -15,7 +15,7 @@ from .pkg_helpers import (
 )
 
 if t.TYPE_CHECKING:
-    from .config import Configuration
+    from .config import _ConfigCommon as Configuration
 
 
 PathLike = t.Union[str, os.PathLike]
