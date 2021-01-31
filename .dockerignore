@@ -1,8 +1,8 @@
 *
 !pypiserver
 !requirements
-!docker-requirements.txt
-!entrypoint.sh
+!docker/docker-requirements.txt
+!docker/entrypoint.sh
 !README.rst
 !setup.cfg
 !setup.py

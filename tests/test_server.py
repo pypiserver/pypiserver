@@ -18,6 +18,7 @@ import shutil
 import socket
 import sys
 import time
+import typing as t
 from collections import namedtuple
 from pathlib import Path
 from shlex import split
@@ -40,7 +41,9 @@ Srv = namedtuple("Srv", ("port", "root"))
 @contextlib.contextmanager
 def run_server(root, authed=False, other_cli=""):
     """Run a server, optionally with partial auth enabled."""
-    htpasswd = CURRENT_PATH.joinpath("htpasswd.a.a").expanduser().resolve()
+    htpasswd = (
+        CURRENT_PATH.joinpath("../fixtures/htpasswd.a.a").expanduser().resolve()
+    )
     pswd_opt_choices = {
         True: f"-P {htpasswd} -a update,download",
         False: "-P. -a.",
@@ -91,7 +94,7 @@ def _kill_proc(proc):
         proc.kill()
 
 
-def build_url(port, user="", pswd=""):
+def build_url(port: t.Union[int, str], user: str = "", pswd: str = "") -> str:
     auth = f"{user}:{pswd}@" if user or pswd else ""
     return f"http://{auth}localhost:{port}"
 
@@ -196,12 +199,18 @@ def empty_packdir(tmp_path_factory):
     return tmp_path_factory.mktemp("dists")
 
 
-def pip_download(cmd, port, install_dir, user=None, pswd=None):
+def pip_download(
+    cmd: str,
+    port: t.Union[int, str],
+    install_dir: str,
+    user: str = None,
+    pswd: str = None,
+) -> int:
     url = build_url(port, user, pswd)
     return _run_pip(f"-vv download -d {install_dir} -i {url} {cmd}")
 
 
-def _run_pip(cmd):
+def _run_pip(cmd: str) -> int:
     ncmd = (
         "pip --no-cache-dir --disable-pip-version-check "
         f"--retries 0 --timeout 5 --no-input {cmd}"
@@ -260,7 +269,7 @@ def authed_pypirc(authed_server):
         yield path
 
 
-def run_twine(command, package, conf):
+def run_twine(command: str, package: str, conf: str) -> None:
     proc = Popen(
         split(
             f"twine {command} --repository test --config-file {conf} {package}"

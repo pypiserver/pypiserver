@@ -33,7 +33,7 @@ FROM base AS builder_dependencies
 
 COPY pypiserver /code/pypiserver
 COPY requirements /code/requirements
-COPY docker-requirements.txt /code
+COPY docker/docker-requirements.txt /code
 COPY setup.cfg /code
 COPY setup.py /code
 COPY README.rst /code
@@ -50,7 +50,7 @@ FROM base
 # Copy the libraries installed via pip
 COPY --from=builder_dependencies /install /usr/local
 COPY --from=builder_gosu /usr/local/bin/gosu /usr/local/bin/gosu
-COPY entrypoint.sh /entrypoint.sh
+COPY docker/entrypoint.sh /entrypoint.sh
 
 # Use a consistent user and group ID so that linux users
 # can create a corresponding system user and set permissions
@@ -61,11 +61,13 @@ RUN apk add bash \
     && addgroup -S -g 9898 pypiserver \
     && adduser -S -u 9898 -G pypiserver pypiserver --home /data\
     && mkdir -p /data/packages \
-    && chmod +x /entrypoint.sh
+    && chmod +x /entrypoint.sh 
 
 VOLUME /data/packages
 WORKDIR /data
-ENV PORT=8080
-EXPOSE $PORT
+ENV PYPISERVER_PORT=8080
+# PORT is deprecated. Please use PYPISERVER_PORT instead
+ENV PORT=$PYPISERVER_PORT
+EXPOSE $PYPISERVER_PORT
 
 ENTRYPOINT ["/entrypoint.sh"]

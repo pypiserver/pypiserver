@@ -34,7 +34,8 @@ jobs:
   test-pypy:
 
     # Run a a separate job so we don't need to mess with conditionally
-    # splitting the python version from the build matrix.
+    # splitting the python version from the build matrix. Also the pypy
+    # tests take freaking forever.
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -74,8 +75,13 @@ jobs:
       run: ./bin/check_readme.sh
 
   # Full-flow docker tests, again not python version dependent
-  docker:
-    runs-on: ubuntu-latest
+  # We _could_ test this on MacOS, but it takes forever to get docker
+  # installed. I'm going to say for now probably 99% of people using
+  # the docker image will be doing so from a linux system, e.g. for
+  # a k8s deploy, and I've verified manually that things work on
+  # MacOS, so /shrug.
+  test-docker:
+    runs-on: "ubuntu-latest"
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -83,10 +89,12 @@ jobs:
       with:
         # Pretty much any python version will do
         python-version: "3.9"
-    - name: Install dependencies
-      run: pip install --use-feature 2020-resolver -U twine
+    - name: Install test dependencies
+      run: pip install -r "requirements/test.pip"
+    - name: Install package
+      run: pip install -r "requirements/exe.pip"
     - name: Run tests
-      run: ./bin/test-docker.sh
+      run: "pytest docker/test_docker.py"
 
 
   tests:
