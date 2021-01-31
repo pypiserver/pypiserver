@@ -40,7 +40,9 @@ Srv = namedtuple("Srv", ("port", "root"))
 @contextlib.contextmanager
 def run_server(root, authed=False, other_cli=""):
     """Run a server, optionally with partial auth enabled."""
-    htpasswd = CURRENT_PATH.joinpath("htpasswd.a.a").expanduser().resolve()
+    htpasswd = (
+        CURRENT_PATH.joinpath("../fixtures/htpasswd.a.a").expanduser().resolve()
+    )
     pswd_opt_choices = {
         True: f"-P {htpasswd} -a update,download",
         False: "-P. -a.",

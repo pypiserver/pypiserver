@@ -13,7 +13,7 @@ from pypiserver.config import DEFAULTS, Config, RunConfig, UpdateConfig
 FILE_DIR = pathlib.Path(__file__).parent.resolve()
 
 # Username and password stored in the htpasswd.a.a test file.
-HTPASS_TEST_FILE = str(FILE_DIR / "htpasswd.a.a")
+HTPASS_TEST_FILE = str(FILE_DIR / "../fixtures/htpasswd.a.a")
 HTPASS_TEST_USER = "a"
 HTPASS_TEST_PASS = "a"
 

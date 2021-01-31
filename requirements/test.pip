@@ -2,6 +2,7 @@
 # running tests
 
 gevent>=1.1b4; python_version >= '3'
+httpx
 pip>=7
 passlib>=1.6
 pytest>=2.3

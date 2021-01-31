@@ -16,7 +16,7 @@ import pypiserver
 logger = logging.getLogger(__name__)
 
 TEST_DIR = pathlib.Path(__file__).parent
-HTPASS_FILE = TEST_DIR / "htpasswd.a.a"
+HTPASS_FILE = TEST_DIR / "../fixtures/htpasswd.a.a"
 WELCOME_FILE = TEST_DIR / "sample_msg.html"
 
 

@@ -61,7 +61,7 @@ RUN apk add bash \
     && addgroup -S -g 9898 pypiserver \
     && adduser -S -u 9898 -G pypiserver pypiserver --home /data\
     && mkdir -p /data/packages \
-    && chmod +x /entrypoint.sh
+    && chmod +x /entrypoint.sh 
 
 VOLUME /data/packages
 WORKDIR /data

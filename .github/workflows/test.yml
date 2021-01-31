@@ -77,7 +77,7 @@ jobs:
 
   # Full-flow docker tests, again not python version dependent
   docker:
-    runs-on: ubuntu-latest
+    runs-on: ["ubuntu-latest", "macos-latest"]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -86,6 +86,6 @@ jobs:
         # Pretty much any python version will do
         python-version: "3.9"
     - name: Install dependencies
-      run: pip install --use-feature 2020-resolver -U twine
+      run: pip install -r "requirements/test.pip"
     - name: Run tests
-      run: ./bin/test-docker.sh
+      run: "pytest docker/tests"

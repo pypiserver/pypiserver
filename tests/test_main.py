@@ -12,7 +12,7 @@ from pypiserver.bottle import Bottle
 
 
 THIS_DIR = pathlib.Path(__file__).parent
-HTPASS_FILE = THIS_DIR / "htpasswd.a.a"
+HTPASS_FILE = THIS_DIR / "../fixtures/htpasswd.a.a"
 IGNORELIST_FILE = THIS_DIR / "test-ignorelist"
 
 
