@@ -14,7 +14,7 @@ tests_require = [
     "webtest",
 ]
 
-setup_requires = ["setuptools", "setuptools-git >= 0.3", "wheel >= 0.31 .0"]
+setup_requires = ["setuptools", "setuptools-git >= 0.3", "wheel >= 0.31"]
 
 
 def read_file(rel_path: str):
