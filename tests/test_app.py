@@ -4,34 +4,21 @@
 import logging
 import os
 import pathlib
-
-
-try:  # python 3
-    from html.parser import HTMLParser
-    from html import unescape
-except ImportError:
-    from HTMLParser import HTMLParser
-
-    unescape = HTMLParser().unescape
-
-try:
-    import xmlrpc.client as xmlrpclib
-except ImportError:
-    import xmlrpclib  # legacy Python
+import xmlrpc.client as xmlrpclib
+from html import unescape
 
 # Third party imports
 import pytest
 import webtest
 
-
 # Local Imports
-from pypiserver import __main__, bottle
-
-import tests.test_core as test_core
-
+from tests.test_pkg_helpers import files, invalid_files
+from pypiserver import __main__, bottle, core, Bottle
+from pypiserver.backend import CachingFileBackend, SimpleFileBackend
 
 # Enable logging to detect any problems with it
 ##
+
 __main__.init_logging()
 
 
@@ -43,12 +30,14 @@ def app(tmpdir):
         roots=[pathlib.Path(tmpdir.strpath)],
         authenticate=[],
         password_file=".",
+        backend_arg="simple-dir",
     )
 
 
 @pytest.fixture
 def testapp(app):
     """Return a webtest TestApp initiated with pypiserver app"""
+    bottle.debug(True)
     return webtest.TestApp(app)
 
 
@@ -111,7 +100,18 @@ def welcome_file_all_vars(request, root):
     return wfile
 
 
-def test_root_count(root, testapp):
+@pytest.fixture
+def add_file_to_root(app):
+    def file_adder(root, filename, content=""):
+        root.join(filename).write(content)
+        backend = app.config.backend
+        if isinstance(backend, CachingFileBackend):
+            backend.cache_manager.invalidate_root_cache(root)
+
+    return file_adder
+
+
+def test_root_count(root, testapp, add_file_to_root):
     """Test that the welcome page count updates with added packages
 
     :param root: root temporary directory fixture
@@ -119,7 +119,7 @@ def test_root_count(root, testapp):
     """
     resp = testapp.get("/")
     resp.mustcontain("PyPI compatible package index serving 0 packages")
-    root.join("Twisted-11.0.0.tar.bz2").write("")
+    add_file_to_root(root, "Twisted-11.0.0.tar.bz2")
     resp = testapp.get("/")
     resp.mustcontain("PyPI compatible package index serving 1 packages")
 
@@ -330,16 +330,19 @@ def test_nonroot_root_with_x_forwarded_host_without_trailing_slash(testapp):
     resp.mustcontain("""<a href="/priv/packages/">here</a>""")
 
 
-def test_nonroot_simple_index(root, testpriv):
-    root.join("foobar-1.0.zip").write("")
+def test_nonroot_simple_index(root, testpriv, add_file_to_root):
+    add_file_to_root(root, "foobar-1.0.zip", "123")
     resp = testpriv.get("/priv/simple/foobar/")
     links = resp.html("a")
     assert len(links) == 1
     assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
 
 
-def test_nonroot_simple_index_with_x_forwarded_host(root, testapp):
-    root.join("foobar-1.0.zip").write("")
+def test_nonroot_simple_index_with_x_forwarded_host(
+    root, testapp, add_file_to_root
+):
+    add_file_to_root(root, "foobar-1.0.zip", "123")
+
     resp = testapp.get(
         "/simple/foobar/", headers={"X-Forwarded-Host": "forwarded.ed/priv/"}
     )
@@ -348,22 +351,25 @@ def test_nonroot_simple_index_with_x_forwarded_host(root, testapp):
     assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
 
 
-def test_nonroot_simple_packages(root, testpriv):
-    root.join("foobar-1.0.zip").write("123")
+def test_nonroot_simple_packages(root, testpriv, add_file_to_root):
+    add_file_to_root(root, "foobar-1.0.zip", "123")
     resp = testpriv.get("/priv/packages/")
     links = resp.html("a")
     assert len(links) == 1
-    assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
+    assert "/priv/packages/foobar-1.0.zip#" in links[0]["href"]
 
 
-def test_nonroot_simple_packages_with_x_forwarded_host(root, testapp):
-    root.join("foobar-1.0.zip").write("123")
+def test_nonroot_simple_packages_with_x_forwarded_host(
+    root, testapp, add_file_to_root
+):
+    add_file_to_root(root, "foobar-1.0.zip", "123")
+
     resp = testapp.get(
         "/packages/", headers={"X-Forwarded-Host": "forwarded/priv/"}
     )
     links = resp.html("a")
     assert len(links) == 1
-    assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
+    assert "/priv/packages/foobar-1.0.zip#" in links[0]["href"]
 
 
 def test_root_no_relative_paths(testpriv):
@@ -444,7 +450,7 @@ def test_upload_badAction(testapp):
 
 
 @pytest.mark.parametrize(
-    "package", [f[0] for f in test_core.files if f[1] and "/" not in f[0]]
+    "package", [f[0] for f in files if f[1] and "/" not in f[0]]
 )
 def test_upload(package, root, testapp):
     resp = testapp.post(
@@ -458,8 +464,23 @@ def test_upload(package, root, testapp):
     assert uploaded_pkgs[0].lower() == package.lower()
 
 
+def test_upload_conflict_on_existing(root, testapp):
+    package = "foo_bar-1.0.tar.gz"
+    root.join("foo_bar-1.0.tar.gz").write("")
+
+    resp = testapp.post(
+        "/",
+        params={":action": "file_upload"},
+        upload_files=[("content", package, b"")],
+        status=409,
+    )
+
+    assert resp.status_int == 409
+    assert "Package 'foo_bar-1.0.tar.gz' already exists!" in unescape(resp.text)
+
+
 @pytest.mark.parametrize(
-    "package", [f[0] for f in test_core.files if f[1] and "/" not in f[0]]
+    "package", [f[0] for f in files if f[1] and "/" not in f[0]]
 )
 def test_upload_with_signature(package, root, testapp):
     resp = testapp.post(
@@ -477,9 +498,7 @@ def test_upload_with_signature(package, root, testapp):
     assert f"{package.lower()}.asc" in uploaded_pkgs
 
 
-@pytest.mark.parametrize(
-    "package", [f[0] for f in test_core.files if f[1] is None]
-)
+@pytest.mark.parametrize("package", invalid_files)
 def test_upload_badFilename(package, root, testapp):
     resp = testapp.post(
         "/",

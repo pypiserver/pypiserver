@@ -6,13 +6,15 @@ import itertools
 import os
 import sys
 from distutils.version import LooseVersion
+from pathlib import Path
 from subprocess import call
+from xmlrpc.client import Server
 
 import pip
 
-from . import core
-
-from xmlrpc.client import Server
+from .backend import listdir
+from .core import PkgFile
+from .pkg_helpers import normalize_pkgname, parse_version
 
 
 def make_pypi_client(url):
@@ -41,7 +43,7 @@ def filter_latest_pkgs(pkgs):
     pkgname2latest = {}
 
     for x in pkgs:
-        pkgname = core.normalize_pkgname(x.pkgname)
+        pkgname = normalize_pkgname(x.pkgname)
 
         if pkgname not in pkgname2latest:
             pkgname2latest[pkgname] = x
@@ -53,9 +55,9 @@ def filter_latest_pkgs(pkgs):
 
 def build_releases(pkg, versions):
     for x in versions:
-        parsed_version = core.parse_version(x)
+        parsed_version = parse_version(x)
         if parsed_version > pkg.parsed_version:
-            yield core.PkgFile(pkgname=pkg.pkgname, version=x, replaces=pkg)
+            yield PkgFile(pkgname=pkg.pkgname, version=x, replaces=pkg)
 
 
 def find_updates(pkgset, stable_only=True):
@@ -98,7 +100,8 @@ def find_updates(pkgset, stable_only=True):
 
     if no_releases:
         sys.stdout.write(
-            f"no releases found on pypi for {', '.join(sorted(no_releases))}\n\n"
+            f"no releases found on pypi for"
+            f" {', '.join(sorted(no_releases))}\n\n"
         )
 
     return need_update
@@ -135,8 +138,7 @@ class PipCmd:
 def update_package(pkg, destdir, dry_run=False):
     """Print and optionally execute a package update."""
     print(
-        "# update {0.pkgname} from {0.replaces.version} to "
-        "{0.version}".format(pkg)
+        f"# update {pkg.pkgname} from {pkg.replaces.version} to {pkg.version}"
     )
 
     cmd = tuple(
@@ -148,7 +150,7 @@ def update_package(pkg, destdir, dry_run=False):
         )
     )
 
-    print("{}\n".format(" ".join(cmd)))
+    print(" ".join(cmd), end="\n\n")
     if not dry_run:
         call(cmd)
 
@@ -171,7 +173,9 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
 def update_all_packages(
     roots, destdir=None, dry_run=False, stable_only=True, ignorelist=None
 ):
-    all_packages = itertools.chain(*[core.listdir(r) for r in roots])
+    all_packages = itertools.chain.from_iterable(
+        listdir(Path(r)) for r in roots
+    )
 
     skip_packages = set(ignorelist or ())
 

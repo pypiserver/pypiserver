@@ -4,9 +4,23 @@
 #
 
 from os.path import dirname
-
-from watchdog.observers import Observer
+from pathlib import Path
+import typing as t
 import threading
+
+try:
+    from watchdog.observers import Observer
+
+    ENABLE_CACHING = True
+
+except ImportError:
+
+    Observer = None
+
+    ENABLE_CACHING = False
+
+if t.TYPE_CHECKING:
+    from pypiserver.core import PkgFile
 
 
 class CacheManager:
@@ -26,6 +40,11 @@ class CacheManager:
     """
 
     def __init__(self):
+        if not ENABLE_CACHING:
+            raise RuntimeError(
+                "Please install the extra cache requirements by running 'pip "
+                "install pypiserver[cache]' to use the CachingFileBackend"
+            )
 
         # Cache for listdir output
         self.listdir_cache = {}
@@ -46,7 +65,12 @@ class CacheManager:
         self.digest_lock = threading.Lock()
         self.listdir_lock = threading.Lock()
 
-    def listdir(self, root, impl_fn):
+    def listdir(
+        self,
+        root: t.Union[Path, str],
+        impl_fn: t.Callable[[Path], t.Iterable["PkgFile"]],
+    ) -> t.Iterable["PkgFile"]:
+        root = str(root)
         with self.listdir_lock:
             try:
                 return self.listdir_cache[root]
@@ -56,11 +80,13 @@ class CacheManager:
                     if root not in self.watched:
                         self._watch(root)
 
-                v = list(impl_fn(root))
+                v = list(impl_fn(Path(root)))
                 self.listdir_cache[root] = v
                 return v
 
-    def digest_file(self, fpath, hash_algo, impl_fn):
+    def digest_file(
+        self, fpath: str, hash_algo: str, impl_fn: t.Callable[[str, str], str]
+    ) -> str:
         with self.digest_lock:
             try:
                 cache = self.digest_cache[hash_algo]
@@ -82,13 +108,17 @@ class CacheManager:
             cache[fpath] = v
             return v
 
-    def _watch(self, root):
+    def _watch(self, root: str):
         self.watched.add(root)
         self.observer.schedule(_EventHandler(self, root), root, recursive=True)
 
+    def invalidate_root_cache(self, root: t.Union[Path, str]):
+        with self.listdir_lock:
+            self.listdir_cache.pop(str(root), None)
+
 
 class _EventHandler:
-    def __init__(self, cache, root):
+    def __init__(self, cache: CacheManager, root: str):
         self.cache = cache
         self.root = root
 
@@ -101,8 +131,7 @@ class _EventHandler:
             return
 
         # Lazy: just invalidate the whole cache
-        with cache.listdir_lock:
-            cache.listdir_cache.pop(self.root, None)
+        cache.invalidate_root_cache(self.root)
 
         # Digests are more expensive: invalidate specific paths
         paths = []
@@ -117,6 +146,3 @@ class _EventHandler:
             for _, subcache in cache.digest_cache.items():
                 for path in paths:
                     subcache.pop(path, None)
-
-
-cache_manager = CacheManager()

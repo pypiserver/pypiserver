@@ -1,10 +1,13 @@
-from collections import namedtuple
 import logging
 import mimetypes
 import os
 import re
-import zipfile
 import xml.dom.minidom
+import xmlrpc.client as xmlrpclib
+import zipfile
+from collections import namedtuple
+from io import BytesIO
+from urllib.parse import urljoin, urlparse
 
 from pypiserver.config import RunConfig
 from . import __version__
@@ -18,26 +21,10 @@ from .bottle import (
     Bottle,
     template,
 )
-
-try:
-    import xmlrpc.client as xmlrpclib  # py3
-except ImportError:
-    import xmlrpclib  # py2
-
-try:
-    from io import BytesIO
-except ImportError:
-    from StringIO import StringIO as BytesIO
-
-try:  # PY3
-    from urllib.parse import urljoin, urlparse
-except ImportError:  # PY2
-    from urlparse import urljoin, urlparse
-
+from .pkg_helpers import guess_pkgname_and_version, normalize_pkgname_for_url
 
 log = logging.getLogger(__name__)
 config: RunConfig
-
 app = Bottle()
 
 
@@ -103,19 +90,13 @@ def favicon():
 def root():
     fp = request.custom_fullpath
 
-    try:
-        numpkgs = len(list(config.iter_packages()))
-    except Exception as exc:
-        log.error(f"Could not list packages: {exc}")
-        numpkgs = 0
-
     # Ensure template() does not consider `msg` as filename!
     msg = config.welcome_msg + "\n"
     return template(
         msg,
         URL=request.url.rstrip("/") + "/",
         VERSION=__version__,
-        NUMPKGS=numpkgs,
+        NUMPKGS=config.backend.package_count(),
         PACKAGES=fp.rstrip("/") + "/packages/",
         SIMPLE=fp.rstrip("/") + "/simple/",
     )
@@ -148,16 +129,12 @@ def remove_pkg():
     if not name or not version:
         msg = f"Missing 'name'/'version' fields: name={name}, version={version}"
         raise HTTPError(400, msg)
-    pkgs = list(
-        filter(
-            lambda pkg: pkg.pkgname == name and pkg.version == version,
-            core.find_packages(config.iter_packages()),
-        )
-    )
-    if len(pkgs) == 0:
+
+    pkgs = list(config.backend.find_version(name, version))
+    if not pkgs:
         raise HTTPError(404, f"{name} ({version}) not found")
     for pkg in pkgs:
-        os.unlink(pkg.fn)
+        config.backend.remove_package(pkg)
 
 
 Upload = namedtuple("Upload", "pkg sig")
@@ -183,13 +160,11 @@ def file_upload():
             continue
         if (
             not is_valid_pkg_filename(uf.raw_filename)
-            or core.guess_pkgname_and_version(uf.raw_filename) is None
+            or guess_pkgname_and_version(uf.raw_filename) is None
         ):
             raise HTTPError(400, f"Bad filename: {uf.raw_filename}")
 
-        if not config.overwrite and core.exists(
-            config.package_root, uf.raw_filename
-        ):
+        if not config.overwrite and config.backend.exists(uf.raw_filename):
             log.warning(
                 f"Cannot upload {uf.raw_filename!r} since it already exists! \n"
                 "  You may start server with `--overwrite` option. "
@@ -200,7 +175,7 @@ def file_upload():
                 "  You may start server with `--overwrite` option.",
             )
 
-        core.store(config.package_root, uf.raw_filename, uf.save)
+        config.backend.add_package(uf.raw_filename, uf.file)
         if request.auth:
             user = request.auth[0]
         else:
@@ -231,10 +206,10 @@ def update():
 
 
 @app.route("/simple")
-@app.route("/simple/:prefix")
+@app.route("/simple/:project")
 @app.route("/packages")
 @auth("list")
-def pep_503_redirects(prefix=None):
+def pep_503_redirects(project=None):
     return redirect(request.custom_fullpath + "/", 301)
 
 
@@ -257,7 +232,7 @@ def handle_rpc():
         )
         response = []
         ordering = 0
-        for p in config.iter_packages():
+        for p in config.backend.get_all_packages():
             if p.pkgname.count(value) > 0:
                 # We do not presently have any description/summary, returning
                 # version instead
@@ -278,7 +253,7 @@ def handle_rpc():
 @app.route("/simple/")
 @auth("list")
 def simpleindex():
-    links = sorted(core.get_prefixes(config.iter_packages()))
+    links = sorted(config.backend.get_projects())
     tmpl = """\
     <html>
         <head>
@@ -295,59 +270,62 @@ def simpleindex():
     return template(tmpl, links=links)
 
 
-@app.route("/simple/:prefix/")
+@app.route("/simple/:project/")
 @auth("list")
-def simple(prefix=""):
-    # PEP 503: require normalized prefix
-    normalized = core.normalize_pkgname_for_url(prefix)
-    if prefix != normalized:
-        return redirect("/simple/{0}/".format(normalized), 301)
+def simple(project):
+    # PEP 503: require normalized project
+    normalized = normalize_pkgname_for_url(project)
+    if project != normalized:
+        return redirect(f"/simple/{normalized}/", 301)
 
-    files = sorted(
-        core.find_packages(config.iter_packages(), prefix=prefix),
+    packages = sorted(
+        config.backend.find_project_packages(project),
         key=lambda x: (x.parsed_version, x.relfn),
     )
-    if not files:
+    if not packages:
         if not config.disable_fallback:
-            return redirect(f"{config.fallback_url.rstrip('/')}/{prefix}/")
+            return redirect(f"{config.fallback_url.rstrip('/')}/{project}/")
         return HTTPError(404, f"Not Found ({normalized} does not exist)\n\n")
 
-    fp = request.custom_fullpath
-    links = [
+    current_uri = request.custom_fullpath
+
+    links = (
         (
-            os.path.basename(f.relfn),
-            urljoin(fp, f"../../packages/{f.fname_and_hash(config.hash_algo)}"),
+            os.path.basename(pkg.relfn),
+            urljoin(current_uri, f"../../packages/{pkg.fname_and_hash}"),
         )
-        for f in files
-    ]
+        for pkg in packages
+    )
+
     tmpl = """\
     <html>
         <head>
-            <title>Links for {{prefix}}</title>
+            <title>Links for {{project}}</title>
         </head>
         <body>
-            <h1>Links for {{prefix}}</h1>
+            <h1>Links for {{project}}</h1>
             % for file, href in links:
                  <a href="{{href}}">{{file}}</a><br>
             % end
         </body>
     </html>
     """
-    return template(tmpl, prefix=prefix, links=links)
+    return template(tmpl, project=project, links=links)
 
 
 @app.route("/packages/")
 @auth("list")
 def list_packages():
     fp = request.custom_fullpath
-    files = sorted(
-        core.find_packages(config.iter_packages()),
+    packages = sorted(
+        config.backend.get_all_packages(),
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
     )
-    links = [
-        (f.relfn_unix, urljoin(fp, f.fname_and_hash(config.hash_algo)))
-        for f in files
-    ]
+
+    links = (
+        (pkg.relfn_unix, urljoin(fp, pkg.fname_and_hash)) for pkg in packages
+    )
+
     tmpl = """\
     <html>
         <head>
@@ -367,7 +345,7 @@ def list_packages():
 @app.route("/packages/:filename#.*#")
 @auth("download")
 def server_static(filename):
-    entries = core.find_packages(config.iter_packages())
+    entries = config.backend.get_all_packages()
     for x in entries:
         f = x.relfn_unix
         if f == filename:
@@ -385,8 +363,8 @@ def server_static(filename):
     return HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
 
 
-@app.route("/:prefix")
-@app.route("/:prefix/")
-def bad_url(prefix):
+@app.route("/:project")
+@app.route("/:project/")
+def bad_url(project):
     """Redirect unknown root URLs to /simple/."""
-    return redirect(core.get_bad_url_redirect_path(request, prefix))
+    return redirect(core.get_bad_url_redirect_path(request, project))

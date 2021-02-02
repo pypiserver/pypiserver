@@ -37,24 +37,30 @@ import argparse
 import contextlib
 import hashlib
 import io
-import itertools
 import logging
 import pathlib
-import pkg_resources
 import re
 import sys
 import textwrap
 import typing as t
 from distutils.util import strtobool as strtoint
 
-# The `passlib` requirement is optional, so we need to verify its import here.
+import pkg_resources
 
+from pypiserver.backend import (
+    SimpleFileBackend,
+    CachingFileBackend,
+    Backend,
+    IBackend,
+    get_file_backend,
+    BackendProxy,
+)
+
+# The `passlib` requirement is optional, so we need to verify its import here.
 try:
     from passlib.apache import HtpasswdFile
 except ImportError:
     HtpasswdFile = None
-
-from pypiserver import core
 
 
 # The "strtobool" function in distutils does a nice job at parsing strings,
@@ -80,6 +86,7 @@ class DEFAULTS:
     PACKAGE_DIRECTORIES = [pathlib.Path("~/packages").expanduser().resolve()]
     PORT = 8080
     SERVER_METHOD = "auto"
+    BACKEND = "auto"
 
 
 def auth_arg(arg: str) -> t.List[str]:
@@ -236,6 +243,28 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
             "standard python library)"
         ),
     )
+
+    parser.add_argument(
+        "--hash-algo",
+        default=DEFAULTS.HASH_ALGO,
+        type=hash_algo_arg,
+        help=(
+            "Any `hashlib` available algorithm to use for generating fragments "
+            "on package links. Can be disabled with one of (0, no, off, false)."
+        ),
+    )
+
+    parser.add_argument(
+        "--backend",
+        default=DEFAULTS.BACKEND,
+        choices=("auto", "simple-dir", "cached-dir"),
+        dest="backend_arg",
+        help=(
+            "A backend implementation. Keep the default 'auto' to automatically"
+            " determine whether to activate caching or not"
+        ),
+    )
+
     parser.add_argument(
         "--version",
         action="version",
@@ -254,7 +283,6 @@ def get_parser() -> argparse.ArgumentParser:
             "directories starting with a dot. Multiple package directories "
             "may be specified."
         ),
-        # formatter_class=argparse.RawTextHelpFormatter,
         formatter_class=PreserveWhitespaceRawTextHelpFormatter,
         epilog=(
             "Visit https://github.com/pypiserver/pypiserver "
@@ -382,15 +410,6 @@ def get_parser() -> argparse.ArgumentParser:
         help="Allow overwriting existing package files during upload.",
     )
     run_parser.add_argument(
-        "--hash-algo",
-        default=DEFAULTS.HASH_ALGO,
-        type=hash_algo_arg,
-        help=(
-            "Any `hashlib` available algorithm to use for generating fragments "
-            "on package links. Can be disabled with one of (0, no, off, false)."
-        ),
-    )
-    run_parser.add_argument(
         "--welcome",
         metavar="HTML_FILE",
         # we want to run our `html_file_arg` function to get our default value
@@ -504,9 +523,12 @@ def get_parser() -> argparse.ArgumentParser:
 
 
 TConf = t.TypeVar("TConf", bound="_ConfigCommon")
+BackendFactory = t.Callable[["_ConfigCommon"], Backend]
 
 
 class _ConfigCommon:
+    hash_algo: t.Optional[str] = None
+
     def __init__(
         self,
         roots: t.List[pathlib.Path],
@@ -514,6 +536,8 @@ class _ConfigCommon:
         log_frmt: str,
         log_file: t.Optional[str],
         log_stream: t.Optional[t.IO],
+        hash_algo: t.Optional[str],
+        backend_arg: str,
     ) -> None:
         """Construct a RuntimeConfig."""
         # Global arguments
@@ -521,17 +545,23 @@ class _ConfigCommon:
         self.log_file = log_file
         self.log_stream = log_stream
         self.log_frmt = log_frmt
+
         self.roots = roots
+        self.hash_algo = hash_algo
+        self.backend_arg = backend_arg
 
         # Derived properties are directly based on other properties and are not
         # included in equality checks.
         self._derived_properties: t.Tuple[str, ...] = (
             "iter_packages",
             "package_root",
+            "backend",
         )
         # The first package directory is considered the root. This is used
         # for uploads.
         self.package_root = self.roots[0]
+
+        self.backend = self.get_backend(backend_arg)
 
     @classmethod
     def from_namespace(
@@ -551,6 +581,8 @@ class _ConfigCommon:
             log_stream=namespace.log_stream,
             log_frmt=namespace.log_frmt,
             roots=namespace.package_directory,
+            hash_algo=namespace.hash_algo,
+            backend_arg=namespace.backend_arg,
         )
 
     @property
@@ -565,13 +597,17 @@ class _ConfigCommon:
         # If we've specified 3 or more levels of verbosity, just return not set.
         return levels.get(self.verbosity, logging.NOTSET)
 
-    def iter_packages(self) -> t.Iterator[core.PkgFile]:
-        """Iterate over packages in root directories."""
-        yield from (
-            itertools.chain.from_iterable(
-                core.listdir(str(r)) for r in self.roots
-            )
-        )
+    def get_backend(self, arg: str) -> IBackend:
+
+        available_backends: t.Dict[str, BackendFactory] = {
+            "auto": get_file_backend,
+            "simple-dir": SimpleFileBackend,
+            "cached-dir": CachingFileBackend,
+        }
+
+        backend = available_backends[arg]
+
+        return BackendProxy(backend(self))
 
     def with_updates(self: TConf, **kwargs: t.Any) -> TConf:
         """Create a new config with the specified updates.
@@ -624,7 +660,6 @@ class RunConfig(_ConfigCommon):
         fallback_url: str,
         server_method: str,
         overwrite: bool,
-        hash_algo: t.Optional[str],
         welcome_msg: str,
         cache_control: t.Optional[int],
         log_req_frmt: str,
@@ -643,13 +678,11 @@ class RunConfig(_ConfigCommon):
         self.fallback_url = fallback_url
         self.server_method = server_method
         self.overwrite = overwrite
-        self.hash_algo = hash_algo
         self.welcome_msg = welcome_msg
         self.cache_control = cache_control
         self.log_req_frmt = log_req_frmt
         self.log_res_frmt = log_res_frmt
         self.log_err_frmt = log_err_frmt
-
         # Derived properties
         self._derived_properties = self._derived_properties + ("auther",)
         self.auther = self.get_auther(auther)
@@ -669,7 +702,6 @@ class RunConfig(_ConfigCommon):
             "fallback_url": namespace.fallback_url,
             "server_method": namespace.server,
             "overwrite": namespace.overwrite,
-            "hash_algo": namespace.hash_algo,
             "welcome_msg": namespace.welcome,
             "cache_control": namespace.cache_control,
             "log_req_frmt": namespace.log_req_frmt,
@@ -752,6 +784,9 @@ class UpdateConfig(_ConfigCommon):
         }
 
 
+Configuration = t.Union[RunConfig, UpdateConfig]
+
+
 class Config:
     """Config constructor for building a config from args."""
 
@@ -767,9 +802,7 @@ class Config:
         return default_config.with_updates(**overrides)
 
     @classmethod
-    def from_args(
-        cls, args: t.Sequence[str] = None
-    ) -> t.Union[RunConfig, UpdateConfig]:
+    def from_args(cls, args: t.Sequence[str] = None) -> Configuration:
         """Construct a Config from the passed args or sys.argv."""
         # If pulling args from sys.argv (commandline arguments), argv[0] will
         # be the program name, (i.e. pypi-server), so we don't need to

@@ -3,20 +3,15 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
+from pathlib import Path
+from unittest.mock import Mock
 
 import py
 import pytest
 
 from pypiserver import manage
-from pypiserver.core import (
-    PkgFile,
-    guess_pkgname_and_version,
-    parse_version,
-)
+from pypiserver.core import PkgFile
+from pypiserver.pkg_helpers import guess_pkgname_and_version, parse_version
 from pypiserver.manage import (
     PipCmd,
     build_releases,
@@ -210,17 +205,17 @@ def test_update_all_packages(monkeypatch):
     private_pkg_2 = PkgFile("my_other_private_pkg", "1.0")
 
     roots_mock = {
-        "/opt/pypi": [
+        Path("/opt/pypi"): [
             public_pkg_1,
             private_pkg_1,
         ],
-        "/data/pypi": [public_pkg_2, private_pkg_2],
+        Path("/data/pypi"): [public_pkg_2, private_pkg_2],
     }
 
-    def core_listdir_mock(directory):
-        return roots_mock.get(directory, [])
+    def core_listdir_mock(path: Path):
+        return roots_mock.get(path, [])
 
-    monkeypatch.setattr(manage.core, "listdir", core_listdir_mock)
+    monkeypatch.setattr(manage, "listdir", core_listdir_mock)
     monkeypatch.setattr(manage, "update", Mock(return_value=None))
 
     destdir = None
@@ -243,7 +238,7 @@ def test_update_all_packages(monkeypatch):
     )
 
 
-def test_update_all_packages_with_ignorelist(monkeypatch):
+def test_update_all_packages_with_blacklist(monkeypatch):
     """Test calling update_all_packages()"""
     public_pkg_1 = PkgFile("Flask", "1.0")
     public_pkg_2 = PkgFile("requests", "1.0")
@@ -251,17 +246,17 @@ def test_update_all_packages_with_ignorelist(monkeypatch):
     private_pkg_2 = PkgFile("my_other_private_pkg", "1.0")
 
     roots_mock = {
-        "/opt/pypi": [
+        Path("/opt/pypi"): [
             public_pkg_1,
             private_pkg_1,
         ],
-        "/data/pypi": [public_pkg_2, private_pkg_2],
+        Path("/data/pypi"): [public_pkg_2, private_pkg_2],
     }
 
-    def core_listdir_mock(directory):
-        return roots_mock.get(directory, [])
+    def core_listdir_mock(path: Path):
+        return roots_mock.get(path, [])
 
-    monkeypatch.setattr(manage.core, "listdir", core_listdir_mock)
+    monkeypatch.setattr(manage, "listdir", core_listdir_mock)
     monkeypatch.setattr(manage, "update", Mock(return_value=None))
 
     destdir = None

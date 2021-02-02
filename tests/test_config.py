@@ -8,6 +8,7 @@ import sys
 
 import pytest
 
+from pypiserver.backend import SimpleFileBackend, BackendProxy
 from pypiserver.config import DEFAULTS, Config, RunConfig, UpdateConfig
 
 FILE_DIR = pathlib.Path(__file__).parent.resolve()
@@ -529,6 +530,35 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         legacy_args=["--log-err-frmt", "foo"],
         exp_config_type=RunConfig,
         exp_config_values={"log_err_frmt": "foo"},
+    ),
+    # backend
+    ConfigTestCase(
+        "Run: backend unspecified",
+        args=["run"],
+        legacy_args=[],
+        exp_config_type=RunConfig,
+        exp_config_values={
+            "backend_arg": "auto",
+            "_test": (
+                lambda conf: (
+                    isinstance(conf.backend, BackendProxy)
+                    and isinstance(conf.backend.backend, SimpleFileBackend)
+                )
+            ),
+        },
+    ),
+    ConfigTestCase(
+        "Run: simple backend specified",
+        args=["run", "--backend", "simple-dir"],
+        legacy_args=["--backend", "simple-dir"],
+        exp_config_type=RunConfig,
+        exp_config_values={
+            "_test": (
+                lambda conf: (
+                    isinstance(conf.backend.backend, SimpleFileBackend)
+                )
+            ),
+        },
     ),
     # ******************************************************************
     # Update subcommand args
