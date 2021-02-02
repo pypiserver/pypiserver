@@ -604,10 +604,6 @@ class _ConfigCommon:
             "simple-dir": SimpleFileBackend,
             "cached-dir": CachingFileBackend,
         }
-        # if arg not in available_backends:
-        #     raise argparse.ArgumentTypeError(
-        #         f"Value must be one of {', '.join(available_backends.keys())}"
-        #     )
 
         backend = available_backends[arg]
 
