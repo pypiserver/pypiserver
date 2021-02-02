@@ -8,13 +8,13 @@ from setuptools import setup
 tests_require = [
     "pytest>=2.3",
     "tox",
-    "twine",
+    "twine>=1.11",
     "pip>=7",
     "passlib>=1.6",
     "webtest",
 ]
 
-setup_requires = ["setuptools", "setuptools-git >= 0.3", "wheel >= 0.25.0"]
+setup_requires = ["setuptools", "setuptools-git >= 0.3", "wheel >= 0.31 .0"]
 
 
 def read_file(rel_path: str):
