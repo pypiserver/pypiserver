@@ -142,17 +142,11 @@ def run(
 
 def uninstall_pkgs() -> None:
     """Uninstall any packages we've installed."""
-    proc = subprocess.Popen(
-        ("pip", "freeze"), stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    out, err = proc.communicate()
-    assert proc.returncode == 0, err and f"{err.decode()}"
+    res = run("pip", "freeze", capture=True)
     if any(
-        ln.strip().startswith("pypiserver-mypkg")
-        for ln in out.decode().splitlines()
+        ln.strip().startswith("pypiserver-mypkg") for ln in res.out.splitlines()
     ):
-        proc = subprocess.Popen(("pip", "uninstall", "-y", "pypiserver-mypkg"))
-        proc.communicate()
+        run("pip", "uninstall", "-y", "pypiserver-mypkg")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -282,9 +276,7 @@ class TestPermissions:
             # full user name, so we only check for the first bit
             assert user.startswith("pypi")
         finally:
-            subprocess.Popen(
-                ("docker", "container", "rm", "-f", container_id)
-            ).communicate()
+            run("docker", "container", "rm", "-f", container_id)
 
 
 class TestBasics:
@@ -376,11 +368,7 @@ class TestBasics:
             f"http://localhost:{self.HOST_PORT}/simple",
             "pypiserver-mypkg",
         )
-        run(
-            "python",
-            "-c",
-            "'import pypiserver_mypkg; mypkg.pkg_name()'",
-        )
+        run("python", "-c", "'import pypiserver_mypkg; mypkg.pkg_name()'")
 
     @pytest.mark.usefixtures("container")
     def test_welcome(self) -> None:
@@ -521,11 +509,7 @@ class TestAuthed:
             f"http://a:a@localhost:{self.HOST_PORT}/simple",
             "pypiserver-mypkg",
         )
-        run(
-            "python",
-            "-c",
-            "'import pypiserver_mypkg; mypkg.pkg_name()'",
-        )
+        run("python", "-c", "'import pypiserver_mypkg; mypkg.pkg_name()'")
 
     @pytest.mark.usefixtures("upload_mypkg", "cleanup")
     def test_install_failed_auth(self) -> None:
