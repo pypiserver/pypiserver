@@ -1,7 +1,9 @@
 """Tests for the Pypiserver Docker image."""
 
+import contextlib
 import os
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -39,12 +41,16 @@ def image() -> str:
     Return the tag.
     """
     tag = "pypiserver:test"
-    proc = subprocess.Popen(
-        ("docker", "build", "--file", str(DOCKERFILE), "--tag", tag, ROOT_DIR),
+    run(
+        "docker",
+        "build",
+        "--file",
+        str(DOCKERFILE),
+        "--tag",
+        tag,
+        str(ROOT_DIR),
         cwd=ROOT_DIR,
     )
-    proc.communicate()
-    assert proc.returncode == 0
     return tag
 
 
@@ -52,9 +58,7 @@ def image() -> str:
 def mypkg_build() -> None:
     """Ensure the mypkg test fixture package is build."""
     # Use make for this so that it will skip the build step if it's not needed
-    proc = subprocess.Popen(("make", "mypkg"), cwd=ROOT_DIR)
-    proc.communicate()
-    assert proc.returncode == 0
+    run("make", "mypkg", cwd=ROOT_DIR)
 
 
 @pytest.fixture(scope="session")
@@ -88,8 +92,52 @@ def wait_for_container(port: int) -> None:
         else:
             return
 
-    # If we reach here, we've tried 20 times without success.
+    # If we reach here, we've tried 60 times without success, meaning either
+    # the container is broken or it took more than about a minute to become
+    # functional, either of which cases is something we will want to look into.
     raise RuntimeError("Could not connect to pypiserver container")
+
+
+def get_socket() -> int:
+    """Find a random, open socket and return it."""
+    # Close the socket automatically upon exiting the block
+    with contextlib.closing(
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ) as sock:
+        # Bind to a random open socket >=1024
+        sock.bind(("", 0))
+        # Return the socket number
+        return sock.getsockname()[1]
+
+
+class RunReturn(t.NamedTuple):
+    """Simple wrapper around a simple subprocess call's results."""
+
+    returncode: int
+    out: str
+    err: str
+
+
+def run(
+    *cmd: str,
+    capture: bool = False,
+    raise_on_err: bool = True,
+    check_code: t.Callable[[int], bool] = lambda c: c == 0,
+    **popen_kwargs: t.Any,
+) -> RunReturn:
+    """Run a command to completion."""
+    stdout = subprocess.PIPE if capture else None
+    stderr = subprocess.PIPE if capture else None
+    proc = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, **popen_kwargs)
+    out, err = proc.communicate()
+    result = RunReturn(
+        proc.returncode,
+        "" if out is None else out.decode(),
+        "" if err is None else err.decode(),
+    )
+    if raise_on_err and not check_code(result.returncode):
+        raise RuntimeError(result)
+    return result
 
 
 def uninstall_pkgs() -> None:
@@ -107,7 +155,7 @@ def uninstall_pkgs() -> None:
         proc.communicate()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def session_cleanup() -> t.Iterator[None]:
     """Deal with any pollution of the local env."""
     yield
@@ -126,25 +174,13 @@ class TestCommands:
 
     def test_help(self, image: str) -> None:
         """We can get help from the docker container."""
-        proc = subprocess.Popen(
-            ("docker", "run", image, "--help"),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        out, err = proc.communicate()
-        assert proc.returncode == 0, err and f"{err.decode()}"
-        assert "pypi-server" in out.decode()
+        res = run("docker", "run", image, "--help", capture=True)
+        assert "pypi-server" in res.out
 
     def test_version(self, image: str) -> None:
         """We can get the version from the docker container."""
-        proc = subprocess.Popen(
-            ("docker", "run", image, "--version"),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        out, err = proc.communicate()
-        assert proc.returncode == 0, err and f"{err.decode()}"
-        assert out.decode().strip() == pypiserver.__version__
+        res = run("docker", "run", image, "--version", capture=True)
+        assert res.out.strip() == pypiserver.__version__
 
 
 class TestPermissions:
@@ -161,28 +197,24 @@ class TestPermissions:
             data_dir = Path(tmpdir) / "data"
             data_dir.mkdir(mode=perms)
 
-            proc = subprocess.Popen(
-                (
-                    "docker",
-                    "run",
-                    "--rm",
-                    "--user",
-                    # Run as a not us user ID, so access to /data will be
-                    # determined by the "all other users" setting
-                    str(os.getuid() + 1),
-                    "-v",
-                    # Mount the temporary directory as the /data directory
-                    f"{data_dir}:/data",
-                    image,
-                ),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+            res = run(
+                "docker",
+                "run",
+                "--rm",
+                "--user",
+                # Run as a not us user ID, so access to /data will be
+                # determined by the "all other users" setting
+                str(os.getuid() + 1),
+                "-v",
+                # Mount the temporary directory as the /data directory
+                f"{data_dir}:/data",
+                image,
+                capture=True,
+                # This should error out, so we check that the code is non-zero
+                check_code=lambda c: c != 0,
             )
-            _, err = proc.communicate()
 
-            # we should error out in this case
-            assert proc.returncode != 0
-            assert "must have read/execute access" in err.decode()
+            assert "must have read/execute access" in res.err
 
     @pytest.mark.parametrize(
         "extra_args",
@@ -198,58 +230,51 @@ class TestPermissions:
             # but writable only by the owner
             (td_path / "packages").mkdir(mode=0o444)
 
-            proc = subprocess.Popen(
-                (
-                    "docker",
-                    "run",
-                    "--rm",
-                    *extra_args,
-                    "-v",
-                    # Mount the temporary directory as the /data directory
-                    f"{tmpdir}:/data",
-                    image,
-                ),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            _, err = proc.communicate()
-            # we should error out in this case
-            assert proc.returncode != 0
-            assert "must have read/write/execute access" in err.decode()
-
-    def test_runs_as_pypiserver_user(self, image: str) -> None:
-        """Test that the default run uses the pypiserver user."""
-        proc = subprocess.Popen(
-            (
+            res = run(
                 "docker",
                 "run",
                 "--rm",
-                "--detach",
-                "--publish",
-                "8080:8080",
+                *extra_args,
+                "-v",
+                # Mount the temporary directory as the /data directory
+                f"{tmpdir}:/data",
                 image,
-            ),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        out, err = proc.communicate()
-        # we should error out in this case
-        assert proc.returncode == 0, err and f"{err.decode()}"
-        container_id = out.decode().strip()
-        try:
-            wait_for_container(8080)
-            proc = subprocess.Popen(
-                ("docker", "container", "exec", container_id, "ps", "a"),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture=True,
+                # We should error out in this case
+                check_code=lambda c: c != 0,
             )
-            out, err = proc.communicate()
-            assert proc.returncode == 0, err and f"{err.decode()}"
+            assert "must have read/write/execute access" in res.err
+
+    def test_runs_as_pypiserver_user(self, image: str) -> None:
+        """Test that the default run uses the pypiserver user."""
+        host_port = get_socket()
+        res = run(
+            "docker",
+            "run",
+            "--rm",
+            "--detach",
+            "--publish",
+            f"{host_port}:8080",
+            image,
+            capture=True,
+        )
+        container_id = res.out.strip()
+        try:
+            wait_for_container(host_port)
+            res = run(
+                "docker",
+                "container",
+                "exec",
+                container_id,
+                "ps",
+                "a",
+                capture=True,
+            )
             proc_line = next(
                 filter(
                     # grab the process line for the pypi-server process
                     lambda ln: "pypi-server" in ln,
-                    map(bytes.decode, out.splitlines()),
+                    res.out.splitlines(),
                 )
             )
             user = proc_line.split()[1]
@@ -265,39 +290,33 @@ class TestPermissions:
 class TestBasics:
     """Test basic pypiserver functionality in a simple unauthed container."""
 
+    HOST_PORT = get_socket()
+
     @pytest.fixture(scope="class")
     def container(self, image: str) -> t.Iterator[str]:
         """Run the pypiserver container.
 
         Returns the container ID.
         """
-        proc = subprocess.Popen(
-            (
-                "docker",
-                "run",
-                "--rm",
-                "--publish",
-                "8080:8080",
-                "--detach",
-                image,
-                "run",
-                "--passwords",
-                ".",
-                "--authenticate",
-                ".",
-            ),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+        res = run(
+            "docker",
+            "run",
+            "--rm",
+            "--publish",
+            f"{self.HOST_PORT}:8080",
+            "--detach",
+            image,
+            "run",
+            "--passwords",
+            ".",
+            "--authenticate",
+            ".",
+            capture=True,
         )
-        out, err = proc.communicate()
-        assert proc.returncode == 0, err and f"{err.decode()}"
-        wait_for_container(8080)
-        container_id = out.strip().decode()
+        wait_for_container(self.HOST_PORT)
+        container_id = res.out.strip()
         yield container_id
-        proc = subprocess.Popen(
-            ("docker", "container", "rm", "-f", container_id)
-        )
-        proc.communicate()
+        run("docker", "container", "rm", "-f", container_id)
 
     @pytest.fixture(scope="class")
     def upload_mypkg(
@@ -306,43 +325,35 @@ class TestBasics:
         mypkg_paths: t.Dict[str, Path],
     ) -> None:
         """Upload mypkg to the container."""
-        proc = subprocess.Popen(
-            (
-                sys.executable,
-                "-m",
-                "twine",
-                "upload",
-                "--repository-url",
-                "http://localhost:8080",
-                "--username",
-                "",
-                "--password",
-                "",
-                f"{mypkg_paths['dist_dir']}/*",
-            )
+        run(
+            sys.executable,
+            "-m",
+            "twine",
+            "upload",
+            "--repository-url",
+            f"http://localhost:{self.HOST_PORT}",
+            "--username",
+            "",
+            "--password",
+            "",
+            f"{mypkg_paths['dist_dir']}/*",
         )
-        proc.communicate()
-        assert proc.returncode == 0
 
     @pytest.mark.usefixtures("upload_mypkg")
     def test_download(self) -> None:
         """Download mypkg from the container."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            proc = subprocess.Popen(
-                (
-                    sys.executable,
-                    "-m",
-                    "pip",
-                    "download",
-                    "--index-url",
-                    "http://localhost:8080/simple",
-                    "--dest",
-                    tmpdir,
-                    "pypiserver_mypkg",
-                )
+            run(
+                sys.executable,
+                "-m",
+                "pip",
+                "download",
+                "--index-url",
+                f"http://localhost:{self.HOST_PORT}/simple",
+                "--dest",
+                tmpdir,
+                "pypiserver_mypkg",
             )
-            proc.communicate()
-            assert proc.returncode == 0
             assert any(
                 "pypiserver_mypkg" in path.name
                 for path in Path(tmpdir).iterdir()
@@ -356,29 +367,25 @@ class TestBasics:
         since we are requesting the package name with a dash, rather
         than an underscore.
         """
-        proc = subprocess.Popen(
-            (
-                sys.executable,
-                "-m",
-                "pip",
-                "install",
-                "--index-url",
-                "http://localhost:8080/simple",
-                "pypiserver-mypkg",
-            )
+        run(
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--index-url",
+            f"http://localhost:{self.HOST_PORT}/simple",
+            "pypiserver-mypkg",
+        )
+        run(
+            "python",
+            "-c",
+            "'import pypiserver_mypkg; mypkg.pkg_name()'",
         )
 
-        proc.communicate()
-        assert proc.returncode == 0
-        proc = subprocess.Popen(
-            ("python", "-c", "'import pypiserver_mypkg; mypkg.pkg_name()'"),
-        )
-        proc.communicate()
-        assert proc.returncode == 0
-
+    @pytest.mark.usefixtures("container")
     def test_welcome(self) -> None:
         """View the welcome page."""
-        resp = httpx.get("http://localhost:8080")
+        resp = httpx.get(f"http://localhost:{self.HOST_PORT}")
         assert resp.status_code == 200
         assert "pypiserver" in resp.text
 
@@ -386,7 +393,7 @@ class TestBasics:
 class TestAuthed:
     """Test basic pypiserver functionality in a simple unauthed container."""
 
-    HOST_PORT = 8081
+    HOST_PORT = get_socket()
 
     @pytest.fixture(scope="class")
     def container(self, image: str) -> t.Iterator[str]:
@@ -400,46 +407,27 @@ class TestAuthed:
             pkg_path = dirpath / "packages"
             pkg_path.mkdir(mode=0o777)
 
-            proc = subprocess.Popen(
-                (
-                    "docker",
-                    "run",
-                    "--rm",
-                    "--publish",
-                    "8081:8080",
-                    "-v",
-                    f"{dirpath / 'htpasswd'}:/data/htpasswd",
-                    "--detach",
-                    image,
-                    "run",
-                    "--passwords",
-                    "/data/htpasswd",
-                    "--authenticate",
-                    "download, update",
-                ),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+            res = run(
+                "docker",
+                "run",
+                "--rm",
+                "--publish",
+                f"{self.HOST_PORT}:8080",
+                "-v",
+                f"{dirpath / 'htpasswd'}:/data/htpasswd",
+                "--detach",
+                image,
+                "run",
+                "--passwords",
+                "/data/htpasswd",
+                "--authenticate",
+                "download, update",
+                capture=True,
             )
-            out, err = proc.communicate()
-            assert proc.returncode == 0, err and f"{err.decode()}"
             wait_for_container(self.HOST_PORT)
-            container_id = out.strip().decode()
+            container_id = res.out.strip()
             yield container_id
-            proc = subprocess.Popen(
-                (
-                    "docker",
-                    "container",
-                    "exec",
-                    container_id,
-                    "rm",
-                    "-rf",
-                    "/data/packages",
-                )
-            )
-            proc = subprocess.Popen(
-                ("docker", "container", "rm", "-f", container_id)
-            )
-            proc.communicate()
+            run("docker", "container", "rm", "-f", container_id)
 
     @pytest.fixture(scope="class")
     def upload_mypkg(
@@ -448,23 +436,19 @@ class TestAuthed:
         mypkg_paths: t.Dict[str, Path],
     ) -> None:
         """Upload mypkg to the container."""
-        proc = subprocess.Popen(
-            (
-                sys.executable,
-                "-m",
-                "twine",
-                "upload",
-                "--repository-url",
-                f"http://localhost:{self.HOST_PORT}",
-                "--username",
-                "a",
-                "--password",
-                "a",
-                f"{mypkg_paths['dist_dir']}/*",
-            )
+        run(
+            sys.executable,
+            "-m",
+            "twine",
+            "upload",
+            "--repository-url",
+            f"http://localhost:{self.HOST_PORT}",
+            "--username",
+            "a",
+            "--password",
+            "a",
+            f"{mypkg_paths['dist_dir']}/*",
         )
-        proc.communicate()
-        assert proc.returncode == 0
 
     def test_upload_failed_auth(
         self,
@@ -472,39 +456,32 @@ class TestAuthed:
         mypkg_paths: t.Dict[str, Path],
     ) -> None:
         """Upload mypkg to the container."""
-        proc = subprocess.Popen(
-            (
-                sys.executable,
-                "-m",
-                "twine",
-                "upload",
-                "--repository-url",
-                f"http://localhost:{self.HOST_PORT}",
-                f"{mypkg_paths['dist_dir']}/*",
-            )
+        run(
+            sys.executable,
+            "-m",
+            "twine",
+            "upload",
+            "--repository-url",
+            f"http://localhost:{self.HOST_PORT}",
+            f"{mypkg_paths['dist_dir']}/*",
+            check_code=lambda c: c != 0,
         )
-        proc.communicate()
-        assert proc.returncode != 0
 
     @pytest.mark.usefixtures("upload_mypkg")
     def test_download(self) -> None:
         """Download mypkg from the container."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            proc = subprocess.Popen(
-                (
-                    sys.executable,
-                    "-m",
-                    "pip",
-                    "download",
-                    "--index-url",
-                    f"http://a:a@localhost:{self.HOST_PORT}/simple",
-                    "--dest",
-                    tmpdir,
-                    "pypiserver_mypkg",
-                )
+            run(
+                sys.executable,
+                "-m",
+                "pip",
+                "download",
+                "--index-url",
+                f"http://a:a@localhost:{self.HOST_PORT}/simple",
+                "--dest",
+                tmpdir,
+                "pypiserver_mypkg",
             )
-            proc.communicate()
-            assert proc.returncode == 0
             assert any(
                 "pypiserver_mypkg" in path.name
                 for path in Path(tmpdir).iterdir()
@@ -514,21 +491,18 @@ class TestAuthed:
     def test_download_failed_auth(self) -> None:
         """Download mypkg from the container."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            proc = subprocess.Popen(
-                (
-                    sys.executable,
-                    "-m",
-                    "pip",
-                    "download",
-                    "--index-url",
-                    f"http://localhost:{self.HOST_PORT}/simple",
-                    "--dest",
-                    tmpdir,
-                    "pypiserver_mypkg",
-                )
+            run(
+                sys.executable,
+                "-m",
+                "pip",
+                "download",
+                "--index-url",
+                f"http://localhost:{self.HOST_PORT}/simple",
+                "--dest",
+                tmpdir,
+                "pypiserver_mypkg",
+                check_code=lambda c: c != 0,
             )
-            proc.communicate()
-            assert proc.returncode != 0
 
     @pytest.mark.usefixtures("upload_mypkg", "cleanup")
     def test_install(self) -> None:
@@ -538,25 +512,20 @@ class TestAuthed:
         since we are requesting the package name with a dash, rather
         than an underscore.
         """
-        proc = subprocess.Popen(
-            (
-                sys.executable,
-                "-m",
-                "pip",
-                "install",
-                "--index-url",
-                f"http://a:a@localhost:{self.HOST_PORT}/simple",
-                "pypiserver-mypkg",
-            )
+        run(
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--index-url",
+            f"http://a:a@localhost:{self.HOST_PORT}/simple",
+            "pypiserver-mypkg",
         )
-
-        proc.communicate()
-        assert proc.returncode == 0
-        proc = subprocess.Popen(
-            ("python", "-c", "'import pypiserver_mypkg; mypkg.pkg_name()'"),
+        run(
+            "python",
+            "-c",
+            "'import pypiserver_mypkg; mypkg.pkg_name()'",
         )
-        proc.communicate()
-        assert proc.returncode == 0
 
     @pytest.mark.usefixtures("upload_mypkg", "cleanup")
     def test_install_failed_auth(self) -> None:
@@ -566,21 +535,17 @@ class TestAuthed:
         since we are requesting the package name with a dash, rather
         than an underscore.
         """
-        proc = subprocess.Popen(
-            (
-                sys.executable,
-                "-m",
-                "pip",
-                "install",
-                "--no-cache",
-                "--index-url",
-                f"http://localhost:{self.HOST_PORT}/simple",
-                "pypiserver-mypkg",
-            )
+        run(
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--no-cache",
+            "--index-url",
+            f"http://localhost:{self.HOST_PORT}/simple",
+            "pypiserver-mypkg",
+            check_code=lambda c: c != 0,
         )
-
-        proc.communicate()
-        assert proc.returncode != 0
 
     def test_welcome(self) -> None:
         """View the welcome page."""

@@ -65,10 +65,11 @@ jobs:
     - name: Check types
       # individual mypy files for now, until we get the rest
       # of the project typechecking
-      run: |
-        mypy \
-         pypiserver/config.py \
-         tests/test_init.py
+      run: >-
+        mypy
+        docker/test_docker.py
+        pypiserver/config.py 
+        tests/test_init.py
     - name: Check formatting
       run: black --diff --check .
     - name: Validate README
