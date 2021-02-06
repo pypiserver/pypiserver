@@ -2,9 +2,10 @@
 # running tests
 
 gevent>=1.1b4; python_version >= '3'
-pip>=7
+httpx
+pip
 passlib>=1.6
-pytest>=2.3
+pytest>=6
 pytest-cov
 setuptools
 tox
