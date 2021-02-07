@@ -8,6 +8,7 @@ from unittest import mock
 
 import pytest
 
+import pypiserver.bottle
 from pypiserver import __main__
 from pypiserver.bottle import Bottle
 
@@ -84,6 +85,22 @@ def test_port(main):
 def test_server(main):
     assert main(["--server=paste"])["server"] == "paste"
     assert main(["--server", "cherrypy"])["server"] == "cherrypy"
+
+
+def test_wsgiserver_extra_args_present(monkeypatch, main):
+    """The wsgi server gets extra keyword arguments."""
+    monkeypatch.setattr(
+        __main__, "guess_auto_server", lambda: pypiserver.bottle.WSGIRefServer
+    )
+    assert main([])["handler_class"] is __main__.WsgiHandler
+
+
+def test_wsgiserver_extra_kwargs_absent(monkeypatch, main):
+    """Other servers don't get wsgiserver args."""
+    monkeypatch.setattr(
+        __main__, "guess_auto_server", lambda: pypiserver.bottle.WaitressServer
+    )
+    assert "handler_class" not in main([])
 
 
 def test_root_multiple(main):
