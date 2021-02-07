@@ -1,8 +1,7 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """Entrypoint for pypiserver."""
 
-from __future__ import print_function
-
+import importlib
 import logging
 import sys
 import typing as t
@@ -88,54 +87,35 @@ class ServerCheck:
     # pylint: disable=unused-import
 
     @staticmethod
-    def WaitressServer() -> bool:
+    def can_import(name: str) -> bool:
+        """Attempt to import a module. Return a bool indicating success."""
         try:
-            import waitress  # noqa: F401
-
+            importlib.import_module(name)
             return True
         except ImportError:
             return False
 
-    @staticmethod
-    def PasteServer() -> bool:
-        try:
-            import paste  # noqa: F401
+    @classmethod
+    def WaitressServer(cls) -> bool:
+        return cls.can_import("waitress")
 
+    @classmethod
+    def PasteServer(cls) -> bool:
+        return cls.can_import("paste")
+
+    @classmethod
+    def TwistedServer(cls) -> bool:
+        return cls.can_import("twisted.web")
+
+    @classmethod
+    def CherryPyServer(cls) -> bool:
+        if cls.can_import("cheroot.wsgi"):
             return True
-        except ImportError:
-            return False
+        return cls.can_import("cherrypy.wsgiserver")
 
-    @staticmethod
-    def TwistedServer() -> bool:
-        try:
-            import twisted.web  # noqa: F401
-
-            return True
-        except ImportError:
-            return False
-
-    @staticmethod
-    def CherryPyServer() -> bool:
-        try:
-            import cheroot.wsgi  # noqa: F401
-
-            return True
-        except ImportError:
-            try:
-                import cherrypy.wsgiserver  # noqa: F401
-
-                return True
-            except ImportError:
-                return False
-
-    @staticmethod
-    def WSGIRefServer() -> bool:
-        try:
-            import wsgiref  # noqa: F401
-
-            return True
-        except ImportError:
-            return False
+    @classmethod
+    def WSGIRefServer(cls) -> bool:
+        return cls.can_import("wsgiref")
 
     # pylint: enable=missing-function-docstring
     # pylint: enable=invalid-name
@@ -149,14 +129,21 @@ def guess_auto_server() -> "t.Type[pypiserver.bottle.ServerAdapter]":
     import pypiserver.bottle  # pylint: disable=redefined-outer-name
 
     # Return the first ServerAdapter in `AutoServer.adapters` whose
-    # corresponding method in `ServerCheck` returns True. If none of the
-    # servers import correctly, `next()` will raise a `StopIteration` error.
-    return next(
+    # corresponding method in `ServerCheck` returns True.
+    server = next(
         filter(
             lambda s: getattr(ServerCheck, s.__name__)(),
             pypiserver.bottle.AutoServer.adapters,
-        )
+        ),
+        None,
     )
+    if server is None:
+        raise RuntimeError(
+            "Unexpected error determining bottle auto server. There may be an "
+            "issue with this python environment. Please report this bug at "
+            "https://github.com/pypiserver/pypiserver/issues"
+        )
+    return server
 
 
 def main(argv: t.Sequence[str] = None) -> None:
@@ -220,6 +207,9 @@ def main(argv: t.Sequence[str] = None) -> None:
         # When bottle runs gunicorn, gunicorn tries to pull its arguments from
         # sys.argv. Because pypiserver's arguments don't match gunicorn's,
         # this leads to errors.
+        # Gunicorn can be configured by using a `gunicorn.conf.py` config file
+        # or by specifying the `GUNICORN_CMD_ARGS` env var. See gunicorn
+        # docs for more info.
         sys.argv = ["gunicorn"]
 
     wsgi_kwargs = {"handler_class": WsgiHandler}
