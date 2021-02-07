@@ -295,14 +295,16 @@ class TestBasics:
     @pytest.fixture(
         scope="class",
         params=[
-            # default server with cached backend
+            # default (gunicorn) server with cached backend
             (),
-            # default server with non-cached backend
+            # default (gunicorn) server with non-cached backend
             ("--backend", "simple-dir"),
-            # gunicorn server with a non-cached backend
+            # explicit gunicorn server with a non-cached backend
             ("--server", "gunicorn", "--backend", "simple-dir"),
-            # gunicorn server
+            # explicit gunicorn server
             ("--server", "gunicorn"),
+            # explicit waitress server
+            ("--server", "wsgiref"),
             # explicit wsgiref server
             ("--server", "wsgiref"),
         ],
@@ -395,6 +397,32 @@ class TestBasics:
             "pypiserver-mypkg",
         )
         run("python", "-c", "'import pypiserver_mypkg; mypkg.pkg_name()'")
+
+    def test_expected_server(self, container: ContainerInfo) -> None:
+        """Ensure we run the server we think we're running."""
+        resp = httpx.get(f"http://localhost:{container.port}")
+        server = resp.headers["server"].lower()
+        arg_pairs = tuple(zip(container.args, container.args[1:]))
+        if (
+            container.args[-1] == "pypiserver:test"
+            or ("--server", "gunicorn") in arg_pairs
+        ):
+            # We specified no overriding args, so we should run gunicorn, or
+            # we specified gunicorn in overriding args.
+            assert "gunicorn" in server
+        elif ("--server", "wsgiref") in arg_pairs:
+            # We explicitly specified the wsgiref server
+            assert "wsgiserver" in server
+        elif ("--server", "waitress") in arg_pairs:
+            # We explicitly specified the wsgiref server
+            assert "waitress" in server
+        else:
+            # We overrode args, so instead of using the gunicorn default,
+            # we use the `auto` option. Bottle won't choose gunicorn as an
+            # auto server, so we have waitress installed in the docker container
+            # as a fallback for these scenarios, since wsgiref is not production
+            # ready
+            assert "waitress" in server
 
     def test_welcome(self, container: ContainerInfo) -> None:
         """View the welcome page."""
