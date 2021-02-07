@@ -279,23 +279,50 @@ class TestPermissions:
             run("docker", "container", "rm", "-f", container_id)
 
 
+class ContainerInfo(t.NamedTuple):
+    """Info about a running container"""
+
+    container_id: str
+    port: int
+    args: tuple
+
+
 class TestBasics:
     """Test basic pypiserver functionality in a simple unauthed container."""
 
-    HOST_PORT = get_socket()
-
-    @pytest.fixture(scope="class")
-    def container(self, image: str) -> t.Iterator[str]:
+    # We want to automatically parametrize this class' tests with a variety of
+    # pypiserver args, since it should work the same in all of these cases
+    @pytest.fixture(
+        scope="class",
+        params=[
+            # default (gunicorn) server with cached backend
+            (),
+            # default (gunicorn) server with non-cached backend
+            ("--backend", "simple-dir"),
+            # explicit gunicorn server with a non-cached backend
+            ("--server", "gunicorn", "--backend", "simple-dir"),
+            # explicit gunicorn server
+            ("--server", "gunicorn"),
+            # explicit waitress server
+            ("--server", "wsgiref"),
+            # explicit wsgiref server
+            ("--server", "wsgiref"),
+        ],
+    )
+    def container(
+        self, request: pytest.FixtureRequest, image: str
+    ) -> t.Iterator[ContainerInfo]:
         """Run the pypiserver container.
 
         Returns the container ID.
         """
-        res = run(
+        port = get_socket()
+        args = (
             "docker",
             "run",
             "--rm",
             "--publish",
-            f"{self.HOST_PORT}:8080",
+            f"{port}:8080",
             "--detach",
             image,
             "run",
@@ -303,17 +330,18 @@ class TestBasics:
             ".",
             "--authenticate",
             ".",
-            capture=True,
+            *request.param,  # type: ignore
         )
-        wait_for_container(self.HOST_PORT)
+        res = run(*args, capture=True)
+        wait_for_container(port)
         container_id = res.out.strip()
-        yield container_id
+        yield ContainerInfo(container_id, port, args)
         run("docker", "container", "rm", "-f", container_id)
 
     @pytest.fixture(scope="class")
     def upload_mypkg(
         self,
-        container: str,  # pylint: disable=unused-argument
+        container: ContainerInfo,
         mypkg_paths: t.Dict[str, Path],
     ) -> None:
         """Upload mypkg to the container."""
@@ -323,7 +351,7 @@ class TestBasics:
             "twine",
             "upload",
             "--repository-url",
-            f"http://localhost:{self.HOST_PORT}",
+            f"http://localhost:{container.port}",
             "--username",
             "",
             "--password",
@@ -332,7 +360,7 @@ class TestBasics:
         )
 
     @pytest.mark.usefixtures("upload_mypkg")
-    def test_download(self) -> None:
+    def test_download(self, container: ContainerInfo) -> None:
         """Download mypkg from the container."""
         with tempfile.TemporaryDirectory() as tmpdir:
             run(
@@ -341,7 +369,7 @@ class TestBasics:
                 "pip",
                 "download",
                 "--index-url",
-                f"http://localhost:{self.HOST_PORT}/simple",
+                f"http://localhost:{container.port}/simple",
                 "--dest",
                 tmpdir,
                 "pypiserver_mypkg",
@@ -352,7 +380,7 @@ class TestBasics:
             )
 
     @pytest.mark.usefixtures("upload_mypkg", "cleanup")
-    def test_install(self) -> None:
+    def test_install(self, container: ContainerInfo) -> None:
         """Install mypkg from the container.
 
         Note this also ensures that name normalization is working,
@@ -365,15 +393,40 @@ class TestBasics:
             "pip",
             "install",
             "--index-url",
-            f"http://localhost:{self.HOST_PORT}/simple",
+            f"http://localhost:{container.port}/simple",
             "pypiserver-mypkg",
         )
         run("python", "-c", "'import pypiserver_mypkg; mypkg.pkg_name()'")
 
-    @pytest.mark.usefixtures("container")
-    def test_welcome(self) -> None:
+    def test_expected_server(self, container: ContainerInfo) -> None:
+        """Ensure we run the server we think we're running."""
+        resp = httpx.get(f"http://localhost:{container.port}")
+        server = resp.headers["server"].lower()
+        arg_pairs = tuple(zip(container.args, container.args[1:]))
+        if (
+            container.args[-1] == "pypiserver:test"
+            or ("--server", "gunicorn") in arg_pairs
+        ):
+            # We specified no overriding args, so we should run gunicorn, or
+            # we specified gunicorn in overriding args.
+            assert "gunicorn" in server
+        elif ("--server", "wsgiref") in arg_pairs:
+            # We explicitly specified the wsgiref server
+            assert "wsgiserver" in server
+        elif ("--server", "waitress") in arg_pairs:
+            # We explicitly specified the wsgiref server
+            assert "waitress" in server
+        else:
+            # We overrode args, so instead of using the gunicorn default,
+            # we use the `auto` option. Bottle won't choose gunicorn as an
+            # auto server, so we have waitress installed in the docker container
+            # as a fallback for these scenarios, since wsgiref is not production
+            # ready
+            assert "waitress" in server
+
+    def test_welcome(self, container: ContainerInfo) -> None:
         """View the welcome page."""
-        resp = httpx.get(f"http://localhost:{self.HOST_PORT}")
+        resp = httpx.get(f"http://localhost:{container.port}")
         assert resp.status_code == 200
         assert "pypiserver" in resp.text
 
@@ -485,7 +538,7 @@ class TestAuthed:
                 "pip",
                 "download",
                 "--index-url",
-                f"http://localhost:{self.HOST_PORT}/simple",
+                f"http://foo:bar@localhost:{self.HOST_PORT}/simple",
                 "--dest",
                 tmpdir,
                 "pypiserver_mypkg",

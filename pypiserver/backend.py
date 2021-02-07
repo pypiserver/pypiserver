@@ -2,6 +2,7 @@ import abc
 import functools
 import hashlib
 import itertools
+import logging
 import os
 import typing as t
 from pathlib import Path
@@ -16,6 +17,9 @@ from .pkg_helpers import (
 
 if t.TYPE_CHECKING:
     from .config import _ConfigCommon as Configuration
+
+
+log = logging.getLogger(__name__)
 
 
 PathLike = t.Union[str, os.PathLike]
@@ -147,7 +151,15 @@ class SimpleFileBackend(Backend):
 
     def remove_package(self, pkg: PkgFile) -> None:
         if pkg.fn is not None:
-            os.remove(pkg.fn)
+            try:
+                os.remove(pkg.fn)
+            except FileNotFoundError:
+                log.warning(
+                    "Tried to remove %s, but it is already gone", pkg.fn
+                )
+            except OSError:
+                log.exception("Unexpected error removing package: %s", pkg.fn)
+                raise
 
     def exists(self, filename: str) -> bool:
         return any(
@@ -166,6 +178,14 @@ class CachingFileBackend(SimpleFileBackend):
         super().__init__(config)
 
         self.cache_manager = cache_manager or CacheManager()  # type: ignore
+
+    def add_package(self, filename: str, stream: t.BinaryIO) -> None:
+        super().add_package(filename, stream)
+        self.cache_manager.invalidate_root_cache(self.roots[0])
+
+    def remove_package(self, pkg: PkgFile) -> None:
+        super().remove_package(pkg)
+        self.cache_manager.invalidate_root_cache(pkg.root)
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
         return itertools.chain.from_iterable(

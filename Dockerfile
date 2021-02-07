@@ -31,26 +31,37 @@ RUN apk add --no-cache --virtual .build-deps \
 
 FROM base AS builder_dependencies
 
-COPY pypiserver /code/pypiserver
-COPY requirements /code/requirements
-COPY docker/docker-requirements.txt /code
-COPY setup.cfg /code
-COPY setup.py /code
-COPY README.rst /code
+WORKDIR /code
 
+COPY docker/docker-requirements.txt .
+
+# Install requirements
 RUN apk add --no-cache --virtual .build-deps \
         build-base \
         libffi-dev \
     && mkdir /install \
-    && python -m pip install --no-warn-script-location \
-                --prefix=/install \
-                /code --requirement /code/docker-requirements.txt
+    && python -m pip install \
+        --no-warn-script-location \
+        --prefix=/install \
+        --requirement docker-requirements.txt
+
+# Install pypiserver
+# - do this separately from deps so that when developing, every change does not
+#   require reinstalling deps
+COPY pypiserver pypiserver
+COPY setup.cfg .
+COPY setup.py .
+COPY README.rst .
+RUN python -m pip install --no-warn-script-location --prefix=/install .
 
 FROM base
+
+WORKDIR /data
 # Copy the libraries installed via pip
 COPY --from=builder_dependencies /install /usr/local
 COPY --from=builder_gosu /usr/local/bin/gosu /usr/local/bin/gosu
 COPY docker/entrypoint.sh /entrypoint.sh
+COPY docker/gunicorn.conf.py /data
 
 # Use a consistent user and group ID so that linux users
 # can create a corresponding system user and set permissions
@@ -64,10 +75,11 @@ RUN apk add bash \
     && chmod +x /entrypoint.sh 
 
 VOLUME /data/packages
-WORKDIR /data
 ENV PYPISERVER_PORT=8080
 # PORT is deprecated. Please use PYPISERVER_PORT instead
 ENV PORT=$PYPISERVER_PORT
+# Flush logs immediately to stdout
+ENV PYTHONUNBUFFERED=t
 EXPOSE $PYPISERVER_PORT
 
 ENTRYPOINT ["/entrypoint.sh"]

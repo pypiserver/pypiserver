@@ -223,7 +223,7 @@ def handle_rpc():
         .childNodes[0]
         .wholeText.strip()
     )
-    log.info(f"Processing RPC2 request for '{methodname}'")
+    log.debug(f"Processing RPC2 request for '{methodname}'")
     if methodname == "search":
         value = (
             parser.getElementsByTagName("string")[0]
