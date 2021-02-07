@@ -1,7 +1,6 @@
 import logging
 import os
 import pathlib
-from pathlib import Path
 import sys
 import typing as t
 from unittest import mock
@@ -90,7 +89,9 @@ def test_server(main):
 def test_wsgiserver_extra_args_present(monkeypatch, main):
     """The wsgi server gets extra keyword arguments."""
     monkeypatch.setattr(
-        __main__, "guess_auto_server", lambda: pypiserver.bottle.WSGIRefServer
+        __main__,
+        "guess_auto_server",
+        lambda: __main__.AutoServer.WsgiRef,
     )
     assert main([])["handler_class"] is __main__.WsgiHandler
 
@@ -98,7 +99,9 @@ def test_wsgiserver_extra_args_present(monkeypatch, main):
 def test_wsgiserver_extra_kwargs_absent(monkeypatch, main):
     """Other servers don't get wsgiserver args."""
     monkeypatch.setattr(
-        __main__, "guess_auto_server", lambda: pypiserver.bottle.WaitressServer
+        __main__,
+        "guess_auto_server",
+        lambda: __main__.AutoServer.Waitress,
     )
     assert "handler_class" not in main([])
 
@@ -254,3 +257,40 @@ def test_blacklist_file(main):
     """
     main(["-U", "--blacklist-file", str(IGNORELIST_FILE)])
     assert main.update_kwargs["ignorelist"] == ["mypiserver", "something"]
+
+
+def test_auto_servers() -> None:
+    """Test auto servers."""
+    # A list of bottle ServerAdapters
+    bottle_adapters = tuple(
+        a.__name__.lower() for a in pypiserver.bottle.AutoServer.adapters
+    )
+    # We are going to expect that our AutoServer enum names must match those
+    # at least closely enough to be recognizable.
+    our_mappings = tuple(map(str.lower, __main__.AutoServer.__members__))
+
+    # Assert that all of our mappings are represented in bottle adapters
+    assert all(
+        any(mapping in a for a in bottle_adapters) for mapping in our_mappings
+    )
+
+    # Assert that our import checking order matches the order in which the
+    # adapters are defined in the AutoServer
+    our_check_order = tuple(i[0] for i in __main__.AUTO_SERVER_IMPORTS)
+
+    # Some of the servers have more than one check, so we need to rmeove
+    # duplicates before we check for identity with the AutoServer definition.
+    seen: t.Dict[__main__.AutoServer, __main__.AutoServer] = {}
+    our_check_order = tuple(
+        seen.setdefault(i, i) for i in our_check_order if i not in seen
+    )
+
+    # We should have the same number of deduped checkers as there are bottle
+    # adapters
+    assert len(our_check_order) == len(bottle_adapters)
+
+    # And the order should be the same
+    assert all(
+        us.name.lower() in them
+        for us, them in zip(our_check_order, bottle_adapters)
+    )

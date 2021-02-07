@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 """Entrypoint for pypiserver."""
 
+import enum
 import importlib
 import logging
 import sys
@@ -10,10 +11,6 @@ from wsgiref.simple_server import WSGIRequestHandler
 
 import functools as ft
 from pypiserver.config import Config, UpdateConfig
-
-if t.TYPE_CHECKING:
-    import pypiserver.bottle  # noqa pylint: disable=unused-import
-
 
 log = logging.getLogger("pypiserver.main")
 
@@ -68,73 +65,43 @@ class WsgiHandler(WSGIRequestHandler):
         )
 
 
-class ServerCheck:
-    """Methods to check for a server's presence in the import path."""
+class AutoServer(enum.Enum):
+    """Expected servers that can be automaticlaly selected by bottle."""
 
-    # Because we need to potentially override behavior for different servers
-    # by passing options into bottle's `run` method, and because those options
-    # aren't necessarily compatible between servers, we need to be able to guess
-    # which server bottle will pick if the user specifies the `auto` server
-    # type. These methods' names match the `__name__` property of the server
-    # adapters in bottle, so we can filter the adapters on the `AutoServer`
-    # adapter to figure out which ones are present. Since bottle uses the
-    # first server to successfully import from that same list, this should
-    # be sufficient to give us good certainty as to which server it will run.
-
-    # pylint: disable=missing-function-docstring
-    # pylint: disable=invalid-name
-    # pylint: disable=import-outside-toplevel
-    # pylint: disable=unused-import
-
-    @staticmethod
-    def can_import(name: str) -> bool:
-        """Attempt to import a module. Return a bool indicating success."""
-        try:
-            importlib.import_module(name)
-            return True
-        except ImportError:
-            return False
-
-    @classmethod
-    def WaitressServer(cls) -> bool:
-        return cls.can_import("waitress")
-
-    @classmethod
-    def PasteServer(cls) -> bool:
-        return cls.can_import("paste")
-
-    @classmethod
-    def TwistedServer(cls) -> bool:
-        return cls.can_import("twisted.web")
-
-    @classmethod
-    def CherryPyServer(cls) -> bool:
-        if cls.can_import("cheroot.wsgi"):
-            return True
-        return cls.can_import("cherrypy.wsgiserver")
-
-    @classmethod
-    def WSGIRefServer(cls) -> bool:
-        return cls.can_import("wsgiref")
-
-    # pylint: enable=missing-function-docstring
-    # pylint: enable=invalid-name
-    # pylint: enable=import-outside-toplevel
-    # pylint: enable=unused-import
+    Waitress = enum.auto()
+    Paste = enum.auto()
+    Twisted = enum.auto()
+    CherryPy = enum.auto()
+    WsgiRef = enum.auto()
 
 
-def guess_auto_server() -> "t.Type[pypiserver.bottle.ServerAdapter]":
+# Possible automatically selected servers. This MUST match the available
+# auto servers in bottle.py
+AUTO_SERVER_IMPORTS = (
+    (AutoServer.Waitress, "waitress"),
+    (AutoServer.Paste, "paste"),
+    (AutoServer.Twisted, "twisted.web"),
+    (AutoServer.CherryPy, "cheroot.wsgi"),
+    (AutoServer.CherryPy, "cherrypy.wsgiserver"),
+    # this should always be available because it's part of the stdlib
+    (AutoServer.WsgiRef, "wsgiref"),
+)
+
+
+def _can_import(name: str) -> bool:
+    """Attempt to import a module. Return a bool indicating success."""
+    try:
+        importlib.import_module(name)
+        return True
+    except ImportError:
+        return False
+
+
+def guess_auto_server() -> AutoServer:
     """Guess which server bottle will use for the auto setting."""
-    # pylint: disable=import-outside-toplevel
-    import pypiserver.bottle  # pylint: disable=redefined-outer-name
-
-    # Return the first ServerAdapter in `AutoServer.adapters` whose
-    # corresponding method in `ServerCheck` returns True.
+    # Return the first server that can be imported.
     server = next(
-        filter(
-            lambda s: getattr(ServerCheck, s.__name__)(),
-            pypiserver.bottle.AutoServer.adapters,
-        ),
+        (s for s, i in AUTO_SERVER_IMPORTS if _can_import(i)),
         None,
     )
     if server is None:
@@ -217,12 +184,12 @@ def main(argv: t.Sequence[str] = None) -> None:
     if config.server_method == "auto":
         expected_server = guess_auto_server()
         extra_kwargs = (
-            wsgi_kwargs if expected_server is bottle.WSGIRefServer else {}
+            wsgi_kwargs if expected_server is AutoServer.WsgiRef else {}
         )
         log.debug(
             "Server 'auto' selected. Expecting bottle to run '%s'. "
             "Passing extra keyword args: %s",
-            expected_server.__name__,
+            expected_server.name,
             extra_kwargs,
         )
     else:
