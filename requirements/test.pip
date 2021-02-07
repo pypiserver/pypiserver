@@ -5,7 +5,7 @@ gevent>=1.1b4; python_version >= '3'
 httpx
 pip
 passlib>=1.6
-pytest>=6
+pytest>=6.2.2
 pytest-cov
 setuptools
 tox

@@ -67,14 +67,18 @@ def test_noargs(main):
     # Assert we're calling with the default host, port, and server, and
     # assume that we've popped `app` off of the bottle args in our `main`
     # fixture.
-    assert main([]) == {"host": "0.0.0.0", "port": 8080, "server": "auto"}
+    exp_kwargs = {"host": "0.0.0.0", "port": 8080, "server": "auto"}
+    actual_kwargs = main([])
+    # Only assert our expected are are present. We may pass extra kwargs
+    # for particular servers, depending on what is available in the python
+    # path.
+    assert all(map(lambda k: exp_kwargs[k] == actual_kwargs[k], exp_kwargs))
 
 
 def test_port(main):
-    expected = dict(host="0.0.0.0", port=8081, server="auto")
-    assert main(["--port=8081"]) == expected
-    assert main(["--port", "8081"]) == expected
-    assert main(["-p", "8081"]) == expected
+    assert main(["--port=8081"])["port"] == 8081
+    assert main(["--port", "8081"])["port"] == 8081
+    assert main(["-p", "8081"])["port"] == 8081
 
 
 def test_server(main):

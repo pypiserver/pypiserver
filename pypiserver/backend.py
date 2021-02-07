@@ -167,6 +167,15 @@ class CachingFileBackend(SimpleFileBackend):
 
         self.cache_manager = cache_manager or CacheManager()  # type: ignore
 
+    def add_package(self, filename: str, stream: t.BinaryIO) -> None:
+        write_file(stream, self.roots[0].joinpath(filename))
+        self.cache_manager.invalidate_root_cache(self.roots[0])
+
+    def remove_package(self, pkg: PkgFile) -> None:
+        if pkg.fn is not None:
+            os.remove(pkg.fn)
+        self.cache_manager.invalidate_root_cache(pkg.root)
+
     def get_all_packages(self) -> t.Iterable[PkgFile]:
         return itertools.chain.from_iterable(
             self.cache_manager.listdir(r, listdir) for r in self.roots
