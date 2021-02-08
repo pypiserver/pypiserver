@@ -250,7 +250,7 @@ export PIP_EXTRA_INDEX_URL=http://localhost:8080/simple/
 ```
 
 or by adding the following lines to `~/.pip/pip.conf`:
-
+    
 ``` ini
 [global]
 extra-index-url = http://localhost:8080/simple/
@@ -293,14 +293,14 @@ In that case, `pypiserver` is responsible for authenticating the upload-requests
    *htpasswd* file specified by the `-P`, `--passwords` option
    (see next steps):
 
-    ```shell
+    ``` shell
     pip install passlib
     ```
 
 #. Create the Apache *htpasswd* file with at least one user/password pair
    with this command (you'll be prompted for a password):
    
-    ```shell
+    ``` shell
     htpasswd -sc htpasswd.txt <some_username>
     ```
 
@@ -331,7 +331,7 @@ In that case, `pypiserver` is responsible for authenticating the upload-requests
 #. You  need to restart the server with the `-P` option only once
    (but user/password pairs can later be added or updated on the fly):
    
-    ```shell
+    ``` shell
     ./pypi-server -p 8080 -P htpasswd.txt ~/packages &
     ```
 
@@ -342,7 +342,7 @@ To avoid storing you passwords on disk, in clear text, you may either:
 - use the `register` *setuptools*'s command with the `-r` option,
   like this:
 
-  ```shell
+  ``` shell
   python setup.py sdist register -r local upload -r local
   ```
 
@@ -351,7 +351,7 @@ To avoid storing you passwords on disk, in clear text, you may either:
   your files with PGP-Signatures and uploading the generated `.asc` files
   to `pypiserver`:
   
-  ```shell
+  ``` shell
   twine upload -r local --sign -identity user_name ./foo-1.zip
   ```
 
@@ -364,7 +364,7 @@ To avoid storing you passwords on disk, in clear text, you may either:
 
 #. On client-side, edit or create a `~/.pypirc` file with a similar content:
    
-    ```ini
+    ``` ini
     [distutils]
     index-servers =
     pypi
@@ -384,7 +384,7 @@ To avoid storing you passwords on disk, in clear text, you may either:
 #. Then from within the directory of the python-project you wish to upload,
    issue this command:
    
-   ```shell
+   ``` shell
    python setup.py sdist upload -r local
    ```
 
