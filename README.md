@@ -77,34 +77,34 @@ not officially supported, and will not receive bugfixes or new features.
 
 1. Install `pypiserver` with this command:
 
-``` shell
-pip install pypiserver                # Or: pypiserver[passlib,watchdog]
-mkdir ~/packages                      # Copy packages into this directory.
-```
+    ``` shell
+    pip install pypiserver                # Or: pypiserver[passlib,watchdog]
+    mkdir ~/packages                      # Copy packages into this directory.
+    ```
 
 See also [Alternative Installation methods](#alternative-installation-methods)
 
 2. Copy some packages into your `~/packages` folder and then
    get your `pypiserver` up and running:
 
-``` shell
-pypi-server run -p 8080 ~/packages &      # Will listen to all IPs.
-```
+    ``` shell
+    pypi-server run -p 8080 ~/packages &      # Will listen to all IPs.
+    ```
 
 3. From the client computer, type this:
 
-``` shell
-# Download and install hosted packages.
-pip install --extra-index-url http://localhost:8080/simple/ ...
+    ``` shell
+    # Download and install hosted packages.
+    pip install --extra-index-url http://localhost:8080/simple/ ...
 
-# or
-pip install --extra-index-url http://localhost:8080 ...
+    # or
+    pip install --extra-index-url http://localhost:8080 ...
 
-# Search hosted packages.
-pip search --index http://localhost:8080 ...
+    # Search hosted packages.
+    pip search --index http://localhost:8080 ...
 
-# Note that pip search does not currently work with the /simple/ endpoint.
-```
+    # Note that pip search does not currently work with the /simple/ endpoint.
+    ```
 
 See also [Client-side configurations](#client-side-configurations) for avoiding 
 tedious typing.
