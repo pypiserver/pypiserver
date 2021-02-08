@@ -362,7 +362,7 @@ To avoid storing you passwords on disk, in clear text, you may either:
 
 ### Upload with `setuptools`
 
-#. On client-side, edit or create a `~/.pypirc` file with a similar content:
+1. On client-side, edit or create a `~/.pypirc` file with a similar content:
    
     ``` ini
     [distutils]
@@ -381,7 +381,7 @@ To avoid storing you passwords on disk, in clear text, you may either:
     ```
 
 
-#. Then from within the directory of the python-project you wish to upload,
+2. Then from within the directory of the python-project you wish to upload,
    issue this command:
    
    ``` shell
@@ -683,13 +683,15 @@ For detailed information please visit https://nssm.cc
   `paste`, `cherrypy`, `twisted` and `wsgiref` (part of Python); you select
   them using the `--server` flag.
 
-- You may view all supported WSGI servers using the following interactive code::
+- You may view all supported WSGI servers using the following interactive code:
 
+    ``` python-console
     >>> from pypiserver import bottle
     >>> list(bottle.server_names.keys())
     ['cgi', 'gunicorn', 'cherrypy', 'eventlet', 'tornado', 'geventSocketIO',
     'rocket', 'diesel', 'twisted', 'wsgiref', 'fapws3', 'bjoern', 'gevent',
     'meinheld', 'auto', 'aiohttp', 'flup', 'gae', 'paste', 'waitress']
+        ```
 
 - If none of the above servers matches your needs, invoke just the
   `pypiserver:app()` method which returns the internal WSGI-app WITHOUT
