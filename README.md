@@ -288,7 +288,7 @@ In that case, `pypiserver` is responsible for authenticating the upload-requests
 
 ### Apache-Like Authentication (`htpasswd`)
 
-#. First make sure you have the *passlib* module installed (note that
+1. First make sure you have the *passlib* module installed (note that
    `passlib>=1.6` is required), which is needed for parsing the Apache
    *htpasswd* file specified by the `-P`, `--passwords` option
    (see next steps):
@@ -297,9 +297,9 @@ In that case, `pypiserver` is responsible for authenticating the upload-requests
     pip install passlib
     ```
 
-#. Create the Apache *htpasswd* file with at least one user/password pair
+2. Create the Apache *htpasswd* file with at least one user/password pair
    with this command (you'll be prompted for a password):
-   
+
     ``` shell
     htpasswd -sc htpasswd.txt <some_username>
     ```
@@ -328,7 +328,7 @@ In that case, `pypiserver` is responsible for authenticating the upload-requests
     >
     > Please see `Using Ad-hoc authentication providers`_ for more information.
 
-#. You  need to restart the server with the `-P` option only once
+3. You  need to restart the server with the `-P` option only once
    (but user/password pairs can later be added or updated on the fly):
    
     ``` shell
