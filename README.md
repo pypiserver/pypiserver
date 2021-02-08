@@ -1,6 +1,6 @@
 <!-- -*- mode: GFM; coding: utf-8 -*- -->
 
-![Pypiserver](pypiserver_log.png "Pypiserver")
+![Pypiserver](./pypiserver_log.png)
 
 # pypiserver - minimal, pip-compatible PyPI server
 
