@@ -439,6 +439,13 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         exp_config_type=RunConfig,
         exp_config_values={"overwrite": True},
     ),
+    ConfigTestCase(
+        case="Run: overwrite-dev set",
+        args=["run", "--overwrite-dev"],
+        legacy_args=["--overwrite-dev"],
+        exp_config_type=RunConfig,
+        exp_config_values={"overwrite": "dev"},
+    ),
     # hash-algo
     ConfigTestCase(
         case="Run: hash-algo unspecified",

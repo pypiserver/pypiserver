@@ -267,6 +267,8 @@ optional arguments:
                         one of paste, cherrypy, twisted, or wsgiref.
   -o, --overwrite       Allow overwriting existing package files during
                         upload.
+  --overwrite-dev       Allow overwriting existing package files during upload,
+                        only for development releases.
   --welcome HTML_FILE   Use the contents of HTML_FILE as a custom welcome
                         message on the home page.
   --cache-control AGE   Add "Cache-Control: max-age=AGE" header to package
