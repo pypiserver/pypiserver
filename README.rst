@@ -62,7 +62,7 @@ not officially supported, and will not receive bugfixes or new features.
 
 1. Install ``pypiserver`` with this command::
 
-    pip install pypiserver                # Or: pypiserver[passlib,watchdog]
+    pip install pypiserver                # Or: pypiserver[passlib,cache]
     mkdir ~/packages                      # Copy packages into this directory.
 
    See also `Alternative Installation methods`_.
