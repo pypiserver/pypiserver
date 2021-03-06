@@ -1,7 +1,7 @@
 # Hello
 
 Welcome to the contributor's documentation section of `pypiserver`.  
-Here you can find the information about inner working of the system.  
+Here you can find information about the inner working of the system.  
 Contributions and support in maintaining (both the project and these documents)
 is very welcome :v:  
 
@@ -15,7 +15,7 @@ is very welcome :v:
 ## Find more information
 
 If something is missing in the documentation here, try checking in the
-`README.rst` and if it's still not there, don't hesistate to contribute.  
+`README.rst` and if it's still not there, don't hesitate to contribute.  
 
 ## Documentation organization
 
