@@ -8,6 +8,7 @@ import zipfile
 from collections import namedtuple
 from io import BytesIO
 from urllib.parse import urljoin, urlparse
+from json import dumps
 
 from pypiserver.config import RunConfig
 from . import __version__
@@ -361,6 +362,21 @@ def server_static(filename):
             return response
 
     return HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
+
+@app.route("/:project/json")
+@auth("list")
+def json_info(project):
+    rv = {}
+    releases = []
+    for x in config.backend.find_project_packages(project):
+        r = {x.version: [{"url": "http://localhost:8080/packages/" + x.relfn_unix}]}
+        releases.append(r)
+    rv["releases"] = releases
+    # todo check if this really that simple
+    max_version = max([r for r in releases.keys()])
+    rv = {"info" : {"version": max_version}}
+    response.content_type = 'application/json'
+    return dumps(rv)
 
 
 @app.route("/:project")
