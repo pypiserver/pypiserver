@@ -7,7 +7,7 @@ import typing as t
 from pypiserver.bottle import Bottle
 from pypiserver.config import Config, RunConfig, strtobool
 
-version = __version__ = "2.0.0dev1"
+version = __version__ = "2.0.0dev1aw"
 __version_info__ = tuple(_re.split("[.-]", __version__))
 __updated__ = "2020-10-11 11:23:15"
 

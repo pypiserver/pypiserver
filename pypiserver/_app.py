@@ -366,15 +366,19 @@ def server_static(filename):
 @app.route("/:project/json")
 @auth("list")
 def json_info(project):
-    rv = {}
-    releases = []
-    for x in config.backend.find_project_packages(project):
-        r = {x.version: [{"url": "http://localhost:8080/packages/" + x.relfn_unix}]}
-        releases.append(r)
-    rv["releases"] = releases
-    # todo check if this really that simple
-    max_version = max([r for r in releases.keys()])
-    rv = {"info" : {"version": max_version}}
+    packages = sorted(
+        config.backend.find_project_packages(project),
+        key=lambda x: x.parsed_version, reverse=True
+    )
+    max_version = packages[0].version
+    releases = {}
+    req_url = request.url
+    for x in packages:
+        releases[x.version] = [{"url": urljoin(req_url, "../../packages/" + x.relfn)}]
+    rv = {
+        "info" : {"version": max_version},
+        "releases" : releases
+    }
     response.content_type = 'application/json'
     return dumps(rv)
 
