@@ -370,13 +370,13 @@ def json_info(project):
         config.backend.find_project_packages(project),
         key=lambda x: x.parsed_version, reverse=True
     )
-    max_version = packages[0].version
+    latest_version = packages[0].version
     releases = {}
     req_url = request.url
     for x in packages:
         releases[x.version] = [{"url": urljoin(req_url, "../../packages/" + x.relfn)}]
     rv = {
-        "info" : {"version": max_version},
+        "info" : {"version": latest_version},
         "releases" : releases
     }
     response.content_type = 'application/json'
