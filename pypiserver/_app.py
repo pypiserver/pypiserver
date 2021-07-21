@@ -81,6 +81,11 @@ def log_error(http_error):
     log.info(config.log_err_frmt, vars(http_error))
 
 
+@app.route("/health")
+def health():
+    return 'beep-boop'
+
+
 @app.route("/favicon.ico")
 def favicon():
     return HTTPError(404)
