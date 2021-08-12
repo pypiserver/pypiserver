@@ -366,10 +366,19 @@ def server_static(filename):
 @app.route("/:project/json")
 @auth("list")
 def json_info(project):
+    # PEP 503: require normalized project
+    normalized = normalize_pkgname_for_url(project)
+    if project != normalized:
+        return redirect(f"/{normalized}/json", 301)
+
     packages = sorted(
         config.backend.find_project_packages(project),
         key=lambda x: x.parsed_version, reverse=True
     )
+
+    if not packages:
+        raise HTTPError(404, f"package {project} not found")
+
     latest_version = packages[0].version
     releases = {}
     req_url = request.url
