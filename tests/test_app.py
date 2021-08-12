@@ -419,6 +419,39 @@ def test_simple_index_list_name_with_underscore_no_egg(root, testapp):
     assert hrefs == {"foo-bar/"}
 
 
+def test_json_info(root, testapp):
+    root.join("foobar-1.0.zip").write("")
+    root.join("foobar-1.1.zip").write("")
+    root.join("foobarX-1.1.zip").write("")
+
+    resp = testapp.get("/foobar/json")
+    assert "info" in resp.json
+    assert "releases" in resp.json
+    assert len(resp.json["info"]) == 1
+    assert len(resp.json["releases"]) == 2
+
+
+def test_json_info_package_not_existing(root, testapp):
+    resp = testapp.get("/foobar/json", status=404)
+
+
+@pytest.mark.parametrize(
+    "package,normalized",
+    [
+        ("FooBar", "foobar"),
+        ("Foo.Bar", "foo-bar"),
+        ("foo_bar", "foo-bar"),
+        ("Foo-Bar", "foo-bar"),
+        ("foo--_.bar", "foo-bar"),
+    ],
+)
+def test_json_info_normalized_name_redirect(testapp, package, normalized):
+    resp = testapp.get("/{0}/json".format(package))
+    assert resp.status_code >= 300
+    assert resp.status_code < 400
+    assert resp.location.endswith("/{0}/json".format(normalized))
+
+
 def test_no_cache_control_set(root, testapp):
     assert not testapp.app._pypiserver_config.cache_control
     root.join("foo_bar-1.0.tar.gz").write("")
