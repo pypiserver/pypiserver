@@ -896,6 +896,7 @@ It can be tested with the UNIX port of ``micropython``::
     ports/unix/micropython -m tools.upip install -i http://my-server:8080 -p /tmp/mymodules micropython-foobar
 
 Installing packages from the REPL of an embedded device works in this way:
+
 .. code-block:: python
 
     import network
