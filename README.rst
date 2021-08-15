@@ -908,7 +908,7 @@ Installing packages from the REPL of an embedded device works in this way:
     upip.index_urls = ["http://my-server:8080"]
     upip.install("micropython-foobar")
 
-Furhter information on micropython-packaging can be found here: https://docs.micropython.org/en/latest/reference/packages.html
+Further information on micropython-packaging can be found here: https://docs.micropython.org/en/latest/reference/packages.html
 
 
 Sources
