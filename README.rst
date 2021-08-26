@@ -884,6 +884,32 @@ these steps:
    you may add the user under which ``pypiserver`` runs into the *shadow*
    group, with a command like this: ``sudo usermod -a -G shadow pypy-user``.
 
+Use with MicroPython
+--------------------
+The MicroPython interpreter for embedded devices can install packages with the
+module ``upip.py``. The module uses a specialized json-endpoint to retrieve
+package information. This endpoint is supported by ``pypiserver``.
+
+It can be tested with the UNIX port of ``micropython``::
+
+    cd micropython
+    ports/unix/micropython -m tools.upip install -i http://my-server:8080 -p /tmp/mymodules micropython-foobar
+
+Installing packages from the REPL of an embedded device works in this way:
+
+.. code-block:: python
+
+    import network
+    import upip
+
+    sta_if = network.WLAN(network.STA_IF)
+    sta_if.active(True)
+    sta_if.connect('<your ESSID>', '<your password>')
+    upip.index_urls = ["http://my-server:8080"]
+    upip.install("micropython-foobar")
+
+Further information on micropython-packaging can be found here: https://docs.micropython.org/en/latest/reference/packages.html
+
 
 Sources
 =======
