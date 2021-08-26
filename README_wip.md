@@ -47,7 +47,7 @@ interact with it as a package index just as they would with
 index server.
 
 <!-- @start Table of contents -->
-<a name="table-of-contents" target="_top" href="#">_Table of Contents_</a>
+<a name="table-of-contents" target="_top" href="#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install">_Table of Contents_</a>
 - [pypiserver - minimal PyPI server for use with pip/easy_install](#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install)
   * [Quickstart: Installation and Usage](#quickstart-installation-and-usage)
   * [Client-Side Configurations](#client-side-configurations)
