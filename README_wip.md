@@ -348,7 +348,11 @@ _Note_
     > configure `pypiserver` to authenticate using the
     > [python-pam](https://pypi.org/project/python-pam/):
     >
-    > `import pam pypiserver.default_config(auther=pam.authenticate)`
+    > ```python
+    > import pam
+    >
+    > pypiserver.default_config(auther=pam.authenticate)
+    > ```
     >
     > Please see
     > [Using Ad-hoc authentication
