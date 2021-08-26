@@ -301,17 +301,14 @@ Instead of copying packages directly to the server\'s folder (i.e. with
 `python setup.py upload`. In that case, `pypiserver` is responsible for
 authenticating the upload-requests.
 
-::: note
-::: title
-Note
-:::
+_Note_
 
-We strongly advise to password-protected your uploads!
-
-It is possible to disable authentication for uploads (e.g. in
-intranets). To avoid lazy security decisions, read help for `-P` and
-`-a` options.
-:::
+> We strongly advise to password-protected your uploads!
+>
+> It is possible to disable authentication for uploads
+> (e.g. in intranets).  
+> To avoid lazy security decisions,
+> read help for `-P` and `-a` options.
 
 ### *Apache*-Like Authentication (`htpasswd`)
 
@@ -327,41 +324,36 @@ intranets). To avoid lazy security decisions, read help for `-P` and
 
         htpasswd -sc htpasswd.txt <some_username>
 
-    ::: tip
-    ::: title
-    Tip
-    :::
+    _Tip_
 
-    Read this SO question for running [htpasswd]{.title-ref} cmd under
-    *Windows*:
+    > Read this SO question for running
+    > `htpasswd` cmd under *Windows*:
+    >
+    > <http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u>
+    >
+    > or, if you have bogus passwords that you don\'t
+    > care because they are for an internal service 
+    > (which is still \"bad\", from a security
+    > prespective\...), you may use this public service:
+    >
+    > <http://www.htaccesstools.com/htpasswd-generator/>
 
-    <http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u>
+    _Tip_
 
-    or if you have bogus passwords that you don\'t care because they are
-    for an internal service (which is still \"bad\", from a security
-    prespective\...) you may use this public service:
-
-    <http://www.htaccesstools.com/htpasswd-generator/>
-    :::
-
-    ::: tip
-    ::: title
-    Tip
-    :::
-
-    When accessing pypiserver via the api, alternate authentication
-    methods are available via the `auther` config flag. Any callable
-    returning a boolean can be passed through to the pypiserver config
-    in order to provide custom authentication. For example, to configure
-    pypiserver to authenticate using the
-    [python-pam](https://pypi.org/project/python-pam/):
-
-    import pam pypiserver.default_config(auther=pam.authenticate)
-
-    Please see [Using Ad-hoc authentication
-    providers](#using-ad-hoc-authentication-providers) for more
-    information.
-    :::
+    > When accessing `pypiserver` via the api, alternate
+    > authentication methods are available via the `auther`
+    > config flag. Any callable returning a boolean can be
+    > passed through to the pypiserver config in order to
+    > provide custom authentication. For example, to
+    > configure `pypiserver` to authenticate using the
+    > [python-pam](https://pypi.org/project/python-pam/):
+    >
+    > `import pam pypiserver.default_config(auther=pam.authenticate)`
+    >
+    > Please see
+    > [Using Ad-hoc authentication
+    providers](#using-ad-hoc-authentication-providers)
+    > for more information.
 
 3.  You need to restart the server with the `-P` option only once (but
     user/password pairs can later be added or updated on the fly):
@@ -693,15 +685,12 @@ To use your *Apache2* with `pypiserver`, prefer to utilize `mod_wsgi` as
 explained in [bottle\'s
 documentation](http://bottlepy.org/docs/dev/deployment.html#apache-mod-wsgi).
 
-::: note
-::: title
-Note
-:::
+_Note_
 
-If you choose instead to go with `mod_proxy`, mind that you may bump
-into problems with the prefix-path (see
-[#155](https://github.com/pypiserver/pypiserver/issues/155)).
-:::
+> If you choose instead to go with `mod_proxy`,
+> mind that you may bump into problems with the
+> prefix-path
+> (see [#155](https://github.com/pypiserver/pypiserver/issues/155)).
 
 1.  Adapt and place the following *Apache* configuration either into
     top-level scope, or inside some `<VirtualHost>` (contributed by
@@ -737,20 +726,19 @@ into problems with the prefix-path (see
             password_file = "/yoursite/htpasswd", )
         application = pypiserver.app(**conf)
 
-    ::: tip
-    ::: title
-    Tip
-    :::
+    _Tip_
 
-    If you have installed `pypiserver` in a virtualenv, follow
-    `mod_wsgi`\'s
-    [instructions](http://modwsgi.readthedocs.io/en/develop/user-guides/virtual-environments.html)
-    and prepend the python code above with the following:
-
-    import site
-
-    site.addsitedir(\'/yoursite/venv/lib/pythonX.X/site-packages\')
-    :::
+    > If you have installed `pypiserver` in a virtualenv,
+    > follow `mod_wsgi`\'s
+    > [instructions](http://modwsgi.readthedocs.io/en/develop/user-guides/virtual-environments.html)
+    > and prepend the python code above with the following:
+    >
+    > ```python
+    > import site
+    >
+    > site.addsitedir(
+    >   '/yoursite/venv/lib/pythonX.X/site-packages\')
+    > ```
 
 _Note_
 
@@ -804,19 +792,15 @@ unstable packages on different paths:
     workers = 5
     accesslog = -
 
-::: note
-::: title
-Note
-:::
+_Note_
 
-You need to install some more dependencies for this to work, like:
-
-pip install paste pastedeploy gunicorn pypiserver
-
-The server can then start with:
-
-gunicorn_paster paste.ini
-:::
+> You need to install some more dependencies for this to work, like:
+>
+> `pip install paste pastedeploy gunicorn pypiserver`
+>
+> The server can then start with:
+>
+> `gunicorn_paster paste.ini`
 
 ### Behind a Reverse Proxy
 
