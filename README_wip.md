@@ -21,8 +21,9 @@
 | **Maintainers** | Kostis Anagnostopoulos \<<ankostis@gmail.com>\>,<br/>Matthew Planchard \<<mplanchard@gmail.com>\>,<br/>Dmitrii Orlov \<<dmtree@yahoo.com>\><!--,<br/>_YOU? (we are looking for new people here! [#397](https://github.com/pypiserver/pypiserver/issues/397))_ -->
 | **License** | zlib/libpng + MIT |
 | **Community** | <https://pypiserver.zulipchat.com> |
-| **Chat with us on [Zulip](https://pypiserver.zulipchat.com)!** | <!-- For real, do ;) --> |
 <!-- /end Info board -->
+
+> **_Chat with us on [Zulip](https://pypiserver.zulipchat.com)!_**
 
 <!-- @start Description -->
 `pypiserver` is a minimal [PyPI](https://pypi.org) compatible server for
