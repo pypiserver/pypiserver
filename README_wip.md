@@ -740,8 +740,7 @@ _Note_
     > ```python
     > import site
     >
-    > site.addsitedir(
-    >   '/yoursite/venv/lib/pythonX.X/site-packages\')
+    > site.addsitedir('/yoursite/venv/lib/pythonX.X/site-packages')
     > ```
 
 _Note_
