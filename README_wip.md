@@ -34,18 +34,18 @@ accompanying PGP-signatures can be uploaded either with `pip`,
 
 <a name="note">_Note_</a>
 
-The official software powering [PyPI](https://pypi.org) is
-[Warehouse](https://github.com/pypa/warehouse/). However,
-[Warehouse](https://github.com/pypa/warehouse/) is fairly specialized to
-be `pypi.org`\'s own software, and should not be used in other contexts.
-In particular, it does not officially support being used as a custom
-package index by users wishing to serve their own packages.
-
-`pypiserver` implements the same interfaces as [PyPI](https://pypi.org),
-allowing standard Python packaging tooling such as `pip` and `twine` to
-interact with it as a package index just as they would with
-[PyPI](https://pypi.org), while making it much easier to get a running
-index server.
+> The official software powering [PyPI](https://pypi.org)
+> is [Warehouse](https://github.com/pypa/warehouse/). However,
+> [Warehouse](https://github.com/pypa/warehouse/) is fairly specialized to
+> be `pypi.org`\'s own software, and should not be used in other contexts.
+> In particular, it does not officially support being used as a custom
+> package index by users wishing to serve their own packages.
+>
+> `pypiserver` implements the same interfaces as [PyPI](https://pypi.org),
+> allowing standard Python packaging tooling such as `pip` and `twine` to
+> interact with it as a package index just as they would with
+> [PyPI](https://pypi.org), while making it much easier to get a running
+> index server.
 
 <!-- @start Table of contents -->
 <a name="table-of-contents" target="_top" href="#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install">_Table of Contents_</a>
