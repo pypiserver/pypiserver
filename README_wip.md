@@ -21,7 +21,7 @@
 | **Maintainers** | Kostis Anagnostopoulos \<<ankostis@gmail.com>\>, Matthew Planchard \<<mplanchard@gmail.com>\>, Dmitrii Orlov \<<dmtree@yahoo.com>\><!--, _YOU? (we are looking for new people here! [#397](https://github.com/pypiserver/pypiserver/issues/397))_ -->
 | **License** | zlib/libpng + MIT |
 | **Community** | <https://pypiserver.zulipchat.com> |
-| **Chat with us on [Zulip](https://pypiserver.zulipchat.com)!** | <https://pypiserver.zulipchat.com>
+| **Chat with us on [Zulip](https://pypiserver.zulipchat.com)!** | <!-- For real, do ;) --> |
 <!-- /end Info board -->
 
 <!-- @start Description -->
