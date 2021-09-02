@@ -9,6 +9,8 @@ on:
     # executable, from back in the day before docker & a better pip.
     branches-ignore:
       - standalone
+  # Allowing to run on fork pull requests
+  pull_request:
 
 jobs:
   test-cpython:
