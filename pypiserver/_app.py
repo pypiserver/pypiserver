@@ -363,6 +363,7 @@ def server_static(filename):
 
     return HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
 
+
 @app.route("/:project/json")
 @auth("list")
 def json_info(project):
@@ -373,7 +374,8 @@ def json_info(project):
 
     packages = sorted(
         config.backend.find_project_packages(project),
-        key=lambda x: x.parsed_version, reverse=True
+        key=lambda x: x.parsed_version,
+        reverse=True,
     )
 
     if not packages:
@@ -383,12 +385,11 @@ def json_info(project):
     releases = {}
     req_url = request.url
     for x in packages:
-        releases[x.version] = [{"url": urljoin(req_url, "../../packages/" + x.relfn)}]
-    rv = {
-        "info" : {"version": latest_version},
-        "releases" : releases
-    }
-    response.content_type = 'application/json'
+        releases[x.version] = [
+            {"url": urljoin(req_url, "../../packages/" + x.relfn)}
+        ]
+    rv = {"info": {"version": latest_version}, "releases": releases}
+    response.content_type = "application/json"
     return dumps(rv)
 
 
