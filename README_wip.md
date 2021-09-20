@@ -18,7 +18,7 @@
 | **Source**  | <https://github.com/pypiserver/pypiserver> |
 | **PyPi**    | <https://pypi.org/project/pypiserver/> |
 | **Tests**   | <https://github.com/pypiserver/pypiserver/actions> |
-| **Maintainers** | Kostis Anagnostopoulos \<<ankostis@gmail.com>\>,<br/>Matthew Planchard \<<mplanchard@gmail.com>\>,<br/>Dmitrii Orlov \<<dmtree@yahoo.com>\><!--,<br/>_YOU? (we are looking for new people here! [#397](https://github.com/pypiserver/pypiserver/issues/397))_ -->
+| **Maintainers** | Kostis Anagnostopoulos \<<ankostis@gmail.com>\>,<br/>Matthew Planchard \<<mplanchard@gmail.com>\>,<br/>Dmitrii Orlov \<<dmtree@yahoo.com>\><!--,<br/>_YOU? (we are actively looking for new people! [#397](https://github.com/pypiserver/pypiserver/issues/397))_ -->
 | **License** | zlib/libpng + MIT |
 | **Community** | <https://pypiserver.zulipchat.com> |
 <!-- /end Info board -->
