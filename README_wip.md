@@ -1,3 +1,7 @@
+
+<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-disable MD041 -->
+<!-- markdownlint-disable MD046 -->
 ![image](pypiserver_logo.png)
 
 # [pypiserver - minimal PyPI server for use with pip/easy_install](#table-of-contents)
@@ -49,43 +53,44 @@ accompanying PGP-signatures can be uploaded either with `pip`,
 
 <!-- @start Table of contents -->
 <a name="table-of-contents" target="_top" href="#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install">_Table of Contents_</a>
+
 - [pypiserver - minimal PyPI server for use with pip/easy_install](#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install)
-  * [Quickstart: Installation and Usage](#quickstart-installation-and-usage)
-  * [Client-Side Configurations](#client-side-configurations)
-    + [Configuring `pip`](#configuring-pip)
-    + [Configuring `easy_install`](#configuring-easy_install)
-  * [Uploading Packages Remotely](#uploading-packages-remotely)
-    + [*Apache*-Like Authentication (`htpasswd`)](#apache-like-authentication-htpasswd)
-    + [Upload with `setuptools`](#upload-with-setuptools)
-    + [Upload with `twine`](#upload-with-twine)
-  * [Using the Docker Image](#using-the-docker-image)
-  * [Alternative Installation Methods](#alternative-installation-methods)
-    + [Installing the Very Latest Version](#installing-the-very-latest-version)
-    + [Running on Heroku/Dotcloud](#running-on-herokudotcloud)
-  * [Recipes](#recipes)
-    + [Managing the Package Directory](#managing-the-package-directory)
-    + [Serving Thousands of Packages](#serving-thousands-of-packages)
-    + [Managing Automated Startup](#managing-automated-startup)
+  - [Quickstart: Installation and Usage](#quickstart-installation-and-usage)
+  - [Client-Side Configurations](#client-side-configurations)
+    - [Configuring `pip`](#configuring-pip)
+    - [Configuring `easy_install`](#configuring-easy_install)
+  - [Uploading Packages Remotely](#uploading-packages-remotely)
+    - [*Apache*-Like Authentication (`htpasswd`)](#apache-like-authentication-htpasswd)
+    - [Upload with `setuptools`](#upload-with-setuptools)
+    - [Upload with `twine`](#upload-with-twine)
+  - [Using the Docker Image](#using-the-docker-image)
+  - [Alternative Installation Methods](#alternative-installation-methods)
+    - [Installing the Very Latest Version](#installing-the-very-latest-version)
+    - [Running on Heroku/Dotcloud](#running-on-herokudotcloud)
+  - [Recipes](#recipes)
+    - [Managing the Package Directory](#managing-the-package-directory)
+    - [Serving Thousands of Packages](#serving-thousands-of-packages)
+    - [Managing Automated Startup](#managing-automated-startup)
       - [Running As a `systemd` Service](#running-as-a-systemd-service)
       - [Launching through `supervisor`](#launching-through-supervisor)
       - [Running As a service with `NSSM` (Windows)](#running-as-a-service-with-nssm-windows)
-    + [Using a Different WSGI Server](#using-a-different-wsgi-server)
+    - [Using a Different WSGI Server](#using-a-different-wsgi-server)
       - [Apache (`mod_wsgi`)](#apache-mod_wsgi)
       - [`gunicorn`](#gunicorn)
       - [`paste`](#paste)
-    + [Behind a Reverse Proxy](#behind-a-reverse-proxy)
+    - [Behind a Reverse Proxy](#behind-a-reverse-proxy)
       - [Nginx](#nginx)
       - [Supporting HTTPS](#supporting-https)
       - [Traefik](#traefik)
-    + [Utilizing the API](#utilizing-the-api)
+    - [Utilizing the API](#utilizing-the-api)
       - [Using Ad-Hoc Authentication Providers](#using-ad-hoc-authentication-providers)
-    + [Use with MicroPython](#use-with-micropython)
-  * [Sources](#sources)
-  * [Known Limitations](#known-limitations)
-  * [Similar Projects](#similar-projects)
-    + [Unmaintained or archived](#unmaintained-or-archived)
-  * [Related Software](#related-software)
-  * [Licensing](#licensing)
+    - [Use with MicroPython](#use-with-micropython)
+  - [Sources](#sources)
+  - [Known Limitations](#known-limitations)
+  - [Similar Projects](#similar-projects)
+    - [Unmaintained or archived](#unmaintained-or-archived)
+  - [Related Software](#related-software)
+  - [Licensing](#licensing)
 <!-- /end Table of contents -->
 
 ## Quickstart: Installation and Usage
@@ -98,18 +103,17 @@ For legacy Python versions, use `pypiserver-1.x` series. Note that these
 are not officially supported, and will not receive bugfixes or new
 features.
 
-_Tip_  
-
-
+> _Tip_
+>
 > The commands below work on a unix-like
-> operating system with a posix shell. 
+> operating system with a posix shell.
 > The `'~'` character expands to user\'s home directory.
-> 
+>
 > If you\'re using Windows, you\'ll have to use
 > their \"Windows counterparts\". The same is true
 > for the rest of this documentation.
 
-1.  Install `pypiserver` with this command:
+1. Install `pypiserver` with this command:
 
         pip install pypiserver                # Or: pypiserver[passlib,cache]
         mkdir ~/packages                      # Copy packages into this directory.
@@ -117,12 +121,12 @@ _Tip_
     See also [Alternative Installation
     methods](#alternative-installation-methods).
 
-2.  Copy some packages into your `~/packages` folder and then get your
+2. Copy some packages into your `~/packages` folder and then get your
     `pypiserver` up and running:
 
         pypi-server -p 8080 ~/packages &      # Will listen to all IPs.
 
-3.  From the client computer, type this:
+3. From the client computer, type this:
 
         # Download and install hosted packages.
         pip install --extra-index-url http://localhost:8080/simple/ ...
@@ -138,7 +142,7 @@ _Tip_
     See also [Client-side configurations](#client-side-configurations)
     for avoiding tedious typing.
 
-4.  Enter `pypi-server -h` in the cmd-line to print a detailed usage
+4. Enter `pypi-server -h` in the cmd-line to print a detailed usage
     message:
 
         pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
@@ -278,8 +282,8 @@ or by adding the following lines to `~/.pip/pip.conf`:
     [global]
     extra-index-url = http://localhost:8080/simple/
 
-_Note_
-
+> _Note_
+>
 > If you have installed `pypiserver` on a remote url
 > without *https* you wil receive an \"untrusted\"
 > warning from *pip*, urging you to append
@@ -302,8 +306,8 @@ Instead of copying packages directly to the server\'s folder (i.e. with
 `python setup.py upload`. In that case, `pypiserver` is responsible for
 authenticating the upload-requests.
 
-_Note_
-
+> _Note_
+>
 > We strongly advise to password-protected your uploads!
 >
 > It is possible to disable authentication for uploads
@@ -313,14 +317,14 @@ _Note_
 
 ### *Apache*-Like Authentication (`htpasswd`)
 
-1.  First make sure you have the *passlib* module installed (note that
+1. First make sure you have the *passlib* module installed (note that
     `passlib>=1.6` is required), which is needed for parsing the Apache
     *htpasswd* file specified by the `-P`, `--passwords` option (see
     next steps):
 
         pip install passlib
 
-2.  Create the Apache *htpasswd* file with at least one user/password
+2. Create the Apache *htpasswd* file with at least one user/password
     pair with this command (you\'ll be prompted for a password):
 
         htpasswd -sc htpasswd.txt <some_username>
@@ -333,7 +337,7 @@ _Note_
     > <http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u>
     >
     > or, if you have bogus passwords that you don\'t
-    > care because they are for an internal service 
+    > care because they are for an internal service
     > (which is still \"bad\", from a security
     > prespective\...), you may use this public service:
     >
@@ -360,14 +364,14 @@ _Note_
     providers](#using-ad-hoc-authentication-providers)
     > for more information.
 
-3.  You need to restart the server with the `-P` option only once (but
+3. You need to restart the server with the `-P` option only once (but
     user/password pairs can later be added or updated on the fly):
 
         ./pypi-server -p 8080 -P htpasswd.txt ~/packages &
 
 ### Upload with `setuptools`
 
-1.  On client-side, edit or create a `~/.pypirc` file with a similar
+1. On client-side, edit or create a `~/.pypirc` file with a similar
     content:
 
         [distutils]
@@ -384,7 +388,7 @@ _Note_
         username: <some_username>
         password: <some_passwd>
 
-2.  Then from within the directory of the python-project you wish to
+2. Then from within the directory of the python-project you wish to
     upload, issue this command:
 
         python setup.py sdist upload -r local
@@ -393,17 +397,17 @@ _Note_
 
 To avoid storing you passwords on disk, in clear text, you may either:
 
--   use the `register` *setuptools*\'s command with the `-r` option,
-    like that:
+- use the `register` *setuptools*\'s command with the `-r` option,
+  like that:
 
-        python setup.py sdist register -r local upload -r local
+      python setup.py sdist register -r local upload -r local
 
--   use [twine](https://pypi.org/project/twine/) library, which breaks
-    the procedure in two steps. In addition, it supports signing your
-    files with PGP-Signatures and uploading the generated
-    [.asc]{.title-ref} files to `pypiserver`:
+- use [twine](https://pypi.org/project/twine/) library, which breaks
+  the procedure in two steps. In addition, it supports signing your
+  files with PGP-Signatures and uploading the generated
+  [.asc]{.title-ref} files to `pypiserver`:
 
-        twine upload -r local --sign -identity user_name ./foo-1.zip
+      twine upload -r local --sign -identity user_name ./foo-1.zip
 
 ## Using the Docker Image
 
@@ -662,11 +666,11 @@ For detailed information please visit <https://nssm.cc>
 
 ### Using a Different WSGI Server
 
--   The `bottle` web-server which supports many WSGI-servers, among
+- The `bottle` web-server which supports many WSGI-servers, among
     others, `paste`, `cherrypy`, `twisted` and `wsgiref` (part of
     Python); you select them using the `--server` flag.
 
--   You may view all supported WSGI servers using the following
+- You may view all supported WSGI servers using the following
     interactive code:
 
         >>> from pypiserver import bottle
@@ -675,13 +679,13 @@ For detailed information please visit <https://nssm.cc>
         'rocket', 'diesel', 'twisted', 'wsgiref', 'fapws3', 'bjoern', 'gevent',
         'meinheld', 'auto', 'aiohttp', 'flup', 'gae', 'paste', 'waitress']
 
--   If none of the above servers matches your needs, invoke just the
+- If none of the above servers matches your needs, invoke just the
     `pypiserver:app()` method which returns the internal WSGI-app
     WITHOUT starting-up a server - you may then send it to any WSGI
     server you like. Read also the [Utilizing the
     API](#utilizing-the-api) section.
 
--   Some examples are given below - you may find more details in [bottle
+- Some examples are given below - you may find more details in [bottle
     site](http://bottlepy.org/docs/dev/deployment.html#switching-the-server-backend).
 
 #### Apache (`mod_wsgi`)
@@ -690,14 +694,14 @@ To use your *Apache2* with `pypiserver`, prefer to utilize `mod_wsgi` as
 explained in [bottle\'s
 documentation](http://bottlepy.org/docs/dev/deployment.html#apache-mod-wsgi).
 
-_Note_
-
+> _Note_
+>
 > If you choose instead to go with `mod_proxy`,
 > mind that you may bump into problems with the
 > prefix-path
 > (see [#155](https://github.com/pypiserver/pypiserver/issues/155)).
 
-1.  Adapt and place the following *Apache* configuration either into
+1. Adapt and place the following *Apache* configuration either into
     top-level scope, or inside some `<VirtualHost>` (contributed by
     Thomas Waldmann):
 
@@ -720,7 +724,7 @@ _Note_
             Allow from all
         </Directory>
 
-2.  Then create the `/yoursite/cfg/pypiserver.wsgi` file and make sure
+2. Then create the `/yoursite/cfg/pypiserver.wsgi` file and make sure
     that the `user` and `group` of the `WSGIDaemonProcess` directive
     (`pypisrv:pypisrv` in the example) have the read permission on it:
 
@@ -744,14 +748,15 @@ _Note_
     > site.addsitedir('/yoursite/venv/lib/pythonX.X/site-packages')
     > ```
 
-_Note_
-
+> _Note_
+>
 > For security reasons, notice that the `Directory`
 > directive grants access to a directory holding
 > the `wsgi` start-up script, alone; nothing else.
 
-_Note_
-
+<!--  -->
+> _Note_
+>
 > To enable HTTPS support on Apache, configure the
 > directive that contains the WSGI configuration
 > to use SSL.
@@ -796,8 +801,8 @@ unstable packages on different paths:
     workers = 5
     accesslog = -
 
-_Note_
-
+> _Note_
+>
 > You need to install some more dependencies for this to work, like:
 >
 > `pip install paste pastedeploy gunicorn pypiserver`
@@ -901,14 +906,14 @@ In order to enable ad-hoc authentication-providers or to use
 WSGI-servers not supported by *bottle* out-of-the-box, you needed to
 launch `pypiserver` via its API.
 
--   The main entry-point for configuring `pypiserver` is the
+- The main entry-point for configuring `pypiserver` is the
     [pypiserver:app()](https://github.com/pypiserver/pypiserver/blob/master/pypiserver/__init__.py#L116)
     function. This function returns the internal WSGI-app that you my
     then send to any WSGI-server you like.
--   To get all `pypiserver:app()` keywords and their explanations, read
+- To get all `pypiserver:app()` keywords and their explanations, read
     the function
     [pypiserver:default_config()](https://github.com/pypiserver/pypiserver/blob/master/pypiserver/__init__.py#L35).
--   Finally, to fire-up a WSGI-server with the configured app, invoke
+- Finally, to fire-up a WSGI-server with the configured app, invoke
     the `bottle:run(app, host, port, server)` function. Note that
     `pypiserver` ships with it is own copy of *bottle*; to use it,
     import it like that: `from pypiserver import bottle`
@@ -924,11 +929,11 @@ Unix, you may delegate such decisions to the
 [python-pam](https://pypi.org/project/python-pam/) library by following
 these steps:
 
-1.  Ensure `python-pam` module is installed:
+1. Ensure `python-pam` module is installed:
 
         pip install python-pam
 
-2.  Create a python-script along these lines:
+2. Create a python-script along these lines:
 
         $ cat > pypiserver-start.py
         import pypiserver
@@ -939,12 +944,12 @@ these steps:
 
         [Ctrl+ D]
 
-3.  Invoke the python-script to start-up `pypiserver`:
+3. Invoke the python-script to start-up `pypiserver`:
 
-        $ python pypiserver-start.py
+        python pypiserver-start.py
 
-_Note_
-
+> _Note_
+>
 > The [python-pam](https://pypi.org/project/python-pam/) module, requires
 > *read* access to `/etc/shadow` file; you
 > may add the user under which
@@ -1000,14 +1005,14 @@ To receive any later changes, in the above folder use:
 
 The following limitations are known:
 
--   Command `pypi -U` that compares uploaded packages with *pypi* to see
+- Command `pypi -U` that compares uploaded packages with *pypi* to see
     if they are outdated, does not respect a http-proxy environment
     variable (see
     [#19](https://github.com/pypiserver/pypiserver/issues/19)).
--   It accepts documentation uploads but does not save them to disk (see
+- It accepts documentation uploads but does not save them to disk (see
     [#47](https://github.com/pypiserver/pypiserver/issues/47) for a
     discussion)
--   It does not handle misspelled packages as *pypi-repo* does,
+- It does not handle misspelled packages as *pypi-repo* does,
     therefore it is suggested to use it with `--extra-index-url` instead
     of `--index-url` (see
     [#38](https://github.com/pypiserver/pypiserver/issues/38)).
@@ -1022,12 +1027,12 @@ There are lots of other projects, which allow you to run your own PyPI
 server. If `pypiserver` doesn\'t work for you, the following are among
 the most popular alternatives:
 
--   [devpi-server](https://pypi.org/project/devpi/): a reliable fast
+- [devpi-server](https://pypi.org/project/devpi/): a reliable fast
     pypi.org caching server, part of the comprehensive [github-style
     pypi index server and packaging meta
     tool](https://pypi.org/project/devpi/). (version: 2.1.4, access
     date: 8/3/2015)
--   Check this SO question: [How to roll my own
+- Check this SO question: [How to roll my own
     pypi](http://stackoverflow.com/questions/1235331/how-to-roll-my-own-pypi)
 
 ### Unmaintained or archived
@@ -1035,9 +1040,9 @@ the most popular alternatives:
 These projects were once alternatives to pypiserver but are now either
 unmaintained or archived.
 
--   [pip2pi](https://github.com/wolever/pip2pi) a simple cmd-line tool
+- [pip2pi](https://github.com/wolever/pip2pi) a simple cmd-line tool
     that builds a PyPI-compatible local folder from pip requirements
--   [flask-pypi-proxy](http://flask-pypi-proxy.readthedocs.org/) A proxy
+- [flask-pypi-proxy](http://flask-pypi-proxy.readthedocs.org/) A proxy
     for PyPI that also enables also uploading custom packages.
 
 ## Related Software
@@ -1046,12 +1051,12 @@ Though not direct alternatives for `pypiserver`\'s use as an index
 server, the following is a list of related software projects that you
 may want to familiarize with:
 
--   [pypi-uploader](https://pypi.org/project/pypi-uploader/): A
+- [pypi-uploader](https://pypi.org/project/pypi-uploader/): A
     command-line utility to upload packages to your `pypiserver` from
     pypi without having to store them locally first.
--   [twine](https://pypi.org/project/twine/): A command-line utility for
+- [twine](https://pypi.org/project/twine/): A command-line utility for
     interacting with PyPI or `pypiserver`.
--   [warehouse](https://github.com/pypa/warehouse/): the software that
+- [warehouse](https://github.com/pypa/warehouse/): the software that
     powers [PyPI](https://pypi.org) itself. It is not generally intended
     to be run by end-users.
 
