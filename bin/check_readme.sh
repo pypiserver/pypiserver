@@ -6,6 +6,8 @@
 # PyPi would fail parsing them, ending up with an ugly landing page,
 # when uploaded.
 
+# TODO: fix to check the README.md!
+
 >&2 echo "+++ Checking README for PyPy...."
 set +x ## Enable for debug
 

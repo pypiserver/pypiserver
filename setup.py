@@ -40,7 +40,7 @@ def get_version():
 setup(
     name="pypiserver",
     description="A minimal PyPI server for use with pip/easy_install.",
-    long_description=read_file("README.rst"),
+    long_description=read_file("README.md"),
     version=get_version(),
     packages=["pypiserver"],
     package_data={"pypiserver": ["welcome.html"]},

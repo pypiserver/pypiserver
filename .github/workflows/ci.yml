@@ -73,8 +73,7 @@ jobs:
         tests/test_init.py
     - name: Check formatting
       run: black --diff --check .
-    - name: Validate README
-      run: ./bin/check_readme.sh
+# TODO: add check README!
 
   # Full-flow docker tests, again not python version dependent
   # We _could_ test this on MacOS, but it takes forever to get docker
