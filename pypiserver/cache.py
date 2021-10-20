@@ -6,7 +6,7 @@
 import platform
 from os.path import dirname
 from pathlib import Path
-from subprocess import call
+from subprocess import check_output
 import typing as t
 import threading
 
@@ -49,7 +49,7 @@ class CacheManager:
             # Lazy: Answering this on Windows is more involved.
             return False
         # From https://stackoverflow.com/a/460061/13483441
-        return "nfs" in call("stat -f -L -c %T {}".format(path)).stdout
+        return b"nfs" in check_output(["stat", "-f", "-L", "-c", "%T", path])
 
     def __init__(self):
         if not ENABLE_CACHING:
