@@ -3,19 +3,23 @@
 # is installed
 #
 
+import platform
 from os.path import dirname
 from pathlib import Path
+from subprocess import call
 import typing as t
 import threading
 
 try:
     from watchdog.observers import Observer
+    from watchdog.observers.polling import PollingObserver
 
     ENABLE_CACHING = True
 
 except ImportError:
 
     Observer = None
+    PollingObserver = None
 
     ENABLE_CACHING = False
 
@@ -38,6 +42,14 @@ class CacheManager:
     hashes on large files can get expensive, and it's very easy to
     invalidate specific filenames.
     """
+
+    @staticmethod
+    def root_is_nfs(path: str):
+        if "Windows" in platform.system():
+            # Lazy: Answering this on Windows is more involved.
+            return False
+        # From https://stackoverflow.com/a/460061/13483441
+        return "nfs" in call("stat -f -L -c %T {}".format(path)).stdout
 
     def __init__(self):
         if not ENABLE_CACHING:
@@ -64,6 +76,9 @@ class CacheManager:
         self.watch_lock = threading.Lock()
         self.digest_lock = threading.Lock()
         self.listdir_lock = threading.Lock()
+
+        # Used to track whether any root is an NFS volume
+        self.polling = False
 
     def listdir(
         self,
@@ -109,8 +124,22 @@ class CacheManager:
             return v
 
     def _watch(self, root: str):
-        self.watched.add(root)
+        if CacheManager.root_is_nfs(root):
+            if not self.polling:
+                self.polling = True
+                self.observer.stop()
+                # See https://github.com/gorakhargosh/watchdog/issues/504#issuecomment-449643137
+                # We need to use a PollingObserver if we are on an NFS volume
+                self.observer = PollingObserver()
+                for already_watched_root in self.watched:
+                    self.observer.schedule(
+                        _EventHandler(self, already_watched_root),
+                        already_watched_root,
+                        recursive=True,
+                    )
+                self.observer.start()
         self.observer.schedule(_EventHandler(self, root), root, recursive=True)
+        self.watched.add(root)
 
     def invalidate_root_cache(self, root: t.Union[Path, str]):
         with self.listdir_lock:
