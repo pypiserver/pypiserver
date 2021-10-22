@@ -4,15 +4,19 @@
 #
 
 import platform
+from os import stat
+from os import listdir
 from os.path import dirname
 from pathlib import Path
 from subprocess import check_output
 import typing as t
 import threading
 
+from .pkg_helpers import guess_pkgname_and_version
+from .core import PkgFile
 try:
     from watchdog.observers import Observer
-    from watchdog.observers.polling import PollingObserver
+    from watchdog.observers.polling import PollingObserverVFS
 
     ENABLE_CACHING = True
 
@@ -23,20 +27,14 @@ except ImportError:
 
     ENABLE_CACHING = False
 
-if t.TYPE_CHECKING:
-    from pypiserver.core import PkgFile
-
 
 class CacheManager:
     """
     A naive cache implementation for listdir and digest_file
 
     The listdir_cache is just a giant list of PkgFile objects, and
-    for simplicity it is invalidated anytime a modification occurs
-    within the directory it represents. If we were smarter about
-    the way that the listdir data structure were created/stored,
-    then we could do more granular invalidation. In practice, this
-    is good enough for now.
+    we modify the list based on FileEvents from the watchdog.Observer
+    (or PollingObserverVFS on nfs)
 
     The digest_cache exists on a per-file basis, because computing
     hashes on large files can get expensive, and it's very easy to
@@ -50,6 +48,22 @@ class CacheManager:
             return False
         # From https://stackoverflow.com/a/460061/13483441
         return b"nfs" in check_output(["stat", "-f", "-L", "-c", "%T", path])
+
+    @staticmethod
+    def get_pkgfile_for_path(path: str, root: t.Union[Path, str]):
+        pathlib_path = Path(path)
+        res = guess_pkgname_and_version(str(pathlib_path.name))
+        if res is None:
+            # Assume it's not a python package
+            return
+        event_dest_pkgname, event_dest_version = res
+        return PkgFile(
+            pkgname=event_dest_pkgname,
+            version=event_dest_version,
+            fn=str(pathlib_path),
+            root=str(root),
+            relfn=str(pathlib_path)[len(str(root)) + 1 :],
+        )
 
     def __init__(self):
         if not ENABLE_CACHING:
@@ -79,6 +93,10 @@ class CacheManager:
 
         # Used to track whether any root is an NFS volume
         self.polling = False
+        self.polling_interval = 1
+
+    def set_cache_polling_interval(self, cache_polling_interval):
+        self.polling_interval = cache_polling_interval
 
     def listdir(
         self,
@@ -130,7 +148,7 @@ class CacheManager:
                 self.observer.stop()
                 # See https://github.com/gorakhargosh/watchdog/issues/504#issuecomment-449643137
                 # We need to use a PollingObserver if we are on an NFS volume
-                self.observer = PollingObserver()
+                self.observer = PollingObserverVFS(stat, listdir, self.polling_interval)
                 for already_watched_root in self.watched:
                     self.observer.schedule(
                         _EventHandler(self, already_watched_root),
@@ -141,9 +159,26 @@ class CacheManager:
         self.observer.schedule(_EventHandler(self, root), root, recursive=True)
         self.watched.add(root)
 
-    def invalidate_root_cache(self, root: t.Union[Path, str]):
+    def handle_cache_event(self, root: t.Union[Path, str], event):
+        if event.event_type == "modified":
+            return
         with self.listdir_lock:
-            self.listdir_cache.pop(str(root), None)
+            if hasattr(event, "dest_path"):
+                event_dest_pkg = CacheManager.get_pkgfile_for_path(event.dest_path, root)
+            event_pkg = CacheManager.get_pkgfile_for_path(event.src_path, root)
+            if event.event_type == "created":
+                self.listdir_cache[root].append(event_pkg)
+            elif event.event_type == "deleted":
+                for index, cached_path in enumerate(self.listdir_cache[root]):
+                    if cached_path.fn == event_pkg.fn:
+                        del self.listdir_cache[root][index]
+                        break
+            elif event.event_type == "moved":
+                for index, cached_path in enumerate(self.listdir_cache[root]):
+                    if cached_path.fn == event_pkg.fn:
+                        del self.listdir_cache[root][index]
+                        self.listdir_cache[root].append(event_dest_pkg)
+                        break
 
 
 class _EventHandler:
@@ -159,8 +194,7 @@ class _EventHandler:
         if event.is_directory:
             return
 
-        # Lazy: just invalidate the whole cache
-        cache.invalidate_root_cache(self.root)
+        cache.handle_cache_event(self.root, event)
 
         # Digests are more expensive: invalidate specific paths
         paths = []

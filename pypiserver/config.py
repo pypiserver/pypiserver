@@ -87,6 +87,7 @@ class DEFAULTS:
     PORT = 8080
     SERVER_METHOD = "auto"
     BACKEND = "auto"
+    CACHE_POLLING_INTERVAL = 1
 
 
 def auth_arg(arg: str) -> t.List[str]:
@@ -459,6 +460,15 @@ def get_parser() -> argparse.ArgumentParser:
             "to '%%s' to see them all."
         ),
     )
+    run_parser.add_argument(
+        "--cache-polling-interval",
+        metavar="INTERVAL(seconds)",
+        default=DEFAULTS.CACHE_POLLING_INTERVAL,
+        help=(
+            "Number of seconds to wait in between polling for NFS-based "
+            "package directories"
+        ),
+    )
 
     update_parser = subparsers.add_parser(
         "update",
@@ -665,6 +675,7 @@ class RunConfig(_ConfigCommon):
         log_req_frmt: str,
         log_res_frmt: str,
         log_err_frmt: str,
+        cache_polling_interval: int,
         auther: t.Callable[[str, str], bool] = None,
         **kwargs: t.Any,
     ) -> None:
@@ -686,6 +697,9 @@ class RunConfig(_ConfigCommon):
         # Derived properties
         self._derived_properties = self._derived_properties + ("auther",)
         self.auther = self.get_auther(auther)
+        self.cache_polling_interval = cache_polling_interval
+        if hasattr(self.backend.backend, "cache_manager"):
+            self.backend.backend.cache_manager.set_cache_polling_interval(cache_polling_interval)
 
     @classmethod
     def kwargs_from_namespace(
@@ -707,6 +721,7 @@ class RunConfig(_ConfigCommon):
             "log_req_frmt": namespace.log_req_frmt,
             "log_res_frmt": namespace.log_res_frmt,
             "log_err_frmt": namespace.log_err_frmt,
+            "cache_polling_interval": namespace.cache_polling_interval,
         }
 
     def get_auther(
