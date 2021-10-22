@@ -16,7 +16,7 @@ from .pkg_helpers import guess_pkgname_and_version
 from .core import PkgFile
 try:
     from watchdog.observers import Observer
-    from watchdog.observers.polling import PollingObserverVFS
+    from watchdog.observers.polling import PollingObserver
 
     ENABLE_CACHING = True
 
@@ -34,7 +34,7 @@ class CacheManager:
 
     The listdir_cache is just a giant list of PkgFile objects, and
     we modify the list based on FileEvents from the watchdog.Observer
-    (or PollingObserverVFS on nfs)
+    (or PollingObserver on nfs)
 
     The digest_cache exists on a per-file basis, because computing
     hashes on large files can get expensive, and it's very easy to
@@ -148,7 +148,7 @@ class CacheManager:
                 self.observer.stop()
                 # See https://github.com/gorakhargosh/watchdog/issues/504#issuecomment-449643137
                 # We need to use a PollingObserver if we are on an NFS volume
-                self.observer = PollingObserverVFS(stat, listdir, self.polling_interval)
+                self.observer = PollingObserver(timeout=self.polling_interval)
                 for already_watched_root in self.watched:
                     self.observer.schedule(
                         _EventHandler(self, already_watched_root),
