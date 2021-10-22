@@ -464,6 +464,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--cache-polling-interval",
         metavar="INTERVAL(seconds)",
         default=DEFAULTS.CACHE_POLLING_INTERVAL,
+        type=int,
         help=(
             "Number of seconds to wait in between polling for NFS-based "
             "package directories"
