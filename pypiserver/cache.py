@@ -3,6 +3,7 @@
 # is installed
 #
 
+import logging
 import platform
 from os import stat
 from os import listdir
@@ -27,6 +28,8 @@ except ImportError:
 
     ENABLE_CACHING = False
 
+log = logging.getLogger(__name__)
+
 
 class CacheManager:
     """
@@ -50,9 +53,9 @@ class CacheManager:
         return b"nfs" in check_output(["stat", "-f", "-L", "-c", "%T", path])
 
     @staticmethod
-    def get_pkgfile_for_path(path: str, root: t.Union[Path, str]):
-        pathlib_path = Path(path)
-        res = guess_pkgname_and_version(str(pathlib_path.name))
+    def get_pkgfile_for_path(path: Path, root: t.Union[Path, str]):
+        path = Path(path)
+        res = guess_pkgname_and_version(str(path.name))
         if res is None:
             # Assume it's not a python package
             return
@@ -60,9 +63,9 @@ class CacheManager:
         return PkgFile(
             pkgname=event_dest_pkgname,
             version=event_dest_version,
-            fn=str(pathlib_path),
+            fn=str(path),
             root=str(root),
-            relfn=str(pathlib_path)[len(str(root)) + 1 :],
+            relfn=str(path)[len(str(root)) + 1 :],
         )
 
     def __init__(self):
@@ -159,7 +162,8 @@ class CacheManager:
         self.observer.schedule(_EventHandler(self, root), root, recursive=True)
         self.watched.add(root)
 
-    def handle_cache_event(self, root: t.Union[Path, str], event):
+    def handle_cache_event(self, root: Path, event):
+        log.debug(event)
         if event.event_type == "modified":
             return
         with self.listdir_lock:
@@ -167,24 +171,30 @@ class CacheManager:
                 event_dest_pkg = CacheManager.get_pkgfile_for_path(event.dest_path, root)
             event_pkg = CacheManager.get_pkgfile_for_path(event.src_path, root)
             if event.event_type == "created":
-                self.listdir_cache[root].append(event_pkg)
-            elif event.event_type == "deleted":
-                for index, cached_path in enumerate(self.listdir_cache[root]):
+                for index, cached_path in enumerate(self.listdir_cache[str(root)]):
                     if cached_path.fn == event_pkg.fn:
-                        del self.listdir_cache[root][index]
+                        log.info("I already have a package with this fn: {}".format(cached_path.fn))
+                        del self.listdir_cache[str(root)][index]
+                        break
+                self.listdir_cache[str(root)].append(event_pkg)
+            elif event.event_type == "deleted":
+                for index, cached_path in enumerate(self.listdir_cache[str(root)]):
+                    if cached_path.fn == event_pkg.fn:
+                        del self.listdir_cache[str(root)][index]
                         break
             elif event.event_type == "moved":
-                for index, cached_path in enumerate(self.listdir_cache[root]):
+                for index, cached_path in enumerate(self.listdir_cache[str(root)]):
                     if cached_path.fn == event_pkg.fn:
-                        del self.listdir_cache[root][index]
-                        self.listdir_cache[root].append(event_dest_pkg)
+                        del self.listdir_cache[str(root)][index]
+                        self.listdir_cache[str(root)].append(event_dest_pkg)
                         break
+        log.debug("listdir_cache size: {}".format(len(self.listdir_cache[str(root)])))
 
 
 class _EventHandler:
     def __init__(self, cache: CacheManager, root: str):
         self.cache = cache
-        self.root = root
+        self.root = Path(root)
 
     def dispatch(self, event):
         """Called by watchdog observer"""
@@ -193,6 +203,18 @@ class _EventHandler:
         # Don't care about directory events
         if event.is_directory:
             return
+
+        # Check if the path of the event is in a hidden folder (starts with ".")
+        # directly in the root and ignore if it is
+        # e.g. the .snapshot directory in an nfs share
+        src_folder_parts = Path(event.src_path).parent.parts
+        for index, part in enumerate(src_folder_parts):
+            try:
+                self.root.parts[index]
+            except IndexError:
+                current_path_is_a_folder = Path(*src_folder_parts[:index+1]).is_dir()
+                if part.startswith(".") and current_path_is_a_folder:
+                    return
 
         cache.handle_cache_event(self.root, event)
 
