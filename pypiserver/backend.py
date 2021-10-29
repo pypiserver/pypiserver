@@ -169,6 +169,11 @@ class SimpleFileBackend(Backend):
         )
 
 
+class EventStub:
+  event_type = ""
+  src_path = ""
+
+
 class CachingFileBackend(SimpleFileBackend):
     def __init__(
         self,
@@ -181,11 +186,17 @@ class CachingFileBackend(SimpleFileBackend):
 
     def add_package(self, filename: str, stream: t.BinaryIO) -> None:
         super().add_package(filename, stream)
-        self.cache_manager.invalidate_root_cache(self.roots[0])
+        event = EventStub
+        event.event_type = 'created'
+        event.src_path = str(self.roots[0] / Path(filename))
+        self.cache_manager.handle_cache_event(self.roots[0], event)
 
     def remove_package(self, pkg: PkgFile) -> None:
         super().remove_package(pkg)
-        self.cache_manager.invalidate_root_cache(pkg.root)
+        event = EventStub
+        event.event_type = 'deleted'
+        event.src_path = pkg.fn
+        self.cache_manager.handle_cache_event(pkg.root, event)
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
         return itertools.chain.from_iterable(
