@@ -8,13 +8,14 @@ import xmlrpc.client as xmlrpclib
 from html import unescape
 
 # Third party imports
+from pathlib import Path
 import pytest
 import webtest
 
 # Local Imports
 from tests.test_pkg_helpers import files, invalid_files
 from pypiserver import __main__, bottle, core, Bottle
-from pypiserver.backend import CachingFileBackend, SimpleFileBackend
+from pypiserver.backend import CachingFileBackend, SimpleFileBackend, EventStub
 
 # Enable logging to detect any problems with it
 ##
@@ -106,7 +107,10 @@ def add_file_to_root(app):
         root.join(filename).write(content)
         backend = app.config.backend
         if isinstance(backend, CachingFileBackend):
-            backend.cache_manager.invalidate_root_cache(root)
+            event = EventStub
+            event.event_type = 'created'
+            event.src_path = str(root / Path(filename))
+            backend.cache_manager.handle_cache_event(root, event)
 
     return file_adder
 
