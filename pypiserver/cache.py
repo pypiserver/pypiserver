@@ -190,6 +190,12 @@ class CacheManager:
                         break
         log.debug("listdir_cache size: {}".format(len(self.listdir_cache[str(root)])))
 
+    def exists(self, filename: str, root: Path) -> bool:
+        return any(
+            filename == existing_file.relfn
+            for existing_file in self.listdir_cache[str(root)]
+        )
+
 
 class _EventHandler:
     def __init__(self, cache: CacheManager, root: str):

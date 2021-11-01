@@ -210,6 +210,11 @@ class CachingFileBackend(SimpleFileBackend):
             pkg.fn, self.hash_algo, digest_file
         )
 
+    def exists(self, filename: str) -> bool:
+        for root in self.roots:
+            if self.cache_manager.exists(filename, root):
+                return True
+
 
 def write_file(fh: t.BinaryIO, destination: PathLike) -> None:
     """write a byte stream into a destination file. Writes are chunked to reduce
