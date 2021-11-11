@@ -83,7 +83,7 @@ def log_error(http_error):
 
 @app.route("/health")
 def health():
-    return 'Ok.'
+    return 'Ok'
 
 
 @app.route("/favicon.ico")
