@@ -8,6 +8,7 @@ import zipfile
 from collections import namedtuple
 from io import BytesIO
 from urllib.parse import urljoin, urlparse
+from json import dumps
 
 from pypiserver.config import RunConfig
 from . import __version__
@@ -366,6 +367,35 @@ def server_static(filename):
             return response
 
     return HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
+
+
+@app.route("/:project/json")
+@auth("list")
+def json_info(project):
+    # PEP 503: require normalized project
+    normalized = normalize_pkgname_for_url(project)
+    if project != normalized:
+        return redirect(f"/{normalized}/json", 301)
+
+    packages = sorted(
+        config.backend.find_project_packages(project),
+        key=lambda x: x.parsed_version,
+        reverse=True,
+    )
+
+    if not packages:
+        raise HTTPError(404, f"package {project} not found")
+
+    latest_version = packages[0].version
+    releases = {}
+    req_url = request.url
+    for x in packages:
+        releases[x.version] = [
+            {"url": urljoin(req_url, "../../packages/" + x.relfn)}
+        ]
+    rv = {"info": {"version": latest_version}, "releases": releases}
+    response.content_type = "application/json"
+    return dumps(rv)
 
 
 @app.route("/:project")
