@@ -15,6 +15,7 @@ import threading
 
 from .pkg_helpers import guess_pkgname_and_version
 from .core import PkgFile
+
 try:
     from watchdog.observers import Observer
     from watchdog.observers.polling import PollingObserver
@@ -120,9 +121,7 @@ class CacheManager:
                 self.listdir_cache[root] = v
                 return v
 
-    def digest_file(
-        self, fpath: str, hash_algo: str, impl_fn: t.Callable[[str, str], str]
-    ) -> str:
+    def digest_file(self, fpath: str, hash_algo: str, impl_fn: t.Callable[[str, str], str]) -> str:
         with self.digest_lock:
             try:
                 cache = self.digest_cache[hash_algo]
@@ -169,7 +168,11 @@ class CacheManager:
         with self.listdir_lock:
             if hasattr(event, "dest_path"):
                 event_dest_pkg = CacheManager.get_pkgfile_for_path(event.dest_path, root)
+                if not event_dest_pkg:
+                    return
             event_pkg = CacheManager.get_pkgfile_for_path(event.src_path, root)
+            if not event_pkg:
+                return
             if event.event_type == "created":
                 for index, cached_path in enumerate(self.listdir_cache[str(root)]):
                     if cached_path.fn == event_pkg.fn:
@@ -192,8 +195,7 @@ class CacheManager:
 
     def exists(self, filename: str, root: Path) -> bool:
         return any(
-            filename == existing_file.relfn
-            for existing_file in self.listdir_cache[str(root)]
+            filename == existing_file.relfn for existing_file in self.listdir_cache[str(root)]
         )
 
 
@@ -218,7 +220,7 @@ class _EventHandler:
             try:
                 self.root.parts[index]
             except IndexError:
-                current_path_is_a_folder = Path(*src_folder_parts[:index+1]).is_dir()
+                current_path_is_a_folder = Path(*src_folder_parts[: index + 1]).is_dir()
                 if part.startswith(".") and current_path_is_a_folder:
                     return
 
