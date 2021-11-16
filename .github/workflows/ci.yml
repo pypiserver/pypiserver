@@ -18,7 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9"]
+        # Commented out as tests with tox on python3.9 fail with updated dependencies.
+        # See https://github.com/pypiserver/pypiserver/issues/406.
+        # uncomment when the issue #406 is resolved.
+        # python-version: ["3.6", "3.7", "3.8", "3.9"]
+        python-version: ["3.6", "3.7", "3.8"]
 
     steps:
     - uses: actions/checkout@v2
