@@ -1,0 +1,60 @@
+# Search asks for passwords:
+
+1. Check _app.py auth('list') decorator
+
+2. In Pypa/pip see auth.py handle_401 with
+
+    ```python
+    # Query the keyring for credentials:
+        username, password = self._get_new_credentials(
+            resp.url,
+            allow_netrc=False,
+            allow_keyring=True,
+        )
+    ```
+
+Output:  
+
+```bash
+$ python3 -m pip search --index http://localhost:8080/ pipx -vvv --trusted-host localhost:8080
+Starting new HTTP connection (1): localhost:8080
+http://localhost:8080 "POST / HTTP/1.1" 401 706
+Getting credentials from keyring for localhost:8080
+Loading KWallet
+Loading SecretService
+Loading Windows
+Loading chainer
+Loading macOS
+User for localhost:8080: ^CERROR: Operation cancelled by user
+Exception information:
+Traceback (most recent call last):
+  File "...lib/python3.8/site-packages/pip/_internal/cli/base_command.py", line 173, in _main
+    status = self.run(options, args)
+  File "...lib/python3.8/site-packages/pip/_internal/commands/search.py", line 54, in run
+    pypi_hits = self.search(query, options)
+  File "...lib/python3.8/site-packages/pip/_internal/commands/search.py", line 74, in search
+    hits = pypi.search({'name': query, 'summary': query}, 'or')
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.8/lib/python3.8/xmlrpc/client.py", line 1109, in __call__
+    return self.__send(self.__name, args)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.8/lib/python3.8/xmlrpc/client.py", line 1450, in __request
+    response = self.__transport.request(
+  File "...lib/python3.8/site-packages/pip/_internal/network/xmlrpc.py", line 44, in request
+    response = self._session.post(
+  File "...lib/python3.8/site-packages/pip/_vendor/requests/sessions.py", line 590, in post
+    return self.request('POST', url, data=data, json=json, **kwargs)
+  File "...lib/python3.8/site-packages/pip/_internal/network/session.py", line 454, in request
+    return super().request(method, url, *args, **kwargs)
+  File "...lib/python3.8/site-packages/pip/_vendor/requests/sessions.py", line 542, in request
+    resp = self.send(prep, **send_kwargs)
+  File "...lib/python3.8/site-packages/pip/_vendor/requests/sessions.py", line 662, in send
+    r = dispatch_hook('response', hooks, r, **kwargs)
+  File "...lib/python3.8/site-packages/pip/_vendor/requests/hooks.py", line 31, in dispatch_hook
+    _hook_data = hook(hook_data, **kwargs)
+  File "...lib/python3.8/site-packages/pip/_internal/network/auth.py", line 263, in handle_401
+    username, password, save = self._prompt_for_password(parsed.netloc)
+  File "...lib/python3.8/site-packages/pip/_internal/network/auth.py", line 226, in _prompt_for_password
+    username = ask_input(f"User for {netloc}: ")
+  File "...lib/python3.8/site-packages/pip/_internal/utils/misc.py", line 218, in ask_input
+    return input(message)
+KeyboardInterrupt
+```
