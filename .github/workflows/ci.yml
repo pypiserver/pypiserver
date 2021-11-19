@@ -9,6 +9,8 @@ on:
     # executable, from back in the day before docker & a better pip.
     branches-ignore:
       - standalone
+  # Allowing to run on fork pull requests
+  pull_request:
 
 jobs:
   test-cpython:
@@ -16,7 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9"]
+        # Commented out as tests with tox on python3.9 fail with updated dependencies.
+        # See https://github.com/pypiserver/pypiserver/issues/406.
+        # uncomment when the issue #406 is resolved.
+        # python-version: ["3.6", "3.7", "3.8", "3.9"]
+        python-version: ["3.6", "3.7", "3.8"]
 
     steps:
     - uses: actions/checkout@v2
@@ -62,7 +68,9 @@ jobs:
         # Pretty much any python version will do
         python-version: "3.9"
     - name: Install dependencies
-      run: pip install -r "requirements/dev.pip"
+      run: |
+        pip install -r "requirements/dev.pip"
+        pip install types-pkg_resources # one of mypy required stubs
     - name: Check types
       # individual mypy files for now, until we get the rest
       # of the project typechecking
