@@ -163,8 +163,6 @@ class CacheManager:
 
     def handle_cache_event(self, root: Path, event):
         log.debug(event)
-        if event.event_type == "modified":
-            return
         with self.listdir_lock:
             if hasattr(event, "dest_path"):
                 event_dest_pkg = CacheManager.get_pkgfile_for_path(event.dest_path, root)
@@ -173,24 +171,15 @@ class CacheManager:
             event_pkg = CacheManager.get_pkgfile_for_path(event.src_path, root)
             if not event_pkg:
                 return
-            if event.event_type == "created":
-                for index, cached_path in enumerate(self.listdir_cache[str(root)]):
-                    if cached_path.fn == event_pkg.fn:
-                        log.info("I already have a package with this fn: {}".format(cached_path.fn))
-                        del self.listdir_cache[str(root)][index]
-                        break
+            for index, cached_path in enumerate(self.listdir_cache[str(root)]):
+                if cached_path.fn == event_pkg.fn:
+                    del self.listdir_cache[str(root)][index]
+                    break
+            if event.event_type in ["created", "modified"]:
                 self.listdir_cache[str(root)].append(event_pkg)
-            elif event.event_type == "deleted":
-                for index, cached_path in enumerate(self.listdir_cache[str(root)]):
-                    if cached_path.fn == event_pkg.fn:
-                        del self.listdir_cache[str(root)][index]
-                        break
             elif event.event_type == "moved":
-                for index, cached_path in enumerate(self.listdir_cache[str(root)]):
-                    if cached_path.fn == event_pkg.fn:
-                        del self.listdir_cache[str(root)][index]
-                        self.listdir_cache[str(root)].append(event_dest_pkg)
-                        break
+                self.listdir_cache[str(root)].append(event_dest_pkg)
+            # Note: Deleted events do not require further processing
         log.debug("listdir_cache size: {}".format(len(self.listdir_cache[str(root)])))
 
     def exists(self, filename: str, root: Path) -> bool:
