@@ -201,18 +201,6 @@ class _EventHandler:
         if event.is_directory:
             return
 
-        # Check if the path of the event is in a hidden folder (starts with ".")
-        # directly in the root and ignore if it is
-        # e.g. the .snapshot directory in an nfs share
-        src_folder_parts = Path(event.src_path).parent.parts
-        for index, part in enumerate(src_folder_parts):
-            try:
-                self.root.parts[index]
-            except IndexError:
-                current_path_is_a_folder = Path(*src_folder_parts[: index + 1]).is_dir()
-                if part.startswith(".") and current_path_is_a_folder:
-                    return
-
         cache.handle_cache_event(self.root, event)
 
         # Digests are more expensive: invalidate specific paths
