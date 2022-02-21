@@ -14,8 +14,11 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.org/project/pypiserver/
 :Tests:       https://github.com/pypiserver/pypiserver/actions
-:Maintainers: Kostis Anagnostopoulos <ankostis@gmail.com>,
-              Matthew Planchard <mplanchard@gmail.com>
+:Maintainers: | Kostis Anagnostopoulos <ankostis@gmail.com>,
+              | Matthew Planchard <mplanchard@gmail.com>,
+              | Dmitrii Orlov <dmtree.dev@yahoo.com>,
+              | **Someone new?** We are looking for new maintainers! 
+                <https://github.com/pypiserver/pypiserver/issues/397>
 :License:     zlib/libpng + MIT
 :Community:   https://pypiserver.zulipchat.com
 
