@@ -1,0 +1,26 @@
+# Release Candidate GitHub Action
+
+name: release_candidate
+
+# TODO:
+# 1. create a new AUTO-RC-<DATE> branch
+# 2. create a commit with bumpver & update CHANGES.rst & README.rst
+# 3. push to GH
+# 4. open a PR to `master`
+
+on:
+  schedule:
+    - cron:  '0 0 1 * *'  # each 1st day of the month
+  workflow_dispatch:      # on manual trigger
+
+
+jobs:
+  new-rc-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git checkout -b auto-release-candidate-$(date +'%m-%d-%Y')
+          git push -u origin auto-release-candidate-$(date +'%m-%d-%Y')
