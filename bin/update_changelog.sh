@@ -14,7 +14,8 @@ set -e # exit on errors
 
 CHANGE_FILE='CHANGES.rst'
 RC_DATE=$(date +'%m-%d-%Y')
-TMP_CHANGE_LOG="./rc-${RC_DATE}.txt"
+WORKSPACE_DIR=${GITHUB_WORKSPACE:-.}
+TMP_CHANGE_LOG="${WORKSPACE_DIR}/rc-${RC_DATE}.txt"
 
 
 ############
