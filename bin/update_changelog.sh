@@ -8,6 +8,8 @@
 # 3. create new RC version entry
 # 4. add change log entries
 
+# TODO: provide that as parameters?
+
 CHANGE_FILE='CHANGES.rst'
 RC_DATE=$(date +'%m-%d-%Y')
 TMP_CHANGE_LOG="./rc-${RC_DATE}.txt"
