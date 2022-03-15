@@ -32,5 +32,6 @@ jobs:
           git push -u origin auto-release-candidate-$(date +'%m-%d-%Y')
 
           git status
+          git fetch
 
           ./bin/update_changelog.sh
