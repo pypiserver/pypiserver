@@ -10,6 +10,19 @@
 
 CHANGE_FILE='CHANGES.rst'
 RC_DATE=$(date +'%m-%d-%Y')
+TMP_CHANGE_LOG="./rc-${RC_DATE}.txt"
+
+
+############
+# CLEANUPS #
+############
+
+rm -rf $TMP_CHANGE_LOG
+
+
+##################
+# INITIALIZATION #
+##################
 
 echo "Updating $CHANGE_FILE:"
 
@@ -41,8 +54,6 @@ echo "Final RC version: $RC_VERSION"
 ###################
 
 CHANGE_DIFF_TARGETS="v${LAST_VERSION}..HEAD"
-TMP_CHANGE_LOG="./rc-${RC_DATE}.txt"
-
 VERSION_TITLE="${RC_VERSION} (__rc__)"
 TITLE_LINE=$(awk -v LL=${#VERSION_TITLE} 'BEGIN{for(c=0;c<LL;c++) printf "-"}')
 VERSION_HEADER="$VERSION_TITLE\n${TITLE_LINE}"
@@ -55,14 +66,14 @@ git log --pretty=oneline --abbrev-commit $CHANGE_DIFF_TARGETS | sed 's/^/- /' >>
 
 # CHECK FINAL CONTENT
 cat $TMP_CHANGE_LOG
-CHANGE_LOG_CONTENTS=$(cat $TMP_CHANGE_LOG)
 
 # APPEND INFO TO CHANGE FILE:
+#   1. Finds the first (tbd) release
+#   2. Populates space between (tbd) release with RC changes
+sed -i '' "/^[0-9]\.0\.0.*\(tbd\)/{N;G;r\
+\
+$TMP_CHANGE_LOG
+\
+}" $CHANGE_FILE
 
-# FIXME: needs fixing here!
-# https://stackoverflow.com/questions/9970124/sed-to-insert-on-first-match-only
-# maybe use awk for portability
-
-sed -i '' '/^[0-9]+\.0\.0.*\(tbd\)/a\
-yo
-' $CHANGE_FILE
+# CHANGE_LOG_CONTENTS=$(cat $TMP_CHANGE_LOG)
