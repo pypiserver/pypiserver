@@ -31,4 +31,6 @@ jobs:
           git checkout -b auto-release-candidate-$(date +'%m-%d-%Y')
           git push -u origin auto-release-candidate-$(date +'%m-%d-%Y')
 
+          git status
+
           ./bin/update_changelog.sh
