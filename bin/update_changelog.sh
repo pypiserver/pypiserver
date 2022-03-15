@@ -8,6 +8,8 @@
 # 3. create new RC version entry
 # 4. add change log entries
 
+set -e # exit on errors
+
 # TODO: provide that as parameters?
 
 CHANGE_FILE='CHANGES.rst'
