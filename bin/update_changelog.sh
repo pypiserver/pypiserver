@@ -14,7 +14,7 @@ set -e # exit on errors
 
 CHANGE_FILE='CHANGES.rst'
 RC_DATE=$(date +'%m-%d-%Y')
-WORKSPACE_DIR=${GITHUB_WORKSPACE:-.}
+WORKSPACE_DIR="${GITHUB_WORKSPACE:-.}/rc"
 TMP_CHANGE_LOG="${WORKSPACE_DIR}/rc-${RC_DATE}.txt"
 
 
@@ -23,6 +23,7 @@ TMP_CHANGE_LOG="${WORKSPACE_DIR}/rc-${RC_DATE}.txt"
 ############
 
 rm -rf $TMP_CHANGE_LOG
+mkdir -p $WORKSPACE_DIR
 
 
 ##################
@@ -70,6 +71,7 @@ echo -e "$VERSION_HEADER\n" >> $TMP_CHANGE_LOG
 git log --pretty=oneline --abbrev-commit $CHANGE_DIFF_TARGETS | sed 's/^/- /' >> $TMP_CHANGE_LOG
 
 # CHECK FINAL CONTENT
+ls $WORKSPACE_DIR
 cat $TMP_CHANGE_LOG
 
 # APPEND INFO TO CHANGE FILE:
