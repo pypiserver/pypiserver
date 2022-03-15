@@ -2,11 +2,17 @@
 
 name: release_candidate
 
-# TODO:
-# 1. create a new AUTO-RC-<DATE> branch
-# 2. create a commit with bumpver & update CHANGES.rst & README.rst
-# 3. push to GH
-# 4. open a PR to `master`
+# TODO(actions):
+# - [x] create a new AUTO-RC-<DATE> branch
+# - [x] update CHANGES.rst
+# - [ ] update README.rst
+# - [ ] create bumpver commit
+# - [ ] push to GH
+# - [ ] open a PR to `master`
+
+# TODO(general):
+# - [ ] setup the action
+# - [ ] cleanup the action
 
 on:
   schedule:
@@ -15,7 +21,7 @@ on:
 
 
 jobs:
-  new-rc-branch:
+  new-rc:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -24,3 +30,5 @@ jobs:
           git config user.email github-actions@github.com
           git checkout -b auto-release-candidate-$(date +'%m-%d-%Y')
           git push -u origin auto-release-candidate-$(date +'%m-%d-%Y')
+
+          ./bin/update_changelog.sh
