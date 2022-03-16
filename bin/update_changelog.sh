@@ -74,13 +74,30 @@ git log --pretty=oneline --abbrev-commit $CHANGE_DIFF_TARGETS | sed 's/^/- /' >>
 ls $WORKSPACE_DIR
 cat $TMP_CHANGE_LOG
 
+
 # APPEND INFO TO CHANGE FILE:
 #   1. Finds the first (tbd) release
 #   2. Populates space between (tbd) release with RC changes
+# NB: supporting macos and linux interoperability
+#     see https://stackoverflow.com/questions/43171648/sed-gives-sed-cant-read-no-such-file-or-directory
+if [[ "$OSTYPE" == "darwin"* ]]; then
+# begin:
+# mac os support
 sed -i '' "/^[0-9]\.0\.0.*\(tbd\)/{N;G;r\
 \
 $TMP_CHANGE_LOG
 \
 }" $CHANGE_FILE
+# end;
+else
+# begin:
+# linux support
+sed -i "/^[0-9]\.0\.0.*\(tbd\)/{N;G;r\
+\
+$TMP_CHANGE_LOG
+\
+}" $CHANGE_FILE
+# end;
+fi
 
 # CHANGE_LOG_CONTENTS=$(cat $TMP_CHANGE_LOG)
