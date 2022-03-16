@@ -5,8 +5,10 @@ name: release_candidate
 # TODO(actions):
 # - [x] create a new AUTO-RC-<DATE> branch
 # - [x] update CHANGES.rst
+# - [x] create changes commit
+# - [x] push to GH
 # - [ ] update README.rst
-# - [ ] create bumpver commit
+# - [ ] create readme commit
 # - [ ] push to GH
 # - [ ] open a PR to `master`
 
