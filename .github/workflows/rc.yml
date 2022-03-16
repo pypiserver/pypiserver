@@ -35,3 +35,7 @@ jobs:
           git fetch
 
           ./bin/update_changelog.sh
+
+          git add CHANGES.rst
+          git commit -m "chore(rc-changes): update Changes.rst"
+          git push
