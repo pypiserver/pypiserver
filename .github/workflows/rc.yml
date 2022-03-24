@@ -47,7 +47,7 @@ jobs:
           git commit -m "chore(rc-changes): update Changes.rst"
           git push
 
-          gh pr create  --title auto-release-candidate-${RC_DATE} \
+          gh pr create  --title "chore(auto-release-candidate-${RC_DATE})" \
                         --body "Automated release candidate for ${RC_DATE}." \
                         --base master \
                         --draft
