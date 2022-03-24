@@ -27,6 +27,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          # Flag to fetch all history.
+          #   @see https://github.com/marketplace/actions/checkout#Fetch-all-history-for-all-tags-and-branches
+          fetch-depth: 0
       - run: |
           RC_DATE=$(date +'%m-%d-%Y')
           git config user.name github-actions
