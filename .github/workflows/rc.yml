@@ -45,7 +45,7 @@ jobs:
 
           gh pr create  --title auto-release-candidate-${RC_DATE} \
                         --body "Automated release candidate for ${RC_DATE}." \
-                        --base master
+                        --base master \
                         --draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
