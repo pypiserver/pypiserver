@@ -28,10 +28,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: |
+          RC_DATE=$(date +'%m-%d-%Y')
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git checkout -b auto-release-candidate-$(date +'%m-%d-%Y')
-          git push -u origin auto-release-candidate-$(date +'%m-%d-%Y')
+          git checkout -b auto-release-candidate-${RC_DATE}
+          git push -u origin auto-release-candidate-${RC_DATE}
 
           git status
           git fetch
@@ -41,3 +42,8 @@ jobs:
           git add CHANGES.rst
           git commit -m "chore(rc-changes): update Changes.rst"
           git push
+
+          gh pr create  --title auto-release-candidate-${RC_DATE} \
+                        --body "Automated release candidate for ${RC_DATE}" \
+                        --base master
+                        --draft
