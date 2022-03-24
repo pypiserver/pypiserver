@@ -73,6 +73,9 @@ VERSION_TITLE="${RC_VERSION} (__rc__)"
 TITLE_LINE=$(awk -v LL=${#VERSION_TITLE} 'BEGIN{for(c=0;c<LL;c++) printf "-"}')
 VERSION_HEADER="$VERSION_TITLE\n${TITLE_LINE}"
 
+# DEBUG INFO
+echo -e "Comparing versions between: $CHANGE_DIFF_TARGETS\n"
+
 # VERSION HEADER:
 echo -e "$VERSION_HEADER\n" >> $TMP_CHANGE_LOG
 
