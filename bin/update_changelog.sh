@@ -41,11 +41,18 @@ echo "Detected last release version: $LAST_VERSION"
 # VERSION BUMPING #
 ###################
 
+
 echo "Bumping patch version..."
 MAJOR_COLUMN=1
 MINOR_COLUMN=2
 PATCH_COLUMN=3
 
+# `awk` is used to bump the PATCH version since the last public release.
+#   -F - gives a separator for splitting the original release into columns.
+#   -v - provides a value for variable to be used in the `awk` command.
+#   -v K=$PATCH_COLUMN - provides value for `K` - the version column to bump.
+# This attempts to preserve the a standard syntax for GNU Awk.
+# More can be found here: https://www.gnu.org/software/gawk/manual/gawk.html
 BUMPED_VERSION=$(echo $LAST_VERSION | awk -F. -v K=$PATCH_COLUMN '{$K+=1; print $0}' OFS='.')
 
 echo "Bumped to new candidate version: $BUMPED_VERSION"
@@ -59,8 +66,10 @@ echo "Final RC version: $RC_VERSION"
 # CHANGELOG ENTRY #
 ###################
 
+
 CHANGE_DIFF_TARGETS="v${LAST_VERSION}..HEAD"
 VERSION_TITLE="${RC_VERSION} (__rc__)"
+# Using GNU Awk syntax: -v LL specifies the title pattern variable.
 TITLE_LINE=$(awk -v LL=${#VERSION_TITLE} 'BEGIN{for(c=0;c<LL;c++) printf "-"}')
 VERSION_HEADER="$VERSION_TITLE\n${TITLE_LINE}"
 
@@ -75,15 +84,13 @@ echo -e "\nCollected info:"
 ls $WORKSPACE_DIR
 cat $TMP_CHANGE_LOG
 
-
 # APPEND INFO TO CHANGE FILE:
 #   1. Finds the first (tbd) release
-#   2. Populates space between (tbd) release with RC changes
+#   2. Populates space between (tbd) release and the latest one with RC changes
 # NB: supporting macos and linux interoperability
 #     see https://stackoverflow.com/questions/43171648/sed-gives-sed-cant-read-no-such-file-or-directory
 if [[ "$OSTYPE" == "darwin"* ]]; then
-# begin:
-# mac os support
+# begin: mac os support
 sed -i '' "/^[0-9]\.0\.0.*\(tbd\)/{N;G;r\
 \
 $TMP_CHANGE_LOG
@@ -91,8 +98,7 @@ $TMP_CHANGE_LOG
 }" $CHANGE_FILE
 # end;
 else
-# begin:
-# linux support
+# begin: linux support
 sed -i "/^[0-9]\.0\.0.*\(tbd\)/{N;G;r\
 \
 $TMP_CHANGE_LOG
