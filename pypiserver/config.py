@@ -615,7 +615,7 @@ class _ConfigCommon:
         The current config is used as a base. Any properties not specified in
         keyword arguments will remain unchanged.
         """
-        return self.__class__(**{**dict(self), **kwargs})  # type: ignore
+        return self.__class__(**{**dict(self), **kwargs})
 
     def __repr__(self) -> str:
         """A string representation indicating the class and its properties."""
@@ -635,7 +635,7 @@ class _ConfigCommon:
         return all(
             getattr(other, k) == v
             for k, v in self
-            if not k in self._derived_properties
+            if k not in self._derived_properties
         )
 
     def __iter__(self) -> t.Iterator[t.Tuple[str, t.Any]]:
