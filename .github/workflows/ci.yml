@@ -14,7 +14,6 @@ on:
 
 jobs:
   test-cpython:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -25,64 +24,62 @@ jobs:
         python-version: ["3.6", "3.7", "3.8"]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: pip install tox
-    - name: Run tests
-      # Create a tox env specification by stripping the dot out of the version
-      # specification and appending it to "py"
-      run: |
-        tox -e "py$(echo ${{ matrix.python-version }} | tr -d .)"
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install tox
+      - name: Run tests
+        # Create a tox env specification by stripping the dot out of the version
+        # specification and appending it to "py"
+        run: |
+          tox -e "py$(echo ${{ matrix.python-version }} | tr -d .)"
 
   test-pypy:
-
     # Run a a separate job so we don't need to mess with conditionally
     # splitting the python version from the build matrix. Also the pypy
     # tests take freaking forever.
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: pypy3
-    - name: Install dependencies
-      run: pip install tox
-    - name: Run tests
-      run: tox -e pypy3
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: pypy3
+      - name: Install dependencies
+        run: pip install tox
+      - name: Run tests
+        run: tox -e pypy3
 
   check:
-
     # These checks only need to be done once, not for every python version we s
     # upport
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        # Pretty much any python version will do
-        python-version: "3.9"
-    - name: Install dependencies
-      run: |
-        pip install -r "requirements/dev.pip"
-        pip install types-pkg_resources # one of mypy required stubs
-    - name: Check types
-      # individual mypy files for now, until we get the rest
-      # of the project typechecking
-      run: >-
-        mypy
-        docker/test_docker.py
-        pypiserver/config.py 
-        tests/test_init.py
-    - name: Check formatting
-      run: black --diff --check .
-    - name: Validate README
-      run: ./bin/check_readme.sh
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          # Pretty much any python version will do
+          python-version: "3.9"
+      - name: Install dependencies
+        run: |
+          pip install -r "requirements/dev.pip"
+          pip install types-pkg_resources # one of mypy required stubs
+      - name: Check types
+        # individual mypy files for now, until we get the rest
+        # of the project typechecking
+        run: >-
+          mypy
+          docker/test_docker.py
+          pypiserver/config.py 
+          tests/test_init.py
+      - name: Check formatting
+        run: black --diff --check .
+      - name: Validate README
+        run: ./bin/check_readme.sh
 
   # Full-flow docker tests, again not python version dependent
   # We _could_ test this on MacOS, but it takes forever to get docker
@@ -93,19 +90,18 @@ jobs:
   test-docker:
     runs-on: "ubuntu-latest"
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        # Pretty much any python version will do
-        python-version: "3.9"
-    - name: Install test dependencies
-      run: pip install -r "requirements/test.pip"
-    - name: Install package
-      run: pip install -r "requirements/exe.pip"
-    - name: Run tests
-      run: "pytest docker/test_docker.py"
-
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          # Pretty much any python version will do
+          python-version: "3.9"
+      - name: Install test dependencies
+        run: pip install -r "requirements/test.pip"
+      - name: Install package
+        run: pip install -r "requirements/exe.pip"
+      - name: Run tests
+        run: "pytest docker/test_docker.py"
 
   tests:
     runs-on: "ubuntu-latest"
