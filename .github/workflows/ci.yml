@@ -14,7 +14,6 @@ on:
 
 jobs:
   test-cpython:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -25,64 +24,62 @@ jobs:
         python-version: ["3.6", "3.7", "3.8"]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: pip install tox
-    - name: Run tests
-      # Create a tox env specification by stripping the dot out of the version
-      # specification and appending it to "py"
-      run: |
-        tox -e "py$(echo ${{ matrix.python-version }} | tr -d .)"
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install tox
+      - name: Run tests
+        # Create a tox env specification by stripping the dot out of the version
+        # specification and appending it to "py"
+        run: |
+          tox -e "py$(echo ${{ matrix.python-version }} | tr -d .)"
 
   test-pypy:
-
     # Run a a separate job so we don't need to mess with conditionally
     # splitting the python version from the build matrix. Also the pypy
     # tests take freaking forever.
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: pypy3
-    - name: Install dependencies
-      run: pip install tox
-    - name: Run tests
-      run: tox -e pypy3
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: pypy3
+      - name: Install dependencies
+        run: pip install tox
+      - name: Run tests
+        run: tox -e pypy3
 
   check:
-
     # These checks only need to be done once, not for every python version we s
     # upport
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        # Pretty much any python version will do
-        python-version: "3.9"
-    - name: Install dependencies
-      run: |
-        pip install -r "requirements/dev.pip"
-        pip install types-pkg_resources # one of mypy required stubs
-    - name: Check types
-      # individual mypy files for now, until we get the rest
-      # of the project typechecking
-      run: >-
-        mypy
-        docker/test_docker.py
-        pypiserver/config.py 
-        tests/test_init.py
-    - name: Check formatting
-      run: black --diff --check .
-    - name: Validate README
-      run: ./bin/check_readme.sh
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          # Pretty much any python version will do
+          python-version: "3.9"
+      - name: Install dependencies
+        run: |
+          pip install -r "requirements/dev.pip"
+          pip install types-pkg_resources # one of mypy required stubs
+      - name: Check types
+        # individual mypy files for now, until we get the rest
+        # of the project typechecking
+        run: >-
+          mypy
+          docker/test_docker.py
+          pypiserver/config.py 
+          tests/test_init.py
+      - name: Check formatting
+        run: black --diff --check .
+      - name: Validate README
+        run: ./bin/check_readme.sh
 
   # Full-flow docker tests, again not python version dependent
   # We _could_ test this on MacOS, but it takes forever to get docker
@@ -93,19 +90,18 @@ jobs:
   test-docker:
     runs-on: "ubuntu-latest"
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        # Pretty much any python version will do
-        python-version: "3.9"
-    - name: Install test dependencies
-      run: pip install -r "requirements/test.pip"
-    - name: Install package
-      run: pip install -r "requirements/exe.pip"
-    - name: Run tests
-      run: "pytest docker/test_docker.py"
-
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          # Pretty much any python version will do
+          python-version: "3.9"
+      - name: Install test dependencies
+        run: pip install -r "requirements/test.pip"
+      - name: Install package
+        run: pip install -r "requirements/exe.pip"
+      - name: Run tests
+        run: "pytest docker/test_docker.py"
 
   tests:
     runs-on: "ubuntu-latest"
@@ -117,82 +113,3 @@ jobs:
     steps:
       - name: "Everything is good!"
         run: "echo true"
-
-  # figure out which docker tags we need to push
-  docker-determine-tags:
-    runs-on: "ubuntu-latest"
-    needs:
-      - "tests"
-    steps:
-      - uses: "actions/checkout@v2"
-
-      - uses: "actions/setup-python@v2"
-        with:
-          python-version: "3.9"
-
-        # This script prints a JSON array of needed docker tags, depending on the
-        # ref. That array is then used to construct the matrix of the
-        # deploy-docker job
-      - name: "Get expected docker tags"
-        id: "tags"
-        run: >-
-          echo "::set-output name=tags::$(bin/ci_helper.py ${{ github.ref }} docker_tags)"
-
-        # This is needed because GH actions will fail on an empty matrix, so
-        # we need to be sure the `if` condition is false on the next job if
-        # the matrix will be empty. The script prints 'true' if the array is
-        # not empty, or 'false' otherwise.
-      - name: "Determine whether any tags are needed"
-        id: "has_tags"
-        run: >-
-          echo "::set-output name=has_tags::$(bin/ci_helper.py ${{ github.ref }} has_tags)"
-
-    outputs:
-      tags: "${{ steps.tags.outputs.tags }}"
-      has_tags: "${{ steps.has_tags.outputs.has_tags }}"
-
-  # Deploy any needed docker tags
-  deploy-docker:
-    runs-on: "ubuntu-latest"
-    needs:
-      - "tests"
-      - "docker-determine-tags"
-    if: "${{ fromJson(needs.docker-determine-tags.outputs.has_tags) }}"
-    strategy:
-      matrix:
-        tag: "${{ fromJson(needs.docker-determine-tags.outputs.tags) }}"
-    steps:
-      - uses: "actions/checkout@v2"
-
-      - name: "Cache Docker layers"
-        uses: "actions/cache@v2"
-        with:
-          path: "/tmp/.buildx-cache"
-          key: "${{ runner.os }}-buildx-${{ github.sha }}"
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: "Login to Docker Hub"
-        uses: "docker/login-action@v1"
-        with:
-          username: "${{ secrets.DOCKER_HUB_USER }}"
-          password: "${{ secrets.DOCKER_HUB_TOKEN }}"
-
-      - name: "Set up Docker Buildx"
-        id: "buildx"
-        uses: "docker/setup-buildx-action@v1"
-
-      - name: "Build and push"
-        id: "docker_build"
-        uses: "docker/build-push-action@v2"
-        with:
-          context: "./"
-          file: "./Dockerfile"
-          builder: "${{ steps.buildx.outputs.name }}"
-          push: true
-          tags:  "pypiserver/pypiserver:${{ matrix.tag }}"
-          cache-from: "type=local,src=/tmp/.buildx-cache"
-          cache-to: "type=local,dest=/tmp/.buildx-cache"
-
-      - name: "Image digest"
-        run: "echo ${{ steps.docker_build.outputs.digest }}"
