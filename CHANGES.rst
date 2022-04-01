@@ -4,6 +4,64 @@ Changelog
 2.0.0 (tbd)
 -----------
 
+1.4.3rc04-01-2022 (__rc__)
+--------------------------
+
+- eb3d694 remove the `tmp` directory & add to gitignore (#424)
+- cd1e17c fix(setuptools-in-tests): add `packages=[]` in test setup (#425)
+- 3ba1777 chore(release-candidate-from-github-actions): add github action for release management (#417)
+- e039f40 fix(typing-checks): fix small typing and lint errors in config.py (#421)
+- 3950cdc Merge pull request #415 from dee-me-tree-or-love/chore-adjust-contributors-entry-in-readme-rst
+- f2330fa Merge branch 'master' into chore-adjust-contributors-entry-in-readme-rst
+- e608e86 Merge pull request #416 from dee-me-tree-or-love/fix-small-styling-fixes
+- 3b1a0f8 Merge branch 'master' into fix-small-styling-fixes
+- 22d47a5 Merge pull request #413 from domdfcoding/patch-1
+- cd4bff5 Merge pull request #414 from luismsgomes/master
+- a10cdce Fix black errors on test_server.py
+- 049ae42 Fix black errors on backend.py
+- 050bc9e Merge branch 'master' into chore-adjust-contributors-entry-in-readme-rst
+- ee912cf chore(new-people): adjust maintainers & add call for new people
+- 64b4d21 Fixed violation of PEP 503 warning with pip>=22
+- 057d3b4 Specify doctype for generated pages.
+- bdbd839 Merge pull request #407 from dee-me-tree-or-love/tp-temporarily-disable-cpython39-tests
+- 652a717 disable tests for python3.9
+- d34c992 Merge pull request #400 from dee-me-tree-or-love/tp-fix-mypy-check-dependencies-for-CI
+- a1d7264 Include Black Formatter fix
+- 48688d7 Merge branch 'master' into tp-fix-mypy-check-dependencies-for-CI
+- 2885ac2 Merge pull request #401 from dee-me-tree-or-love/tp-allow-gh-actions-for-fork-pull-requests
+- be39eb2 Allow GH actions to run on pull requests for forks
+- a1002c5 Install requires stub types for mypy in ci.yml
+- 3713da9 Merge pull request #395 from awachtler/master
+- 7693c03 json_info/doc: fixed typo in README.rst <
+- 4e189ae json_info/doc: fix formatting
+- fb81ab7 doc/json_info: added usage description with micropython.
+- e7bc2bb test_app.py/json_info: added tests for the json_info endpoint
+- c205355 _app.py/json_info: improved error handling - added redirect if package name is not normalized - raise 404 error if package is not found
+- a9414fb renamed max_version to latest_version
+- 1ae9f20 rollback version info
+- d28fc96 rework json_info, made url generic, restructured code
+- 43958e4 initial add json support
+- 35fcdd0 Contributor documentation directory and README (#383)
+- 302b4a8 Correct README example (#380)
+- df300de Push to Docker Hub from CI (#375)
+- 8306de1 Gunicorn/gevent docker, log fixes, cache busting (#371)
+- d868005 Docker improvements (#365)
+- df7454f Add aggregate "tests" job (#370)
+- cf424c9 Refactor storage operations into separate Backend classes (#348)
+- 7688e1b Fix silly typo in the readme :) (#362)
+- d0694d9 Switch to GH actions (#361)
+- 4b1bd1c Refactor test_server to increase speed (#354)
+- 4e1fd1e Fix version incompatibility that breaks twine in docker test (#356)
+- 15d8114 Add python 3.9 testing (#351)
+- c668b18 Use argparse config throughout app (#349)
+- 47d6efe Restore ability to drop hashing in new config (#347)
+- 8014fa5 Merge branch 'v1.4.x'
+- 0594c33 Backwards-compatible argparse config (not yet in use) (#339)
+- d886bc2 Cleanup code to python 3.6 (#342)
+- b44edb6 CHORE: pull CHANGES.rst from v1.4.x
+- 8101cf9 Run black on codebase (#336)
+- 4ab210c MAINT: drop standalone, drop py 2.7 and 3.5 (#338)
+
 1.4.2 (2020-10-10)
 ------------------
 
