@@ -4,8 +4,8 @@ Changelog
 2.0.0 (tbd)
 -----------
 
-1.5.0rc04-01-2022 (__rc__)
---------------------------
+1.5.0 (2022-04-26)
+------------------
 
 - CHORE: pull CHANGES.rst from v1.4.x
 - DOC: add call for maintainers to README
