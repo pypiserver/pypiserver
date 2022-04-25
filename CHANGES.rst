@@ -4,6 +4,42 @@ Changelog
 2.0.0 (tbd)
 -----------
 
+1.5.0rc04-01-2022 (__rc__)
+--------------------------
+
+- CHORE: pull CHANGES.rst from v1.4.x
+- DOC: add call for maintainers to README
+- DOC: Fixes in README examples (#380)
+- DOC: start of empty contributor documentation directory (#383)
+- ENH: added JSON Topic for use with micropython-upip (#395, thanks @awachtler)
+- ENH: Backwards-compatible argparse config (not yet in use) (#339)
+- ENH: Refactor storage operations into separate Backend classes (#348)
+- ENH: Restore ability to drop hashing in new config (#347)
+- ENH: Specify doctype for generated pages.
+  Fixed violation of PEP 503 warning with pip>=22.
+  (#413 and #414, thanks @domdfcoding and @luismsgomes)
+- ENH: Use argparse config throughout app (#349)
+- FIX: Fix silly typo in the readme :) (#362)
+- FIX: fix small typing and lint errors in config.py (#421)
+- FIX: fix version incompatibility that breaks twine in docker test (#356)
+- FIX: fix(setuptools-in-tests) add `packages=[]` in test setup (#425)
+- FIX: Gunicorn/gevent docker, log fixes, cache busting (#371)
+- MAINT: Add aggregate "tests" job (#370)
+- MAINT: add github action for release management (#417)
+- MAINT: Add python 3.9 testing (#351, disabled in #407)
+- MAINT: Cleanup code to python 3.6 (#342)
+- MAINT: contributor update in README (#415)
+- MAINT: disable unstable test for Python 3.9 (#407, planned temporary)
+- MAINT: Docker improvements (#365)
+- MAINT: drop standalone, drop py 2.7 and 3.5 (#338)
+- MAINT: Merge branch 'v1.4.x'
+- MAINT: Push to Docker Hub from CI (#375)
+- MAINT: Refactor test_server to increase speed (#354)
+- MAINT: Run black on codebase (#336)
+- MAINT: run gh actions on PRs from forks #401
+- MAINT: small code style fixes
+- MAINT: Switch to GH actions (#361)
+
 1.4.2 (2020-10-10)
 ------------------
 
