@@ -25,6 +25,7 @@ Changelog
 - FIX: fix(setuptools-in-tests) add `packages=[]` in test setup (#425)
 - FIX: Gunicorn/gevent docker, log fixes, cache busting (#371)
 - MAINT: Add aggregate "tests" job (#370)
+- MAINT: Add release to PyPi job (#428)
 - MAINT: add github action for release management (#417)
 - MAINT: Add python 3.9 testing (#351, disabled in #407)
 - MAINT: Cleanup code to python 3.6 (#342)
