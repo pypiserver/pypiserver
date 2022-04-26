@@ -9,6 +9,8 @@ on:
     # executable, from back in the day before docker & a better pip.
     branches-ignore:
       - standalone
+    tags:
+      - "v**"
   # Allowing to run on fork pull requests
   pull_request:
 
@@ -118,21 +120,13 @@ jobs:
 
   ## PYPI
 
-  build_wheel_and_push_to_pypi:
+  build-wheel-and-push-to-pypi:
     runs-on: ubuntu-latest
     needs:
       - "tests"
     # only if a tag is pushed
     if: startsWith(github.event.ref, 'refs/tags/v')
     steps:
-      - name: Wait for tests to succeed
-        uses: lewagon/wait-on-check-action@v1.0.0
-        with:
-          ref: ${{ github.ref }}
-          check-name: "Everything is good!"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
-
       - uses: actions/checkout@master
       - name: Set up Python 3.8
         uses: actions/setup-python@v1
@@ -144,7 +138,6 @@ jobs:
           /bin/package.sh
 
       - name: Publish distribution 📦 to PyPI.
-        if: startsWith(github.ref, 'refs/tags')
         uses: pypa/gh-action-pypi-publish@master
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
