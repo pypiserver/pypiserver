@@ -9,7 +9,7 @@ from pypiserver.config import Config, RunConfig, strtobool
 
 version = __version__ = "1.5.0"
 __version_info__ = tuple(_re.split("[.-]", __version__))
-__updated__ = "2022-05-01 22:12:49"
+__updated__ = "2022-05-01 22:36:22"
 
 __title__ = "pypiserver"
 __summary__ = "A minimal PyPI server for use with pip/easy_install."
