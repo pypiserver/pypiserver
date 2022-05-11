@@ -57,7 +57,7 @@ def run_server(root, authed=False, other_cli=""):
         f"run -vvv --overwrite -i 127.0.0.1 "
         f"-p {port} {pswd_opts} {other_cli} {root}"
     )
-    proc = Popen(cmd.split(), bufsize=2 ** 16)
+    proc = Popen(cmd.split(), bufsize=2**16)
     srv = Srv(port, root)
     try:
         wait_until_ready(srv)
@@ -119,6 +119,7 @@ setup(
     options={
         "bdist_wheel": {"universal": True},
     },
+    packages=[],
 )
 """
 

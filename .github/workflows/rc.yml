@@ -1,0 +1,55 @@
+# Release Candidate GitHub Action
+
+name: release_candidate
+
+# TODO(actions):
+# - [x] create a new AUTO-RC-<DATE> branch
+# - [x] update CHANGES.rst
+# - [x] create changes commit
+# - [x] push to GH
+# - [ ] update README.rst
+# - [ ] create readme commit
+# - [ ] push to GH
+# - [ ] open a PR to `master`
+
+# TODO(general):
+# - [ ] setup the action
+# - [ ] cleanup the action
+
+on:
+  schedule:
+    - cron:  '0 0 1 * *'  # each 1st day of the month
+  workflow_dispatch:      # on manual trigger
+
+
+jobs:
+  new-rc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # Flag to fetch all history.
+          #   @see https://github.com/marketplace/actions/checkout#Fetch-all-history-for-all-tags-and-branches
+          fetch-depth: 0
+      - run: |
+          RC_DATE=$(date +'%m-%d-%Y')
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git checkout -b auto-release-candidate-${RC_DATE}
+          git push -u origin auto-release-candidate-${RC_DATE}
+
+          git status
+          git fetch
+
+          ./bin/update_changelog.sh
+
+          git add CHANGES.rst
+          git commit -m "chore(rc-changes): update Changes.rst"
+          git push
+
+          gh pr create  --title "chore(auto-release-candidate-${RC_DATE})" \
+                        --body "Automated release candidate for ${RC_DATE}." \
+                        --base master \
+                        --draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

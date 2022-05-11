@@ -47,3 +47,8 @@ __pycache__/
 .venv/
 venv/
 
+# Release Candidate Artifacts
+rc/
+
+# Various local temporary artifacts
+.tmp/

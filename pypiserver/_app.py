@@ -261,6 +261,7 @@ def handle_rpc():
 def simpleindex():
     links = sorted(config.backend.get_projects())
     tmpl = """\
+    <!DOCTYPE html>
     <html>
         <head>
             <title>Simple Index</title>
@@ -304,6 +305,7 @@ def simple(project):
     )
 
     tmpl = """\
+    <!DOCTYPE html>
     <html>
         <head>
             <title>Links for {{project}}</title>
@@ -333,6 +335,7 @@ def list_packages():
     )
 
     tmpl = """\
+    <!DOCTYPE html>
     <html>
         <head>
             <title>Index of packages</title>
