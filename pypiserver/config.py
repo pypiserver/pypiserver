@@ -879,7 +879,7 @@ class Config:
     def _adjust_old_args(args: t.Sequence[str]) -> t.List[str]:
         """Adjust args for backwards compatibility.
 
-        Should only be called once args have been verified to be unparseable.
+        Should only be called once args have been verified to be unparsable.
         """
         # Backwards compatibility hack: for most of pypiserver's life, "run"
         # and "update" were not separate subcommands. The `-U` flag being
