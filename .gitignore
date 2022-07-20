@@ -47,6 +47,10 @@ __pycache__/
 .venv/
 venv/
 
+# Temporary / runtime generated files
+traefik/
+auth/
+
 # Release Candidate Artifacts
 rc/
 
