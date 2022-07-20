@@ -1752,7 +1752,7 @@ class JSONPlugin(object):
             if isinstance(rv, dict):
                 #Attempt to serialize, raises exception on failure
                 json_response = dumps(rv)
-                #Set content type only if serialization succesful
+                #Set content type only if serialization successful
                 response.content_type = 'application/json'
                 return json_response
             elif isinstance(rv, HTTPResponse) and isinstance(rv.body, dict):
@@ -2327,7 +2327,7 @@ class ResourceManager(object):
         ''' Search for a resource and return an absolute file path, or `None`.
 
             The :attr:`path` list is searched in order. The first match is
-            returend. Symlinks are followed. The result is cached to speed up
+            returned. Symlinks are followed. The result is cached to speed up
             future lookups. '''
         if name not in self.cache or DEBUG:
             for path in self.path:

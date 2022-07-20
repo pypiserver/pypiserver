@@ -50,3 +50,9 @@ venv/
 # Temporary / runtime generated files
 traefik/
 auth/
+
+# Release Candidate Artifacts
+rc/
+
+# Various local temporary artifacts
+.tmp/

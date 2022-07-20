@@ -9,13 +9,16 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 ==============================================================================
 |pypi-ver| |test-status| |dependencies| |python-ver| |proj-license|
 
-:Version:     2.0.0dev1
-:Date:        2020-10-10
+:Version:     1.5.0
+:Date:        2020-04-25
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.org/project/pypiserver/
 :Tests:       https://github.com/pypiserver/pypiserver/actions
-:Maintainers: Kostis Anagnostopoulos <ankostis@gmail.com>,
-              Matthew Planchard <mplanchard@gmail.com>
+:Maintainers: | Kostis Anagnostopoulos <ankostis@gmail.com>,
+              | Matthew Planchard <mplanchard@gmail.com>,
+              | Dmitrii Orlov <dmtree.dev@yahoo.com>,
+              | **Someone new?** We are looking for new maintainers! 
+                <https://github.com/pypiserver/pypiserver/issues/397>
 :License:     zlib/libpng + MIT
 :Community:   https://pypiserver.zulipchat.com
 
@@ -231,7 +234,7 @@ or by adding the following lines to ``~/.pip/pip.conf``::
 
 .. Note::
    If you have installed ``pypiserver`` on a remote url without *https*
-   you wil receive an "untrusted" warning from *pip*, urging you to append
+   you will receive an "untrusted" warning from *pip*, urging you to append
    the ``--trusted-host`` option.  You can also include this option permanently
    in your configuration-files or environment variables.
 
@@ -279,7 +282,7 @@ In that case, ``pypiserver`` is responsible for authenticating the upload-reques
          http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u
 
       or if you have bogus passwords that you don't care because they are for
-      an internal service (which is still "bad", from a security prespective...)
+      an internal service (which is still "bad", from a security perspective...)
       you may use this public service:
 
          http://www.htaccesstools.com/htpasswd-generator/
@@ -396,7 +399,7 @@ previous versions of ``pypiserver`` already exist, and (optionally) uninstall th
   # VERSION-CHECK: Fails if not installed.
   pypi-server --version
 
-  # UNINSTALL: Invoke again untill it fails.
+  # UNINSTALL: Invoke again until it fails.
   pip uninstall pypiserver
 
 Installing the Very Latest Version
