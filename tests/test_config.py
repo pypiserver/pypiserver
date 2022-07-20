@@ -563,7 +563,7 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
     # ******************************************************************
     # Update subcommand args
     # ******************************************************************
-    # exeucte
+    # execute
     ConfigTestCase(
         case="Update: execute not specified",
         args=["update"],
@@ -735,7 +735,7 @@ def test_config_error(
     """Validate error cases."""
     with pytest.raises(SystemExit):
         Config.from_args(args)
-    # Unfortunatley the error text is printed before the SystemExit is
+    # Unfortunately the error text is printed before the SystemExit is
     # raised, rather than being raised _with_ the systemexit, so we
     # need to capture stderr and check it for our expected text, if
     # any was specified in the test case.

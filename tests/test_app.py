@@ -584,7 +584,7 @@ def test_search(root, testapp, search_xml, pkgs, matches):
     expected name and version matches for a search for the "test"
     package as specified by the search_xml fixture.
 
-    :param root: root temporry directory fixture; used as packages dir
+    :param root: root temporary directory fixture; used as packages dir
         for testapp
     :param testapp: webtest TestApp
     :param str search_xml: XML string roughly equivalent to a pip search

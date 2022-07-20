@@ -234,7 +234,7 @@ or by adding the following lines to ``~/.pip/pip.conf``::
 
 .. Note::
    If you have installed ``pypiserver`` on a remote url without *https*
-   you wil receive an "untrusted" warning from *pip*, urging you to append
+   you will receive an "untrusted" warning from *pip*, urging you to append
    the ``--trusted-host`` option.  You can also include this option permanently
    in your configuration-files or environment variables.
 
@@ -282,7 +282,7 @@ In that case, ``pypiserver`` is responsible for authenticating the upload-reques
          http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u
 
       or if you have bogus passwords that you don't care because they are for
-      an internal service (which is still "bad", from a security prespective...)
+      an internal service (which is still "bad", from a security perspective...)
       you may use this public service:
 
          http://www.htaccesstools.com/htpasswd-generator/
@@ -399,7 +399,7 @@ previous versions of ``pypiserver`` already exist, and (optionally) uninstall th
   # VERSION-CHECK: Fails if not installed.
   pypi-server --version
 
-  # UNINSTALL: Invoke again untill it fails.
+  # UNINSTALL: Invoke again until it fails.
   pip uninstall pypiserver
 
 Installing the Very Latest Version

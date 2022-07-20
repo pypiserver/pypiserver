@@ -278,7 +278,7 @@ def test_auto_servers() -> None:
     # adapters are defined in the AutoServer
     our_check_order = tuple(i[0] for i in __main__.AUTO_SERVER_IMPORTS)
 
-    # Some of the servers have more than one check, so we need to rmeove
+    # Some of the servers have more than one check, so we need to remove
     # duplicates before we check for identity with the AutoServer definition.
     seen: t.Dict[__main__.AutoServer, __main__.AutoServer] = {}
     our_check_order = tuple(
