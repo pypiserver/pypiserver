@@ -188,6 +188,12 @@ def test_packages_empty(testapp):
     assert len(resp.html("a")) == 0
 
 
+def test_health(testapp):
+    resp = testapp.get("/health")
+    assert resp.status_int == 200
+    assert "Ok" in resp
+
+
 def test_favicon(testapp):
     testapp.get("/favicon.ico", status=404)
 
