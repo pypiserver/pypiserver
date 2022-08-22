@@ -7,9 +7,9 @@ Changelog
 1.5.1rc08-01-2022 (__rc__)
 --------------------------
 
-- 61e4487 feat: add extremely basic /health endpoint (#396)
-- 640a748 Add traefik/ and auth/ dirs to gitignore (#398)
-- a67829e chore: Fix typos (#431)
+- 61e4487 ENH: add extremely basic /health endpoint (#396)
+- 640a748 CHORE: Add traefik/ and auth/ dirs to gitignore (#398)
+- a67829e CHORE: Fix typos (#431)
 
 1.5.0 (2022-05-01)
 ------------------
