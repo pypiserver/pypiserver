@@ -10,7 +10,7 @@ pypiserver - minimal PyPI server for use with pip/easy_install
 |pypi-ver| |test-status| |dependencies| |python-ver| |proj-license|
 
 :Version:     1.5.0
-:Date:        2020-04-25
+:Date:        2022-08-22
 :Source:      https://github.com/pypiserver/pypiserver
 :PyPI:        https://pypi.org/project/pypiserver/
 :Tests:       https://github.com/pypiserver/pypiserver/actions
