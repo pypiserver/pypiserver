@@ -5,7 +5,7 @@ import re
 import xml.dom.minidom
 import xmlrpc.client as xmlrpclib
 import zipfile
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from io import BytesIO
 from urllib.parse import urljoin, urlparse
 from json import dumps
@@ -391,16 +391,23 @@ def json_info(project):
     if not packages:
         raise HTTPError(404, f"package {project} not found")
 
-    links = [pkg.relfn_unix for pkg in packages]
+    package_links = defaultdict(list)
+    for pkg in packages:
+        package_links[pkg.version].append(pkg.relfn_unix)
+    #links = [pkg.relfn_unix for pkg in packages]
 
     latest_version = packages[0].version
     releases = {}
     req_url = request.url
     for package in packages:
+        matching_links = []
+        for version, links in package_links.items():
+            if version == package.version:
+                matching_links += links
         releases[package.version] = [
             {"url": urljoin(req_url, "../../packages/" + link),
              "digests": {"sha256": config.backend.digest_sha256(package, os.path.join(package.root, link))}}
-            for link in links
+            for link in matching_links
         ]
     rv = {"info": {"version": latest_version}, "releases": releases}
     response.content_type = "application/json"
