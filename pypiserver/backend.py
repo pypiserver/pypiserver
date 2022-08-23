@@ -106,7 +106,7 @@ class Backend(IBackend, abc.ABC):
             return None
         if file_name is None:
             file_name = pkg.fn
-        return digest_file(file_name, "sha256")
+        return digest_file(file_name, "sha256", ":")
 
     def package_count(self) -> int:
         """Return a count of all available packages. When implementing a Backend
@@ -259,12 +259,13 @@ def valid_packages(root: Path, files: t.Iterable[Path]) -> t.Iterator[PkgFile]:
 
 
 @functools.lru_cache(maxsize=1000)
-def digest_file(file_path: PathLike, hash_algo: str) -> str:
+def digest_file(file_path: PathLike, hash_algo: str, seperator="=") -> str:
     """
     Reads and digests a file according to specified hashing-algorith.
 
     :param file_path: path to a file on disk
     :param hash_algo: any algo contained in :mod:`hashlib`
+    :param seperator: the seperator to use between hash_algor and the hash
     :return: <hash_algo>=<hex_digest>
 
     From http://stackoverflow.com/a/21565932/548792
@@ -274,7 +275,7 @@ def digest_file(file_path: PathLike, hash_algo: str) -> str:
     with open(file_path, "rb") as f:
         for block in iter(lambda: f.read(blocksize), b""):
             digester.update(block)
-    return f"{hash_algo}={digester.hexdigest()}"
+    return f"{hash_algo}{seperator}{digester.hexdigest()}"
 
 
 def get_file_backend(config: "Configuration") -> Backend:
