@@ -373,6 +373,8 @@ def server_static(filename):
 
 
 @app.route("/:project/json")
+@app.route("/pypi/:project/json")
+@app.route("/simple/:project/json")
 @auth("list")
 def json_info(project):
     # PEP 503: require normalized project
@@ -389,12 +391,16 @@ def json_info(project):
     if not packages:
         raise HTTPError(404, f"package {project} not found")
 
+    links = [pkg.relfn_unix for pkg in packages]
+
     latest_version = packages[0].version
     releases = {}
     req_url = request.url
-    for x in packages:
-        releases[x.version] = [
-            {"url": urljoin(req_url, "../../packages/" + x.relfn)}
+    for package in packages:
+        releases[package.version] = [
+            {"url": urljoin(req_url, "../../packages/" + link),
+             "digests": {"sha256": config.backend.digest_sha256(package, os.path.join(package.root, link))}}
+            for link in links
         ]
     rv = {"info": {"version": latest_version}, "releases": releases}
     response.content_type = "application/json"

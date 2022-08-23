@@ -18,9 +18,7 @@ from .pkg_helpers import (
 if t.TYPE_CHECKING:
     from .config import _ConfigCommon as Configuration
 
-
 log = logging.getLogger(__name__)
-
 
 PathLike = t.Union[str, os.PathLike]
 
@@ -48,6 +46,10 @@ class IBackend(abc.ABC):
 
     @abc.abstractmethod
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
+        pass
+
+    @abc.abstractmethod
+    def digest_sha256(self, pkg: PkgFile, file_name: str = None) -> t.Optional[str]:
         pass
 
     @abc.abstractmethod
@@ -98,6 +100,13 @@ class Backend(IBackend, abc.ABC):
         if self.hash_algo is None or pkg.fn is None:
             return None
         return digest_file(pkg.fn, self.hash_algo)
+
+    def digest_sha256(self, pkg: PkgFile, file_name: str = None):
+        if pkg.fn is None:
+            return None
+        if file_name is None:
+            file_name = pkg.fn
+        return digest_file(file_name, "sha256")
 
     def package_count(self) -> int:
         """Return a count of all available packages. When implementing a Backend
@@ -171,9 +180,9 @@ class SimpleFileBackend(Backend):
 
 class CachingFileBackend(SimpleFileBackend):
     def __init__(
-        self,
-        config: "Configuration",
-        cache_manager: t.Optional[CacheManager] = None,
+            self,
+            config: "Configuration",
+            cache_manager: t.Optional[CacheManager] = None,
     ):
         super().__init__(config)
 
@@ -204,7 +213,7 @@ def write_file(fh: t.BinaryIO, destination: PathLike) -> None:
     """write a byte stream into a destination file. Writes are chunked to reduce
     the memory footprint
     """
-    chunk_size = 2**20  # 1 MB
+    chunk_size = 2 ** 20  # 1 MB
     offset = fh.tell()
     try:
         with open(destination, "wb") as dest:
@@ -245,10 +254,11 @@ def valid_packages(root: Path, files: t.Iterable[Path]) -> t.Iterator[PkgFile]:
                 version=version,
                 fn=fn,
                 root=root_name,
-                relfn=fn[len(root_name) + 1 :],
+                relfn=fn[len(root_name) + 1:],
             )
 
 
+@functools.lru_cache(maxsize=1000)
 def digest_file(file_path: PathLike, hash_algo: str) -> str:
     """
     Reads and digests a file according to specified hashing-algorith.
@@ -279,7 +289,7 @@ PkgFunc = t.TypeVar("PkgFunc", bound=t.Callable[..., t.Iterable[PkgFile]])
 def with_digester(func: PkgFunc) -> PkgFunc:
     @functools.wraps(func)
     def add_digester_method(
-        self: "BackendProxy", *args: t.Any, **kwargs: t.Any
+            self: "BackendProxy", *args: t.Any, **kwargs: t.Any
     ) -> t.Iterable[PkgFile]:
         packages = func(self, *args, **kwargs)
         for package in packages:
@@ -323,3 +333,6 @@ class BackendProxy(IBackend):
 
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
         return self.backend.digest(pkg)
+
+    def digest_sha256(self, pkg: PkgFile, file_name: str = None):
+        return self.backend.digest_sha256(pkg, file_name)
