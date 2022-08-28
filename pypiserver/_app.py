@@ -82,8 +82,35 @@ def log_error(http_error):
     log.info(config.log_err_frmt, vars(http_error))
 
 
-@app.route("/health")
+_health_check_endpoint_re = re.compile(r"^/[a-z0-9/_-]+$", re.I)
+
+
+def is_valid_health_check_endpoint(endpoint: str) -> bool:
+    # Avoid health check route uses reserved endpoints
+    invalid_prefixes = ["/simple", "/packages", "/RPC2"]
+    for prefix in invalid_prefixes:
+        if endpoint.startswith(prefix):
+            return False
+    return _health_check_endpoint_re.fullmatch(endpoint) is not None
+
+
+def get_health_endpoint():
+    """ Get the liveness endpoint from the environment variable
+         `HEALTH_ENDPOINT` and verify it.
+        If the customized endpoint is invalied, it will fallback to the
+         DEFAULT_HEALTH_ENDPOINT. """
+
+    DEFAULT_HEALTH_ENDPOINT = "/health"
+    customized_endpoint = os.environ.get("HEALTH_ENDPOINT", DEFAULT_HEALTH_ENDPOINT)
+    if not is_valid_health_check_endpoint(customized_endpoint):
+        return DEFAULT_HEALTH_ENDPOINT
+    return customized_endpoint
+
+
+@app.route(get_health_endpoint())
 def health():
+    """ This endpoint should always response 200 OK,
+        otherwise means that the service is unhealthy or dead. """
     return "Ok"
 
 
