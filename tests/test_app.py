@@ -41,6 +41,22 @@ def testapp(app):
     return webtest.TestApp(app)
 
 
+def testapp_with_env(tmpdir):
+    """ Similar to testapp but with environment
+        please monkeypatch environment variable before create testapp. """
+    from pypiserver import app
+
+    bottle.debug(True)
+    return webtest.TestApp(
+        app(
+            roots=[pathlib.Path(tmpdir.strpath)],
+            authenticate=[],
+            password_file=".",
+            backend_arg="simple-dir",
+        )
+    )
+
+
 @pytest.fixture
 def root(tmpdir):
     """Return a pytest temporary directory"""
@@ -188,7 +204,25 @@ def test_packages_empty(testapp):
     assert len(resp.html("a")) == 0
 
 
-def test_health(testapp):
+def test_health_default_endpoint(testapp):
+    resp = testapp.get("/health")
+    assert resp.status_int == 200
+    assert "Ok" in resp
+
+
+def test_health_customized_endpoint(monkeypatch, tmpdir):
+    monkeypatch.setenv("HEALTH_ENDPOINT", "/healthz")
+    testapp = testapp_with_env(tmpdir)
+
+    resp = testapp.get("/healthz")
+    assert resp.status_int == 200
+    assert "Ok" in resp
+
+
+def test_health_invalid_customized_endpoint(monkeypatch, tmpdir):
+    monkeypatch.setenv("HEALTH_ENDPOINT", "/:health")
+    testapp = testapp_with_env(tmpdir)
+
     resp = testapp.get("/health")
     assert resp.status_int == 200
     assert "Ok" in resp
