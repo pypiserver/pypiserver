@@ -109,8 +109,8 @@ def get_health_endpoint():
 
 @app.route(get_health_endpoint())
 def health():
-    """ This endpoint should always response 200 OK,
-        otherwise means that the service is unhealthy or dead. """
+    """This endpoint should always response 200 OK,
+    otherwise means that the service is unhealthy or dead."""
     return "Ok"
 
 

@@ -42,8 +42,8 @@ def testapp(app):
 
 
 def testapp_with_env(tmpdir):
-    """ Similar to testapp but with environment
-        please monkeypatch environment variable before create testapp. """
+    """Similar to testapp but with environment
+    please monkeypatch environment variable before create testapp."""
     from pypiserver import app
 
     bottle.debug(True)
