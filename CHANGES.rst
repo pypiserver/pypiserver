@@ -4,6 +4,13 @@ Changelog
 2.0.0 (tbd)
 -----------
 
+1.5.1rc09-01-2022 (__rc__)
+--------------------------
+
+- 61e4487 feat: add extremely basic /health endpoint (#396)
+- 640a748 Add traefik/ and auth/ dirs to gitignore (#398)
+- a67829e chore: Fix typos (#431)
+
 1.5.0 (2022-05-01)
 ------------------
 
