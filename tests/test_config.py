@@ -369,6 +369,28 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         exp_config_type=RunConfig,
         exp_config_values={"fallback_url": "foobar.com"},
     ),
+    # health-endpoint
+    ConfigTestCase(
+        case="Run: health-endpoint unspecified",
+        args=["run"],
+        legacy_args=[],
+        exp_config_type=RunConfig,
+        exp_config_values={"health_endpoint": DEFAULTS.HEALTH_ENDPOINT},
+    ),
+    ConfigTestCase(
+        case="Run: health-endpoint specified",
+        args=["run", "--health-endpoint", "/healthz"],
+        legacy_args=["--health-endpoint", "/healthz"],
+        exp_config_type=RunConfig,
+        exp_config_values={"health_endpoint": "/healthz"},
+    ),
+    ConfigTestCase(
+        case="Run: health-endpoint specified but invalid",
+        args=["run", "--health-endpoint", "/health!"],
+        legacy_args=["--health-endpoint", "/health!"],
+        exp_config_type=RunConfig,
+        exp_config_values={"health_endpoint": DEFAULTS.HEALTH_ENDPOINT},
+    ),
     # server method
     ConfigTestCase(
         case="Run: server method unspecified",

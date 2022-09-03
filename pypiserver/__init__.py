@@ -5,7 +5,7 @@ import sys
 import typing as t
 
 from pypiserver.bottle import Bottle
-from pypiserver.config import Config, RunConfig, strtobool
+from pypiserver.config import DEFAULTS, Config, RunConfig, strtobool
 
 version = __version__ = "1.5.0"
 __version_info__ = tuple(_re.split("[.-]", __version__))
@@ -114,6 +114,15 @@ def backwards_compat_kwargs(kwargs: dict, warn: bool = True) -> dict:
     return updated_kwargs
 
 
+def _get_health_endpoint(config: RunConfig, app: Bottle) -> str:
+    """Verify the health_endpoint and fallback to default if invalid."""
+    # Avoid health check route uses exist endpoints
+    for rule in (route.rule for route in app.routes if route.rule != "/"):
+        if config.health_endpoint.startswith(rule):
+            return DEFAULTS.HEALTH_ENDPOINT
+    return config.health_endpoint
+
+
 def app(**kwargs: t.Any) -> Bottle:
     """Construct a bottle app running pypiserver.
 
@@ -138,6 +147,8 @@ def app_from_config(config: RunConfig) -> Bottle:
     # Add a reference to our config on the Bottle app for easy access in testing
     # and other contexts.
     _app.app._pypiserver_config = config
+    # add customized health check endpoint
+    _app.app.route(_get_health_endpoint(config, _app.app), "GET", lambda: "Ok")
     return _app.app
 
 

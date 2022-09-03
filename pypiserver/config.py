@@ -76,6 +76,7 @@ class DEFAULTS:
 
     AUTHENTICATE = ["update"]
     FALLBACK_URL = "https://pypi.org/simple/"
+    HEALTH_ENDPOINT = "/health"
     HASH_ALGO = "md5"
     INTERFACE = "0.0.0.0"
     LOG_FRMT = "%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s"
@@ -132,6 +133,14 @@ def hash_algo_arg(arg: str) -> t.Optional[str]:
         f"of {hashlib.algorithms_available}, or turn off hashing by "
         "setting --hash-algo to 'off', '0', or 'false'"
     )
+
+
+def health_endpoint_arg(arg: str) -> str:
+    """Verify the health_endpoint and fallback to default if invalid."""
+    # Only allow alphanumeric, hyphen, forward slash, and underscore
+    if re.fullmatch(r"^/[a-z0-9/_-]+$", arg, re.I) is None:
+        return DEFAULTS.HEALTH_ENDPOINT
+    return arg
 
 
 def html_file_arg(arg: t.Optional[str]) -> str:
@@ -380,6 +389,15 @@ def get_parser() -> argparse.ArgumentParser:
         help=(
             "Redirect to FALLBACK_URL for packages not found in the local "
             "index."
+        ),
+    )
+    run_parser.add_argument(
+        "--health-endpoint",
+        default=DEFAULTS.HEALTH_ENDPOINT,
+        type=health_endpoint_arg,
+        help=(
+            "The liveness endpoint. Always response 200 OK, otherwise means"
+            "that the service is unhealthy or dead."
         ),
     )
     run_parser.add_argument(
@@ -658,6 +676,7 @@ class RunConfig(_ConfigCommon):
         password_file: t.Optional[str],
         disable_fallback: bool,
         fallback_url: str,
+        health_endpoint: str,
         server_method: str,
         overwrite: bool,
         welcome_msg: str,
@@ -676,6 +695,7 @@ class RunConfig(_ConfigCommon):
         self.password_file = password_file
         self.disable_fallback = disable_fallback
         self.fallback_url = fallback_url
+        self.health_endpoint = health_endpoint
         self.server_method = server_method
         self.overwrite = overwrite
         self.welcome_msg = welcome_msg
@@ -700,6 +720,7 @@ class RunConfig(_ConfigCommon):
             "password_file": namespace.passwords,
             "disable_fallback": namespace.disable_fallback,
             "fallback_url": namespace.fallback_url,
+            "health_endpoint": namespace.health_endpoint,
             "server_method": namespace.server,
             "overwrite": namespace.overwrite,
             "welcome_msg": namespace.welcome,
