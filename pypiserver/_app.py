@@ -394,7 +394,7 @@ def json_info(project):
     package_links = defaultdict(list)
     for pkg in packages:
         package_links[pkg.version].append(pkg.relfn_unix)
-    #links = [pkg.relfn_unix for pkg in packages]
+    # links = [pkg.relfn_unix for pkg in packages]
 
     latest_version = packages[0].version
     releases = {}
@@ -405,8 +405,14 @@ def json_info(project):
             if version == package.version:
                 matching_links += links
         releases[package.version] = [
-            {"url": urljoin(req_url, "../../packages/" + link),
-             "digests": {"sha256": config.backend.digest_sha256(package, os.path.join(package.root, link))}}
+            {
+                "url": urljoin(req_url, "../../packages/" + link),
+                "digests": {
+                    "sha256": config.backend.digest_sha256(
+                        package, os.path.join(package.root, link)
+                    )
+                },
+            }
             for link in matching_links
         ]
     rv = {"info": {"version": latest_version}, "releases": releases}

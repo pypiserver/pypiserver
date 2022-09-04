@@ -49,7 +49,9 @@ class IBackend(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def digest_sha256(self, pkg: PkgFile, file_name: str = None) -> t.Optional[str]:
+    def digest_sha256(
+        self, pkg: PkgFile, file_name: str = None
+    ) -> t.Optional[str]:
         pass
 
     @abc.abstractmethod
@@ -180,9 +182,9 @@ class SimpleFileBackend(Backend):
 
 class CachingFileBackend(SimpleFileBackend):
     def __init__(
-            self,
-            config: "Configuration",
-            cache_manager: t.Optional[CacheManager] = None,
+        self,
+        config: "Configuration",
+        cache_manager: t.Optional[CacheManager] = None,
     ):
         super().__init__(config)
 
@@ -213,7 +215,7 @@ def write_file(fh: t.BinaryIO, destination: PathLike) -> None:
     """write a byte stream into a destination file. Writes are chunked to reduce
     the memory footprint
     """
-    chunk_size = 2 ** 20  # 1 MB
+    chunk_size = 2**20  # 1 MB
     offset = fh.tell()
     try:
         with open(destination, "wb") as dest:
@@ -254,7 +256,7 @@ def valid_packages(root: Path, files: t.Iterable[Path]) -> t.Iterator[PkgFile]:
                 version=version,
                 fn=fn,
                 root=root_name,
-                relfn=fn[len(root_name) + 1:],
+                relfn=fn[len(root_name) + 1 :],
             )
 
 
@@ -290,7 +292,7 @@ PkgFunc = t.TypeVar("PkgFunc", bound=t.Callable[..., t.Iterable[PkgFile]])
 def with_digester(func: PkgFunc) -> PkgFunc:
     @functools.wraps(func)
     def add_digester_method(
-            self: "BackendProxy", *args: t.Any, **kwargs: t.Any
+        self: "BackendProxy", *args: t.Any, **kwargs: t.Any
     ) -> t.Iterable[PkgFile]:
         packages = func(self, *args, **kwargs)
         for package in packages:
