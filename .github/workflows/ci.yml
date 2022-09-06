@@ -5,13 +5,11 @@ name: CI
 on:
   # This will run when any branch or tag is pushed
   push:
-    # standalone is an old branch containing a fully functional pypiserver
-    # executable, from back in the day before docker & a better pip.
-    branches-ignore:
-      - standalone
+    branches:
+      - "master"
     tags:
       - "v**"
-  # Allowing to run on fork pull requests
+  # Allowing to run on fork and other pull requests
   pull_request:
 
 jobs:
