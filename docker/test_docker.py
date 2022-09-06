@@ -147,7 +147,8 @@ def uninstall_pkgs() -> None:
     """Uninstall any packages we've installed."""
     res = run("pip", "freeze", capture=True)
     if any(
-        ln.strip().startswith(TEST_DEMO_PIP_PACKAGE) for ln in res.out.splitlines()
+        ln.strip().startswith(TEST_DEMO_PIP_PACKAGE)
+        for ln in res.out.splitlines()
     ):
         run("pip", "uninstall", "-y", TEST_DEMO_PIP_PACKAGE)
 
@@ -333,7 +334,7 @@ class TestBasics:
             ".",
             "--authenticate",
             ".",
-            *request.param,  # type: ignore
+            *request.param,
         )
         res = run(*args, capture=True)
         wait_for_container(port)
