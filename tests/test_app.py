@@ -197,7 +197,9 @@ def test_health_default_endpoint(testapp):
 def test_health_customized_endpoint(root):
     from pypiserver import app
 
-    testapp = webtest.TestApp(app(root=root.strpath, health_endpoint="/healthz"))
+    testapp = webtest.TestApp(
+        app(root=root.strpath, health_endpoint="/healthz")
+    )
     resp = testapp.get("/healthz")
     assert resp.status_int == 200
     assert "Ok" in resp
