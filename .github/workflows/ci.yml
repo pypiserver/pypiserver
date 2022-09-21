@@ -15,7 +15,7 @@ on:
   pull_request:
 
 jobs:
-  test-cpython:
+  test-python:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -29,8 +29,7 @@ jobs:
       - name: Install dependencies
         run: pip install tox
       - name: Run tests
-        run: |
-          tox -e py
+        run: tox -e py
 
   check:
     # These checks only need to be done once, not for every python version we s
@@ -87,8 +86,7 @@ jobs:
     needs:
       - "check"
       - "test-docker"
-      - "test-cpython"
-      - "test-pypy"
+      - "test-python"
     steps:
       - name: "Everything is good!"
         run: "echo true"
