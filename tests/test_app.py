@@ -207,11 +207,8 @@ def test_health_customized_endpoint(root):
 def test_health_invalid_customized_endpoint(root):
     from pypiserver import app
 
-    _app = app(root=root.strpath, health_endpoint="/simple")
-    testapp = webtest.TestApp(_app)
-    resp = testapp.get("/health")
-    assert resp.status_int == 200
-    assert "Ok" in resp
+    with pytest.raises(RuntimeError, match="overlaps with existing routes"):
+        app(root=root.strpath, health_endpoint="/simple")
 
 
 def test_favicon(testapp):

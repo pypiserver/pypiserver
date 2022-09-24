@@ -114,15 +114,6 @@ def backwards_compat_kwargs(kwargs: dict, warn: bool = True) -> dict:
     return updated_kwargs
 
 
-def _get_health_endpoint(config: RunConfig, app: Bottle) -> str:
-    """Verify the health_endpoint and fallback to default if invalid."""
-    # Avoid health check route uses exist endpoints
-    for rule in (route.rule for route in app.routes if route.rule != "/"):
-        if config.health_endpoint.startswith(rule):
-            return DEFAULTS.HEALTH_ENDPOINT
-    return config.health_endpoint
-
-
 def app(**kwargs: t.Any) -> Bottle:
     """Construct a bottle app running pypiserver.
 
@@ -130,7 +121,7 @@ def app(**kwargs: t.Any) -> Bottle:
         (or its base), defined in `pypiserver.config`, may be overridden.
     """
     config = Config.default_with_overrides(**backwards_compat_kwargs(kwargs))
-    return app_from_config(config)
+    return setup_routes_from_config(app_from_config(config), config)
 
 
 def app_from_config(config: RunConfig) -> Bottle:
@@ -161,6 +152,8 @@ def setup_routes_from_config(app: Bottle, config: RunConfig) -> Bottle:
 
     _setup_health_endpoint(app, config)
     return app
+
+
 T = t.TypeVar("T")
 
 
