@@ -48,12 +48,12 @@ from distutils.util import strtobool as strtoint
 import pkg_resources
 
 from pypiserver.backend import (
-    Backend,
-    BackendProxy,
-    CachingFileBackend,
-    IBackend,
     SimpleFileBackend,
+    CachingFileBackend,
+    Backend,
+    IBackend,
     get_file_backend,
+    BackendProxy,
 )
 
 # The `passlib` requirement is optional, so we need to verify its import here.
