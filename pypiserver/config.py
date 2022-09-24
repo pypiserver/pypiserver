@@ -136,11 +136,16 @@ def hash_algo_arg(arg: str) -> t.Optional[str]:
 
 
 def health_endpoint_arg(arg: str) -> str:
-    """Verify the health_endpoint and fallback to default if invalid."""
-    # Only allow alphanumeric, hyphen, forward slash, and underscore
-    if re.fullmatch(r"^/[a-z0-9/_-]+$", arg, re.I) is None:
-        return DEFAULTS.HEALTH_ENDPOINT
-    return arg
+    """Verify the health_endpoint and raises ValueError if invalid."""
+    rule_regex = r"^/[a-z0-9/_-]+$"
+    if re.fullmatch(rule_regex, arg, re.I) is not None:
+        return arg
+
+    raise argparse.ArgumentTypeError(
+        "Invalid path for the health endpoint. Make sure that it contains only "
+        "alphanumeric characters, hyphens, forward slashes and underscores."
+        f"In other words, make sure to match the following regex: {rule_regex}"
+    )
 
 
 def html_file_arg(arg: t.Optional[str]) -> str:
