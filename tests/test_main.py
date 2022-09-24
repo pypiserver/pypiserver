@@ -294,3 +294,20 @@ def test_auto_servers() -> None:
         us.name.lower() in them
         for us, them in zip(our_check_order, bottle_adapters)
     )
+
+
+def test_health_endpoint_default(main):
+    main([])
+    assert main.app._pypiserver_config.health_endpoint == "/health"
+    assert "/health" in (route.rule for route in main.app.routes)
+
+
+def test_health_endpoint_customized(main):
+    main(["--health-endpoint", "/healthz"])
+    assert main.app._pypiserver_config.health_endpoint == "/healthz"
+    assert "/healthz" in (route.rule for route in main.app.routes)
+
+
+def test_health_endpoint_invalid_customized(main):
+    with pytest.raises(SystemExit):
+        main(["--health-endpoint", "/health!"])
