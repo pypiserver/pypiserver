@@ -396,8 +396,8 @@ def get_parser() -> argparse.ArgumentParser:
         default=DEFAULTS.HEALTH_ENDPOINT,
         type=health_endpoint_arg,
         help=(
-            "The liveness endpoint. Always response 200 OK, otherwise means"
-            "that the service is unhealthy or dead."
+            "Configure a custom liveness endpoint. It always returns 200 OK if the service is up." 
+            "Otherwise it means that the service is unhealthy or dead."
         ),
     )
     run_parser.add_argument(
