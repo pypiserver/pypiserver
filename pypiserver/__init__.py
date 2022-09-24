@@ -5,7 +5,7 @@ import sys
 import typing as t
 
 from pypiserver.bottle import Bottle
-from pypiserver.config import DEFAULTS, Config, RunConfig, strtobool
+from pypiserver.config import Config, RunConfig, strtobool
 
 version = __version__ = "1.5.0"
 __version_info__ = tuple(_re.split("[.-]", __version__))
