@@ -917,6 +917,36 @@ Installing packages from the REPL of an embedded device works in this way:
 
 Further information on micropython-packaging can be found here: https://docs.micropython.org/en/latest/reference/packages.html
 
+Custom Health Check Endpoint
+----------------------------
+
+pypiserver provide a default health endpoint. `/health`
+It always returns 200 Ok if the service is up. Otherwise it means that the 
+service is dead.
+
+pypiserver also allow users to customize the health endpoint. (see `#441 <https://github.com/pypiserver/pypiserver/issues/441>`_).
+Alphanumeric characters, hyphens, forward slashes and underscores are allowed.
+Such as: `/healthz`, `/health/live-1`, `/api_health`, `/action/health`
+
+Configure a custom health endpoint by CLI arguments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Run pypiserver with argument::
+
+    pypi-server --health-endpoint /action/health
+
+Configure a custom health endpoint by script
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    import pypiserver
+    from pypiserver import bottle
+    app = pypiserver.app(root="./packages", health_endpoint="/action/health")
+    bottle.run(app=app, host="0.0.0.0", port=8080, server="auto")
+
+Try `curl http://localhost:8080/action/health`
+
 
 Sources
 =======
