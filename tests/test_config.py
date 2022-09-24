@@ -747,7 +747,7 @@ def test_config(
 @pytest.mark.parametrize(
     "args, exp_txt",
     CONFIG_ERROR_PARAMS,
-    ids=CONFIG_TEST_IDS,
+    ids=CONFIG_ERROR_IDS,
 )
 def test_config_error(
     args: t.List[str],
