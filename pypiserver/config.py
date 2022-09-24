@@ -143,7 +143,7 @@ def health_endpoint_arg(arg: str) -> str:
 
     raise argparse.ArgumentTypeError(
         "Invalid path for the health endpoint. Make sure that it contains only "
-        "alphanumeric characters, hyphens, forward slashes and underscores."
+        "alphanumeric characters, hyphens, forward slashes and underscores. "
         f"In other words, make sure to match the following regex: {rule_regex}"
     )
 
