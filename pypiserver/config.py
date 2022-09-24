@@ -48,12 +48,12 @@ from distutils.util import strtobool as strtoint
 import pkg_resources
 
 from pypiserver.backend import (
-    SimpleFileBackend,
-    CachingFileBackend,
     Backend,
-    IBackend,
-    get_file_backend,
     BackendProxy,
+    CachingFileBackend,
+    IBackend,
+    SimpleFileBackend,
+    get_file_backend,
 )
 
 # The `passlib` requirement is optional, so we need to verify its import here.
@@ -396,8 +396,8 @@ def get_parser() -> argparse.ArgumentParser:
         default=DEFAULTS.HEALTH_ENDPOINT,
         type=health_endpoint_arg,
         help=(
-            "Configure a custom liveness endpoint. It always returns 200 OK if the service is up." 
-            "Otherwise it means that the service is unhealthy or dead."
+            "Configure a custom liveness endpoint. It always returns 200 Ok if "
+            "the service is up. Otherwise it means that the service is dead."
         ),
     )
     run_parser.add_argument(
