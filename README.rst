@@ -920,18 +920,17 @@ Further information on micropython-packaging can be found here: https://docs.mic
 Custom Health Check Endpoint
 ----------------------------
 
-pypiserver provide a default health endpoint. `/health`
-It always returns 200 Ok if the service is up. Otherwise it means that the 
-service is dead.
+pypiserver provide a default health endpoint. ``/health`` It always returns
+``200 Ok`` if the service is up. Otherwise it means that the service is dead.
 
 pypiserver also allow users to customize the health endpoint. (see `#441 <https://github.com/pypiserver/pypiserver/issues/441>`_).
 Alphanumeric characters, hyphens, forward slashes and underscores are allowed.
-Such as: `/healthz`, `/health/live-1`, `/api_health`, `/action/health`
+Valid example: `/healthz`, `/health/live-1`, `/api_health`, `/action/health`
 
 Configure a custom health endpoint by CLI arguments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Run pypiserver with argument::
+Run pypiserver with ``--health-endpoint`` argument::
 
     pypi-server --health-endpoint /action/health
 
