@@ -147,11 +147,20 @@ def app_from_config(config: RunConfig) -> Bottle:
     # Add a reference to our config on the Bottle app for easy access in testing
     # and other contexts.
     _app.app._pypiserver_config = config
-    # add customized health check endpoint
-    _app.app.route(_get_health_endpoint(config, _app.app), "GET", lambda: "Ok")
     return _app.app
 
 
+def setup_routes_from_config(app: Bottle, config: RunConfig) -> Bottle:
+    """Set up additional routes supplied from the config."""
+    def _setup_health_endpoint(app, config):
+        if config.health_endpoint in [route.rule for route in app.routes]:
+            raise RuntimeError(
+                "Provided health endpoint overlaps with existing routes"
+            )
+        app.route(config.health_endpoint, "GET", lambda: "Ok")
+
+    _setup_health_endpoint(app, config)
+    return app
 T = t.TypeVar("T")
 
 
