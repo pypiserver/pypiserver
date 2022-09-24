@@ -705,6 +705,14 @@ _CONFIG_ERROR_CASES = (
         )
         for val in ("true", "foo", "1", "md6")
     ),
+    *(
+        ConfigErrorCase(
+            case=f"Invalid health endpoint: {val}",
+            args=["run", "--health-endpoint", val],
+            exp_txt="Invalid path for the health endpoint",
+        )
+        for val in ("/", "health", "/health!", "/:health", "/health?check=True")
+    ),
 )
 # pylint: disable=unsubscriptable-object
 CONFIG_ERROR_PARAMS = (i[1:] for i in _CONFIG_ERROR_CASES)
