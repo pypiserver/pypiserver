@@ -384,13 +384,6 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         exp_config_type=RunConfig,
         exp_config_values={"health_endpoint": "/healthz"},
     ),
-    ConfigTestCase(
-        case="Run: health-endpoint specified but invalid",
-        args=["run", "--health-endpoint", "/health!"],
-        legacy_args=["--health-endpoint", "/health!"],
-        exp_config_type=RunConfig,
-        exp_config_values={"health_endpoint": DEFAULTS.HEALTH_ENDPOINT},
-    ),
     # server method
     ConfigTestCase(
         case="Run: server method unspecified",
