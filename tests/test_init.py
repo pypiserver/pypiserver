@@ -106,7 +106,7 @@ def test_backwards_compat_kwargs_duplicate_check(
     assert "('redirect_to_fallback', 'disable_fallback')" in str(err.value)
 
 
-def test_setup_routes_from_config_customized_endpoint():
+def test_setup_routes_from_config_customized_endpoint() -> None:
     _app = pypiserver.setup_routes_from_config(
         pypiserver.app(),
         Config.default_with_overrides(health_endpoint="/healthz"),
@@ -114,7 +114,7 @@ def test_setup_routes_from_config_customized_endpoint():
     assert "/healthz" in (route.rule for route in _app.routes)
 
 
-def test_setup_routes_from_config_invalid_customized_endpoint():
+def test_setup_routes_from_config_invalid_customized_endpoint() -> None:
     with pytest.raises(RuntimeError, match="overlaps with existing routes"):
         pypiserver.setup_routes_from_config(
             pypiserver.app(),
