@@ -329,13 +329,6 @@ following command, assuming you have *git* installed on your ``PATH``::
 
   pip install git+git://github.com/pypiserver/pypiserver.git
 
-Running on Heroku/Dotcloud
---------------------------
-
-https://github.com/dexterous/pypiserver-on-the-cloud contains
-instructions on how to run ``pypiserver`` on one of the supported cloud
-service providers.
-
 
 Recipes
 =======
