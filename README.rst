@@ -92,128 +92,37 @@ not officially supported, and will not receive bugfixes or new features.
 
 4. Enter ``pypi-server -h`` in the cmd-line to print a detailed usage message::
 
-    pypi-server [OPTIONS] [PACKAGES_DIRECTORY...]
-      start PyPI compatible package server serving packages from
-      PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the
-      command line, it uses the default ~/packages. pypiserver scans this
-      directory recursively for packages. It skips packages and
-      directories starting with a dot. Multiple package directories can be
-      specified.
+    start PyPI compatible package server serving packages from PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the command line, it uses the default ~/packages. pypiserver scans this directory recursively for packages. It skips packages and directories starting with a dot. Multiple package directories may be specified.
 
-    pypi-server understands the following options:
+    positional arguments:
+      {run,update}
+        run                 Run pypiserver, serving packages from
+                            PACKAGES_DIRECTORY
+        update              Handle updates of packages managed by pypiserver. By
+                            default, a pip command to update the packages is
+                            printed to stdout for introspection or pipelining. See
+                            the `-x` option for updating packages directly.
 
-      -p, --port PORT
-        Listen on port PORT (default: 8080).
+    options:
+      -h, --help            show this help message and exit
+      -v, --verbose         Enable verbose logging; repeat for more verbosity.
+      --log-file FILE       Write logging info into this FILE, as well as to
+                            stdout or stderr, if configured.
+      --log-stream STREAM   Log messages to the specified STREAM. Valid values are
+                            stdout, stderr, and none
+      --log-frmt FORMAT     The logging format-string.  (see `logging.LogRecord`
+                            class from standard python library)
+      --hash-algo HASH_ALGO
+                            Any `hashlib` available algorithm to use for
+                            generating fragments on package links. Can be disabled
+                            with one of (0, no, off, false).
+      --backend {auto,simple-dir,cached-dir}
+                            A backend implementation. Keep the default 'auto' to
+                            automatically determine whether to activate caching or
+                            not
+      --version             show program's version number and exit
 
-      -i, --interface INTERFACE
-        Listen on interface INTERFACE (default: 0.0.0.0, any interface).
-
-      -a, --authenticate (update|download|list), ...
-        Comma-separated list of (case-insensitive) actions to authenticate.
-        Requires to have set the password (-P option).
-        To password-protect package downloads (in addition to uploads) while
-        leaving listings public, use:
-          -P foo/htpasswd.txt -a update,download
-        To allow unauthorized access, use:
-          -P . -a .
-        Note that when uploads are not protected, the `register` command
-        is not necessary, but `~/.pypirc` still need username and password fields,
-        even if bogus.
-        By default, only 'update' is password-protected.
-
-      -P, --passwords PASSWORD_FILE
-        Use apache htpasswd file PASSWORD_FILE to set usernames & passwords when
-        authenticating certain actions (see -a option).
-        To allow unauthorized access, use:
-          -P . -a .
-
-      --disable-fallback
-        Disable redirect to real PyPI index for packages not found in the
-        local index.
-
-      --fallback-url FALLBACK_URL
-        For packages not found in the local index, this URL will be used to
-        redirect to (default: https://pypi.org/simple/).
-
-      --health-endpoint HEALTH_ENDPOINT
-        Configure a custom liveness endpoint. It always returns 200 Ok if  
-        the service is up. Otherwise, it means that the service is not responsive.
-
-      --server METHOD
-        Use METHOD to run the server. Valid values include paste,
-        cherrypy, twisted, gunicorn, gevent, wsgiref, auto. The
-        default is to use "auto" which chooses one of paste, cherrypy,
-        twisted or wsgiref.
-
-      -r, --root PACKAGES_DIRECTORY
-        [deprecated] Serve packages from PACKAGES_DIRECTORY.
-
-      -o, --overwrite
-        Allow overwriting existing package files.
-
-      --hash-algo ALGO
-        Any `hashlib` available algo used as fragments on package links.
-        Set one of (0, no, off, false) to disabled it (default: md5).
-
-      --welcome HTML_FILE
-        Uses the ASCII contents of HTML_FILE as welcome message response.
-
-      -v
-        Enable verbose logging; repeat for more verbosity.
-
-      --log-conf <FILE>
-        Read logging configuration from FILE.
-        By default, configuration is read from `log.conf` if found in server's dir.
-
-      --log-file <FILE>
-        Write logging info into this FILE.
-
-      --log-frmt <FILE>
-        The logging format-string (see `logging.LogRecord` class from standard python library).
-        [Default: %(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s]
-
-      --log-req-frmt FORMAT
-        A format-string selecting Http-Request properties to log; set to '%s' to see them all.
-        [Default: %(bottle.request)s]
-
-      --log-res-frmt FORMAT
-        A format-string selecting Http-Response properties to log; set to  '%s' to see them all.
-        [Default: %(status)s]
-
-      --log-err-frmt FORMAT
-        A format-string selecting Http-Error properties to log; set to  '%s' to see them all.
-        [Default: %(body)s: %(exception)s \n%(traceback)s]
-
-      --cache-control AGE
-        Add "Cache-Control: max-age=AGE, public" header to package downloads.
-        Pip 6+ needs this for caching.
-
-    pypi-server -h, --help
-      Show this help message.
-
-    pypi-server --version
-      Show pypi-server's version.
-
-    pypi-server -U [OPTIONS] [PACKAGES_DIRECTORY...]
-      Update packages in PACKAGES_DIRECTORY. This command searches
-      pypi.org for updates and shows a pip command line which
-      updates the package.
-
-    The following additional options can be specified with -U:
-
-      -x
-        Execute the pip commands instead of only showing them.
-
-      -d DOWNLOAD_DIRECTORY
-        Download package updates to this directory. The default is to use
-        the directory which contains the latest version of the package to
-        be updated.
-
-      -u
-        Allow updating to unstable version (alpha, beta, rc, dev versions).
-
-    Visit https://github.com/pypiserver/pypiserver for more information.
-
+    Visit https://github.com/pypiserver/pypiserver for more information
 
 Client-Side Configurations
 ==========================
@@ -385,7 +294,7 @@ To serve packages from a directory on the host, e.g. ``~/packages``::
 
 To authenticate against a local ``.htpasswd`` file::
 
-    docker run -p 80:8080 -v ~/.htpasswd:/data/.htpasswd pypiserver/pypiserver:latest -P .htpasswd packages
+    docker run -p 80:8080 -v ~/.htpasswd:/data/.htpasswd pypiserver/pypiserver:latest run -P .htpasswd packages
 
 You can also specify ``pypiserver`` to run as a Docker service using a
 composefile. An example composefile is `provided <docker-compose.yml>`_.
@@ -434,14 +343,14 @@ Recipes
 Managing the Package Directory
 ------------------------------
 
-The ``pypi-server`` command has the ``-U`` option that searches for updates of
+The ``pypi-server`` command has the ``update`` command that searches for updates of
 available packages. It scans the package directory for available
 packages and searches on pypi.org for updates. Without further
-options ``pypi-server -U`` will just print a list of commands which must
+options ``pypi-server update`` will just print a list of commands which must
 be run in order to get the latest version of each package. Output
 looks like::
 
-    $ ./pypi-server -U
+    $ ./pypi-server update 
     checking 106 packages for newer version
 
     .........u.e...........e..u.............
@@ -461,7 +370,7 @@ available versions on pypi. A dot(`.`) means the package is up-to-date, ``'u'``
 means the package can be updated and ``'e'`` means the list of releases on
 pypi is empty. After that it shows a *pip* command line which can be used
 to update a one package. Either copy and paste that or run
-``pypi-server -Ux`` in order to really execute those commands. You need
+``pypi-server update -x`` in order to really execute those commands. You need
 to have *pip* installed for that to work however.
 
 Specifying an additional ``-u`` option will also allow alpha, beta and
