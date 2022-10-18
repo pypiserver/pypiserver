@@ -143,6 +143,7 @@ def app_from_config(config: RunConfig) -> Bottle:
 
 def setup_routes_from_config(app: Bottle, config: RunConfig) -> Bottle:
     """Set up additional routes supplied from the config."""
+
     def _setup_health_endpoint(app, config):
         if config.health_endpoint in [route.rule for route in app.routes]:
             raise RuntimeError(
