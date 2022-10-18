@@ -402,7 +402,7 @@ def get_parser() -> argparse.ArgumentParser:
         type=health_endpoint_arg,
         help=(
             "Configure a custom liveness endpoint. It always returns 200 Ok if "
-            "the service is up. Otherwise it means that the service is dead."
+            "the service is up. Otherwise, it means that the service is not responsive."
         ),
     )
     run_parser.add_argument(
