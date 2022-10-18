@@ -945,7 +945,7 @@ Configure a custom health endpoint by script
     app = pypiserver.app(root="./packages", health_endpoint="/action/health")
     bottle.run(app=app, host="0.0.0.0", port=8080, server="auto")
 
-Try `curl http://localhost:8080/action/health`
+Try ``curl http://localhost:8080/action/health``
 
 
 Sources
