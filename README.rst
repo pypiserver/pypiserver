@@ -923,9 +923,10 @@ Custom Health Check Endpoint
 ``pypiserver`` provides a default health endpoint at ``/health``. It always returns
 ``200 Ok`` if the service is up. Otherwise, it means that the service is not responsive.
 
-pypiserver also allow users to customize the health endpoint. (see `#441 <https://github.com/pypiserver/pypiserver/issues/441>`_).
-Alphanumeric characters, hyphens, forward slashes and underscores are allowed.
-Valid example: `/healthz`, `/health/live-1`, `/api_health`, `/action/health`
+In addition, ``pypiserver`` allows users to customize the health endpoint.
+Alphanumeric characters, hyphens, forward slashes and underscores are allowed
+and the endpoint should not overlap with any existing routes.
+Valid examples: ``/healthz``, ``/health/live-1``, ``/api_health``, ``/action/health``
 
 Configure a custom health endpoint by CLI arguments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
