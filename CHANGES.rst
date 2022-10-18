@@ -4,6 +4,15 @@ Changelog
 2.0.0 (tbd)
 -----------
 
+1.5.1rc10-01-2022 (__rc__)
+--------------------------
+
+- 61e4487 ENH: add extremely basic /health endpoint (#396)
+- bbd2a47 FIX: docker tests in cicd (#444)
+- 784a9a1 MAINT: Replace usage of deprecated inspect.getargspec (#436)
+- 640a748 MAINT: Add traefik/ and auth/ dirs to gitignore (#398)
+- a67829e MAINT: Fix typos in README (#431)
+
 1.5.0 (2022-05-01)
 ------------------
 
