@@ -15,57 +15,35 @@ on:
   pull_request:
 
 jobs:
-  test-cpython:
+  test-python:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        # Commented out as tests with tox on python3.9 fail with updated dependencies.
-        # See https://github.com/pypiserver/pypiserver/issues/406.
-        # uncomment when the issue #406 is resolved.
-        # python-version: ["3.6", "3.7", "3.8", "3.9"]
-        python-version: ["3.6", "3.7", "3.8"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "pypy3.9"]  # "3.11-dev"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: pip install tox
       - name: Run tests
-        # Create a tox env specification by stripping the dot out of the version
-        # specification and appending it to "py"
-        run: |
-          tox -e "py$(echo ${{ matrix.python-version }} | tr -d .)"
-
-  test-pypy:
-    # Run a a separate job so we don't need to mess with conditionally
-    # splitting the python version from the build matrix. Also the pypy
-    # tests take freaking forever.
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: pypy3
-      - name: Install dependencies
-        run: pip install tox
-      - name: Run tests
-        run: tox -e pypy3
+        run: tox -e py
 
   check:
-    # These checks only need to be done once, not for every python version we s
-    # upport
+    # These checks only need to be done once, not for every python version we
+    # support
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          # Pretty much any python version will do
-          python-version: "3.9"
+          # Use the current version of Python
+          python-version: "3.x"
       - name: Install dependencies
         run: |
           pip install -r "requirements/dev.pip"
@@ -92,12 +70,12 @@ jobs:
   test-docker:
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          # Pretty much any python version will do
-          python-version: "3.9"
+          # Use the current version of Python
+          python-version: "3.x"
       - name: Install test dependencies
         run: pip install -r "requirements/test.pip"
       - name: Install package
@@ -110,8 +88,7 @@ jobs:
     needs:
       - "check"
       - "test-docker"
-      - "test-cpython"
-      - "test-pypy"
+      - "test-python"
     steps:
       - name: "Everything is good!"
         run: "echo true"
@@ -128,10 +105,10 @@ jobs:
     if: startsWith(github.event.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@master
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v1
+      - name: Set up Python
+        uses: actions/setup-python@v3
         with:
-          python-version: 3.8
+          python-version: 3.x
 
       - name: Build distribution _wheel_.
         run: |
@@ -151,11 +128,11 @@ jobs:
     needs:
       - "tests"
     steps:
-      - uses: "actions/checkout@v2"
+      - uses: "actions/checkout@v3"
 
-      - uses: "actions/setup-python@v2"
+      - uses: "actions/setup-python@v4"
         with:
-          python-version: "3.9"
+          python-version: "3.x"
 
         # This script prints a JSON array of needed docker tags, depending on the
         # ref. That array is then used to construct the matrix of the
@@ -188,10 +165,10 @@ jobs:
       matrix:
         tag: "${{ fromJson(needs.docker-determine-tags.outputs.tags) }}"
     steps:
-      - uses: "actions/checkout@v2"
+      - uses: "actions/checkout@v3"
 
       - name: "Cache Docker layers"
-        uses: "actions/cache@v2"
+        uses: "actions/cache@v3"
         with:
           path: "/tmp/.buildx-cache"
           key: "${{ runner.os }}-buildx-${{ github.sha }}"
