@@ -30,6 +30,8 @@ jobs:
         run: pip install tox==3.27.*
       - name: Check version
         run: python --version
+      - name: Check version 3
+        run: python3 --version
       - name: Run tests
         run: tox -e py
 
