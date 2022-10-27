@@ -5,13 +5,11 @@ name: CI
 on:
   # This will run when any branch or tag is pushed
   push:
-    # standalone is an old branch containing a fully functional pypiserver
-    # executable, from back in the day before docker & a better pip.
-    branches-ignore:
-      - standalone
+    branches:
+      - "master"
     tags:
       - "v**"
-  # Allowing to run on fork pull requests
+  # Allowing to run on fork and other pull requests
   pull_request:
 
 jobs:
@@ -29,7 +27,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install tox
+        run: |
+          pip install --upgrade setuptools
+          pip install tox==3.27.*
       - name: Run tests
         run: tox -e py
 
@@ -106,7 +106,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.x
 
