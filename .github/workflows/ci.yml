@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install tox
+        run: pip install tox==3.27.*
       - name: Run tests
         run: tox -e py
 
@@ -104,7 +104,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.x
 
