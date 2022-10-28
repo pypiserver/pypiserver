@@ -88,6 +88,8 @@ except ImportError:
     ez["use_setuptools"](**setup_args)
 
     if to_reload:
+        from importlib import reload
+
         reload(pkg_resources)
     import pkg_resources
 
