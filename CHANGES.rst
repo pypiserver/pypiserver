@@ -4,7 +4,7 @@ Changelog
 2.0.0 (tbd)
 -----------
 
-1.5.1rc10-01-2022 (__rc__)
+1.5.1 (2022-10-18)
 --------------------------
 
 - 61e4487 ENH: add extremely basic /health endpoint (#396)
