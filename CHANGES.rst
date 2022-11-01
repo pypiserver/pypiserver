@@ -4,6 +4,21 @@ Changelog
 2.0.0 (tbd)
 -----------
 
+1.5.1rc11-01-2022 (__rc__)
+--------------------------
+
+- 4a0c6fb from importlib import reload for Python 3 (#448)
+- 0ba44b5 fix: force setuptools update + no duplicate runs in GH Actions (#445)
+- 530852b Support current versions of CPython (#453)
+- 6ea316c Upgrade GitHub Actions (#447)
+- 249cc6c chore(ver): bump 1.5.0-->1.5.1
+- 1628055 chore(auto-release-candidate-10-01-2022) (#450)
+- 784a9a1 chore: Replace usage of deprecated inspect.getargspec (#436)
+- bbd2a47 fix: docker tests in cicd (#444)
+- 61e4487 feat: add extremely basic /health endpoint (#396)
+- 640a748 Add traefik/ and auth/ dirs to gitignore (#398)
+- a67829e chore: Fix typos (#431)
+
 1.5.1rc10-01-2022 (__rc__)
 --------------------------
 
