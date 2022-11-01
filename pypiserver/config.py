@@ -77,7 +77,7 @@ class DEFAULTS:
     AUTHENTICATE = ["update"]
     FALLBACK_URL = "https://pypi.org/simple/"
     HEALTH_ENDPOINT = "/health"
-    HASH_ALGO = "md5"
+    HASH_ALGO = "sha256"
     INTERFACE = "0.0.0.0"
     LOG_FRMT = "%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s"
     LOG_ERR_FRMT = "%(body)s: %(exception)s \n%(traceback)s"
