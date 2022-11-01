@@ -136,8 +136,8 @@ not officially supported, and will not receive bugfixes or new features.
         redirect to (default: https://pypi.org/simple/).
 
       --health-endpoint HEALTH_ENDPOINT
-        Configure a custom liveness endpoint. It always returns 200 Ok if 
-        the service is up. Otherwise it means that the service is dead.
+        Configure a custom liveness endpoint. It always returns 200 Ok if  
+        the service is up. Otherwise, it means that the service is not responsive.
 
       --server METHOD
         Use METHOD to run the server. Valid values include paste,
