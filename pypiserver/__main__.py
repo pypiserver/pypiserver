@@ -169,6 +169,7 @@ def main(argv: t.Sequence[str] = None) -> None:
     # Here `app` is a Bottle instance, which we pass to bottle.run() to run
     # the server
     app = pypiserver.app_from_config(config)
+    app = pypiserver.setup_routes_from_config(app, config)
 
     if config.server_method == "gunicorn":
         # When bottle runs gunicorn, gunicorn tries to pull its arguments from

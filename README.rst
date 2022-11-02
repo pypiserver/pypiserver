@@ -135,6 +135,10 @@ not officially supported, and will not receive bugfixes or new features.
         For packages not found in the local index, this URL will be used to
         redirect to (default: https://pypi.org/simple/).
 
+      --health-endpoint HEALTH_ENDPOINT
+        Configure a custom liveness endpoint. It always returns 200 Ok if  
+        the service is up. Otherwise, it means that the service is not responsive.
+
       --server METHOD
         Use METHOD to run the server. Valid values include paste,
         cherrypy, twisted, gunicorn, gevent, wsgiref, auto. The
@@ -912,6 +916,36 @@ Installing packages from the REPL of an embedded device works in this way:
     upip.install("micropython-foobar")
 
 Further information on micropython-packaging can be found here: https://docs.micropython.org/en/latest/reference/packages.html
+
+Custom Health Check Endpoint
+----------------------------
+
+``pypiserver`` provides a default health endpoint at ``/health``. It always returns
+``200 Ok`` if the service is up. Otherwise, it means that the service is not responsive.
+
+In addition, ``pypiserver`` allows users to customize the health endpoint.
+Alphanumeric characters, hyphens, forward slashes and underscores are allowed
+and the endpoint should not overlap with any existing routes.
+Valid examples: ``/healthz``, ``/health/live-1``, ``/api_health``, ``/action/health``
+
+Configure a custom health endpoint by CLI arguments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Run pypiserver with ``--health-endpoint`` argument::
+
+    pypi-server --health-endpoint /action/health
+
+Configure a custom health endpoint by script
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    import pypiserver
+    from pypiserver import bottle
+    app = pypiserver.app(root="./packages", health_endpoint="/action/health")
+    bottle.run(app=app, host="0.0.0.0", port=8080, server="auto")
+
+Try ``curl http://localhost:8080/action/health``
 
 
 Sources

@@ -121,7 +121,7 @@ def app(**kwargs: t.Any) -> Bottle:
         (or its base), defined in `pypiserver.config`, may be overridden.
     """
     config = Config.default_with_overrides(**backwards_compat_kwargs(kwargs))
-    return app_from_config(config)
+    return setup_routes_from_config(app_from_config(config), config)
 
 
 def app_from_config(config: RunConfig) -> Bottle:
@@ -139,6 +139,20 @@ def app_from_config(config: RunConfig) -> Bottle:
     # and other contexts.
     _app.app._pypiserver_config = config
     return _app.app
+
+
+def setup_routes_from_config(app: Bottle, config: RunConfig) -> Bottle:
+    """Set up additional routes supplied from the config."""
+
+    def _setup_health_endpoint(app, config):
+        if config.health_endpoint in [route.rule for route in app.routes]:
+            raise RuntimeError(
+                "Provided health endpoint overlaps with existing routes"
+            )
+        app.route(config.health_endpoint, "GET", lambda: "Ok")
+
+    _setup_health_endpoint(app, config)
+    return app
 
 
 T = t.TypeVar("T")

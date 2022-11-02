@@ -188,10 +188,27 @@ def test_packages_empty(testapp):
     assert len(resp.html("a")) == 0
 
 
-def test_health(testapp):
+def test_health_default_endpoint(testapp):
     resp = testapp.get("/health")
     assert resp.status_int == 200
     assert "Ok" in resp
+
+
+def test_health_customized_endpoint(root):
+    from pypiserver import app
+
+    _app = app(root=root.strpath, health_endpoint="/healthz")
+    testapp = webtest.TestApp(_app)
+    resp = testapp.get("/healthz")
+    assert resp.status_int == 200
+    assert "Ok" in resp
+
+
+def test_health_invalid_customized_endpoint(root):
+    from pypiserver import app
+
+    with pytest.raises(RuntimeError, match="overlaps with existing routes"):
+        app(root=root.strpath, health_endpoint="/simple")
 
 
 def test_favicon(testapp):

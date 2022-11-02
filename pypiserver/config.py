@@ -76,6 +76,7 @@ class DEFAULTS:
 
     AUTHENTICATE = ["update"]
     FALLBACK_URL = "https://pypi.org/simple/"
+    HEALTH_ENDPOINT = "/health"
     HASH_ALGO = "md5"
     INTERFACE = "0.0.0.0"
     LOG_FRMT = "%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s"
@@ -131,6 +132,19 @@ def hash_algo_arg(arg: str) -> t.Optional[str]:
         f"Hash algorithm '{arg}' is not available. Please select one "
         f"of {hashlib.algorithms_available}, or turn off hashing by "
         "setting --hash-algo to 'off', '0', or 'false'"
+    )
+
+
+def health_endpoint_arg(arg: str) -> str:
+    """Verify the health_endpoint and raises ValueError if invalid."""
+    rule_regex = r"^/[a-z0-9/_-]+$"
+    if re.fullmatch(rule_regex, arg, re.I) is not None:
+        return arg
+
+    raise argparse.ArgumentTypeError(
+        "Invalid path for the health endpoint. Make sure that it contains only "
+        "alphanumeric characters, hyphens, forward slashes and underscores. "
+        f"In other words, make sure to match the following regex: {rule_regex}"
     )
 
 
@@ -380,6 +394,15 @@ def get_parser() -> argparse.ArgumentParser:
         help=(
             "Redirect to FALLBACK_URL for packages not found in the local "
             "index."
+        ),
+    )
+    run_parser.add_argument(
+        "--health-endpoint",
+        default=DEFAULTS.HEALTH_ENDPOINT,
+        type=health_endpoint_arg,
+        help=(
+            "Configure a custom liveness endpoint. It always returns 200 Ok if "
+            "the service is up. Otherwise, it means that the service is not responsive."
         ),
     )
     run_parser.add_argument(
@@ -658,6 +681,7 @@ class RunConfig(_ConfigCommon):
         password_file: t.Optional[str],
         disable_fallback: bool,
         fallback_url: str,
+        health_endpoint: str,
         server_method: str,
         overwrite: bool,
         welcome_msg: str,
@@ -676,6 +700,7 @@ class RunConfig(_ConfigCommon):
         self.password_file = password_file
         self.disable_fallback = disable_fallback
         self.fallback_url = fallback_url
+        self.health_endpoint = health_endpoint
         self.server_method = server_method
         self.overwrite = overwrite
         self.welcome_msg = welcome_msg
@@ -700,6 +725,7 @@ class RunConfig(_ConfigCommon):
             "password_file": namespace.passwords,
             "disable_fallback": namespace.disable_fallback,
             "fallback_url": namespace.fallback_url,
+            "health_endpoint": namespace.health_endpoint,
             "server_method": namespace.server,
             "overwrite": namespace.overwrite,
             "welcome_msg": namespace.welcome,
