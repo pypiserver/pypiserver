@@ -4,6 +4,16 @@ Changelog
 2.0.0 (tbd)
 -----------
 
+1.5.2rc12-01-2022 (__rc__)
+--------------------------
+
+- ae3dcf2 feat: :stethoscope: allow customized health check endpoint (#442)
+- 2f3b997 fix: correct 1.5.1 tag date in CHANGES (#457)
+- 4a0c6fb from importlib import reload for Python 3 (#448)
+- 0ba44b5 fix: force setuptools update + no duplicate runs in GH Actions (#445)
+- 530852b Support current versions of CPython (#453)
+- 6ea316c Upgrade GitHub Actions (#447)
+
 1.5.1 (2022-10-18)
 --------------------------
 
