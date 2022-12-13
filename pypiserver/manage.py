@@ -13,6 +13,7 @@ from xmlrpc.client import Server
 import pip
 
 from .backend import listdir
+from .config import DEFAULTS
 from .core import PkgFile
 from .pkg_helpers import normalize_pkgname, parse_version
 
@@ -125,7 +126,7 @@ class PipCmd:
         destdir,
         pkg_name,
         pkg_version,
-        index="https://pypi.org/simple",
+        index=DEFAULTS.FALLBACK_URL,
     ):
         """Yield an update command for pip."""
         for part in cmd_root:
