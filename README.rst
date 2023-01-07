@@ -73,7 +73,7 @@ not officially supported, and will not receive bugfixes or new features.
 2. Copy some packages into your ``~/packages`` folder and then
    get your ``pypiserver`` up and running::
 
-    pypi-server -p 8080 ~/packages &      # Will listen to all IPs.
+    pypi-server run -p 8080 ~/packages &      # Will listen to all IPs.
 
 3. From the client computer, type this::
 
@@ -214,7 +214,7 @@ In that case, ``pypiserver`` is responsible for authenticating the upload-reques
 #. You  need to restart the server with the ``-P`` option only once
    (but user/password pairs can later be added or updated on the fly)::
 
-     ./pypi-server -p 8080 -P htpasswd.txt ~/packages &
+     ./pypi-server run -p 8080 -P htpasswd.txt ~/packages &
 
 Upload with ``setuptools``
 --------------------------
@@ -272,7 +272,7 @@ You can always check to see what tags are currently available at our
 
 To run the most recent release of ``pypiserver`` with Docker, simply::
 
-    docker run pypiserver/pypiserver:latest
+    docker run pypiserver/pypiserver:latest run
 
 This starts ``pypiserver`` serving packages from the ``/data/packages``
 directory inside the container, listening on the container port 8080.
@@ -284,13 +284,13 @@ which will always be 8080.
 Of course, just running a container isn't that interesting. To map
 port 80 on the host to port 8080 on the container::
 
-    docker run -p 80:8080 pypiserver/pypiserver:latest
+    docker run -p 80:8080 pypiserver/pypiserver:latest run
 
 You can now access your ``pypiserver`` at ``localhost:80`` in a web browser.
 
 To serve packages from a directory on the host, e.g. ``~/packages``::
 
-    docker run -p 80:8080 -v ~/packages:/data/packages pypiserver/pypiserver:latest
+    docker run -p 80:8080 -v ~/packages:/data/packages pypiserver/pypiserver:latest run
 
 To authenticate against a local ``.htpasswd`` file::
 
@@ -435,7 +435,7 @@ config file for ``systemd`` can be seen below::
     User=www-data
     Group=www-data
 
-    ExecStart=/usr/local/bin/pypi-server -p 8080 -a update,download --log-file /var/log/pypiserver.log -P /etc/nginx/.htpasswd /var/www/pypi
+    ExecStart=/usr/local/bin/pypi-server run -p 8080 -a update,download --log-file /var/log/pypiserver.log -P /etc/nginx/.htpasswd /var/www/pypi
     ExecStop=/bin/kill -TERM $MAINPID
     ExecReload=/bin/kill -HUP $MAINPID
     Restart=always
@@ -463,7 +463,7 @@ package and as such, it provides excellent cross-platform support for process
 management. An example configuration file for ``supervisor`` is given below::
 
     [program:pypi]
-    command=/home/pypi/pypi-venv/bin/pypi-server -p 7001 -P /home/pypi/.htpasswd /home/pypi/packages
+    command=/home/pypi/pypi-venv/bin/pypi-server run -p 7001 -P /home/pypi/.htpasswd /home/pypi/packages
     directory=/home/pypi
     user=pypi
     autostart=true
@@ -481,7 +481,7 @@ to use win32 or win64, and add that exe to environment PATH.
 
 Create a start_pypiserver.bat::
 
-    pypi-server -p 8080 C:\Path\To\Packages &
+    pypi-server run -p 8080 C:\Path\To\Packages &
 
 Test the batch file by running it first before creating the service. Make sure you can access
 the server remotely, and install packages. If you can, proceed, if not troubleshoot until you can.
@@ -835,7 +835,7 @@ Configure a custom health endpoint by CLI arguments
 
 Run pypiserver with ``--health-endpoint`` argument::
 
-    pypi-server --health-endpoint /action/health
+    pypi-server run --health-endpoint /action/health
 
 Configure a custom health endpoint by script
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
