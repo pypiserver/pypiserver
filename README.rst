@@ -948,10 +948,10 @@ See the ``LICENSE.txt`` file.
 .. _twine: https://pypi.org/project/twine/
 .. _pypi-uploader: https://pypi.org/project/pypi-uploader/
 .. _python-pam: https://pypi.org/project/python-pam/
-.. |test-status| image:: https://github.com/pypiserver/pypiserver/workflows/Test/badge.svg
+.. |test-status| image:: https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml/badge.svg
     :alt: test status
     :scale: 100%
-    :target: https://github.com/pypiserver/pypiserver/actions?query=workflow%3ATest
+    :target: https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml
 
 .. |pypi-ver| image::  https://img.shields.io/pypi/v/pypiserver.svg
     :target: https://pypi.org/project/pypiserver/
