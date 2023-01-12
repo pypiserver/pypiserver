@@ -187,6 +187,7 @@ not officially supported, and will not receive bugfixes or new features.
       --cache-control AGE
         Add "Cache-Control: max-age=AGE, public" header to package downloads.
         Pip 6+ needs this for caching.
+        AGE is specified in seconds.
 
     pypi-server -h, --help
       Show this help message.
