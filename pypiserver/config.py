@@ -453,6 +453,7 @@ def get_parser() -> argparse.ArgumentParser:
         help=(
             'Add "Cache-Control: max-age=AGE" header to package downloads. '
             "Pip 6+ requires this for caching."
+            "AGE is specified in seconds."
         ),
     )
     run_parser.add_argument(
