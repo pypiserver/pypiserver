@@ -828,7 +828,7 @@ class Config:
         return default_config.with_updates(**overrides)
 
     @classmethod
-    def from_args(cls, args: t.Sequence[str] = None) -> Configuration:
+    def from_args(cls, args: t.Optional[t.Sequence[str]] = None) -> Configuration:
         """Construct a Config from the passed args or sys.argv."""
         # If pulling args from sys.argv (commandline arguments), argv[0] will
         # be the program name, (i.e. pypi-server), so we don't need to
