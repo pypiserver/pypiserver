@@ -689,7 +689,7 @@ class RunConfig(_ConfigCommon):
         log_req_frmt: str,
         log_res_frmt: str,
         log_err_frmt: str,
-        auther: t.Callable[[str, str], bool] = None,
+        auther: t.Optional[t.Callable[[str, str], bool]] = None,
         **kwargs: t.Any,
     ) -> None:
         """Construct a RuntimeConfig."""
