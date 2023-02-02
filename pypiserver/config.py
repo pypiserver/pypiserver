@@ -621,7 +621,6 @@ class _ConfigCommon:
         return levels.get(self.verbosity, logging.NOTSET)
 
     def get_backend(self, arg: str) -> IBackend:
-
         available_backends: t.Dict[str, BackendFactory] = {
             "auto": get_file_backend,
             "simple-dir": SimpleFileBackend,
