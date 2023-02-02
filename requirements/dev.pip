@@ -6,6 +6,6 @@
 -r exe.pip
 -r test.pip
 
-black==22.12.*
+black
 docopt  # For `/bin/bumpver.py`.
 mypy; implementation_name == 'cpython'
