@@ -39,7 +39,6 @@ class main_wrapper:
 
 @pytest.fixture()
 def main(monkeypatch):
-
     main = main_wrapper()
 
     def run(**kwargs):
