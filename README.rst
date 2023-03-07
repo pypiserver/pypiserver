@@ -1,6 +1,6 @@
 .. -*- mode: rst; coding: utf-8 -*-
 
-.. image:: pypiserver_logo.png
+.. image:: docs/__resources__/pypiserver_logo.png
    :width: 300 px
    :align: center
 
