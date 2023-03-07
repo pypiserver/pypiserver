@@ -13,7 +13,8 @@ If something is missing in the documentation here, maybe it is covered in
 ## Documentation setup
 
 > Some areas to describe are highlighted in
-    [this issue](https://github.com/pypiserver/pypiserver/issues/368),
+    [this issue](https://github.com/pypiserver/pypiserver/issues/368)
+    ([#368](https://github.com/pypiserver/pypiserver/issues/368)),
     but feel free to add if you see something missing there.
 
 The [`./contents`](./contents/) directory is designed to
