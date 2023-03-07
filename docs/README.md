@@ -25,7 +25,7 @@ Everyone is very welcome to extend `pypiserver` documentation.
 
 1. :thought_balloon: If you think of a topic you would like to describe, this is great.
 2. :deciduous_tree: Fork this project and clone it locally to start your contribution.
-3. :page_facing_up: Create a new Markdown file/subdirectory+file inside the [`./contents`](./contents/):
+3. :page_facing_up: Create a new Markdown (`<doc title>.md`) file/subdirectory+file inside the [`./contents`](./contents/):
    - :file_folder: Use subdirectories to organize related documentation into topics.
 4. :octocat: Push your changes to your fork and open a PR to this repository.
 5. :bell: Tag someone from the maintainers if you'd like, but in any case we will try to review the PR as soon as possible.
