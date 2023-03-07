@@ -184,7 +184,7 @@ message *about starting the server*::
                           use "auto", which chooses one of paste, cherrypy, twisted, or wsgiref.
     -o, --overwrite       Allow overwriting existing package files during upload.
     --welcome HTML_FILE   Use the contents of HTML_FILE as a custom welcome message on the home page.
-    --cache-control AGE   Add "Cache-Control: max-age=AGE" header to package downloads. Pip 6+ requires this for caching.
+    --cache-control AGE   Add "Cache-Control: max-age=AGE" header to package downloads. Pip 6+ requires this for caching. AGE is specified in seconds.
     --log-req-frmt FORMAT
                           A format-string selecting Http-Request properties to log; set to '%s' to see them all.
     --log-res-frmt FORMAT
