@@ -622,7 +622,6 @@ class _ConfigCommon:
         return levels.get(self.verbosity, logging.NOTSET)
 
     def get_backend(self, arg: str) -> IBackend:
-
         available_backends: t.Dict[str, BackendFactory] = {
             "auto": get_file_backend,
             "simple-dir": SimpleFileBackend,
@@ -690,7 +689,7 @@ class RunConfig(_ConfigCommon):
         log_req_frmt: str,
         log_res_frmt: str,
         log_err_frmt: str,
-        auther: t.Callable[[str, str], bool] = None,
+        auther: t.Optional[t.Callable[[str, str], bool]] = None,
         **kwargs: t.Any,
     ) -> None:
         """Construct a RuntimeConfig."""
@@ -829,7 +828,9 @@ class Config:
         return default_config.with_updates(**overrides)
 
     @classmethod
-    def from_args(cls, args: t.Sequence[str] = None) -> Configuration:
+    def from_args(
+        cls, args: t.Optional[t.Sequence[str]] = None
+    ) -> Configuration:
         """Construct a Config from the passed args or sys.argv."""
         # If pulling args from sys.argv (commandline arguments), argv[0] will
         # be the program name, (i.e. pypi-server), so we don't need to
