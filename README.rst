@@ -132,8 +132,8 @@ message *about starting the server*::
 
   usage: pypi-server run [-h] [-v] [--log-file FILE] [--log-stream STREAM] [--log-frmt FORMAT] [--hash-algo HASH_ALGO]
                        [--backend {auto,simple-dir,cached-dir}] [--version] [-p PORT] [-i HOST] [-a AUTHENTICATE] [-P PASSWORD_FILE] [--disable-fallback]
-                       [--fallback-url FALLBACK_URL] [--server METHOD] [-o] [--welcome HTML_FILE] [--cache-control AGE] [--log-req-frmt FORMAT]
-                       [--log-res-frmt FORMAT] [--log-err-frmt FORMAT]
+                       [--fallback-url FALLBACK_URL] [--health-endpoint HEALTH_ENDPOINT] [--server METHOD] [-o] [--welcome HTML_FILE]
+                       [--cache-control AGE] [--log-req-frmt FORMAT] [--log-res-frmt FORMAT] [--log-err-frmt FORMAT]
                        [package_directory [package_directory ...]]
 
   positional arguments:
@@ -180,6 +180,10 @@ message *about starting the server*::
     --disable-fallback    Disable the default redirect to PyPI for packages not found in the local index.
     --fallback-url FALLBACK_URL
                           Redirect to FALLBACK_URL for packages not found in the local index.
+    --health-endpoint HEALTH_ENDPOINT
+                          Configure a custom liveness endpoint.
+                          It always returns 200 Ok if the service is up.
+                          Otherwise, it means that the service is not responsive.
     --server METHOD       Use METHOD to run the server. Valid values include paste, cherrypy, twisted, gunicorn, gevent, wsgiref, and auto. The default is to
                           use "auto", which chooses one of paste, cherrypy, twisted, or wsgiref.
     -o, --overwrite       Allow overwriting existing package files during upload.
