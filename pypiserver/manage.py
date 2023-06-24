@@ -8,17 +8,33 @@ import sys
 from distutils.version import LooseVersion
 from pathlib import Path
 from subprocess import call
-from xmlrpc.client import Server
 
 import pip
+import requests as requests
 
 from .backend import listdir
 from .core import PkgFile
 from .pkg_helpers import normalize_pkgname, parse_version
 
 
+class Pypi(object):
+    def __init__(self, url):
+        self.url = url
+
+    def package_releases(self, pkg_name):
+        # noinspection PyBroadException
+        try:
+            resp = requests.get(f"{self.url}{pkg_name}/json")
+            resp.raise_for_status()
+            meta = resp.json()
+            return [str(v) for v in meta['releases'].keys()]
+        except Exception:
+            pass
+        return []
+
+
 def make_pypi_client(url):
-    return Server(url)
+    return Pypi(url)
 
 
 def is_stable_version(pversion):
