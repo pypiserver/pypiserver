@@ -1,6 +1,6 @@
 # We use gunicorn as the default server in the docker container, with gevent
 # workers
-gevent==21.12.0
+gevent==22.10.2
 gunicorn==20.0.4
 passlib==1.7.4
 bcrypt==3.2.0
