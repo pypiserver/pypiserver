@@ -4,6 +4,27 @@ Changelog
 2.0.0 (tbd)
 -----------
 
+1.5.2rc07-01-2023 (__rc__)
+--------------------------
+
+- 3f520cd fix: Add missing pip dependency (#500)
+- 85e065e Feat/dependabot (#493)
+- 73dbe15 Health endpoint usage is missing. (#481)
+- e0c9723 chore: Bump waitress from 1.4.4 to 2.1.2 in /docker (#454)
+- a95f456 chore: update docs folder (#479)
+- 8cc8e80 Update README.rst and config.py (#470)
+- 754b0f4 chore: add help output for `run` and `update` to README (#478)
+- 5fd6400 Update README to reflect run/update commands (#451)
+- abc4bfb Upgrade to psf/black stable style 2023 (#474)
+- 383c936 chore: disable tests on Python3.6 (#471)
+- d716d0f fix: explicit optional types in `config.py` (#472)
+- ae3dcf2 feat: :stethoscope: allow customized health check endpoint (#442)
+- 2f3b997 fix: correct 1.5.1 tag date in CHANGES (#457)
+- 4a0c6fb from importlib import reload for Python 3 (#448)
+- 0ba44b5 fix: force setuptools update + no duplicate runs in GH Actions (#445)
+- 530852b Support current versions of CPython (#453)
+- 6ea316c Upgrade GitHub Actions (#447)
+
 1.5.1 (2022-10-18)
 --------------------------
 
