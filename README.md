@@ -8,12 +8,21 @@
 [![Generic badge](https://img.shields.io/badge/license-MIT|zlib/libpng-blue.svg)](https://shields.io/)
 
 
-| Version | 1.5.1 |
-|-----|-----|
-| Date: | 2022-10-18 |
-| Source|https://github.com/pypiserver/pypiserver|
-|PyPI|https://pypi.org/project/pypiserver/|
-|Tests|https://github.com/pypiserver/pypiserver/actions|
-|Maintainers| Kostis Anagnostopoulos <ankostis@gmail.com>, Matthew Planchard <mplanchard@gmail.com>,  Dmitrii Orlov <dmtree.dev@yahoo.com>,  **Someone new?** We are looking for new maintainers! [#397](https://github.com/pypiserver/pypiserver/issues/397) |
-|License|zlib/libpng + MIT|
-|Community|https://pypiserver.zulipchat.com|
+| name         | description                                                                                                                                                                                                                                      |
+|:-------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Version      | 1.5.1                                                                                                                                                                                                                                            |
+| Date:        | 2022-10-18                                                                                                                                                                                                                                       |
+| Source       | https://github.com/pypiserver/pypiserver                                                                                                                                                                                                         |
+| PyPI         | https://pypi.org/project/pypiserver/                                                                                                                                                                                                             |
+| Tests        | https://github.com/pypiserver/pypiserver/actions                                                                                                                                                                                                 |
+| Maintainers  | Kostis Anagnostopoulos <ankostis@gmail.com>, Matthew Planchard <mplanchard@gmail.com>,  Dmitrii Orlov <dmtree.dev@yahoo.com>,  **Someone new?** We are looking for new maintainers! [#397](https://github.com/pypiserver/pypiserver/issues/397)  |
+| License      | zlib/libpng + MIT                                                                                                                                                                                                                                |
+| Community    | https://pypiserver.zulipchat.com                                                                                                                                                                                                                 |
+
+Chat with us on [Zulip](https://pypiserver.zulipchat.com)
+
+**pypiserver** is a minimal [PyPI](https://pypi.org/) compatible server for **pip** or **easy_install**.
+It is based on [bottle](http://bottlepy.org/) and serves packages from regular directories.
+Wheels, bdists, eggs and accompanying PGP-signatures can be uploaded
+either with **pip**, **setuptools**, **twine**, **pypi-uploader**, or simply copied
+with **scp**.
