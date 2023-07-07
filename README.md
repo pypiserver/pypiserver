@@ -1,4 +1,4 @@
-![pypi server logo](./docs/__resources__/pypi_server_logo.png)
+![pypi server logo](docs/__resources__/pypiserver_logo.png)
 
 [**pypiserver - minimal PyPI server for use with pip/easy_install**]()
 
