@@ -46,7 +46,9 @@ making it much easier to get a running index server.
 Table of Contents 
 pypiserver - minimal PyPI server for use with pip/easy_install
 
-- [Quickstart: Installation and Usage](#Quickstart-Installation-and-Usage)
+- [Quickstart: Installation and Usage](#Quickstart:-Installation-and-Usage)
+  - [More details about *pypi-server run*](#More-details-about-pypi-server-run)
+  - [More details about *pypi-server update*](#More-details-about-pypi-server-update)
 
 ## Quickstart: Installation and Usage
 **pypiserver** works with Python 3.6+ and PyPy3.
@@ -64,3 +66,8 @@ The **'~'** character expands to user's home directory.
 If you're using Windows, you'll have to use their "Windows counterparts".
 The same is true for the rest of this documentation.
 
+### More-details-about-pypi-server-run
+ioueaoeuou
+
+### More details about pypi-server update
+aoueoeuouou
