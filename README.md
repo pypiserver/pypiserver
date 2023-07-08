@@ -26,3 +26,41 @@ It is based on [bottle](http://bottlepy.org/) and serves packages from regular d
 Wheels, bdists, eggs and accompanying PGP-signatures can be uploaded
 either with **pip**, **setuptools**, **twine**, **pypi-uploader**, or simply copied
 with **scp**.
+
+Note
+The official software powering [PyPI](https://pypi.org/) is 
+[Warehouse](https://github.com/pypa/warehouse/). However, 
+[Warehouse](https://github.com/pypa/warehouse/)
+is fairly specialized to be **pypi.org**'s own software, and should not
+be used in other contexts. In particular, it does not officially support
+being used as a custom package index by users wishing to serve their own
+packages.
+
+**pypiserver** implements the same interfaces as , allowing
+standard Python packaging tooling such as **pip** and **twine** to
+interact with it as a package index just as they would with [PyPI](https://pypi.org/), while
+making it much easier to get a running index server.
+
+# pypiserver 
+
+Table of Contents 
+pypiserver - minimal PyPI server for use with pip/easy_install
+
+- [Quickstart: Installation and Usage](#Quickstart-Installation-and-Usage)
+
+## Quickstart: Installation and Usage
+**pypiserver** works with Python 3.6+ and PyPy3.
+
+Older Python versions may still work, but they are not tested.
+
+For legacy Python versions, use **pypiserver-1.x** series. Note that these are
+not officially supported, and will not receive bugfixes or new features.
+
+Tip
+
+The commands below work on a unix-like operating system with a posix shell.
+The **'~'** character expands to user's home directory.
+
+If you're using Windows, you'll have to use their "Windows counterparts".
+The same is true for the rest of this documentation.
+
