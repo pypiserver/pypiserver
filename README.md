@@ -410,7 +410,7 @@ To avoid lazy security decisions, read help for **-P** and **-a** options.
 2. Create the Apache **htpasswd** file with at least one user/password pair
 with this command (you'll be prompted for a password)
 ```shell
-     htpasswd -sc htpasswd.txt <some_username>
+    htpasswd -sc htpasswd.txt <some_username>
 
 ```
 
@@ -431,8 +431,8 @@ returning a boolean can be passed through to the pypiserver config in
 order to provide custom authentication. For example, to configure
 pypiserver to authenticate using the `python-pam`
 ```shell
-import pam
-pypiserver.default_config(auther=pam.authenticate)
+    import pam
+    pypiserver.default_config(auther=pam.authenticate)
 
 ```
 Please see `Using Ad-hoc authentication providers`_ for more information.
@@ -440,6 +440,6 @@ Please see `Using Ad-hoc authentication providers`_ for more information.
 3. You  need to restart the server with the **-P** option only once
 (but user/password pairs can later be added or updated on the fly)
 ```shell
-./pypi-server run -p 8080 -P htpasswd.txt ~/packages &
+    ./pypi-server run -p 8080 -P htpasswd.txt ~/packages &
 ```
 
