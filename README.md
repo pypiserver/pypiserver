@@ -443,3 +443,121 @@ Please see `Using Ad-hoc authentication providers`_ for more information.
     ./pypi-server run -p 8080 -P htpasswd.txt ~/packages &
 ```
 
+### Upload with **setuptools**
+
+1. On client-side, edit or create a **~/.pypirc** file with a similar content::
+```shell
+     [distutils]
+     index-servers =
+       pypi
+       local
+
+     [pypi]
+     username:<your_pypi_username>
+     password:<your_pypi_passwd>
+
+     [local]
+     repository: http://localhost:8080
+     username: <some_username>
+     password: <some_passwd>
+```
+
+2. Then from within the directory of the python-project you wish to upload,
+issue this command::
+```shell
+     python setup.py sdist upload -r local
+```
+
+### Upload with **twine**
+
+To avoid storing you passwords on disk, in clear text, you may either:
+
+- use the **register** *setuptools*'s command with the **-r** option,
+  like that
+```shell
+  python setup.py sdist register -r local upload -r local
+```
+
+- use *twine* library, which
+  breaks the procedure in two steps.  In addition, it supports signing
+  your files with PGP-Signatures and uploading the generated *.asc* files
+  to **pypiserver**::
+```shell
+  twine upload -r local --sign -identity user_name ./foo-1.zip
+```
+
+## Using the Docker Image
+
+Starting with version 1.2.5, official Docker images will be built for each
+push to master, each dev, alpha, or beta release, and each final release.
+The most recent full release will always be available under the tag **latest**,
+and the current master branch will always be available under the tag
+**unstable**.
+
+You can always check to see what tags are currently available at our
+[*Docker Repo*](https://hub.docker.com/r/pypiserver/pypiserver/tags/).
+
+To run the most recent release of **pypiserver** with Docker, simply
+
+```shell
+    docker run pypiserver/pypiserver:latest run
+```
+
+This starts **pypiserver** serving packages from the **/data/packages**
+directory inside the container, listening on the container port 8080.
+
+The container takes all the same arguments as the normal **pypi-server**
+executable, with the exception of the internal container port (**-p**),
+which will always be 8080.
+
+Of course, just running a container isn't that interesting. To map
+port 80 on the host to port 8080 on the container::
+```shell
+    docker run -p 80:8080 pypiserver/pypiserver:latest run
+```
+
+You can now access your **pypiserver** at **localhost:80** in a web browser.
+
+To serve packages from a directory on the host, e.g. **~/packages**
+
+```shell
+    docker run -p 80:8080 -v ~/packages:/data/packages pypiserver/pypiserver:latest run
+```
+
+To authenticate against a local **.htpasswd** file::
+```shell
+    docker run -p 80:8080 -v ~/.htpasswd:/data/.htpasswd pypiserver/pypiserver:latest run -P .htpasswd packages
+```
+
+You can also specify **pypiserver** to run as a Docker service using a
+composefile. An example composefile is [provided](https://github.com/pypiserver/pypiserver/blob/master/docker-compose.yml)
+
+## Alternative Installation Methods
+
+When trying the methods below, first use the following command to check whether
+previous versions of **pypiserver** already exist, and (optionally) uninstall them::
+```shell
+# VERSION-CHECK: Fails if not installed.
+pypi-server --version
+
+# UNINSTALL: Invoke again until it fails.
+pip uninstall pypiserver
+```
+
+### Installing the Very Latest Version
+
+In case the latest version in *pypi* is a pre-release, you have to use
+*pip*'s *--pre* option.  And to update an existing installation combine it
+with `--ignore-installed*
+
+```shell
+pip install pypiserver --pre -I
+```
+
+You can even install the latest **pypiserver** directly from *github* with the
+following command, assuming you have *git* installed on your **PATH**
+
+```shell
+pip install git+git://github.com/pypiserver/pypiserver.git
+```
+
