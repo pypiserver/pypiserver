@@ -373,3 +373,73 @@ If you have installed **pypiserver** on a remote url without *https*
 you will receive an "untrusted" warning from *pip*, urging you to append
 the **--trusted-host** option.  You can also include this option permanently
 in your configuration-files or environment variables.
+
+### Configuring **easy_install**
+
+For **easy_install** command you may set the following configuration in
+**~/.pydistutils.cfg**
+
+```shell
+[easy_install]
+index_url = http://localhost:8080/simple/
+```
+
+### Uploading Packages Remotely
+
+Instead of copying packages directly to the server's folder (i.e. with **scp**),
+you may use python tools for the task, e.g. **python setup.py upload**.
+In that case, **pypiserver** is responsible for authenticating the upload-requests.
+
+Note
+
+We strongly advise to password-protected your uploads!
+
+It is possible to disable authentication for uploads (e.g. in intranets).
+To avoid lazy security decisions, read help for **-P** and **-a** options.
+
+### *Apache*-Like Authentication (**htpasswd**)
+
+1. First make sure you have the **passlib** module installed (note that
+**passlib>=1.6** is required), which is needed for parsing the Apache
+*htpasswd* file specified by the **-P**, **--passwords** option
+(see next steps)
+```shell
+    pip install passlib
+```
+
+2. Create the Apache **htpasswd** file with at least one user/password pair
+with this command (you'll be prompted for a password)
+```shell
+     htpasswd -sc htpasswd.txt <some_username>
+
+```
+
+Tip
+
+Read this [SO]()http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u question for running `htpasswd` cmd under *Windows*:
+      or if you have bogus passwords that you don't care because they are for
+      an internal service (which is still "bad", from a security perspective...)
+      you may use this [public service](http://www.htaccesstools.com/htpasswd-generator/)
+
+         
+
+Tip
+
+When accessing pypiserver via the api, alternate authentication
+methods are available via the **auther** config flag. Any callable
+returning a boolean can be passed through to the pypiserver config in
+order to provide custom authentication. For example, to configure
+pypiserver to authenticate using the `python-pam`
+```shell
+import pam
+pypiserver.default_config(auther=pam.authenticate)
+
+```
+Please see `Using Ad-hoc authentication providers`_ for more information.
+
+3. You  need to restart the server with the **-P** option only once
+(but user/password pairs can later be added or updated on the fly)
+```shell
+     ./pypi-server run -p 8080 -P htpasswd.txt ~/packages &
+```
+
