@@ -416,7 +416,7 @@ with this command (you'll be prompted for a password)
 
 Tip
 
-Read this [SO](http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u) question for running `htpasswd` cmd under *Windows*:
+Read this [SO](http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u) question for running `htpasswd` cmd under *Windows*
       or if you have bogus passwords that you don't care because they are for
       an internal service (which is still "bad", from a security perspective...)
       you may use this [public service](http://www.htaccesstools.com/htpasswd-generator/)
