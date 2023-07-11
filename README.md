@@ -47,14 +47,21 @@ Table of Contents
 pypiserver - minimal PyPI server for use with pip/easy_install
 
 - [pypiserver - minimal PyPI server for use with pip/easy_install](#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install)
-  - [Quickstart: Installation and Usage](#Quickstart-Installation-and-Usage)
+  - [Quickstart Installation and Usage](#Quickstart-Installation-and-Usage)
     - [More details about *pypi-server run*](#More-details-about-pypi-server-run)
     - [More details about *pypi-server update*](#More-details-about-pypi-server-update)
   - [Client-Side Configurations](#Client-Side-Configurations)
     - [Configuring pip](#Configuring-pip)
     - [Configuring easy_install](#Configuring-easy_install)
-  
+  - [Uploading Packages Remotely](#Uploading-Packages-Remotely)
+    - [Apache-like Authentication](#Apache-like-Authentication)
+    - [Upload with setutools](#Upload-with-setutools)
+    - [Upload with twine](#Upload-with-twine)
+  - [Using the Docker Image](#Using-the-Docker-Image)
+  - [Alternative Installation methods](#Alternative-Installation-methods)
+    - [Installing the Very Latest Version](#Installing-the-Very-Latest-Version)
 
+    
 ## Quickstart Installation and Usage
 **pypiserver** works with Python 3.6+ and PyPy3.
 
