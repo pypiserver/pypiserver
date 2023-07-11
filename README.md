@@ -440,6 +440,6 @@ Please see `Using Ad-hoc authentication providers`_ for more information.
 3. You  need to restart the server with the **-P** option only once
 (but user/password pairs can later be added or updated on the fly)
 ```shell
-     ./pypi-server run -p 8080 -P htpasswd.txt ~/packages &
+./pypi-server run -p 8080 -P htpasswd.txt ~/packages &
 ```
 
