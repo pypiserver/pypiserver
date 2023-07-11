@@ -141,7 +141,7 @@ Visit https://github.com/pypiserver/pypiserver for more information
 
 ```
 ### More details about pypi server run
-Enter *pypi-server run -h* in the cmd-line to print a detailed usage
+Enter **pypi-server run -h** in the cmd-line to print a detailed usage
 ```shell
 usage: pypi-server run [-h] [-v] [--log-file FILE] [--log-stream STREAM]
                        [--log-frmt FORMAT] [--hash-algo HASH_ALGO]
@@ -243,7 +243,7 @@ optional arguments:
 
 ```
 ### More details about pypi-server update
-More details about *pypi-server update*
+More details about **pypi-server update**
 
 ```shell
 usage: pypi-server run [-h] [-v] [--log-file FILE] [--log-stream STREAM]
