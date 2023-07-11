@@ -46,6 +46,7 @@ making it much easier to get a running index server.
 Table of Contents 
 pypiserver - minimal PyPI server for use with pip/easy_install
 
+
 - [Quickstart: Installation and Usage](#Quickstart:-Installation-and-Usage)
   - [More details about *pypi-server run*](#More-details-about-pypi-server-run)
   - [More details about *pypi-server update*](#More-details-about-pypi-server-update)
@@ -66,8 +67,79 @@ The **'~'** character expands to user's home directory.
 If you're using Windows, you'll have to use their "Windows counterparts".
 The same is true for the rest of this documentation.
 
-### More-details-about-pypi-server-run
-ioueaoeuou
+
+1. Install **pypiserver** with this command
+
+```shell
+   pip install pypiserver                # Or: pypiserver[passlib,cache]
+   mkdir ~/packages                      # Copy packages into this directory.
+```
+   See also [Alternative Installation methods]()
+
+2. Copy some packages into your **~/packages** folder and then
+   get your **pypiserver** up and running
+```shell
+   pypi-server run -p 8080 ~/packages &      # Will listen to all IPs.
+```
+
+3. From the client computer, type this
+```shell
+   # Download and install hosted packages.
+   pip install --extra-index-url http://localhost:8080/simple/ ...
+
+   # or
+   pip install --extra-index-url http://localhost:8080 ...
+
+   # Search hosted packages.
+   pip search --index http://localhost:8080 ...
+
+   # Note that pip search does not currently work with the /simple/ endpoint.
+```
+
+   See also [Client-side configurations]() for avoiding tedious typing.
+
+4. Enter **pypi-server -h** in the cmd-line to print a detailed usage message
+
+```shell
+usage: pypi-server [-h] [-v] [--log-file FILE] [--log-stream STREAM]
+                   [--log-frmt FORMAT] [--hash-algo HASH_ALGO]
+                   [--backend {auto,simple-dir,cached-dir}] [--version]
+                   {run,update} ...
+
+start PyPI compatible package server serving packages from PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the command line, it uses the default ~/packages. pypiserver scans this directory recursively for packages. It skips packages and directories starting with a dot. Multiple package directories may be specified.
+
+positional arguments:
+  {run,update}
+    run                 Run pypiserver, serving packages from
+                        PACKAGES_DIRECTORY
+    update              Handle updates of packages managed by pypiserver. By
+                        default, a pip command to update the packages is
+                        printed to stdout for introspection or pipelining. See
+                        the `-x` option for updating packages directly.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         Enable verbose logging; repeat for more verbosity.
+  --log-file FILE       Write logging info into this FILE, as well as to
+                        stdout or stderr, if configured.
+  --log-stream STREAM   Log messages to the specified STREAM. Valid values are
+                        stdout, stderr, and none
+  --log-frmt FORMAT     The logging format-string.  (see `logging.LogRecord`
+                        class from standard python library)
+  --hash-algo HASH_ALGO
+                        Any `hashlib` available algorithm to use for
+                        generating fragments on package links. Can be disabled
+                        with one of (0, no, off, false).
+  --backend {auto,simple-dir,cached-dir}
+                        A backend implementation. Keep the default 'auto' to
+                        automatically determine whether to activate caching or
+                        not
+  --version             show program's version number and exit
+
+Visit https://github.com/pypiserver/pypiserver for more information
+ 
+
+```
+### More details about pypi server run
 
 ### More details about pypi-server update
-aoueoeuouou
