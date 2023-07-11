@@ -354,7 +354,7 @@ good idea to configure them to always use your local pypi index.
 ### Configuring **pip**
 
 For **pip** command this can be done by setting the environment variable
-**PIP_EXTRA_INDEX_URL** in your **.bashr/.profile/.zshrc**::
+**[PIP_EXTRA_INDEX_URL](https://packaging.python.org/en/latest/guides/hosting-your-own-index/)** in your **.bashr/.profile/.zshrc**
 
 ```shell
 export PIP_EXTRA_INDEX_URL=http://localhost:8080/simple/
