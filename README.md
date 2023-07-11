@@ -345,3 +345,31 @@ optional arguments:
                         log; set to '%s' to see them all.
 
 ```
+## Client-Side Configurations
+Always specifying the pypi url on the command line is a bit
+cumbersome. Since **pypiserver** redirects **pip/easy_install** to the
+**pypi.org** index if it doesn't have a requested package, it is a
+good idea to configure them to always use your local pypi index.
+
+###Configuring **pip**
+
+For **pip** command this can be done by setting the environment variable
+**PIP_EXTRA_INDEX_URL** in your **.bashr/.profile/.zshrc**::
+
+```shell
+export PIP_EXTRA_INDEX_URL=http://localhost:8080/simple/
+```
+
+or by adding the following lines to **~/.pip/pip.conf**
+
+```shell
+[global]
+extra-index-url = http://localhost:8080/simple/
+```
+
+Note
+
+If you have installed **pypiserver** on a remote url without *https*
+you will receive an "untrusted" warning from *pip*, urging you to append
+the **--trusted-host** option.  You can also include this option permanently
+in your configuration-files or environment variables.
