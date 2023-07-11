@@ -50,7 +50,7 @@ pypiserver - minimal PyPI server for use with pip/easy_install
   - [Quickstart: Installation and Usage](#Quickstart:-Installation-and-Usage)
     - [More details about *pypi-server run*](#More-details-about-pypi-server-run)
     - [More details about *pypi-server update*](#More-details-about-pypi-server-update)
-  - [Client-Side Configurations](Client-Side Configurations)
+  - [Client-Side Configurations](#Client-Side-Configurations)
     - [Configuring pip](#Configuring-pip)
     - [Configuring easy_install](#Configuring-easy_install)
   
