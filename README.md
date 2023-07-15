@@ -60,8 +60,34 @@ pypiserver - minimal PyPI server for use with pip/easy_install
   - [Using the Docker Image](#Using-the-Docker-Image)
   - [Alternative Installation methods](#Alternative-Installation-methods)
     - [Installing the Very Latest Version](#Installing-the-Very-Latest-Version)
-
-    
+  - [Recipes](#Recipes)
+    - [Managing the Package Directory](#Managing-the-Package-Directory)
+    - [Serving Thousands of Packages](#Serving-Thousands-of-Packages)
+    - [Managing Automated Startup](#Managing-Automated-Startup)
+        - [Running as a systemd service](#Running-as-a-systemd-service)
+        - [Launching through supervisord](#Launching-through-supervisord)
+        - [Running as a service with NSSM](#Running-as-a-service-with-NSSM)
+    - [Using a Different WSGI Server](#Using-a-Different-WSGI-Server)
+        - [Apache(mod_wsgi)](#Apachemod_wsgi)
+        - [Gunicorn](#Gunicorn)
+        - [Paste](#Paste)
+    - [Behind a Reverse Proxy](#Behind-a-Reverse-Proxy)
+        - [Nginx](#Nginx)
+        - [Supporting HTTPS](#Supporting-HTTPS)
+        - [Traefik](#Traefik)
+    - [Utilizing the API](#Utilizing-the-API)
+        - [Using Ad-Hoc Authentication Providers](#Using-Ad-Hoc-Authentication-Providers)
+    - [Use with MicroPython](#Use-with-MicroPython)
+    - [Custom Health Check Endpoint](#Custom-Health-Check-Endpoint)
+        - [Configure a custom health check by CLI arguments](#Configure-a-custom-health-check-by-CLI-arguments)
+        - [Configure a custom health endpoint by script](#Configure-a-custom-health-endpoint-by-script)
+    - [Sources](#Sources)
+    - [Known Limitations](#known-limitations)
+    - [Similar Projects](#similar-projects)
+      - [Unmaintained or archived](#unmaintained-or-archived)
+    - [Related Projects](#related-projects)
+    - [License](#license)
+        
 ## Quickstart Installation and Usage
 **pypiserver** works with Python 3.6+ and PyPy3.
 
@@ -574,7 +600,7 @@ pip install git+git://github.com/pypiserver/pypiserver.git
 
 ## Recipes
 
-###Managing the Package Directory
+### Managing the Package Directory
 
 The **pypi-server** command has the **update** command that searches for updates of
 available packages. It scans the package directory for available
@@ -1196,7 +1222,7 @@ may want to familiarize with:
 Licensing
 =========
 
-**pypiserver** contains a copy of bottle_ which is available under the
+**pypiserver** contains a copy of [bottle](http://bottlepy.org/) which is available under the
 MIT license, and the remaining part is distributed under the zlib/libpng license.
 See the **LICENSE.txt** file.
 
