@@ -906,12 +906,298 @@ unstable packages on different paths
 Note
    You need to install some more dependencies for this to work, like::
 ```shell
-        pip install paste pastedeploy gunicorn pypiserver
+  pip install paste pastedeploy gunicorn pypiserver
 ```
 
    The server can then start with
 ```shell
-        gunicorn_paster paste.ini
+  gunicorn_paster paste.ini
 ```
+
+### Behind a Reverse Proxy
+----------------------
+
+You can run **pypiserver** behind a reverse proxy as well.
+
+#### Nginx
+
+Extend your nginx configuration
+```shell
+    upstream pypi {
+      server              pypiserver.example.com:12345 fail_timeout=0;
+    }
+
+    server {
+      server_name         myproxy.example.com;
+
+      location / {
+        proxy_set_header  Host $host:$server_port;
+        proxy_set_header  X-Forwarded-Proto $scheme;
+        proxy_set_header  X-Real-IP $remote_addr;
+        proxy_pass        http://pypi;
+      }
+    }
+
+```
+
+As of pypiserver 1.3, you may also use the `X-Forwarded-Host` header in your
+reverse proxy config to enable changing the base URL. For example if you
+want to host pypiserver under a particular path on your server
+```shell
+    upstream pypi {
+      server              localhost:8000;
+    }
+
+    server {
+      location /pypi/ {
+          proxy_set_header  X-Forwarded-Host $host:$server_port/pypi;
+          proxy_set_header  X-Forwarded-Proto $scheme;
+          proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header  X-Real-IP $remote_addr;
+          proxy_pass        http://pypi;
+      }
+    }
+```
+
+#### Supporting HTTPS
+
+Using a reverse proxy is the preferred way of getting pypiserver behind
+HTTPS. For example, to put pypiserver behind HTTPS on port 443, with
+automatic HTTP redirection, using `nginx`
+```shell
+    upstream pypi {
+      server               localhost:8000;
+    }
+
+    server {
+      listen              80 default_server;
+      server_name         _;
+      return              301 https://$host$request_uri;
+    }
+
+    server {
+      listen              443 ssl;
+      server_name         pypiserver.example.com;
+
+      ssl_certificate     /etc/star.example.com.crt;
+      ssl_certificate_key /etc/star.example.com.key;
+      ssl_protocols       TLSv1 TLSv1.1 TLSv1.2;
+      ssl_ciphers         HIGH:!aNULL:!MD5;
+
+      location / {
+        proxy_set_header  Host $host:$server_port;
+        proxy_set_header  X-Forwarded-Proto $scheme;
+        proxy_set_header  X-Real-IP $remote_addr;
+        proxy_pass        http://pypi;
+      }
+    }
+
+```
+
+Please see [nginx's HTTPS docs for more details](http://nginx.org/en/docs/http/configuring_https_servers.html).
+
+Getting and keeping your certificates up-to-date can be simplified using,
+for example, using [certbot and letsencrypt](https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-18-04>).
+
+#### Traefik
+
+It is also possible to use [Traefik](https://docs.traefik.io/) to put pypiserver behind HTTPS on port 443, with
+automatic HTTP redirection using Docker Compose. Please see the provided [docker-compose.yml](https://github.com/pypiserver/pypiserver/blob/master/docker-compose.yml) example for more information.
+
+### Utilizing the API
+
+In order to enable ad-hoc authentication-providers or to use WSGI-servers
+not supported by *bottle* out-of-the-box, you needed to launch **pypiserver**
+via its API.
+
+- The main entry-point for configuring **pypiserver** is the [pypiserver:app()](https://github.com/pypiserver/pypiserver/blob/master/pypiserver/__init__.py#L116)
+  function.  This function returns the internal WSGI-app that you my then
+  send to any WSGI-server you like.
+
+- To get all **pypiserver:app()** keywords and their explanations, read the
+  function [pypiserver:default_config()](https://github.com/pypiserver/pypiserver/blob/master/pypiserver/__init__.py#L35)
+
+- Finally, to fire-up a WSGI-server with the configured app, invoke
+  the **bottle:run(app, host, port, server)** function.
+  Note that **pypiserver** ships with its own copy of *bottle*; to use it,
+  import it like that: **from pypiserver import bottle**
+
+#### Using Ad-Hoc Authentication Providers
+
+The **auther** keyword of **pypiserver:app()** function maybe set only using
+the API. This can be any callable that returns a boolean when passed
+the *username* and the *password* for a given request.
+
+For example, to authenticate users based on the **/etc/passwd** file under Unix,
+you may delegate such decisions to the [python-pam](https://pypi.org/project/python-pam/) library by following
+these steps:
+
+1. Ensure **python-pam** module is installed
+
+   pip install python-pam
+
+2. Create a python-script along these lines
+```shell
+   $ cat > pypiserver-start.py
+   import pypiserver
+   from pypiserver import bottle
+   import pam
+   app = pypiserver.app(root='./packages', auther=pam.authenticate)
+   bottle.run(app=app, host='0.0.0.0', port=80, server='auto')
+
+   [Ctrl+ D]
+```
+
+3. Invoke the python-script to start-up **pypiserver**
+```shell
+   $ python pypiserver-start.py
+```
+
+Note
+The [python-pam](https://pypi.org/project/python-pam/) module, requires *read* access to **/etc/shadow** file;
+you may add the user under which **pypiserver** runs into the *shadow*
+group, with a command like this: **sudo usermod -a -G shadow pypy-user**.
+
+### Use with MicroPython
+The MicroPython interpreter for embedded devices can install packages with the
+module **upip.py**. The module uses a specialized json-endpoint to retrieve
+package information. This endpoint is supported by **pypiserver**.
+
+It can be tested with the UNIX port of **micropython**
+```shell
+    cd micropython
+    ports/unix/micropython -m tools.upip install -i http://my-server:8080 -p /tmp/mymodules micropython-foobar
+
+```
+
+Installing packages from the REPL of an embedded device works in this way:
+
+```python
+    import network
+    import upip
+
+    sta_if = network.WLAN(network.STA_IF)
+    sta_if.active(True)
+    sta_if.connect('<your ESSID>', '<your password>')
+    upip.index_urls = ["http://my-server:8080"]
+    upip.install("micropython-foobar")
+```
+
+
+Further information on micropython-packaging can be found here: https://docs.micropython.org/en/latest/reference/packages.html
+
+### Custom Health Check Endpoint
+
+**pypiserver** provides a default health endpoint at **/health**. It always returns
+**200 Ok** if the service is up. Otherwise, it means that the service is not responsive.
+
+In addition, **pypiserver** allows users to customize the health endpoint.
+Alphanumeric characters, hyphens, forward slashes and underscores are allowed
+and the endpoint should not overlap with any existing routes.
+Valid examples: **/healthz**, **/health/live-1**, **/api_health**, **/action/health**
+
+#### Configure a custom health endpoint by CLI arguments
+
+Run pypiserver with **--health-endpoint** argument:
+```shell
+    pypi-server run --health-endpoint /action/health
+```
+
+#### Configure a custom health endpoint by script
+
+```python
+    import pypiserver
+    from pypiserver import bottle
+    app = pypiserver.app(root="./packages", health_endpoint="/action/health")
+    bottle.run(app=app, host="0.0.0.0", port=8080, server="auto")
+```
+
+Try **curl http://localhost:8080/action/health**
+
+
+## Sources
+
+To create a copy of the repository, use
+```shell
+    git clone https://github.com/pypiserver/pypiserver.git
+    cd pypiserver
+```
+
+To receive any later changes, in the above folder use:
+```shell
+    git pull
+```
+
+
+## Known Limitations
+
+**pypiserver** does not implement the full API as seen on [PyPI](https://pypi.org/). It
+implements just enough to make **easy_install**, **pip install**, and
+**search** work.
+
+The following limitations are known:
+
+- Command **pypi -U** that compares uploaded packages with *pypi* to see if
+  they are outdated, does not respect a http-proxy environment variable
+  (see [#19](https://github.com/pypiserver/pypiserver/issues/19).
+- It accepts documentation uploads but does not save them to
+  disk (see [#47](https://github.com/pypiserver/pypiserver/issues/47) for a
+  discussion)
+- It does not handle misspelled packages as *pypi-repo* does,
+  therefore it is suggested to use it with **--extra-index-url** instead
+  of **--index-url** (see [#38](https://github.com/pypiserver/pypiserver/issues/38>)).
+
+Please use Github's [bugtracker](https://github.com/pypiserver/pypiserver/issues>)
+for other bugs you find.
+
+
+## Similar Projects
+
+There are lots of other projects, which allow you to run your own
+PyPI server. If **pypiserver** doesn't work for you, the following are
+among the most popular alternatives:
+
+- [devpi-server](https://pypi.org/project/devpi/):
+  a reliable fast pypi.org caching server, part of
+  the comprehensive [github-style pypi index server and packaging meta tool](https://pypi.org/project/devpi/).
+  (version: 2.1.4, access date: 8/3/2015)
+
+- Check this SO question: [How to roll my own pypi](http://stackoverflow.com/questions/1235331/how-to-roll-my-own-pypi)
+
+
+### Unmaintained or archived
+
+These projects were once alternatives to pypiserver but are now either unmaintained or archived.
+
+- [pip2pi](https://github.com/wolever/pip2pi)
+  a simple cmd-line tool that builds a PyPI-compatible local folder from pip requirements
+
+- [flask-pypi-proxy](http://flask-pypi-proxy.readthedocs.org/)
+  A proxy for PyPI that also enables uploading custom packages.
+
+
+## Related Software
+
+Though not direct alternatives for **pypiserver**'s use as an index
+server, the following is a list of related software projects that you
+may want to familiarize with:
+
+- [pypi-uploader](https://pypi.org/project/pypi-uploader/):
+  A command-line utility to upload packages to your **pypiserver** from pypi without
+  having to store them locally first.
+
+- [twine](https://pypi.org/project/twine/):
+  A command-line utility for interacting with PyPI or **pypiserver**.
+
+- [warehouse](https://github.com/pypa/warehouse/):
+  the software that powers [PyPI](https://pypi.org/) itself. It is not generally intended to
+  be run by end-users.
+
+Licensing
+=========
+
+**pypiserver** contains a copy of bottle_ which is available under the
+MIT license, and the remaining part is distributed under the zlib/libpng license.
+See the **LICENSE.txt** file.
 
 
