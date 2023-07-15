@@ -572,3 +572,92 @@ following command, assuming you have *git* installed on your **PATH**
 pip install git+git://github.com/pypiserver/pypiserver.git
 ```
 
+## Recipes
+
+###Managing the Package Directory
+
+The **pypi-server** command has the **update** command that searches for updates of
+available packages. It scans the package directory for available
+packages and searches on pypi.org for updates. Without further
+options **pypi-server update** will just print a list of commands which must
+be run in order to get the latest version of each package. Output
+looks like
+
+```shell
+    $ ./pypi-server update 
+    checking 106 packages for newer version
+
+    .........u.e...........e..u.............
+    .....e..............................e...
+    ..........................
+
+    no releases found on pypi for PyXML, Pymacs, mercurial, setuptools
+
+    # update raven from 1.4.3 to 1.4.4
+    pip -q install --no-deps  --extra-index-url https://pypi.org/simple/ -d /home/ralf/packages/mirror raven==1.4.4
+
+    # update greenlet from 0.3.3 to 0.3.4
+    pip -q install --no-deps  --extra-index-url https://pypi.org/simple/ -d /home/ralf/packages/mirror greenlet==0.3.4
+```
+
+It first prints for each package a single character after checking the
+available versions on pypi. A dot(.) means the package is up-to-date, **'u'**
+means the package can be updated and **'e'** means the list of releases on
+pypi is empty. After that it shows a *pip* command line which can be used
+to update a one package. Either copy and paste that or run
+**pypi-server update -x** in order to really execute those commands. You need
+to have *pip* installed for that to work however.
+
+Specifying an additional **-u** option will also allow alpha, beta and
+release candidates to be downloaded. Without this option these
+releases won't be considered.
+
+### Serving Thousands of Packages
+
+By default, **pypiserver** scans the entire packages directory each time an
+incoming HTTP request occurs. This isn't a problem for a small number of
+packages, but causes noticeable slow-downs when serving thousands of packages.
+
+If you run into this problem, significant speedups can be gained by enabling
+pypiserver's directory caching functionality. The only requirement is to
+install the **watchdog** package, or it can be installed during **pypiserver**
+installation, by specifying the **cache** extras option::
+
+```shell
+    pip install pypiserver[cache]
+```
+
+Additional speedups can be obtained by using your webserver's builtin
+caching functionality. For example, if you are using `nginx` as a
+reverse-proxy as described below in `Behind a reverse proxy`_, you can
+easily enable caching. For example, to allow nginx to cache up to
+10 gigabytes of data for up to 1 hour::
+
+```shell
+    proxy_cache_path /data/nginx/cache
+                     levels=1:2
+                     keys_zone=pypiserver_cache:10m
+                     max_size=10g
+                     inactive=60m
+                     use_temp_path=off;
+
+    server {
+        # ...
+        location / {
+            proxy_cache pypiserver_cache;
+            proxy_pass http://localhost:8080;
+        }
+    }
+
+```
+
+Using webserver caching is especially helpful if you have high request
+volume. Using nginx caching, a real-world pypiserver installation was
+able to easily support over 1000 package downloads/min at peak load.
+
+### Managing Automated Startup
+
+There are a variety of options for handling the automated starting of
+pypiserver upon system startup. Two of the most common are *systemd* and
+*supervisor* for linux systems. For windows creating services with scripts isn't
+an easy task without a third party tool such as *NSSM*.
