@@ -661,3 +661,257 @@ There are a variety of options for handling the automated starting of
 pypiserver upon system startup. Two of the most common are *systemd* and
 *supervisor* for linux systems. For windows creating services with scripts isn't
 an easy task without a third party tool such as *NSSM*.
+
+#### Running As a ``systemd`` Service
+
+**systemd** is installed by default on most modern Linux systems and as such,
+it is an excellent option for managing the pypiserver process. An example
+config file for **systemd** can be seen below
+
+```shell
+    [Unit]
+    Description=A minimal PyPI server for use with pip/easy_install.
+    After=network.target
+
+    [Service]
+    Type=simple
+    # systemd requires absolute path here too.
+    PIDFile=/var/run/pypiserver.pid
+    User=www-data
+    Group=www-data
+
+    ExecStart=/usr/local/bin/pypi-server run -p 8080 -a update,download --log-file /var/log/pypiserver.log -P /etc/nginx/.htpasswd /var/www/pypi
+    ExecStop=/bin/kill -TERM $MAINPID
+    ExecReload=/bin/kill -HUP $MAINPID
+    Restart=always
+
+    WorkingDirectory=/var/www/pypi
+
+    TimeoutStartSec=3
+    RestartSec=5
+
+    [Install]
+    WantedBy=multi-user.target
+```
+
+Adjusting the paths and adding this file as **pypiserver.service** into your
+**systemd/system** directory will allow management of the pypiserver process with
+**systemctl**, e.g. **systemctl start pypiserver**.
+
+More useful information about *systemd* can be found at
+https://www.digitalocean.com/community/tutorials/how-to-use-systemctl-to-manage-systemd-services-and-units
+
+#### Launching through ``supervisor``
+
+[supervisor](http://supervisord.org/) has the benefit of being a pure python
+package and as such, it provides excellent cross-platform support for process
+management. An example configuration file for **supervisor** is given below
+
+```shell
+    [program:pypi]
+    command=/home/pypi/pypi-venv/bin/pypi-server run -p 7001 -P /home/pypi/.htpasswd /home/pypi/packages
+    directory=/home/pypi
+    user=pypi
+    autostart=true
+    autorestart=true
+    stderr_logfile=/var/log/pypiserver.err.log
+    stdout_logfile=/var/log/pypiserver.out.log
+```
+    
+
+From there, the process can be managed via **supervisord** using **supervisorctl**.
+
+#### Running As a service with **NSSM** (Windows)
+
+Download NSSM from https://nssm.cc unzip to a desired location such as Program Files. Decide whether you are going
+to use win32 or win64, and add that exe to environment PATH.
+
+Create a start_pypiserver.bat
+```shell
+    pypi-server run -p 8080 C:\Path\To\Packages &
+```
+
+Test the batch file by running it first before creating the service. Make sure you can access
+the server remotely, and install packages. If you can, proceed, if not troubleshoot until you can.
+This will ensure you know the server works, before adding NSSM into the mix.
+
+From the command prompt
+```shell
+    nssm install pypiserver
+```
+
+This command will launch a NSSM gui application
+```shell
+    Path: C:\Path\To\start_pypiserver.bat
+    Startup directory: Auto generates when selecting path
+    Service name: pypiserver
+```
+
+There are more tabs, but that is the basic setup. If the service needs to be running with a certain
+login credentials, make sure you enter those credentials in the logon tab.
+
+Start the service
+```shell
+    nssm start pypiserver
+```
+
+Other useful commands
+```shell
+    nssm --help
+    nssm stop <servicename>
+    nssm restart <servicename>
+    nssm status <servicename>
+
+```
+
+For detailed information please visit https://nssm.cc
+
+#### Using a Different WSGI Server
+
+- The **bottle** web-server which supports many WSGI-servers, among others,
+  **paste**, **cherrypy**, **twisted** and **wsgiref** (part of Python); you select
+  them using the **--server** flag.
+
+- You may view all supported WSGI servers using the following interactive code
+
+```python
+    >>> from pypiserver import bottle
+    >>> list(bottle.server_names.keys())
+    ['cgi', 'gunicorn', 'cherrypy', 'eventlet', 'tornado', 'geventSocketIO',
+   'rocket', 'diesel', 'twisted', 'wsgiref', 'fapws3', 'bjoern', 'gevent',
+   'meinheld', 'auto', 'aiohttp', 'flup', 'gae', 'paste', 'waitress']
+
+```
+
+- If none of the above servers matches your needs, invoke just the
+  **pypiserver:app()** method which returns the internal WSGI-app WITHOUT
+  starting-up a server - you may then send it to any WSGI server you like.
+  Read also the [Utilizing the API](#utilizing-the-api) section.
+
+- Some examples are given below - you may find more details in [bottle
+  site](http://bottlepy.org/docs/dev/deployment.html#switching-the-server-backend>).
+
+Apache (**mod_wsgi**)
+
+To use your *Apache2* with **pypiserver**, prefer to utilize **mod_wsgi** as
+explained in [bottle's documentation](http://bottlepy.org/docs/dev/deployment.html#apache-mod-wsgi>).
+
+Note
+   If you choose instead to go with **mod_proxy**, mind that you may bump into problems
+   with the prefix-path (see [#155](https://github.com/pypiserver/pypiserver/issues/155>)).
+
+1. Adapt and place the following *Apache* configuration either into top-level scope,
+   or inside some **<VirtualHost>** (contributed by Thomas Waldmann):
+```shell
+        WSGIScriptAlias   /     /yoursite/wsgi/pypiserver-wsgi.py
+        WSGIDaemonProcess       pypisrv user=pypisrv group=pypisrv umask=0007 \
+                                processes=1 threads=5 maximum-requests=500 \
+                                display-name=wsgi-pypisrv inactivity-timeout=300
+        WSGIProcessGroup        pypisrv
+        WSGIPassAuthorization On    # Required for authentication (https://github.com/pypiserver/pypiserver/issues/288)
+
+        <Directory /yoursite/wsgi >
+            Require all granted
+        </Directory>
+```
+
+   or if using older **Apache < 2.4**, substitute the last part with this::
+```shell
+        <Directory /yoursite/wsgi >
+            Order deny,allow
+            Allow from all
+        </Directory>
+```
+
+2. Then create the **/yoursite/cfg/pypiserver.wsgi** file and make sure that
+   the **user** and **group** of the **WSGIDaemonProcess** directive
+   (**pypisrv:pypisrv** in the example) have the read permission on it
+
+```python
+
+        import pypiserver
+
+        conf = pypiserver.default_config(
+            root =          "/yoursite/packages",
+            password_file = "/yoursite/htpasswd", )
+        application = pypiserver.app(**conf)
+
+```
+
+
+   Tip
+      If you have installed **pypiserver** in a virtualenv, follow **mod_wsgi**'s
+      [instructions](http://modwsgi.readthedocs.io/en/develop/user-guides/virtual-environments.html)
+      and prepend the python code above with the following
+
+```python
+    import site
+
+    site.addsitedir('/yoursite/venv/lib/pythonX.X/site-packages')
+```
+
+Note
+   For security reasons, notice that the **Directory** directive grants access
+   to a directory holding the **wsgi** start-up script, alone; nothing else.
+
+Note
+   To enable HTTPS support on Apache, configure the directive that contains the
+   WSGI configuration to use SSL.
+
+#### gunicorn
+
+The following command uses **gunicorn** to start **pypiserver**
+```shell
+  gunicorn -w4 'pypiserver:app(root="/home/ralf/packages")'
+```
+
+or when using multiple roots
+```shell
+  gunicorn -w4 'pypiserver:app(root=["/home/ralf/packages", "/home/ralf/experimental"])'
+```
+
+#### paste
+
+[paste](http://pythonpaste.org/>) allows to run multiple WSGI applications
+under different URL paths. Therefore, it is possible to serve different set
+of packages on different paths.
+
+The following example **paste.ini** could be used to serve stable and
+unstable packages on different paths
+
+```shell
+    [composite:main]
+    use = egg:Paste#urlmap
+    /unstable/ = unstable
+    / = stable
+
+    [app:stable]
+    use = egg:pypiserver#main
+    root = ~/stable-packages
+
+    [app:unstable]
+    use = egg:pypiserver#main
+    root = ~/stable-packages
+       ~/unstable-packages
+
+    [server:main]
+    use = egg:gunicorn#main
+    host = 0.0.0.0
+    port = 9000
+    workers = 5
+    accesslog = -
+
+```
+
+Note
+   You need to install some more dependencies for this to work, like::
+```shell
+        pip install paste pastedeploy gunicorn pypiserver
+```
+
+   The server can then start with
+```shell
+        gunicorn_paster paste.ini
+```
+
+
