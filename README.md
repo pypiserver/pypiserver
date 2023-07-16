@@ -383,7 +383,7 @@ We strongly advise to password-protected your uploads!
 It is possible to disable authentication for uploads (e.g. in intranets).
 To avoid lazy security decisions, read help for **-P** and **-a** options.
 
-### [*Apache*-Like Authentication (**htpasswd**)](#pypiserver)
+#### [*Apache*-Like Authentication (**htpasswd**)](#pypiserver)
 
 1. First make sure you have the **passlib** module installed (note that
 **passlib>=1.6** is required), which is needed for parsing the Apache
@@ -429,7 +429,7 @@ Please see `Using Ad-hoc authentication providers`_ for more information.
     ./pypi-server run -p 8080 -P htpasswd.txt ~/packages &
 ```
 
-### [Upload with **setuptools**](#pypiserver)
+#### [Upload with **setuptools**](#pypiserver)
 
 1. On client-side, edit or create a **~/.pypirc** file with a similar content::
 ```shell
@@ -454,7 +454,7 @@ issue this command::
      python setup.py sdist upload -r local
 ```
 
-### [Upload with **twine**](#pypiserver)
+#### [Upload with **twine**](#pypiserver)
 
 To avoid storing you passwords on disk, in clear text, you may either:
 
