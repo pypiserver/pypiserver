@@ -415,7 +415,7 @@ When accessing pypiserver via the api, alternate authentication
 methods are available via the **auther** config flag. Any callable
 returning a boolean can be passed through to the pypiserver config in
 order to provide custom authentication. For example, to configure
-pypiserver to authenticate using the `python-pam`
+pypiserver to authenticate using the [python-pam](https://pypi.org/project/python-pam/)
 ```shell
     import pam
     pypiserver.default_config(auther=pam.authenticate)
