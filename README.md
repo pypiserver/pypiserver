@@ -637,7 +637,7 @@ pypiserver upon system startup. Two of the most common are *systemd* and
 *supervisor* for linux systems. For windows creating services with scripts isn't
 an easy task without a third party tool such as *NSSM*.
 
-#### [Running As a ``systemd`` Service](#pypiserver)
+#### [Running As a systemd Service](#pypiserver)
 
 **systemd** is installed by default on most modern Linux systems and as such,
 it is an excellent option for managing the pypiserver process. An example
@@ -676,7 +676,7 @@ Adjusting the paths and adding this file as **pypiserver.service** into your
 More useful information about *systemd* can be found at
 https://www.digitalocean.com/community/tutorials/how-to-use-systemctl-to-manage-systemd-services-and-units
 
-#### [Launching through ``supervisor``](#pypiserver)
+#### [Launching through supervisor](#pypiserver)
 
 [supervisor](http://supervisord.org/) has the benefit of being a pure python
 package and as such, it provides excellent cross-platform support for process
