@@ -741,7 +741,7 @@ Other useful commands
 
 For detailed information please visit https://nssm.cc
 
-#### [Using a Different WSGI Server](#pypiserver)
+### [Using a Different WSGI Server](#pypiserver)
 
 - The **bottle** web-server which supports many WSGI-servers, among others,
   **paste**, **cherrypy**, **twisted** and **wsgiref** (part of Python); you select
@@ -766,7 +766,7 @@ For detailed information please visit https://nssm.cc
 - Some examples are given below - you may find more details in [bottle
   site](http://bottlepy.org/docs/dev/deployment.html#switching-the-server-backend>).
 
-Apache (**mod_wsgi**)
+#### [Apache (**mod_wsgi**) ](#pypiserver)
 
 To use your *Apache2* with **pypiserver**, prefer to utilize **mod_wsgi** as
 explained in [bottle's documentation](http://bottlepy.org/docs/dev/deployment.html#apache-mod-wsgi>).
