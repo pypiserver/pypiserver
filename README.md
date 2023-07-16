@@ -67,7 +67,7 @@ Table of Contents
         - [Launching through supervisor](#Launching-through-supervisor)
         - [Running as a service with NSSM (Windows)](#Running-as-a-service-with-NSSM)
     - [Using a Different WSGI Server](#Using-a-Different-WSGI-Server)
-        - [Apache( mod_wsgi )](#Apachemod_wsgi)
+        - [Apache](#Apache)
         - [Gunicorn](#Gunicorn)
         - [Paste](#Paste)
     - [Behind a Reverse Proxy](#Behind-a-Reverse-Proxy)
@@ -766,7 +766,7 @@ For detailed information please visit https://nssm.cc
 - Some examples are given below - you may find more details in [bottle
   site](http://bottlepy.org/docs/dev/deployment.html#switching-the-server-backend>).
 
-#### [Apache (**mod_wsgi**) ](#pypiserver)
+#### [Apache](#pypiserver)
 
 To use your *Apache2* with **pypiserver**, prefer to utilize **mod_wsgi** as
 explained in [bottle's documentation](http://bottlepy.org/docs/dev/deployment.html#apache-mod-wsgi>).
