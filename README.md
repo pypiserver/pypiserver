@@ -698,7 +698,7 @@ From there, the process can be managed via **supervisord** using **supervisorctl
 
 #### [Running As a service with NSSM](#pypiserver)
 
-Download NSSM from https://nssm.cc unzip to a desired location such as Program Files. Decide whether you are going
+For Windows download NSSM from https://nssm.cc unzip to a desired location such as Program Files. Decide whether you are going
 to use win32 or win64, and add that exe to environment PATH.
 
 Create a start_pypiserver.bat
