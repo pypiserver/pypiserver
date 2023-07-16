@@ -54,7 +54,7 @@ Table of Contents
     - [Configuring **easy_install**](#Configuring-easy_install)
   - [Uploading Packages Remotely](#Uploading-Packages-Remotely)
     - [Apache like Authentication ( **htpasswd** )](#Apache-like-Authentication)
-    - [Upload with **setuptools**](#Upload-with-**setuptools**)
+    - [Upload with **setuptools**](#Upload-with-setuptools)
     - [Upload with **twine**](#Upload-with-twine)
   - [Using the Docker Image](#Using-the-Docker-Image)
   - [Alternative Installation methods](#Alternative-Installation-methods)
@@ -337,7 +337,7 @@ cumbersome. Since **pypiserver** redirects **pip/easy_install** to the
 **pypi.org** index if it doesn't have a requested package, it is a
 good idea to configure them to always use your local pypi index.
 
-### [Configuring **pip**](#pypiserver)
+### [Configuring pip](#pypiserver)
 
 For **pip** command this can be done by setting the environment variable
 **[PIP_EXTRA_INDEX_URL](https://packaging.python.org/en/latest/guides/hosting-your-own-index/)** in your **.bashr/.profile/.zshrc**
@@ -360,7 +360,7 @@ you will receive an "untrusted" warning from *pip*, urging you to append
 the **--trusted-host** option.  You can also include this option permanently
 in your configuration-files or environment variables.
 
-### [Configuring **easy_install**](#pypiserver)
+### [Configuring easy_install](#pypiserver)
 
 For **easy_install** command you may set the following configuration in
 **~/.pydistutils.cfg**
@@ -383,7 +383,7 @@ We strongly advise to password-protected your uploads!
 It is possible to disable authentication for uploads (e.g. in intranets).
 To avoid lazy security decisions, read help for **-P** and **-a** options.
 
-#### [Apache Like Authentication (**htpasswd**)](#pypiserver)
+#### [Apache Like Authentication (htpasswd)](#pypiserver)
 
 1. First make sure you have the **passlib** module installed (note that
 **passlib>=1.6** is required), which is needed for parsing the Apache
@@ -429,7 +429,7 @@ Please see `Using Ad-hoc authentication providers`_ for more information.
     ./pypi-server run -p 8080 -P htpasswd.txt ~/packages &
 ```
 
-#### [Upload with **setuptools**](#pypiserver)
+#### [Upload with setuptools](#pypiserver)
 
 1. On client-side, edit or create a **~/.pypirc** file with a similar content::
 ```shell
@@ -454,7 +454,7 @@ issue this command::
      python setup.py sdist upload -r local
 ```
 
-#### [Upload with **twine**](#pypiserver)
+#### [Upload with twine](#pypiserver)
 
 To avoid storing you passwords on disk, in clear text, you may either:
 
@@ -696,7 +696,7 @@ management. An example configuration file for **supervisor** is given below
 
 From there, the process can be managed via **supervisord** using **supervisorctl**.
 
-#### [Running As a service with **NSSM** (Windows)](#pypiserver)
+#### [Running As a service with NSSM (Windows)](#pypiserver)
 
 Download NSSM from https://nssm.cc unzip to a desired location such as Program Files. Decide whether you are going
 to use win32 or win64, and add that exe to environment PATH.
