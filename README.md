@@ -176,7 +176,7 @@ Visit https://github.com/pypiserver/pypiserver for more information
  
 
 ```
-### More details about pypi server run
+### [More details about pypi server run](#pypiserver)
 Enter **pypi-server run -h** in the cmd-line to print a detailed usage
 ```text
 usage: pypi-server run [-h] [-v] [--log-file FILE] [--log-stream STREAM]
@@ -278,7 +278,7 @@ optional arguments:
                         log; set to '%s' to see them all.
 
 ```
-### More details about pypi-server update
+### [More details about pypi-server update](#pypiserver)
 More details about **pypi-server update**
 
 ```text
@@ -331,7 +331,7 @@ optional arguments:
 
 
 ```
-## Client-Side Configurations
+## [Client-Side Configurations](#pypiserver)
 Always specifying the pypi url on the command line is a bit
 cumbersome. Since **pypiserver** redirects **pip/easy_install** to the
 **pypi.org** index if it doesn't have a requested package, it is a
