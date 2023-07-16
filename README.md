@@ -36,7 +36,7 @@ be used in other contexts. In particular, it does not officially support
 being used as a custom package index by users wishing to serve their own
 packages.
 
-**pypiserver** implements the same interfaces as , allowing
+**pypiserver** implements the same interfaces as [PyPI](https://pypi.org/), allowing
 standard Python packaging tooling such as **pip** and **twine** to
 interact with it as a package index just as they would with [PyPI](https://pypi.org/), while
 making it much easier to get a running index server.
