@@ -64,8 +64,8 @@ Table of Contents
     - [Serving Thousands of Packages](#Serving-Thousands-of-Packages)
     - [Managing Automated Startup](#Managing-Automated-Startup)
         - [Running as a systemd service](#Running-as-a-systemd-service)
-        - [Launching through supervisor](#Launching-through-supervisord)
-        - [Running as a service with NSSM](#Running-as-a-service-with-NSSM)
+        - [Launching through supervisor](#Launching-through-supervisor)
+        - [Running as a service with NSSM (Windows)](#Running-as-a-service-with-NSSM)
     - [Using a Different WSGI Server](#Using-a-Different-WSGI-Server)
         - [Apache( mod_wsgi)](#Apachemod_wsgi)
         - [Gunicorn](#Gunicorn)
@@ -696,7 +696,7 @@ management. An example configuration file for **supervisor** is given below
 
 From there, the process can be managed via **supervisord** using **supervisorctl**.
 
-#### [Running As a service with NSSM (Windows)](#pypiserver)
+#### [Running As a service with NSSM](#pypiserver)
 
 Download NSSM from https://nssm.cc unzip to a desired location such as Program Files. Decide whether you are going
 to use win32 or win64, and add that exe to environment PATH.
