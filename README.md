@@ -87,7 +87,7 @@ Table of Contents
     - [Related Projects](#related-projects)
     - [License](#license)
         
-## [Quickstart Installation and Usage](#Table-of-Contents)
+## [Quickstart Installation and Usage](Table-of-Contents)
 **pypiserver** works with Python 3.6+ and PyPy3.
 
 Older Python versions may still work, but they are not tested.
