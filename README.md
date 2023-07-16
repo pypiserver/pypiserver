@@ -44,7 +44,6 @@ making it much easier to get a running index server.
 # pypiserver 
 
 Table of Contents 
-pypiserver - minimal PyPI server for use with pip/easy_install
 
 - [pypiserver - minimal PyPI server for use with pip/easy_install](#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install)
   - [Quickstart Installation and Usage](#Quickstart-Installation-and-Usage)
