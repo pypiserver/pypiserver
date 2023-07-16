@@ -337,7 +337,7 @@ cumbersome. Since **pypiserver** redirects **pip/easy_install** to the
 **pypi.org** index if it doesn't have a requested package, it is a
 good idea to configure them to always use your local pypi index.
 
-### Configuring **pip**
+### [Configuring **pip**](#pypiserver)
 
 For **pip** command this can be done by setting the environment variable
 **[PIP_EXTRA_INDEX_URL](https://packaging.python.org/en/latest/guides/hosting-your-own-index/)** in your **.bashr/.profile/.zshrc**
