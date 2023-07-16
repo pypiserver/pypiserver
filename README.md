@@ -54,7 +54,7 @@ Table of Contents
     - [Configuring **easy_install**](#Configuring-easy_install)
   - [Uploading Packages Remotely](#Uploading-Packages-Remotely)
     - [Apache like Authentication ( **htpasswd** )](#Apache-like-Authentication)
-    - [Upload with **setutools**](#Upload-with-setutools)
+    - [Upload with **setuptools**](#Upload-with-setuptools)
     - [Upload with **twine**](#Upload-with-twine)
   - [Using the Docker Image](#Using-the-Docker-Image)
   - [Alternative Installation methods](#Alternative-Installation-methods)
