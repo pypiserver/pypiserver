@@ -67,7 +67,7 @@ Table of Contents
         - [Launching through supervisor](#Launching-through-supervisor)
         - [Running as a service with NSSM (Windows)](#Running-as-a-service-with-NSSM)
     - [Using a Different WSGI Server](#Using-a-Different-WSGI-Server)
-        - [Apache( mod_wsgi)](#Apachemod_wsgi)
+        - [Apache( mod_wsgi )](#Apachemod_wsgi)
         - [Gunicorn](#Gunicorn)
         - [Paste](#Paste)
     - [Behind a Reverse Proxy](#Behind-a-Reverse-Proxy)
