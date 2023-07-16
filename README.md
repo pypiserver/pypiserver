@@ -360,7 +360,7 @@ you will receive an "untrusted" warning from *pip*, urging you to append
 the **--trusted-host** option.  You can also include this option permanently
 in your configuration-files or environment variables.
 
-### Configuring **easy_install**
+### [Configuring **easy_install**](#pypiserver)
 
 For **easy_install** command you may set the following configuration in
 **~/.pydistutils.cfg**
