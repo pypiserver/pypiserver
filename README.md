@@ -53,7 +53,7 @@ Table of Contents
     - [Configuring **pip**](#Configuring-pip)
     - [Configuring **easy_install**](#Configuring-easy_install)
   - [Uploading Packages Remotely](#Uploading-Packages-Remotely)
-    - [Apache-like Authentication ( **htpasswd** )](#Apache-like-Authentication)
+    - [Apache like Authentication ( **htpasswd** )](#Apache-like-Authentication)
     - [Upload with **setutools**](#Upload-with-setutools)
     - [Upload with **twine**](#Upload-with-twine)
   - [Using the Docker Image](#Using-the-Docker-Image)
@@ -383,7 +383,7 @@ We strongly advise to password-protected your uploads!
 It is possible to disable authentication for uploads (e.g. in intranets).
 To avoid lazy security decisions, read help for **-P** and **-a** options.
 
-#### [*Apache*-Like Authentication (**htpasswd**)](#pypiserver)
+#### [Apache Like Authentication (**htpasswd**)](#pypiserver)
 
 1. First make sure you have the **passlib** module installed (note that
 **passlib>=1.6** is required), which is needed for parsing the Apache
