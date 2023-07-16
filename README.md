@@ -19,7 +19,7 @@
 | License      | zlib/libpng + MIT                                                                                                                                                                                                                                |
 | Community    | https://pypiserver.zulipchat.com                                                                                                                                                                                                                 |
 
-Chat with us on [Zulip](https://pypiserver.zulipchat.com)
+Chat with us on [Zulip](https://pypiserver.zulipchat.com)!
 
 **pypiserver** is a minimal [PyPI](https://pypi.org/) compatible server for **pip** or **easy_install**.
 It is based on [bottle](http://bottlepy.org/) and serves packages from regular directories.
