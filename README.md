@@ -833,7 +833,7 @@ Note
    To enable HTTPS support on Apache, configure the directive that contains the
    WSGI configuration to use SSL.
 
-#### [gunicorn](#pypiserver
+#### [gunicorn](#pypiserver)
 
 The following command uses **gunicorn** to start **pypiserver**
 ```shell
