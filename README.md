@@ -132,7 +132,7 @@ The same is true for the rest of this documentation.
    # Note that pip search does not currently work with the /simple/ endpoint.
 ```
 
-   See also [Client-side configurations]() for avoiding tedious typing.
+   See also [Client-side configurations](#Client-Side Configurations) for avoiding tedious typing.
 
 4. Enter **pypi-server -h** in the cmd-line to print a detailed usage message
 
