@@ -136,7 +136,7 @@ The same is true for the rest of this documentation.
 
 4. Enter **pypi-server -h** in the cmd-line to print a detailed usage message
 
-```shell
+```text
 usage: pypi-server [-h] [-v] [--log-file FILE] [--log-stream STREAM]
                    [--log-frmt FORMAT] [--hash-algo HASH_ALGO]
                    [--backend {auto,simple-dir,cached-dir}] [--version]
