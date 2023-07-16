@@ -281,18 +281,13 @@ optional arguments:
 ### More details about pypi-server update
 More details about **pypi-server update**
 
-```shell
-usage: pypi-server run [-h] [-v] [--log-file FILE] [--log-stream STREAM]
-                       [--log-frmt FORMAT] [--hash-algo HASH_ALGO]
-                       [--backend {auto,simple-dir,cached-dir}] [--version]
-                       [-p PORT] [-i HOST] [-a AUTHENTICATE]
-                       [-P PASSWORD_FILE] [--disable-fallback]
-                       [--fallback-url FALLBACK_URL]
-                       [--health-endpoint HEALTH_ENDPOINT] [--server METHOD]
-                       [-o] [--welcome HTML_FILE] [--cache-control AGE]
-                       [--log-req-frmt FORMAT] [--log-res-frmt FORMAT]
-                       [--log-err-frmt FORMAT]
-                       [package_directory [package_directory ...]]
+```text
+usage: pypi-server update [-h] [-v] [--log-file FILE] [--log-stream STREAM]
+                          [--log-frmt FORMAT] [--hash-algo HASH_ALGO]
+                          [--backend {auto,simple-dir,cached-dir}] [--version]
+                          [-x] [-d DOWNLOAD_DIRECTORY] [-u]
+                          [--blacklist-file IGNORELIST_FILE]
+                          [package_directory [package_directory ...]]
 
 positional arguments:
   package_directory     The directory from which to serve packages.
@@ -304,7 +299,7 @@ optional arguments:
                         stdout or stderr, if configured.
   --log-stream STREAM   Log messages to the specified STREAM. Valid values are
                         stdout, stderr, and none
-  --log-frmt FORMAT     The logging format-string.  (see `logging.LogRecord`
+  --log-frmt FORMAT     The logging format-string. (see `logging.LogRecord`
                         class from standard python library)
   --hash-algo HASH_ALGO
                         Any `hashlib` available algorithm to use for
@@ -315,70 +310,25 @@ optional arguments:
                         automatically determine whether to activate caching or
                         not
   --version             show program's version number and exit
-  -p PORT, --port PORT  Listen on port PORT (default: 8080)
-  -i HOST, -H HOST, --interface HOST, --host HOST
-                        Listen on interface INTERFACE (default: 0.0.0.0)
-  -a AUTHENTICATE, --authenticate AUTHENTICATE
-                        Comma-separated list of (case-insensitive) actions to
-                        authenticate (options: download, list, update;
-                        default: update).
-                         
-                         Any actions not specified are not authenticated, so
-                         to authenticate downloads and updates, but allow
-                         unauthenticated viewing of the package list, you would
-                         use:
-                         
-                          pypi-server -a 'download, update' -P
-                          ./my_passwords.htaccess
-                         
-                        To disable authentication, use:
-                         
-                          pypi-server -a . -P .
-                         
-                        See the `-P` option for configuring users and
-                        passwords.
-                         
-                        Note that when uploads are not protected, the
-                        `register` command is not necessary, but `~/.pypirc`
-                        still needs username and password fields, even if
-                        bogus.
-  -P PASSWORD_FILE, --passwords PASSWORD_FILE
-                        Use an apache htpasswd file PASSWORD_FILE to set
-                        usernames and passwords for authentication.
-                         
-                        To allow unauthorized access, use:
-                         
-                          pypi-server -a . -P .
-                         
-  --disable-fallback    Disable the default redirect to PyPI for packages not
-                        found in the local index.
-  --fallback-url FALLBACK_URL
-                        Redirect to FALLBACK_URL for packages not found in the
-                        local index.
-  --health-endpoint HEALTH_ENDPOINT
-                        Configure a custom liveness endpoint. It always
-                        returns 200 Ok if the service is up. Otherwise, it
-                        means that the service is not responsive.
-  --server METHOD       Use METHOD to run the server. Valid values include
-                        paste, cherrypy, twisted, gunicorn, gevent, wsgiref,
-                        and auto. The default is to use "auto", which chooses
-                        one of paste, cherrypy, twisted, or wsgiref.
-  -o, --overwrite       Allow overwriting existing package files during
-                        upload.
-  --welcome HTML_FILE   Use the contents of HTML_FILE as a custom welcome
-                        message on the home page.
-  --cache-control AGE   Add "Cache-Control: max-age=AGE" header to package
-                        downloads. Pip 6+ requires this for caching.AGE is
-                        specified in seconds.
-  --log-req-frmt FORMAT
-                        A format-string selecting Http-Request properties to
-                        log; set to '%s' to see them all.
-  --log-res-frmt FORMAT
-                        A format-string selecting Http-Response properties to
-                        log; set to '%s' to see them all.
-  --log-err-frmt FORMAT
-                        A format-string selecting Http-Error properties to
-                        log; set to '%s' to see them all.
+  -x, --execute         Execute the pip commands rather than printing to
+                        stdout
+  -d DOWNLOAD_DIRECTORY, --download-directory DOWNLOAD_DIRECTORY
+                        Specify a directory where packages updates will be
+                        downloaded. The default behavior is to use the
+                        directory which contains the package being updated.
+  -u, --allow-unstable  Allow updating to unstable versions (alpha, beta, rc,
+                        dev, etc.)
+  --blacklist-file IGNORELIST_FILE, --ignorelist-file IGNORELIST_FILE
+                        Don't update packages listed in this file (one package
+                        name per line, without versions, '#' comments
+                        honored). This can be useful if you upload private
+                        packages into pypiserver, but also keep a mirror of
+                        public packages that you regularly update. Attempting
+                        to pull an update of a private package from `pypi.org`
+                        might pose a security risk - e.g. a malicious user
+                        might publish a higher version of the private package,
+                        containing arbitrary code.
+
 
 ```
 ## Client-Side Configurations
