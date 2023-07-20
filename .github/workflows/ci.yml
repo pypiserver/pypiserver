@@ -11,6 +11,7 @@ on:
       - "v**"
   # Allowing to run on fork and other pull requests
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test-python:
@@ -59,7 +60,7 @@ jobs:
       - name: Check formatting
         run: black --diff --check .
       - name: Validate README
-        run: ./bin/check_readme.sh
+        run: "::set-output name=CHECK_RESULT::$(mdformat --check README.md)"
 
   # Full-flow docker tests, again not python version dependent
   # We _could_ test this on MacOS, but it takes forever to get docker
