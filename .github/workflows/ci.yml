@@ -60,7 +60,7 @@ jobs:
       - name: Check formatting
         run: black --diff --check .
       - name: Validate README
-        run: "::set-output name=CHECK_RESULT::$(mdformat --check README.md)"
+        run: mdformat --check README.md
 
   # Full-flow docker tests, again not python version dependent
   # We _could_ test this on MacOS, but it takes forever to get docker
