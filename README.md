@@ -2,10 +2,10 @@
 
 [**pypiserver - minimal PyPI server for use with pip/easy_install**](<>)
 
-[![pypi badge](https://img.shields.io/badge/pypi-v1.5.1-blue.svg)](https://shields.io/)
-![ci workflow](https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml/badge.svg)
-[![Generic badge](https://img.shields.io/badge/python-3.6%7C3.7%7C3.8+-blue.svg)](https://shields.io/)
-[![Generic badge](https://img.shields.io/badge/license-MIT%7Czlib/libpng-blue.svg)](https://shields.io/)
+[![pypi badge](https://img.shields.io/pypi/v/pypiserver.svg)](https://shields.io/)
+![ci workflow](https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml/badge.svg)(https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml)
+[![Generic badge](https://img.shields.io/badge/python-3.6%7C3.7%7C3.8+-blue.svg)](https://pypi.org/project/pypiserver/)
+[![Generic badge](https://img.shields.io/badge/license-MIT%7Czlib/libpng-blue.svg)](https://raw.githubusercontent.com/pypiserver/pypiserver/master/LICENSE.txt)
 
 | name        | description                                                                                                                                                                                                                                     |
 | :---------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
