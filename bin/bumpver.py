@@ -49,7 +49,7 @@ VFILE = osp.join(my_dir, "..", "pypiserver", "__init__.py")
 VFILE_regex_v = re.compile(r'version *= *__version__ *= *"([^"]+)"')
 VFILE_regex_d = re.compile(r'__updated__ *= *"([^"]+)"')
 
-RFILE = osp.join(my_dir, "..", "README.rst")
+RFILE = osp.join(my_dir, "..", "README.md")
 
 PYTEST_ARGS = [osp.join("tests", "test_docs.py")]
 
