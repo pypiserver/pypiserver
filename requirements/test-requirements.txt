@@ -9,3 +9,6 @@ tox
 twine
 webtest
 wheel>=0.25.0
+mdformat-gfm
+mdformat-frontmatter
+mdformat-footnote

@@ -14,7 +14,7 @@ Files:
 
 Release check-list:
 ===================
-1. Update ``/CHANGES.rst`` (+ Title + Date) & ``/README.rst`` (Date,
+1. Update ``/CHANGES.rst`` (+ Title + Date) & ``/README.md`` (Date,
    not version).
 
 2. Push to GitHub to run all TCs once more.
