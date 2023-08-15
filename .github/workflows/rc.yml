@@ -7,7 +7,7 @@ name: release_candidate
 # - [x] update CHANGES.rst
 # - [x] create changes commit
 # - [x] push to GH
-# - [ ] update README.rst
+# - [ ] update README.md
 # - [ ] create readme commit
 # - [ ] push to GH
 # - [ ] open a PR to `master`

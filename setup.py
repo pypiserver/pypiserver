@@ -9,12 +9,12 @@ tests_require = [
     "pytest>=2.3",
     "tox",
     "twine",
-    "pip>=7",
     "passlib>=1.6",
     "webtest",
 ]
 
 setup_requires = ["setuptools", "setuptools-git >= 0.3", "wheel >= 0.25.0"]
+install_requires = ["pip>=7"]
 
 
 def read_file(rel_path: str):
@@ -40,11 +40,12 @@ def get_version():
 setup(
     name="pypiserver",
     description="A minimal PyPI server for use with pip/easy_install.",
-    long_description=read_file("README.rst"),
+    long_description=read_file("README.md"),
     version=get_version(),
     packages=["pypiserver"],
     package_data={"pypiserver": ["welcome.html"]},
     python_requires=">=3.6",
+    install_requires=install_requires,
     setup_requires=setup_requires,
     extras_require={"passlib": ["passlib>=1.6"], "cache": ["watchdog"]},
     tests_require=tests_require,
