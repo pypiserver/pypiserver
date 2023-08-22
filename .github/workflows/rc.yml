@@ -37,14 +37,14 @@ jobs:
           RC_DATE=${{ steps.get-rc-date.outputs.RC_DATE }}
 
           touch ${PR_BODY_FILE}
-          echo "📦 Automated release candidate for ${RC_DATE}." >> ${PR_BODY_FILE}
-          echo ""                                               >> ${PR_BODY_FILE}
-          echo "TODO:"                                          >> ${PR_BODY_FILE}
-          echo "- [ ] Manually adjust generated CHANGES lines"  >> ${PR_BODY_FILE}
-          echo "- [ ] Manually adjust generated CHANGES title"  >> ${PR_BODY_FILE}
-          echo "- [ ] Manually adjust generated CHANGES date"   >> ${PR_BODY_FILE}
-          echo "- [ ] Approve and merge this PR"                >> ${PR_BODY_FILE}
-          echo "- [ ] See ${{ env.RF_DOCS_FILE }} to continue"  >> ${PR_BODY_FILE}
+          echo "📦 Automated release candidate for ${RC_DATE}."     >> ${PR_BODY_FILE}
+          echo ""                                                   >> ${PR_BODY_FILE}
+          echo "_TODO:_"                                            >> ${PR_BODY_FILE}
+          echo "- [ ] Manually adjust generated CHANGES lines"      >> ${PR_BODY_FILE}
+          echo "- [ ] Manually adjust generated CHANGES title"      >> ${PR_BODY_FILE}
+          echo "- [ ] Manually adjust generated CHANGES date"       >> ${PR_BODY_FILE}
+          echo "- [ ] Approve and merge this PR"                    >> ${PR_BODY_FILE}
+          echo "- [ ] See \`${{ env.RF_DOCS_FILE }}\` to continue"  >> ${PR_BODY_FILE}
 
           echo "${PR_BODY_FILE}:"
           cat ${PR_BODY_FILE}
