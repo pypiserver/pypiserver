@@ -19,7 +19,7 @@ jobs:
   new-rc:
     runs-on: ubuntu-latest
     env:
-      PR_BODY_FILE: ./tmp/pr-body.md
+      PR_BODY_FILE: /tmp/pr-body.md
       RF_DOCS_FILE: ./docs/contents/repo-maintenance/release-work.md
     steps:
       - uses: actions/checkout@v3
