@@ -4,6 +4,17 @@ Changelog
 2.0.0 (tbd)
 -----------
 
+1.5.3rc08-22-2023 (__rc__)
+--------------------------
+
+- 741d85d chore: use global `/tmp` in RC
+- b997e00 chore: clarify the RC workflow
+- 5418797 chore: date in README is now changed by `bumpver`
+- b8d868b feat: replace all dates with bumpver
+- 029e049 chore: convert bin/README to md
+- f14b92c readme output diff on format error (#512)
+- 9edae77 Feature/markdown conversion (#503)
+
 1.5.2 (2023-07-30)
 --------------------------
 
