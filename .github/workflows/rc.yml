@@ -19,6 +19,7 @@ jobs:
   new-rc:
     runs-on: ubuntu-latest
     env:
+      CHANGES_FILE: CHANGES.rst
       PR_BODY_FILE: /tmp/pr-body.md
       RF_DOCS_FILE: ./docs/contents/repo-maintenance/release-work.md
     steps:
@@ -53,8 +54,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RC_DATE=${{ steps.get-rc-date.outputs.RC_DATE }}
+          CHANGES_FILE=${{ env.CHANGES_FILE }}
           PR_BODY_FILE=${{ env.PR_BODY_FILE }}
+          RC_DATE=${{ steps.get-rc-date.outputs.RC_DATE }}
           git config user.name github-actions
           git config user.email github-actions@github.com
           git checkout -b auto-release-candidate-${RC_DATE}
@@ -65,8 +67,8 @@ jobs:
 
           ./bin/update_changelog.sh
 
-          git add CHANGES.rst
-          git commit -m "chore(rc-changes): update Changes.rst"
+          git add ${CHANGES_FILE}
+          git commit -m "chore(rc-changes): update ${CHANGES_FILE}"
           git push
 
           gh pr create  --title "chore(auto-release-candidate-${RC_DATE})" \
