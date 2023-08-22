@@ -18,14 +18,16 @@
 
 4. Push it in GitHub with `--follow-tags`.
 
-5. Generate package *wheel* with `/bin/package.sh`.
+### Manually publishing a new package
 
-6. Upload to PyPi with `twine upload -s -i <gpg-user> dist/*`
+1. Generate package *wheel* with `/bin/package.sh`.
 
-7. Ensure that the new tag is built on
+2. Upload to PyPi with `twine upload -s -i <gpg-user> dist/*`
+
+3. Ensure that the new tag is built on
    [`hub.docker.com`](https://hub.docker.com/r/pypiserver/pypiserver)
    as `latest` and as a direct tag reference.
 
-8. Copy release notes from `/CHANGES.rst` in GitHub as new *"release"*
+4. Copy release notes from `/CHANGES.rst` in GitHub as new *"release"*
    page on the new tag.
    > 💡 Check syntactic differences between `.md` and `.rst` files.
