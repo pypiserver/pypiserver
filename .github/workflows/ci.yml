@@ -130,7 +130,7 @@ jobs:
           ./bin/package.sh
 
       - name: Publish distribution 📦 to PyPI.
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
           print_hash: true
@@ -214,3 +214,21 @@ jobs:
 
       - name: "Image digest"
         run: "echo ${{ steps.docker_build.outputs.digest }}"
+
+  ## GITHUB
+
+  create_release:
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    runs-on: "ubuntu-latest"
+    needs:
+      - "tests"
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: softprops/action-gh-release@v1
+        with:
+          body: 👋 This is a draft release. Please update it manually.
+          prerelease: false
+          draft: true
+          files: |
+            CHANGES.rst
