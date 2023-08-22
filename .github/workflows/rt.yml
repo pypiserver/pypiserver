@@ -1,0 +1,58 @@
+# Release Tag workflow
+
+name: release_tag
+
+# Performed actions:
+# - [x] check that last commit is the CHANGES edit
+# - [x] infer the last RC version
+# - [x] run bumpver.py with the new version
+# - [x] push the commit and new tag
+
+on:
+  workflow_dispatch: # on manual trigger
+
+jobs:
+  new-tag:
+    if: ${{ github.ref_name == 'master' }}
+    runs-on: ubuntu-latest
+    env:
+      CHANGES_FILE: CHANGES.rst
+      EXPECTED_DIFF_COUNT: 1
+    steps:
+      - uses: actions/checkout@v3
+
+      - id: get-diff
+        uses: technote-space/get-diff-action@v6
+        with:
+          PATTERNS: |
+            ${{ env.CHANGES_FILE }}
+          SET_ENV_NAME_COUNT: true
+
+      - id: check-changes
+        run: |
+          echo "${{ steps.get-diff.outputs.count }}/${{ env.EXPECTED_DIFF_COUNT }} changes in ${{ env.CHANGES_FILE }}."
+          exit ${{ steps.get-diff.outputs.count == env.EXPECTED_DIFF_COUNT && 0 || 1 }}
+
+      - id: get-version
+        run: |
+          LAST_VERSION=$(grep -m1 -E ' \([0-9]+-[0-9]+-[0-9]+\)$' ${CHANGE_FILE} | awk '{ print $1 }')
+          echo "LAST_VERSION=${LAST_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - id: install-requirements
+        run: pip install -r "requirements/dev.pip"
+
+      - name: run `bumpver`
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CHANGE_FILE=${{ env.CHANGES_FILE }}
+          LAST_VERSION=${{ steps.get-version.outputs.LAST_VERSION }}
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          python3 bin/bumpver.py -t "Automated release ${LAST_VERSION}" ${LAST_VERSION}
+          git push --follow-tags
