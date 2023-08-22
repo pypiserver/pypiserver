@@ -59,7 +59,22 @@ jobs:
       - name: Check formatting
         run: black --diff --check .
       - name: Validate README
+        id: validate_readme
         run: mdformat --check README.md
+        continue-on-error: true
+      - name: check mdformat result
+        run: |
+          if [ "${{ steps.validate_readme.outcome }}" == "failure" ]; then
+              echo "copy readme to /tmp/pypiserver"
+              mkdir -p /tmp/pypiserver
+              cp README.md /tmp/pypiserver
+              echo "README.md is not formatted correctly. Please run 'mdformat README.md' and commit the result."
+              mdformat /tmp/pypiserver/README.md
+              diff -u README.md /tmp/pypiserver/README.md
+              exit 1
+          else
+              echo "README.md is formatted correctly."
+          fi
 
   # Full-flow docker tests, again not python version dependent
   # We _could_ test this on MacOS, but it takes forever to get docker
