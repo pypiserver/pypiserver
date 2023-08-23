@@ -47,13 +47,17 @@ from distutils.util import strtobool as strtoint
 
 import pkg_resources
 
+if sys.version_info < (3, 10):
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points
+
 from pypiserver.backend import (
-    SimpleFileBackend,
-    CachingFileBackend,
+    BackendNotFound,
     Backend,
     IBackend,
-    get_file_backend,
     BackendProxy,
+    get_all_backends,
 )
 
 # The `passlib` requirement is optional, so we need to verify its import here.
@@ -271,7 +275,6 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--backend",
         default=DEFAULTS.BACKEND,
-        choices=("auto", "simple-dir", "cached-dir"),
         dest="backend_arg",
         help=(
             "A backend implementation. Keep the default 'auto' to automatically"
@@ -543,6 +546,14 @@ def get_parser() -> argparse.ArgumentParser:
             "version of the private package, containing arbitrary code."
         ),
     )
+
+    backends_parser = subparsers.add_parser(
+        "backends",
+        help=textwrap.dedent("Show available storage backends."),
+    )
+
+    add_common_args(backends_parser)
+
     return parser
 
 
@@ -622,15 +633,12 @@ class _ConfigCommon:
         return levels.get(self.verbosity, logging.NOTSET)
 
     def get_backend(self, arg: str) -> IBackend:
-        available_backends: t.Dict[str, BackendFactory] = {
-            "auto": get_file_backend,
-            "simple-dir": SimpleFileBackend,
-            "cached-dir": CachingFileBackend,
-        }
+        backends = get_all_backends()
 
-        backend = available_backends[arg]
+        if arg not in backends:
+            raise BackendNotFound("Backend with name {} not found".format(arg))
 
-        return BackendProxy(backend(self))
+        return BackendProxy(backends[arg](self))
 
     def with_updates(self: TConf, **kwargs: t.Any) -> TConf:
         """Create a new config with the specified updates.
@@ -810,7 +818,37 @@ class UpdateConfig(_ConfigCommon):
         }
 
 
-Configuration = t.Union[RunConfig, UpdateConfig]
+class BackendConfig(_ConfigCommon):
+    """A config for the Backend command."""
+
+    def __init__(
+        self,
+        verbosity: int,
+        log_frmt: str,
+        log_file: t.Optional[str],
+        log_stream: t.Optional[t.IO],
+    ) -> None:
+        """Construct a RuntimeConfig."""
+        # Global arguments
+        self.verbosity = verbosity
+        self.log_file = log_file
+        self.log_stream = log_stream
+        self.log_frmt = log_frmt
+
+    @classmethod
+    def kwargs_from_namespace(
+        cls, namespace: argparse.Namespace
+    ) -> t.Dict[str, t.Any]:
+        """Convert a namespace into __init__ kwargs for this class."""
+        return dict(
+            verbosity=namespace.verbose,
+            log_file=namespace.log_file,
+            log_stream=namespace.log_stream,
+            log_frmt=namespace.log_frmt,
+        )
+
+
+Configuration = t.Union[RunConfig, UpdateConfig, BackendConfig]
 
 
 class Config:
@@ -901,6 +939,9 @@ class Config:
             return RunConfig.from_namespace(parsed)
         if parsed.cmd == "update":
             return UpdateConfig.from_namespace(parsed)
+        if parsed.cmd == "backends":
+            return BackendConfig.from_namespace(parsed)
+
         raise SystemExit(parser.format_usage())
 
     @staticmethod

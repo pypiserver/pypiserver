@@ -9,11 +9,13 @@ from collections import namedtuple
 from io import BytesIO
 from urllib.parse import urljoin, urlparse
 from json import dumps
+from pypiserver.backend import PackageNotFound
 
 from pypiserver.config import RunConfig
 from . import __version__
 from . import core
 from .bottle import (
+    HTTPResponse,
     static_file,
     redirect,
     request,
@@ -349,22 +351,17 @@ def list_packages():
 @app.route("/packages/:filename#.*#")
 @auth("download")
 def server_static(filename):
-    entries = config.backend.get_all_packages()
-    for x in entries:
-        f = x.relfn_unix
-        if f == filename:
-            response = static_file(
-                filename,
-                root=x.root,
-                mimetype=mimetypes.guess_type(filename)[0],
-            )
+    try:
+        with config.backend.package(filename) as fp:
+            response = HTTPResponse(body=fp)
             if config.cache_control:
                 response.set_header(
                     "Cache-Control", f"public, max-age={config.cache_control}"
                 )
-            return response
-
-    return HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
+            yield response
+            return
+    except PackageNotFound:
+        yield HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
 
 
 @app.route("/:project/json")

@@ -81,6 +81,11 @@ setup(
     entry_points={
         "paste.app_factory": ["main=pypiserver:paste_app_factory"],
         "console_scripts": ["pypi-server=pypiserver.__main__:main"],
+        "pypiserver_backends": [
+            "simple-dir=pypiserver.backend:SimpleFileBackend",
+            "cached-dir=pypiserver.backend:CachingFileBackend",
+            "auto=pypiserver.backend:get_file_backend",
+        ],
     },
     options={"bdist_wheel": {"universal": True}},
     platforms=["any"],

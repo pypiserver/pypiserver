@@ -10,7 +10,7 @@ from pathlib import Path
 from wsgiref.simple_server import WSGIRequestHandler
 
 import functools as ft
-from pypiserver.config import Config, UpdateConfig
+from pypiserver.config import BackendConfig, Config, UpdateConfig
 
 log = logging.getLogger("pypiserver.main")
 
@@ -149,6 +149,14 @@ def main(argv: t.Sequence[str] = None) -> None:
             stable_only=config.allow_unstable,
             ignorelist=config.ignorelist,
         )
+        return
+
+    if isinstance(config, BackendConfig):
+        from pypiserver.backend import get_all_backends
+
+        backends = get_all_backends()
+        for b in backends:
+            print(b)
         return
 
     # Fixes #49:
