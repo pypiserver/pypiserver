@@ -487,6 +487,15 @@ def get_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    run_parser.add_argument(
+        "--backend-set",
+        metavar="KEY=VALUE",
+        nargs="+",
+        action="extend",
+        default=[],
+        help="Pass arguments to the storage backend in key=value format",
+    )
+
     update_parser = subparsers.add_parser(
         "update",
         help=textwrap.dedent(
@@ -595,8 +604,13 @@ class _ConfigCommon:
         # The first package directory is considered the root. This is used
         # for uploads.
         self.package_root = self.roots[0]
+        self._backend = None
 
-        self.backend = self.get_backend(backend_arg)
+    @property
+    def backend(self):
+        if not self._backend:
+            self._backend = self.get_backend(self.backend_arg)
+        return self._backend
 
     @classmethod
     def from_namespace(
@@ -697,11 +711,11 @@ class RunConfig(_ConfigCommon):
         log_req_frmt: str,
         log_res_frmt: str,
         log_err_frmt: str,
+        backend_args: t.Dict[str, str],
         auther: t.Optional[t.Callable[[str, str], bool]] = None,
         **kwargs: t.Any,
     ) -> None:
         """Construct a RuntimeConfig."""
-        super().__init__(**kwargs)
         self.port = port
         self.host = host
         self.authenticate = authenticate
@@ -717,8 +731,10 @@ class RunConfig(_ConfigCommon):
         self.log_res_frmt = log_res_frmt
         self.log_err_frmt = log_err_frmt
         # Derived properties
+        super().__init__(**kwargs)
         self._derived_properties = self._derived_properties + ("auther",)
         self.auther = self.get_auther(auther)
+        self.backend_args = backend_args
 
     @classmethod
     def kwargs_from_namespace(
@@ -741,6 +757,9 @@ class RunConfig(_ConfigCommon):
             "log_req_frmt": namespace.log_req_frmt,
             "log_res_frmt": namespace.log_res_frmt,
             "log_err_frmt": namespace.log_err_frmt,
+            "backend_args": dict(
+                arg.split("=") for arg in namespace.backend_set
+            ),
         }
 
     def get_auther(
