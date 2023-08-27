@@ -29,14 +29,14 @@ flowchart LR
 
 ## Process walkthrough
 
-> 🗺️ This description approximates the real GitHub workflows and steps.  
-> 👀 For a more detailed view, do check out the linked resources as you read.
+> 🗺️ ***This description approximates the real GitHub workflows and steps.***  
+> 👀 *For a more detailed view, do check out the linked resources as you read.*
 
 ### Preparation 🌱
 
-> 🛠️ This step is applicable only for maintainers.
+> 🛠️ *These step are applicable only for maintainers.*
 
-#### Release candidate
+#### Release candidate ⭐️
 
 A new release candidate can be initiated ***manually** or **on a monthly schedule***.
 
@@ -47,7 +47,7 @@ The workflow automatically prepares a list of changes for the `CHANGES.rst` and
 creates a new Pull Request *(rc PR)* named
 `chore(auto-release-candidate-YYY-MM-DD)` including these draft change notes.
 
-#### Release notes
+#### Release notes 📝
 
 In the created rc PR, open the `CHANGES.rst` and:
 
@@ -57,7 +57,7 @@ In the created rc PR, open the `CHANGES.rst` and:
 
 Commit the changes and push them to the head branch of the rc PR.
 
-#### Confirmed tag
+#### Confirmed tag ✅
 
 1. Once everything is looking good, ***approve and merge*** the rc PR.
 
@@ -73,27 +73,27 @@ Commit the changes and push them to the head branch of the rc PR.
 
 ### Integration 🪴
 
-#### Code checks
+#### Code checks 🧪
 
 Once any *commmit* or *tag* is pushed to the default branch,
 [`ci.yml`](../../../.github/workflows/ci.yml) GH Workflow automatically
 executes diverse code checks: e.g. *linting*, *formatting*, *tests*.
 
-#### Build and pack
+#### Build and pack 📦
 
 If all the checks are successful, [`ci.yml`](../../../.github/workflows/ci.yml)
 builds all the code artifacts: e.g. *wheels*, *docker images*.
 
 ### Deploy 🌳
 
-#### Publish to PyPi
+#### Publish to PyPi 🗃️
 
 > 🏷️ This happens only on new *version tags*.
 
 Once everythig is built, [`ci.yml`](../../../.github/workflows/ci.yml) uploads
 the wheels to the [`pypiserver` PyPi project](https://pypi.org/project/pypiserver/).
 
-#### Publish to Docker Hub
+#### Publish to Docker Hub 🐳
 
 > 🏷️ Docker image *tags* are determined on the fly.
 
@@ -101,10 +101,10 @@ If all is successful so far, [`ci.yml`](../../../.github/workflows/ci.yml) tags
 the built docker images and pushes them to the
 [`pypiserver` Docker Hub repository](https://hub.docker.com/r/pypiserver/pypiserver).
 
-#### Publish a GitHub Release draft
+#### Publish a GitHub Release draft 📣
 
-> 🛠️ This step is applicable only for maintainers.  
-> 🏷️ This happens only on new *version tags*.
+> 🛠️ *This step is applicable only for maintainers.*  
+> 🏷️ This happens only on new *version tags*.  
 
 To make the release noticeable, [`ci.yml`](../../../.github/workflows/ci.yml)
 also creates a *draft*
