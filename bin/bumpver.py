@@ -146,7 +146,6 @@ def exec_cmd(cmd):
 def do_commit(new_ver, old_ver, dry_run, amend, ver_files):
     import pathlib
 
-    # new_ver = strip_ver2_commonprefix(old_ver, new_ver)
     cmt_msg = "chore(ver): bump %s-->%s" % (old_ver, new_ver)
 
     ver_files = [pathlib.Path(f).as_posix() for f in ver_files]
