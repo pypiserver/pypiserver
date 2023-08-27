@@ -35,19 +35,20 @@ EXAMPLE:
 
 """
 
-import os.path as osp
-import sys
-import re
 import functools as fnt
+import os.path as osp
+import re
+import sys
+from datetime import datetime
 
 import docopt
-
 
 my_dir = osp.dirname(__file__)
 
 VFILE = osp.join(my_dir, "..", "pypiserver", "__init__.py")
-VFILE_regex_v = re.compile(r'version *= *__version__ *= *"([^"]+)"')
-VFILE_regex_d = re.compile(r'__updated__ *= *"([^"]+)"')
+VFILE_regex_version = re.compile(r'version *= *__version__ *= *"([^"]+)"')
+VFILE_regex_datetime = re.compile(r'__updated__ *= *"([^"]+)"')
+VFILE_regex_date = re.compile(r'__updated__ *= *"([^"\s]+)\s')
 
 RFILE = osp.join(my_dir, "..", "README.md")
 
@@ -56,6 +57,13 @@ PYTEST_ARGS = [osp.join("tests", "test_docs.py")]
 
 class CmdException(Exception):
     pass
+
+
+def get_current_date_info() -> (str, str):
+    now = datetime.now()
+    new_datetime = now.strftime("%Y-%m-%d %H:%M:%S%z")
+    new_date = now.strftime("%Y-%m-%d")
+    return (new_datetime, new_date)
 
 
 @fnt.lru_cache()
@@ -138,7 +146,6 @@ def exec_cmd(cmd):
 def do_commit(new_ver, old_ver, dry_run, amend, ver_files):
     import pathlib
 
-    # new_ver = strip_ver2_commonprefix(old_ver, new_ver)
     cmt_msg = "chore(ver): bump %s-->%s" % (old_ver, new_ver)
 
     ver_files = [pathlib.Path(f).as_posix() for f in ver_files]
@@ -183,11 +190,12 @@ def bumpver(
         cmd.append(RFILE)
         exec_cmd(cmd)
 
-    regexes = [VFILE_regex_v, VFILE_regex_d]
-    old_ver, old_date = extract_file_regexes(VFILE, regexes)
+    regexes = [VFILE_regex_version, VFILE_regex_datetime, VFILE_regex_date]
+    old_ver, old_datetime, old_date = extract_file_regexes(VFILE, regexes)
 
     if not new_ver:
         yield old_ver
+        yield old_datetime
         yield old_date
     else:
         if new_ver == old_ver:
@@ -199,12 +207,13 @@ def bumpver(
                 msg += "!\n Use of --force recommended."
                 raise CmdException(msg % new_ver)
 
-        from datetime import datetime
-
-        new_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S%z")
-
+        new_datetime, new_date = get_current_date_info()
         ver_files = [osp.normpath(f) for f in [VFILE, RFILE]]
-        subst_pairs = [(old_ver, new_ver), (old_date, new_date)]
+        subst_pairs = [
+            (old_ver, new_ver),
+            (old_datetime, new_datetime),
+            (old_date, new_date),
+        ]
 
         for repl in replace_substrings(ver_files, subst_pairs):
             new_txt, fpath, replacements = repl
@@ -258,6 +267,7 @@ def main(*args):
     except CmdException as ex:
         sys.exit(str(ex))
     except Exception as ex:
+        print("Unexpected error happened.")
         raise ex
 
 
