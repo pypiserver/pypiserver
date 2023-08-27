@@ -1,11 +1,9 @@
 # Build scripts folder
 
-## Files
+## Highlight files
 
 - `bumpver.py` : Bump, commit and tag new project versions
-- `check_readme.sh` : Check that README has no RsT-syntactic errors.
 - `package.sh` : Build deployable artifact (wheel) in `/dist/` folder.
-- `README.rst` : This file.
 
 ## Fully manual release check-list
 
