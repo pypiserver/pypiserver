@@ -149,8 +149,8 @@ jobs:
       # FIXME(before-merge): uncomment to recover the values
       # tags: "${{ steps.tags.outputs.tags }}"
       # has_tags: "${{ steps.has_tags.outputs.has_tags }}"
-      # FIXME(before-merge): this is used for testing
-      tags: "['sample-test']"
+      # FIXME(before-merge): this is used for testing, should skip GHCR pushes
+      tags: "['unstable']"
       has_tags: "true"
       images: ${{ contains(steps.tags.outputs.tags, 'unstable') && env.FLEXIBLE_IMAGES || env.STABLE_IMAGES }}
     steps:
