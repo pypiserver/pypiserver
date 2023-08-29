@@ -146,11 +146,8 @@ jobs:
       STABLE_IMAGES: '["pypiserver/pypiserver", "ghcr.io/pypiserver/pypiserver"]'
       FLEXIBLE_IMAGES: '["pypiserver/pypiserver"]'
     outputs:
-      # FIXME(before-merge): uncomment to recover the values
-      # has_tags: "${{ steps.has_tags.outputs.has_tags }}"
-      # FIXME(before-merge): this is used for testing
-      has_tags: "true"
       tags: "${{ steps.tags.outputs.tags }}"
+      has_tags: "${{ steps.has_tags.outputs.has_tags }}"
       images: ${{ contains(steps.tags.outputs.tags, 'unstable') && env.FLEXIBLE_IMAGES || env.STABLE_IMAGES }}
     steps:
       - uses: "actions/checkout@v3"
@@ -164,12 +161,8 @@ jobs:
         # deploy-docker job
       - name: "Get expected docker tags"
         id: "tags"
-        # FIXME(before-merge): this is used for testing, should skip the GHCR
         run: >-
-          echo "::set-output name=tags::$(echo '["unstable"]')"
-        # FIXME(before-merge): uncomment to recover the values
-        # run: >-
-        #   echo "::set-output name=tags::$(bin/ci_helper.py ${{ github.ref }} docker_tags)"
+          echo "::set-output name=tags::$(bin/ci_helper.py ${{ github.ref }} docker_tags)"
 
         # This is needed because GH actions will fail on an empty matrix, so
         # we need to be sure the `if` condition is false on the next job if
@@ -225,10 +218,7 @@ jobs:
           context: "./"
           file: "./Dockerfile"
           builder: "${{ steps.buildx.outputs.name }}"
-          # FIXME(before-merge): uncomment to recover the value
-          # push: true
-          # FIXME(before-merge): this is only used for testing
-          push: false
+          push: true
           tags: "${{ matrix.image }}:${{ matrix.tag }}"
           cache-from: "type=local,src=/tmp/.buildx-cache"
           cache-to: "type=local,dest=/tmp/.buildx-cache"
