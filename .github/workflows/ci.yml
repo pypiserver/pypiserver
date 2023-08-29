@@ -146,8 +146,12 @@ jobs:
       STABLE_IMAGES: '["pypiserver/pypiserver", "ghcr.io/pypiserver/pypiserver"]'
       FLEXIBLE_IMAGES: '["pypiserver/pypiserver"]'
     outputs:
-      tags: "${{ steps.tags.outputs.tags }}"
-      has_tags: "${{ steps.has_tags.outputs.has_tags }}"
+      # FIXME(before-merge): uncomment to recover the values
+      # tags: "${{ steps.tags.outputs.tags }}"
+      # has_tags: "${{ steps.has_tags.outputs.has_tags }}"
+      # FIXME(before-merge): this is used for testing
+      tags: "['sample-test']"
+      has_tags: "true"
       images: ${{ contains(steps.tags.outputs.tags, 'unstable') && env.FLEXIBLE_IMAGES || env.STABLE_IMAGES }}
     steps:
       - uses: "actions/checkout@v3"
@@ -218,7 +222,10 @@ jobs:
           context: "./"
           file: "./Dockerfile"
           builder: "${{ steps.buildx.outputs.name }}"
-          push: true
+          # FIXME(before-merge): uncomment to recover the value
+          # push: true
+          # FIXME(before-merge): this is only used for testing
+          push: false
           tags: "${{ matrix.image }}:${{ matrix.tag }}"
           cache-from: "type=local,src=/tmp/.buildx-cache"
           cache-to: "type=local,dest=/tmp/.buildx-cache"
