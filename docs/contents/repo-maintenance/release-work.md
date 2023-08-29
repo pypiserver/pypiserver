@@ -14,6 +14,7 @@ flowchart LR
     pk["build-and-pack 📦"]
     py["pypi-index 🗃️"]
     do["docker-hub 🐳"]
+    gh["gh-container-registry 🚀"]
     gr["github-release 📣"]
 
     subgraph "Preparation 🌱"
@@ -23,7 +24,7 @@ flowchart LR
     rm-->ci-->pk
     end
     subgraph "Deploy 🌳"
-    pk--> py & do & gr
+    pk--> py & do & gh & gr
     end
 ```
 
@@ -100,6 +101,15 @@ the wheels to the [`pypiserver` PyPi project](https://pypi.org/project/pypiserve
 If all is successful so far, [`ci.yml`](../../../.github/workflows/ci.yml) tags
 the built docker images and pushes them to the
 [`pypiserver` Docker Hub repository](https://hub.docker.com/r/pypiserver/pypiserver).
+
+#### Publish to GitHub Container Registry 🚀
+
+> 🏷️ Docker image *tags* are determined on the fly.
+
+For all `stable` (i.e. `latest`, tag, release ...) tags derived by
+[`ci.yml`](../../../.github/workflows/ci.yml) tags,
+the built docker images are *also* pushed to
+[`pypiserver` GitHub Container Registry](https://github.com/orgs/pypiserver/packages?repo_name=pypiserver).
 
 #### Publish a GitHub Release draft 📣
 
