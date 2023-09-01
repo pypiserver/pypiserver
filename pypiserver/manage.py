@@ -3,23 +3,21 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import itertools
+import json
 import os
 import sys
-
-from packaging.version import parse as packaging_parse
+from distutils.version import LooseVersion
 from pathlib import Path
 from subprocess import call
-from xmlrpc.client import Server
+from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 import pip
+from packaging.version import parse as packaging_parse
 
 from .backend import listdir
 from .core import PkgFile
 from .pkg_helpers import normalize_pkgname, parse_version
-
-
-def make_pypi_client(url):
-    return Server(url)
 
 
 def is_stable_version(pversion):
@@ -61,6 +59,20 @@ def build_releases(pkg, versions):
             yield PkgFile(pkgname=pkg.pkgname, version=x, replaces=pkg)
 
 
+def get_package_releases(pkgname):
+    content_type = "application/vnd.pypi.simple.v1+json"
+
+    req = Request(
+        f"https://pypi.org/simple/{pkgname}", headers={"Accept": content_type}
+    )
+    try:
+        with urlopen(req) as resp:
+            parsed = json.load(resp)
+            return parsed["versions"]
+    except URLError:
+        return None
+
+
 def find_updates(pkgset, stable_only=True):
     no_releases = set()
     filter_releases = filter_stable_releases if stable_only else (lambda x: x)
@@ -71,18 +83,15 @@ def find_updates(pkgset, stable_only=True):
 
     latest_pkgs = frozenset(filter_latest_pkgs(pkgset))
 
-    sys.stdout.write(
-        f"checking {len(latest_pkgs)} packages for newer version\n"
-    )
+    sys.stdout.write(f"checking {len(latest_pkgs)} packages for newer version\n")
     need_update = set()
-
-    pypi = make_pypi_client("https://pypi.org/pypi/")
 
     for count, pkg in enumerate(latest_pkgs):
         if count % 40 == 0:
             write("\n")
 
-        pypi_versions = pypi.package_releases(pkg.pkgname)
+        pypi_versions = get_package_releases(pkg.pkgname)
+
         if pypi_versions:
             releases = filter_releases(build_releases(pkg, pypi_versions))
             status = "."
@@ -101,8 +110,7 @@ def find_updates(pkgset, stable_only=True):
 
     if no_releases:
         sys.stdout.write(
-            f"no releases found on pypi for"
-            f" {', '.join(sorted(no_releases))}\n\n"
+            f"no releases found on pypi for" f" {', '.join(sorted(no_releases))}\n\n"
         )
 
     return need_update
@@ -140,9 +148,7 @@ class PipCmd:
 
 def update_package(pkg, destdir, dry_run=False):
     """Print and optionally execute a package update."""
-    print(
-        f"# update {pkg.pkgname} from {pkg.replaces.version} to {pkg.version}"
-    )
+    print(f"# update {pkg.pkgname} from {pkg.replaces.version} to {pkg.version}")
 
     cmd = tuple(
         PipCmd.update(
@@ -176,9 +182,7 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
 def update_all_packages(
     roots, destdir=None, dry_run=False, stable_only=True, ignorelist=None
 ):
-    all_packages = itertools.chain.from_iterable(
-        listdir(Path(r)) for r in roots
-    )
+    all_packages = itertools.chain.from_iterable(listdir(Path(r)) for r in roots)
 
     skip_packages = set(ignorelist or ())
 
