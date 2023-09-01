@@ -4,6 +4,15 @@ Changelog
 2.0.0 (tbd)
 -----------
 
+1.5.3rc09-01-2023 (__rc__)
+--------------------------
+
+- 6417769 chore: add GitHub container registry for stable images (#521)
+- 4645f7b chore: cleanup release process (#516)
+- e542702 TOC internal links  (#520)
+- f14b92c readme output diff on format error (#512)
+- 9edae77 Feature/markdown conversion (#503)
+
 1.5.2 (2023-07-30)
 --------------------------
 
