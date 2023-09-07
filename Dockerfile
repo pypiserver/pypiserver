@@ -51,7 +51,7 @@ RUN apk add --no-cache --virtual .build-deps \
 COPY pypiserver pypiserver
 COPY setup.cfg .
 COPY setup.py .
-COPY README.rst .
+COPY README.md .
 RUN python -m pip install --no-warn-script-location --prefix=/install .
 
 FROM base

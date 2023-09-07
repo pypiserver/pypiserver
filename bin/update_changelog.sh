@@ -32,6 +32,7 @@ mkdir -p $WORKSPACE_DIR
 
 echo "Updating $CHANGE_FILE:"
 
+# TODO(tech-debt): get `LAST_VERSION` with a separate bash script
 LAST_VERSION=$(grep -m1 -E ' \([0-9]+-[0-9]+-[0-9]+\)$' $CHANGE_FILE | awk '{ print $1 }')
 
 echo "Detected last release version: $LAST_VERSION"

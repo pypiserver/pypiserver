@@ -8,7 +8,7 @@ Welcome to the documentation section of `pypiserver`.
 ## More information
 
 If something is missing in the documentation here, maybe it is covered in
-[`README.rst`](../README.rst).
+[README.md](../README.md).
 
 ## Documentation setup
 
