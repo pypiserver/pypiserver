@@ -390,7 +390,8 @@ def json_info(project):
     req_url = request.url
     for x in packages:
         releases[x.version].append(
-            {"url": urljoin(req_url, "../../packages/" + x.relfn)})
+            {"url": urljoin(req_url, "../../packages/" + x.relfn)}
+        )
 
     rv = {"info": {"version": latest_version}, "releases": releases}
     response.content_type = "application/json"
