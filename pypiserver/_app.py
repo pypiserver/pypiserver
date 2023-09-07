@@ -60,7 +60,7 @@ def print_request():
     parsed = urlparse(request.urlparts.scheme + "://" + request.urlparts.netloc)
     request.custom_host = parsed.netloc
     request.custom_fullpath = (
-            parsed.path.rstrip("/") + "/" + request.fullpath.lstrip("/")
+        parsed.path.rstrip("/") + "/" + request.fullpath.lstrip("/")
     )
 
 
@@ -149,8 +149,8 @@ def file_upload():
     if not ufiles.pkg:
         raise HTTPError(400, "Missing 'content' file-field!")
     if (
-            ufiles.sig
-            and f"{ufiles.pkg.raw_filename}.asc" != ufiles.sig.raw_filename
+        ufiles.sig
+        and f"{ufiles.pkg.raw_filename}.asc" != ufiles.sig.raw_filename
     ):
         raise HTTPError(
             400,
@@ -161,8 +161,8 @@ def file_upload():
         if not uf:
             continue
         if (
-                not is_valid_pkg_filename(uf.raw_filename)
-                or guess_pkgname_and_version(uf.raw_filename) is None
+            not is_valid_pkg_filename(uf.raw_filename)
+            or guess_pkgname_and_version(uf.raw_filename) is None
         ):
             raise HTTPError(400, f"Bad filename: {uf.raw_filename}")
 
