@@ -5,11 +5,11 @@ import re
 import xml.dom.minidom
 import xmlrpc.client as xmlrpclib
 import zipfile
+from collections import defaultdict
 from collections import namedtuple
 from io import BytesIO
-from urllib.parse import urljoin, urlparse
 from json import dumps
-from collections import defaultdict
+from urllib.parse import urljoin, urlparse
 
 from pypiserver.config import RunConfig
 from . import __version__
