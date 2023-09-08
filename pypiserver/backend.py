@@ -1,4 +1,5 @@
 import abc
+from contextlib import contextmanager
 import functools
 import hashlib
 import itertools
@@ -23,6 +24,22 @@ log = logging.getLogger(__name__)
 
 
 PathLike = t.Union[str, os.PathLike]
+
+
+class BackendNotFound(Exception):
+    pass
+
+
+class PackageNotFound(Exception):
+    pass
+
+
+class BackingFileNotFound(PackageNotFound):
+    pass
+
+
+class BackingFileInvalid(PackageNotFound):
+    pass
 
 
 class IBackend(abc.ABC):
@@ -62,6 +79,11 @@ class IBackend(abc.ABC):
     def remove_package(self, pkg: PkgFile) -> None:
         pass
 
+    @abc.abstractmethod
+    @contextmanager
+    def package(self, filename: str) -> t.Generator[t.BinaryIO, t.Any, None]:
+        pass
+
 
 class Backend(IBackend, abc.ABC):
     def __init__(self, config: "Configuration"):
@@ -92,6 +114,11 @@ class Backend(IBackend, abc.ABC):
     @abc.abstractmethod
     def exists(self, filename: str) -> bool:
         """Does a package by the given name exist?"""
+        pass
+
+    @abc.abstractmethod
+    @contextmanager
+    def package(self, filename: str) -> t.Generator[t.BinaryIO, t.Any, None]:
         pass
 
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
@@ -167,6 +194,25 @@ class SimpleFileBackend(Backend):
             for root in self.roots
             for existing_file in all_listed_files(root)
         )
+
+    @contextmanager
+    def package(self, filename: str) -> t.Generator[t.BinaryIO, t.Any, None]:
+        if is_listed_path(filename):
+            for root in self.roots:
+                candidate = root.joinpath(filename)
+                if candidate.exists():
+                    fd = candidate.open("rb")
+                    yield fd
+                    fd.close()
+                    return
+        else:
+            raise BackingFileInvalid(
+                "Packages that start with '.' ({}) are invalid.".format(
+                    filename
+                )
+            )
+
+        raise BackingFileNotFound("Could not find package".format(filename))
 
 
 class CachingFileBackend(SimpleFileBackend):
@@ -273,6 +319,13 @@ def get_file_backend(config: "Configuration") -> Backend:
     return SimpleFileBackend(config)
 
 
+def get_all_backends() -> t.Mapping[str, type]:
+    from importlib.metadata import entry_points
+
+    backend_plugins = entry_points(group="pypiserver_backends")
+    return {p.name: p.load() for p in backend_plugins}
+
+
 PkgFunc = t.TypeVar("PkgFunc", bound=t.Callable[..., t.Iterable[PkgFile]])
 
 
@@ -323,3 +376,8 @@ class BackendProxy(IBackend):
 
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
         return self.backend.digest(pkg)
+
+    @contextmanager
+    def package(self, filename: str) -> t.Generator[t.BinaryIO, t.Any, None]:
+        with self.backend.package(filename) as fd:
+            yield fd
