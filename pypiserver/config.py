@@ -62,6 +62,8 @@ try:
 except ImportError:
     HtpasswdFile = None
 
+log = logging.getLogger(__name__)
+GH_DISCUSSIONS_URL = "https://github.com/pypiserver/pypiserver/discussions"
 
 # The "strtobool" function in distutils does a nice job at parsing strings,
 # but returns an integer. This just wraps it in a boolean call so that we
@@ -115,6 +117,12 @@ def auth_arg(arg: str) -> t.List[str]:
 
 def hash_algo_arg(arg: str) -> t.Optional[str]:
     """Parse a hash algorithm from the string."""
+    if arg is DEFAULTS.HASH_ALGO:
+        log.warning(
+            f"Using the default hashing algorithm: {arg}.\n"
+            + "Please make sure it is consistent with your project setup (e.g. lockfiles).\n"
+            + f"For possible migration strategies, consider {GH_DISCUSSIONS_URL}."
+        )
     if arg in hashlib.algorithms_available:
         return arg
     try:
