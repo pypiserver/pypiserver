@@ -117,12 +117,6 @@ def auth_arg(arg: str) -> t.List[str]:
 
 def hash_algo_arg(arg: str) -> t.Optional[str]:
     """Parse a hash algorithm from the string."""
-    if arg is DEFAULTS.HASH_ALGO:
-        log.warning(
-            f"Using the default hashing algorithm: {arg}.\n"
-            + "Please make sure it is consistent with your project setup (e.g. lockfiles).\n"
-            + f"For possible migration strategies, consider {GH_DISCUSSIONS_URL}."
-        )
     if arg in hashlib.algorithms_available:
         return arg
     try:
