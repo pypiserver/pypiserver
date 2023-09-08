@@ -130,12 +130,12 @@ def test_fallback_url_default(main):
 
 def test_hash_algo_default(main):
     main([])
-    assert main.app._pypiserver_config.hash_algo == "md5"
+    assert main.app._pypiserver_config.hash_algo == "sha256"
 
 
 def test_hash_algo(main):
-    main(["--hash-algo=sha256"])
-    assert main.app._pypiserver_config.hash_algo == "sha256"
+    main(["--hash-algo=md5"])
+    assert main.app._pypiserver_config.hash_algo == "md5"
 
 
 def test_hash_algo_off(main):
