@@ -454,7 +454,7 @@ def test_json_info(root, testapp):
     assert len(resp.json["info"]) == 1
     assert len(resp.json["releases"]) == 2
     assert len(resp.json["releases"]["1.0"]) == 1
-    assert len(resp.json["releases"]["1.1"]) == 2  # linux whl is included
+    assert len(resp.json["releases"]["1.1"]) == 2 
 
 
 def test_json_info_package_not_existing(root, testapp):
