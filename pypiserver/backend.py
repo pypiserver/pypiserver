@@ -18,9 +18,7 @@ from .pkg_helpers import (
 if t.TYPE_CHECKING:
     from .config import _ConfigCommon as Configuration
 
-
 log = logging.getLogger(__name__)
-
 
 PathLike = t.Union[str, os.PathLike]
 
@@ -48,6 +46,12 @@ class IBackend(abc.ABC):
 
     @abc.abstractmethod
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
+        pass
+
+    @abc.abstractmethod
+    def digest_sha256(
+        self, pkg: PkgFile, file_name: str = None
+    ) -> t.Optional[str]:
         pass
 
     @abc.abstractmethod
@@ -98,6 +102,13 @@ class Backend(IBackend, abc.ABC):
         if self.hash_algo is None or pkg.fn is None:
             return None
         return digest_file(pkg.fn, self.hash_algo)
+
+    def digest_sha256(self, pkg: PkgFile, file_name: str = None):
+        if pkg.fn is None:
+            return None
+        if file_name is None:
+            file_name = pkg.fn
+        return digest_file(file_name, "sha256", ":")
 
     def package_count(self) -> int:
         """Return a count of all available packages. When implementing a Backend
@@ -249,12 +260,14 @@ def valid_packages(root: Path, files: t.Iterable[Path]) -> t.Iterator[PkgFile]:
             )
 
 
-def digest_file(file_path: PathLike, hash_algo: str) -> str:
+@functools.lru_cache(maxsize=1000)
+def digest_file(file_path: PathLike, hash_algo: str, seperator="=") -> str:
     """
     Reads and digests a file according to specified hashing-algorith.
 
     :param file_path: path to a file on disk
     :param hash_algo: any algo contained in :mod:`hashlib`
+    :param seperator: the seperator to use between hash_algor and the hash
     :return: <hash_algo>=<hex_digest>
 
     From http://stackoverflow.com/a/21565932/548792
@@ -264,7 +277,7 @@ def digest_file(file_path: PathLike, hash_algo: str) -> str:
     with open(file_path, "rb") as f:
         for block in iter(lambda: f.read(blocksize), b""):
             digester.update(block)
-    return f"{hash_algo}={digester.hexdigest()}"
+    return f"{hash_algo}{seperator}{digester.hexdigest()}"
 
 
 def get_file_backend(config: "Configuration") -> Backend:
@@ -323,3 +336,6 @@ class BackendProxy(IBackend):
 
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
         return self.backend.digest(pkg)
+
+    def digest_sha256(self, pkg: PkgFile, file_name: str = None):
+        return self.backend.digest_sha256(pkg, file_name)
