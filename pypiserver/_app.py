@@ -5,10 +5,11 @@ import re
 import xml.dom.minidom
 import xmlrpc.client as xmlrpclib
 import zipfile
+from collections import defaultdict
 from collections import namedtuple
 from io import BytesIO
-from urllib.parse import urljoin, urlparse
 from json import dumps
+from urllib.parse import urljoin, urlparse
 
 from pypiserver.config import RunConfig
 from . import __version__
@@ -385,12 +386,13 @@ def json_info(project):
         raise HTTPError(404, f"package {project} not found")
 
     latest_version = packages[0].version
-    releases = {}
+    releases = defaultdict(list)
     req_url = request.url
     for x in packages:
-        releases[x.version] = [
+        releases[x.version].append(
             {"url": urljoin(req_url, "../../packages/" + x.relfn)}
-        ]
+        )
+
     rv = {"info": {"version": latest_version}, "releases": releases}
     response.content_type = "application/json"
     return dumps(rv)
