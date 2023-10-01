@@ -226,6 +226,13 @@ jobs:
       - name: "Image digest"
         run: "echo ${{ steps.docker_build.outputs.digest }}"
 
+      - name: "Docker Hub Description"
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          repository: pypiserver/pypiserver
+
   ## GITHUB RELEASE DRAFT
 
   create_release:
