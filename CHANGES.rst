@@ -1,8 +1,16 @@
 Changelog
 =========
 
-2.0.1 (tbd)
+3.0.0 (tbd)
 -----------
+
+2.0.1rc10-01-2023 (__rc__)
+--------------------------
+
+- e788785 FIX: dockerhub description readme (#533)
+- 904f50f FIX: specify long_description as MD type (#532)
+- ad9fb4a MAINT: simpler release_tag action (#530)
+
 
 2.0.0 (2023-10-01)
 --------------------------
