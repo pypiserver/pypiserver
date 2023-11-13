@@ -58,7 +58,7 @@ def is_listed_path(path_part: t.Union[PurePath, str]) -> bool:
 
 
 _archive_suffix_rx = re.compile(
-    r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|-py[23]\.\d-.*|"
+    r"(\.zip|\.tar\.gz|\.tgz|\.tar\.bz2|\.tar\.xz|-py[23]\.\d-.*|"
     r"\.win-amd64-py[23]\.\d\..*|\.win32-py[23]\.\d\..*|\.egg)$",
     re.I,
 )
