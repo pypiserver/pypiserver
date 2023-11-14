@@ -5,7 +5,7 @@ import mimetypes
 import typing as t
 from urllib.parse import quote
 
-from pypiserver.pkg_helpers import normalize_pkgname, parse_version
+from pypiserver.pkg_helpers import normalize_pkgname, parse_version, _requires_python
 
 mimetypes.add_type("application/octet-stream", ".egg")
 mimetypes.add_type("application/octet-stream", ".whl")
@@ -36,6 +36,7 @@ class PkgFile:
         "relfn_unix",  # The relative file path in unix notation
         "parsed_version",  # The package version as a tuple of parts
         "digester",  # a function that calculates the digest for the package
+        "_requires_python",  # The 'data-requires-python' attribute
     ]
     digest: t.Optional[str]
     digester: t.Optional[t.Callable[["PkgFile"], t.Optional[str]]]
@@ -80,3 +81,10 @@ class PkgFile:
             self.digest = self.digester(self)
         hashpart = f"#{self.digest}" if self.digest else ""
         return self.relfn_unix + hashpart  # type: ignore
+
+
+    @property
+    def requires_python(self):
+        if not hasattr(self, '_requires_python'):
+            self._requires_python = _requires_python(self.fn)
+        return self._requires_python

@@ -110,3 +110,33 @@ def guess_pkgname_and_version(path: str) -> t.Optional[t.Tuple[str, str]]:
         parts = _pkgname_parts_re.split(ver_spec)
         version = parts[0]
     return pkgname, version
+
+
+def _requires_python(fpath):
+    import tarfile
+    from email.parser import Parser
+    from zipfile import ZipFile, BadZipFile
+    pkg_name, pkg_version = guess_pkgname_and_version(fpath)
+    if fpath.endswith(".zip") or fpath.endswith(".whl"):
+        try:
+            with ZipFile(fpath, 'r') as pkg:
+                if fpath.endswith(".whl"):
+                    pkg_info = "-".join([pkg_name, pkg_version]) + ".dist-info/METADATA"
+                else:
+                    pkg_info = "-".join([pkg_name, pkg_version]) + "/PKG-INFO"
+                pkg_metadata = pkg.read(pkg_info).decode("utf-8")
+                parser = Parser()
+                metadata = parser.parsestr(pkg_metadata)
+                return metadata["Requires-Python"]
+        except Exception as e:
+            return ''
+    else:
+        try:
+            with tarfile.open(fpath, 'r') as pkg:
+                pkg_info = "-".join([pkg_name, pkg_version]) + "/PKG-INFO"
+                pkg_metadata = pkg.extractfile(pkg_info).read().decode("utf-8")
+                parser = Parser()
+                metadata = parser.parsestr(pkg_metadata)
+                return metadata["Requires-Python"]
+        except Exception as e:
+            return ''
