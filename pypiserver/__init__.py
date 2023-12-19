@@ -193,6 +193,10 @@ def paste_app_factory(_global_config, **local_conf):
         """Convert a specified string root into an absolute Path instance."""
         return pathlib.Path(root.strip()).expanduser().resolve()
 
+    def to_overwrite(val: t.Optional[str]) -> t.Optional[t.Union[bool, str]]:
+        """Convert a string value, if provided, to a bool or "dev"."""
+        return val if val == "dev" else to_bool(val)
+
     # A map of config keys we expect in the paste config to the appropriate
     # function to parse the string config value. This map includes both
     # current and legacy keys.
@@ -204,7 +208,7 @@ def paste_app_factory(_global_config, **local_conf):
         "disable_fallback": to_bool,
         # redirect_to_fallback is a deprecated argument for disable_fallback
         "redirect_to_fallback": to_bool,
-        "overwrite": to_bool,
+        "overwrite": to_overwrite,
         "authenticate": functools.partial(to_list, sep=" "),
         # authenticated is a deprecated argument for authenticate
         "authenticated": functools.partial(to_list, sep=" "),
