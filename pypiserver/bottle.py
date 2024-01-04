@@ -1255,6 +1255,19 @@ class BaseRequest(object):
             correctly. """
         return self.urlparts.geturl()
 
+    def _deduplicate_host(self, host):
+        """If the hostname contains multiple comma seperated hosts, return the last host.
+        This can occur when the `X_FORWARDED_HOST` header has been set twice.
+        We assume the last host is the correct one.
+        """
+
+        if host is None:
+            return host
+        
+        if ',' in host:
+            return host.split(",")[-1].strip()
+        return host
+
     @DictProperty('environ', 'bottle.request.urlparts', read_only=True)
     def urlparts(self):
         ''' The :attr:`url` string as an :class:`urlparse.SplitResult` tuple.
@@ -1264,6 +1277,7 @@ class BaseRequest(object):
         env = self.environ
         http = env.get('HTTP_X_FORWARDED_PROTO') or env.get('wsgi.url_scheme', 'http')
         host = env.get('HTTP_X_FORWARDED_HOST') or env.get('HTTP_HOST')
+        host = self._deduplicate_host(host)
         if not host:
             # HTTP 1.1 requires a Host-header. This is for HTTP/1.0 clients.
             host = env.get('SERVER_NAME', '127.0.0.1')
