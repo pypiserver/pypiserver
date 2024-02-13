@@ -43,6 +43,7 @@ import re
 import sys
 import textwrap
 import typing as t
+# FIXME(fix-before-merge): `distutils` is deprecated in 3.12 -> this util needs reimplementation
 from distutils.util import strtobool as strtoint
 
 import pkg_resources

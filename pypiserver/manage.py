@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 import itertools
 import os
 import sys
+# FIXME(fix-before-merge): `distutils` is deprecated in 3.12 -> use `packaging`
 from distutils.version import LooseVersion
 from pathlib import Path
 from subprocess import call
