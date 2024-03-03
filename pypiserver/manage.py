@@ -117,10 +117,10 @@ class PipCmd:
         """Yield an appropriate root command depending on pip version."""
         # FIXME(fix-before-merging): this should be true for PIP < 10.
         # legacy_pip = StrictVersion(pip_version) < StrictVersion('10.0')
-        legacy_pip = packaging_parse(pip_version) < packaging_parse("10.0.0")
+        modern_pip = packaging_parse(pip_version) >= packaging_parse("10.0")
         for part in ("pip", "-q"):
             yield part
-        yield "install" if legacy_pip else "download"
+        yield "download" if modern_pip else "install"
 
     @staticmethod
     def update(
