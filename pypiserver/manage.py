@@ -7,7 +7,7 @@ import os
 import sys
 # FIXME(fix-before-merge): `distutils` is deprecated in 3.12 -> use `packaging`
 # from distutils.version import LooseVersion
-from packaging.version import parse
+from packaging.version import parse as packaging_parse
 from pathlib import Path
 from subprocess import call
 from xmlrpc.client import Server
@@ -116,7 +116,7 @@ class PipCmd:
     def update_root(pip_version):
         """Yield an appropriate root command depending on pip version."""
         # legacy_pip = StrictVersion(pip_version) < StrictVersion('10.0')
-        legacy_pip = parse(pip_version) < parse("10.0")
+        legacy_pip = packaging_parse(pip_version) < packaging_parse("10.0.0")
         for part in ("pip", "-q"):
             yield part
         yield "install" if legacy_pip else "download"
