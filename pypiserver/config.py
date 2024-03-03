@@ -43,12 +43,21 @@ import re
 import sys
 import textwrap
 import typing as t
-# FIXME(fix-before-merge): `distutils` is deprecated in 3.12 -> this util needs reimplementation
-# from distutils.util import strtobool as strtoint
 
-# FIXME(fix-before-merge): pkg_resources is deprecated
-# import pkg_resources
-from importlib.resources import files as import_files
+# The `pkg_resources` package is deprecated in Python 3.12
+try:
+    import pkg_resources
+
+    def get_resource_bytes(package, resource):
+        return pkg_resources.resource_string(package, resource)
+
+except ImportError:
+    from importlib.resources import files as import_files
+
+    def get_resource_bytes(package, resource):
+        ref = import_files(package).joinpath(resource)
+        return ref.read_bytes()
+
 
 from pypiserver.backend import (
     SimpleFileBackend,
@@ -80,12 +89,13 @@ def legacy_strtoint(val):
     Borrowed from deprecated distutils.
     """
     val = val.lower()
-    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+    if val in ("y", "yes", "t", "true", "on", "1"):
         return 1
-    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+    elif val in ("n", "no", "f", "false", "off", "0"):
         return 0
     else:
         raise ValueError("invalid truth value {!r}".format(val))
+
 
 strtobool: t.Callable[[str], bool] = lambda val: bool(legacy_strtoint(val))
 
@@ -172,12 +182,7 @@ def health_endpoint_arg(arg: str) -> str:
 def html_file_arg(arg: t.Optional[str]) -> str:
     """Parse the provided HTML file and return its contents."""
     if arg is None or arg == "pypiserver/welcome.html":
-        # FIXME(fix-before-merge): pkg_resources is deprecated
-        # return pkg_resources.resource_string(__name__, "welcome.html").decode(
-        #     "utf-8"
-        # )
-        ref = import_files(__name__).joinpath("welcome.html")
-        return ref.read_bytes().decode("utf-8")
+        return get_resource_bytes(__name__, "welcome.html").decode("utf-8")
     with open(arg, "r", encoding="utf-8") as f:
         msg = f.read()
     return msg
