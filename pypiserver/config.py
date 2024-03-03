@@ -46,7 +46,9 @@ import typing as t
 # FIXME(fix-before-merge): `distutils` is deprecated in 3.12 -> this util needs reimplementation
 # from distutils.util import strtobool as strtoint
 
-import pkg_resources
+# FIXME(fix-before-merge): pkg_resources is deprecated
+# import pkg_resources
+from importlib.resources import files as import_files
 
 from pypiserver.backend import (
     SimpleFileBackend,
@@ -170,9 +172,12 @@ def health_endpoint_arg(arg: str) -> str:
 def html_file_arg(arg: t.Optional[str]) -> str:
     """Parse the provided HTML file and return its contents."""
     if arg is None or arg == "pypiserver/welcome.html":
-        return pkg_resources.resource_string(__name__, "welcome.html").decode(
-            "utf-8"
-        )
+        # FIXME(fix-before-merge): pkg_resources is deprecated
+        # return pkg_resources.resource_string(__name__, "welcome.html").decode(
+        #     "utf-8"
+        # )
+        ref = import_files(__name__).joinpath("welcome.html")
+        return ref.read_bytes().decode("utf-8")
     with open(arg, "r", encoding="utf-8") as f:
         msg = f.read()
     return msg
