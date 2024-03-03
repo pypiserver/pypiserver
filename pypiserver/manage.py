@@ -115,6 +115,7 @@ class PipCmd:
     @staticmethod
     def update_root(pip_version):
         """Yield an appropriate root command depending on pip version."""
+        # FIXME(fix-before-merging): this should be true for PIP < 10.
         # legacy_pip = StrictVersion(pip_version) < StrictVersion('10.0')
         legacy_pip = packaging_parse(pip_version) < packaging_parse("10.0.0")
         for part in ("pip", "-q"):
