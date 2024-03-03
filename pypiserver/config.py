@@ -44,7 +44,7 @@ import sys
 import textwrap
 import typing as t
 # FIXME(fix-before-merge): `distutils` is deprecated in 3.12 -> this util needs reimplementation
-from distutils.util import strtobool as strtoint
+# from distutils.util import strtobool as strtoint
 
 import pkg_resources
 
@@ -64,10 +64,28 @@ except ImportError:
     HtpasswdFile = None
 
 
-# The "strtobool" function in distutils does a nice job at parsing strings,
-# but returns an integer. This just wraps it in a boolean call so that we
-# get a bool.
-strtobool: t.Callable[[str], bool] = lambda val: bool(strtoint(val))
+def legacy_strtoint(val):
+    """Convert a string representation of truth to true (1) or false (0).
+
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+
+    The "strtobool" function in distutils does a nice job at parsing strings,
+    but returns an integer. This just wraps it in a boolean call so that we
+    get a bool.
+
+    Borrowed from deprecated distutils.
+    """
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return 1
+    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return 0
+    else:
+        raise ValueError("invalid truth value {!r}".format(val))
+
+strtobool: t.Callable[[str], bool] = lambda val: bool(legacy_strtoint(val))
 
 
 # Specify defaults here so that we can use them in tests &c. and not need
