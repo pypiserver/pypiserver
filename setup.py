@@ -14,7 +14,7 @@ tests_require = [
 ]
 
 setup_requires = ["setuptools", "setuptools-git >= 0.3", "wheel >= 0.25.0"]
-install_requires = ["pip>=7", "packaging>=23.2"]
+install_requires = ["pip>=7", "packaging>=23.2", "importlib_resources;python_version>'3.8' and python_version<'3.12'"]
 
 
 def read_file(rel_path: str):

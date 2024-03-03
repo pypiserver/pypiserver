@@ -44,8 +44,12 @@ import sys
 import textwrap
 import typing as t
 
+# FIXME(fix-before-merge):
 try:
-    from importlib.resources import files as import_files
+    try:
+        from importlib_resources import files as import_files
+    except ImportError:
+        from importlib.resources import files as import_files
 
     def get_resource_bytes(package, resource):
         ref = import_files(package).joinpath(resource)
