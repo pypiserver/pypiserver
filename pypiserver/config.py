@@ -44,19 +44,19 @@ import sys
 import textwrap
 import typing as t
 
-# The `pkg_resources` package is deprecated in Python 3.12
 try:
-    import pkg_resources
-
-    def get_resource_bytes(package, resource):
-        return pkg_resources.resource_string(package, resource)
-
-except ImportError:
     from importlib.resources import files as import_files
 
     def get_resource_bytes(package, resource):
         ref = import_files(package).joinpath(resource)
         return ref.read_bytes()
+
+except ImportError:
+    # The `pkg_resources` is deprecated in Python 3.12
+    import pkg_resources
+
+    def get_resource_bytes(package, resource):
+        return pkg_resources.resource_string(package, resource)
 
 
 from pypiserver.backend import (
