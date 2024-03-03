@@ -116,13 +116,13 @@ class PipCmd:
     def update_root(pip_version):
         """Yield an appropriate root command depending on pip version.
         
-        Use `pip download` for `pip` 9 or lower, and `pip install` otherwise.
+        Use `pip install` for `pip` 9 or lower, and `pip download` otherwise.
         """
         # FIXME(fix-before-merging): this should be true for PIP < 10.
         legacy_pip = packaging_parse(pip_version).major < 10
-        for part in ("pip", "-q"):
+        pip_command = "install" if legacy_pip else "download"
+        for part in ("pip", "-q", pip_command):
             yield part
-        yield "install" if legacy_pip else "download"
 
     @staticmethod
     def update(
