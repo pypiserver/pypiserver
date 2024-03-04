@@ -47,6 +47,8 @@ import typing as t
 # FIXME(fix-before-merge):
 try:
     try:
+        # `importlib_resources` is required for Python versions below 3.12
+        # See more in the package docs: https://pypi.org/project/importlib-resources/
         from importlib_resources import files as import_files
     except ImportError:
         from importlib.resources import files as import_files
