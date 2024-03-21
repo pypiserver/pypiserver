@@ -10,6 +10,7 @@ import pytest
 import pypiserver.bottle
 from pypiserver import __main__
 from pypiserver.bottle import Bottle
+from pypiserver.config import get_shell_result
 
 
 THIS_DIR = pathlib.Path(__file__).parent
@@ -123,9 +124,12 @@ def test_fallback_url(main):
 
 def test_fallback_url_default(main):
     main([])
-    assert (
-        main.app._pypiserver_config.fallback_url == "https://pypi.org/simple/"
-    )
+    default = "https://pypi.org/simple/"
+    global_index = get_shell_result("pip config get global.index-url")
+    if not global_index:
+        assert main.app._pypiserver_config.fallback_url == default
+    else:
+        assert main.app._pypiserver_config.fallback_url == global_index
 
 
 def test_hash_algo_default(main):

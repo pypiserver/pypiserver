@@ -10,6 +10,7 @@ import py
 import pytest
 
 from pypiserver import manage
+from pypiserver.config import DEFAULTS
 from pypiserver.core import PkgFile
 from pypiserver.pkg_helpers import guess_pkgname_and_version, parse_version
 from pypiserver.manage import (
@@ -131,7 +132,6 @@ def test_pip_cmd_root(pip_ver, cmd_type):
 
 def test_pip_cmd_update():
     """Verify the correct determination of a pip command."""
-    index = "https://pypi.org/simple"
     destdir = "foo/bar"
     pkg_name = "mypkg"
     pkg_version = "12.0"
@@ -139,7 +139,7 @@ def test_pip_cmd_update():
     exp_cmd = cmd_root + (
         "--no-deps",
         "-i",
-        index,
+        DEFAULTS.FALLBACK_URL,
         "-d",
         destdir,
         "{}=={}".format(pkg_name, pkg_version),
@@ -181,7 +181,7 @@ def test_update_package(monkeypatch):
             "download",
             "--no-deps",
             "-i",
-            "https://pypi.org/simple",
+            DEFAULTS.FALLBACK_URL,
             "-d",
             ".",
             "mypkg==1.0",
