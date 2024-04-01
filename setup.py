@@ -11,7 +11,7 @@ tests_require = [
     "twine",
     "passlib>=1.6",
     "webtest",
-    "build>=1.2.0;python_version>'3.8'",
+    "build>=1.2.0;python_version>='3.8'",
 ]
 
 setup_requires = [
