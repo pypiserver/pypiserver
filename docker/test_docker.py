@@ -583,7 +583,7 @@ class TestAuthed:
             "install",
             "--no-cache",
             "--index-url",
-            f"http://localhost:{self.HOST_PORT}/simple",
+            f"http://foo:bar@localhost:{self.HOST_PORT}/simple",
             TEST_DEMO_PIP_PACKAGE,
             check_code=lambda c: c != 0,
         )
