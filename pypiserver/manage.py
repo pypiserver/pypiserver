@@ -5,8 +5,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 import itertools
 import os
 import sys
-# FIXME(fix-before-merge): `distutils` is deprecated in 3.12 -> use `packaging`
-# from distutils.version import LooseVersion
+
 from packaging.version import parse as packaging_parse
 from pathlib import Path
 from subprocess import call
@@ -115,10 +114,9 @@ class PipCmd:
     @staticmethod
     def update_root(pip_version):
         """Yield an appropriate root command depending on pip version.
-        
+
         Use `pip install` for `pip` 9 or lower, and `pip download` otherwise.
         """
-        # FIXME(fix-before-merging): this should be true for PIP < 10.
         legacy_pip = packaging_parse(pip_version).major < 10
         pip_command = "install" if legacy_pip else "download"
         for part in ("pip", "-q", pip_command):

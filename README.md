@@ -11,12 +11,12 @@
 | :---------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Version     | 2.0.1                                                                                                                                                                                                                                           |
 | Date:       | 2023-10-01                                                                                                                                                                                                                                      |
-| Source      | https://github.com/pypiserver/pypiserver                                                                                                                                                                                                        |
-| PyPI        | https://pypi.org/project/pypiserver/                                                                                                                                                                                                            |
-| Tests       | https://github.com/pypiserver/pypiserver/actions                                                                                                                                                                                                |
+| Source      | <https://github.com/pypiserver/pypiserver>                                                                                                                                                                                                        |
+| PyPI        | <https://pypi.org/project/pypiserver/>                                                                                                                                                                                                            |
+| Tests       | <https://github.com/pypiserver/pypiserver/actions>                                                                                                                                                                                                |
 | Maintainers | Kostis Anagnostopoulos <ankostis@gmail.com>, Matthew Planchard <mplanchard@gmail.com>,  Dmitrii Orlov <dmtree.dev@yahoo.com>,  **Someone new?** We are looking for new maintainers! [#397](https://github.com/pypiserver/pypiserver/issues/397) |
 | License     | zlib/libpng + MIT                                                                                                                                                                                                                               |
-| Community   | https://pypiserver.zulipchat.com                                                                                                                                                                                                                |
+| Community   | <https://pypiserver.zulipchat.com>                                                                                                                                                                                                                |
 
 Chat with us on [Zulip](https://pypiserver.zulipchat.com)!
 
@@ -134,7 +134,7 @@ See also [Alternative Installation methods](<>)
    # Note that pip search does not currently work with the /simple/ endpoint.
 ```
 
-See also [Client-side configurations](#Client-Side-Configurations) for avoiding tedious typing.
+See also [Client-side configurations](#client-side-configurations) for avoiding tedious typing.
 
 4. Enter **pypi-server -h** in the cmd-line to print a detailed usage message
 
@@ -445,8 +445,6 @@ Please see `Using Ad-hoc authentication providers`\_ for more information.
 
 1. On client-side, edit or create a **~/.pypirc** file with a similar content:
 
-<!-- FIXME(fix-before-merge): check if `distutil` here still works  -->
-
 ```shell
      [distutils]
      index-servers =
@@ -463,7 +461,7 @@ Please see `Using Ad-hoc authentication providers`\_ for more information.
      password: <some_passwd>
 ```
 
-2. Then from within the directory of the python-project you wish to upload,
+1. Then from within the directory of the python-project you wish to upload,
    issue this command:
 
 ```shell
@@ -695,7 +693,7 @@ Adjusting the paths and adding this file as **pypiserver.service** into your
 **systemctl**, e.g. **systemctl start pypiserver**.
 
 More useful information about *systemd* can be found at
-https://www.digitalocean.com/community/tutorials/how-to-use-systemctl-to-manage-systemd-services-and-units
+<https://www.digitalocean.com/community/tutorials/how-to-use-systemctl-to-manage-systemd-services-and-units>
 
 #### Launching through supervisor
 
@@ -718,7 +716,7 @@ From there, the process can be managed via **supervisord** using **supervisorctl
 
 #### Running As a service with NSSM
 
-For Windows download NSSM from https://nssm.cc unzip to a desired location such as Program Files. Decide whether you are going
+For Windows download NSSM from <https://nssm.cc> unzip to a desired location such as Program Files. Decide whether you are going
 to use win32 or win64, and add that exe to environment PATH.
 
 Create a start_pypiserver.bat
@@ -764,7 +762,7 @@ Other useful commands
 
 ```
 
-For detailed information please visit https://nssm.cc
+For detailed information please visit <https://nssm.cc>
 
 ### Using a Different WSGI Server
 
@@ -1059,7 +1057,7 @@ these steps:
 3. Invoke the python-script to start-up **pypiserver**
 
 ```shell
-   $ python pypiserver-start.py
+   python pypiserver-start.py
 ```
 
 Note
@@ -1094,7 +1092,7 @@ Installing packages from the REPL of an embedded device works in this way:
     upip.install("micropython-foobar")
 ```
 
-Further information on micropython-packaging can be found here: https://docs.micropython.org/en/latest/reference/packages.html
+Further information on micropython-packaging can be found here: <https://docs.micropython.org/en/latest/reference/packages.html>
 
 ### Custom Health Check Endpoint
 
@@ -1129,7 +1127,7 @@ Run pypiserver with **--health-endpoint** argument:
     bottle.run(app=app, host="0.0.0.0", port=8080, server="auto")
 ````
 
-Try **curl http://localhost:8080/action/health**
+Try **curl <http://localhost:8080/action/health>**
 
 ## Sources
 
