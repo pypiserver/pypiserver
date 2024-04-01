@@ -563,8 +563,8 @@ class TestAuthed:
             "-m",
             "pip",
             "install",
-            "--index-url",
             "--force-reinstall",
+            "--index-url",
             f"http://a:a@localhost:{self.HOST_PORT}/simple",
             TEST_DEMO_PIP_PACKAGE,
         )
@@ -588,9 +588,7 @@ class TestAuthed:
             "--index-url",
             f"http://foo:bar@localhost:{self.HOST_PORT}/simple",
             TEST_DEMO_PIP_PACKAGE,
-            # FIXME(fix-before-merge): undo
-            # check_code=lambda c: c != 0,
-            check_code=lambda c: c == 356789102,
+            check_code=lambda c: c != 0,
         )
 
     def test_welcome(self) -> None:
