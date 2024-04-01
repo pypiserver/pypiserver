@@ -160,6 +160,7 @@ def session_cleanup() -> t.Iterator[None]:
     uninstall_pkgs()
 
 
+# TODO(tech-debt): fix the cleanup and install issue leading to `Requirement satisfied ...` before the request is sent
 @pytest.fixture()
 def cleanup() -> t.Iterator[None]:
     """Clean up after tests that may have affected the env."""
@@ -376,10 +377,10 @@ class TestBasics:
                 f"http://localhost:{container.port}/simple",
                 "--dest",
                 tmpdir,
-                "pypiserver_mypkg",
+                TEST_DEMO_PIP_PACKAGE,
             )
             assert any(
-                "pypiserver_mypkg" in path.name
+                TEST_DEMO_PIP_PACKAGE in path.name
                 for path in Path(tmpdir).iterdir()
             )
 
@@ -525,10 +526,10 @@ class TestAuthed:
                 f"http://a:a@localhost:{self.HOST_PORT}/simple",
                 "--dest",
                 tmpdir,
-                "pypiserver_mypkg",
+                TEST_DEMO_PIP_PACKAGE,
             )
             assert any(
-                "pypiserver_mypkg" in path.name
+                TEST_DEMO_PIP_PACKAGE in path.name
                 for path in Path(tmpdir).iterdir()
             )
 
@@ -545,7 +546,7 @@ class TestAuthed:
                 f"http://foo:bar@localhost:{self.HOST_PORT}/simple",
                 "--dest",
                 tmpdir,
-                "pypiserver_mypkg",
+                TEST_DEMO_PIP_PACKAGE,
                 check_code=lambda c: c != 0,
             )
 
@@ -566,7 +567,11 @@ class TestAuthed:
             f"http://a:a@localhost:{self.HOST_PORT}/simple",
             TEST_DEMO_PIP_PACKAGE,
         )
-        run("python", "-c", "'import pypiserver_mypkg; mypkg.pkg_name()'")
+        run(
+            "python",
+            "-c",
+            f"'import {TEST_DEMO_PIP_PACKAGE}; mypkg.pkg_name()'",
+        )
 
     @pytest.mark.usefixtures("cleanup", "upload_mypkg", "cleanup")
     def test_install_failed_auth(self) -> None:
@@ -584,9 +589,7 @@ class TestAuthed:
             "--no-cache",
             "--index-url",
             f"http://foo:bar@localhost:{self.HOST_PORT}/simple",
-            # FIXME(fix-before-merge): solve `Requirement already satisfied` installation issue 
-            # TEST_DEMO_PIP_PACKAGE,
-            "foo",
+            TEST_DEMO_PIP_PACKAGE + "incorrect-package",
             check_code=lambda c: c != 0,
         )
 
