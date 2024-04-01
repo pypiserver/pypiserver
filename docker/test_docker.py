@@ -383,9 +383,7 @@ class TestBasics:
                 for path in Path(tmpdir).iterdir()
             )
 
-    # FIXME(fix-before-merge): undo the skip once done tweaking
-    @pytest.mark.skip(reason="temporary skipped")
-    @pytest.mark.usefixtures("cleanup", "upload_mypkg", "cleanup")
+    @pytest.mark.usefixtures("upload_mypkg", "cleanup")
     def test_install(self, container: ContainerInfo) -> None:
         """Install mypkg from the container.
 
@@ -398,6 +396,7 @@ class TestBasics:
             "-m",
             "pip",
             "install",
+            "--force-reinstall",
             "--index-url",
             f"http://localhost:{container.port}/simple",
             TEST_DEMO_PIP_PACKAGE,
@@ -442,8 +441,6 @@ class TestAuthed:
 
     HOST_PORT = get_socket()
 
-    # FIXME(fix-before-merge): undo the skip once done tweaking
-    @pytest.mark.skip(reason="temporary skipped")
     @pytest.fixture(scope="class")
     def container(self, image: str) -> t.Iterator[str]:
         """Run the pypiserver container.
@@ -478,8 +475,6 @@ class TestAuthed:
             yield container_id
             run("docker", "container", "rm", "-f", container_id)
 
-    # FIXME(fix-before-merge): undo the skip once done tweaking
-    @pytest.mark.skip(reason="temporary skipped")
     @pytest.fixture(scope="class")
     def upload_mypkg(
         self,
@@ -501,8 +496,6 @@ class TestAuthed:
             f"{mypkg_paths['dist_dir']}/*",
         )
 
-    # FIXME(fix-before-merge): undo the skip once done tweaking
-    @pytest.mark.skip(reason="temporary skipped")
     def test_upload_failed_auth(
         self,
         container: str,  # pylint: disable=unused-argument
@@ -520,8 +513,6 @@ class TestAuthed:
             check_code=lambda c: c != 0,
         )
 
-    # FIXME(fix-before-merge): undo the skip once done tweaking
-    @pytest.mark.skip(reason="temporary skipped")
     @pytest.mark.usefixtures("upload_mypkg")
     def test_download(self) -> None:
         """Download mypkg from the container."""
@@ -542,8 +533,6 @@ class TestAuthed:
                 for path in Path(tmpdir).iterdir()
             )
 
-    # FIXME(fix-before-merge): undo the skip once done tweaking
-    @pytest.mark.skip(reason="temporary skipped")
     @pytest.mark.usefixtures("upload_mypkg")
     def test_download_failed_auth(self) -> None:
         """Download mypkg from the container."""
@@ -561,9 +550,7 @@ class TestAuthed:
                 check_code=lambda c: c != 0,
             )
 
-    # FIXME(fix-before-merge): undo the skip once done tweaking
-    @pytest.mark.skip(reason="temporary skipped")
-    @pytest.mark.usefixtures("cleanup", "upload_mypkg", "cleanup")
+    @pytest.mark.usefixtures("upload_mypkg", "cleanup")
     def test_install(self) -> None:
         """Install mypkg from the container.
 
@@ -577,13 +564,13 @@ class TestAuthed:
             "pip",
             "install",
             "--index-url",
+            "--force-reinstall",
             f"http://a:a@localhost:{self.HOST_PORT}/simple",
             TEST_DEMO_PIP_PACKAGE,
         )
         run("python", "-c", "'import pypiserver_mypkg; mypkg.pkg_name()'")
 
-    # TODO(tech-debt): solve `Requirement already satisfied` installation issue
-    @pytest.mark.usefixtures("cleanup", "upload_mypkg", "cleanup")
+    @pytest.mark.usefixtures("upload_mypkg", "cleanup")
     def test_install_failed_auth(self) -> None:
         """Install mypkg from the container.
 
@@ -596,6 +583,7 @@ class TestAuthed:
             "-m",
             "pip",
             "install",
+            "--force-reinstall",
             "--no-cache",
             "--index-url",
             f"http://foo:bar@localhost:{self.HOST_PORT}/simple",
