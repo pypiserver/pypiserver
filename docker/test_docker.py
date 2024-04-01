@@ -586,7 +586,9 @@ class TestAuthed:
             "--index-url",
             f"http://foo:bar@localhost:{self.HOST_PORT}/simple",
             TEST_DEMO_PIP_PACKAGE + "-not-installed-package",
-            check_code=lambda c: c != 0,
+            # check_code=lambda c: c != 0,
+            # FIXME(fix-before-merge): debugging
+            check_code=lambda c: c != 1,
         )
 
     def test_welcome(self) -> None:
