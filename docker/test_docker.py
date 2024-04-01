@@ -160,7 +160,6 @@ def session_cleanup() -> t.Iterator[None]:
     uninstall_pkgs()
 
 
-# TODO(tech-debt): fix the cleanup and install issue leading to `Requirement satisfied ...` before the request is sent
 @pytest.fixture()
 def cleanup() -> t.Iterator[None]:
     """Clean up after tests that may have affected the env."""
@@ -377,10 +376,10 @@ class TestBasics:
                 f"http://localhost:{container.port}/simple",
                 "--dest",
                 tmpdir,
-                TEST_DEMO_PIP_PACKAGE,
+                "pypiserver_mypkg",
             )
             assert any(
-                TEST_DEMO_PIP_PACKAGE in path.name
+                "pypiserver_mypkg" in path.name
                 for path in Path(tmpdir).iterdir()
             )
 
@@ -526,10 +525,10 @@ class TestAuthed:
                 f"http://a:a@localhost:{self.HOST_PORT}/simple",
                 "--dest",
                 tmpdir,
-                TEST_DEMO_PIP_PACKAGE,
+                "pypiserver_mypkg",
             )
             assert any(
-                TEST_DEMO_PIP_PACKAGE in path.name
+                "pypiserver_mypkg" in path.name
                 for path in Path(tmpdir).iterdir()
             )
 
@@ -546,7 +545,7 @@ class TestAuthed:
                 f"http://foo:bar@localhost:{self.HOST_PORT}/simple",
                 "--dest",
                 tmpdir,
-                TEST_DEMO_PIP_PACKAGE,
+                "pypiserver_mypkg",
                 check_code=lambda c: c != 0,
             )
 
@@ -567,12 +566,9 @@ class TestAuthed:
             f"http://a:a@localhost:{self.HOST_PORT}/simple",
             TEST_DEMO_PIP_PACKAGE,
         )
-        run(
-            "python",
-            "-c",
-            f"'import {TEST_DEMO_PIP_PACKAGE}; mypkg.pkg_name()'",
-        )
+        run("python", "-c", "'import pypiserver_mypkg; mypkg.pkg_name()'")
 
+    # TODO(tech-debt): solve `Requirement already satisfied` installation issue
     @pytest.mark.usefixtures("cleanup", "upload_mypkg", "cleanup")
     def test_install_failed_auth(self) -> None:
         """Install mypkg from the container.
@@ -589,7 +585,7 @@ class TestAuthed:
             "--no-cache",
             "--index-url",
             f"http://foo:bar@localhost:{self.HOST_PORT}/simple",
-            TEST_DEMO_PIP_PACKAGE + "incorrect-package",
+            TEST_DEMO_PIP_PACKAGE + "-not-installed-package",
             check_code=lambda c: c != 0,
         )
 
