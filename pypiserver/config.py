@@ -44,16 +44,15 @@ import sys
 import textwrap
 import typing as t
 
-# FIXME(fix-before-merge):
 try:
+    # `importlib_resources` is required for Python versions below 3.12
+    # See more in the package docs: https://pypi.org/project/importlib-resources/
     try:
-        # `importlib_resources` is required for Python versions below 3.12
-        # See more in the package docs: https://pypi.org/project/importlib-resources/
         from importlib_resources import files as import_files
     except ImportError:
         from importlib.resources import files as import_files
 
-    def get_resource_bytes(package, resource):
+    def get_resource_bytes(package: str, resource: str) -> bytes:
         ref = import_files(package).joinpath(resource)
         return ref.read_bytes()
 
@@ -61,7 +60,7 @@ except ImportError:
     # The `pkg_resources` is deprecated in Python 3.12
     import pkg_resources
 
-    def get_resource_bytes(package, resource):
+    def get_resource_bytes(package: str, resource: str) -> bytes:
         return pkg_resources.resource_string(package, resource)
 
 
@@ -81,7 +80,7 @@ except ImportError:
     HtpasswdFile = None
 
 
-def legacy_strtoint(val):
+def legacy_strtoint(val: str) -> int:
     """Convert a string representation of truth to true (1) or false (0).
 
     True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
