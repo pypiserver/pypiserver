@@ -103,6 +103,10 @@ def run_setup_py(path: Path, arguments: str):
     return os.system(f"{sys.executable} {path / 'setup.py'} {arguments}")
 
 
+def run_py_build(srcdir: Path, flags: str):
+    return os.system(f"{sys.executable} -m build {flags} {srcdir}")
+
+
 # A test-distribution to check if
 #    bottle supports uploading 100's of packages,
 #    see: https://github.com/pypiserver/pypiserver/issues/82
@@ -140,7 +144,9 @@ def server_root(tmp_path_factory):
 @pytest.fixture(scope="module")
 def wheel_file(project, tmp_path_factory):
     distdir = tmp_path_factory.mktemp("dist")
-    assert run_setup_py(project, f"bdist_wheel -d {distdir}") == 0
+    assert run_py_build(project, f"--wheel --outdir {distdir}") == 0
+    # FIXME: deprecate the `setup.py` usage
+    # assert run_setup_py(project, f"bdist_wheel -d {distdir}") == 0
     return list(distdir.glob("centodeps*.whl"))[0]
 
 
@@ -315,22 +321,6 @@ def test_pip_install_authed_succeeds(authed_server, hosted_wheel_file, pipdir):
         == 0
     )
     assert pipdir.joinpath(hosted_wheel_file.name).is_file()
-
-
-@pytest.mark.parametrize("pkg_frmt", ["bdist", "bdist_wheel"])
-@pytest.mark.parametrize(["server_fixture", "pypirc_fixture"], all_servers)
-def test_setuptools_upload(
-    server_fixture, pypirc_fixture, project, pkg_frmt, server_root, request
-):
-    request.getfixturevalue(server_fixture)
-    request.getfixturevalue(pypirc_fixture)
-
-    assert len(list(server_root.iterdir())) == 0
-
-    for i in range(5):
-        print(f"++Attempt #{i}")
-        assert run_setup_py(project, f"-vvv {pkg_frmt} upload -r test") == 0
-    assert len(list(server_root.iterdir())) == 1
 
 
 def test_partial_authed_open_download(partial_authed_server):
