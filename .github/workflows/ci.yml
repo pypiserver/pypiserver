@@ -13,7 +13,7 @@ on:
   pull_request:
 
 env:
-  LAST_SUPPORTED_PYTHON_VERSION: "3.12"
+  LAST_SUPPORTED_PYTHON: "3.12"
 
 jobs:
   test-python:
@@ -21,6 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # make sure to align the `python-version`s in the Matrix with env.LAST_SUPPORTED_PYTHON
         python-version: [
             "3.7",
             "3.8",
@@ -55,7 +56,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           # Use the current version of Python
-          python-version: ${{ env.LAST_SUPPORTED_PYTHON_VERSION }}
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
       - name: Install dependencies
         run: |
           pip install -r "requirements/dev.pip"
@@ -102,7 +103,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           # Use the current version of Python
-          python-version: ${{ env.LAST_SUPPORTED_PYTHON_VERSION }}
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
       - name: Install test dependencies
         run: pip install -r "requirements/test.pip"
       - name: Install package
@@ -135,8 +136,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          # Use the current version of Python
-          python-version: ${{ env.LAST_SUPPORTED_PYTHON_VERSION }}
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
 
       - name: Build distribution _wheel_.
         run: |
@@ -167,8 +167,7 @@ jobs:
 
       - uses: "actions/setup-python@v4"
         with:
-          # Use the current version of Python
-          python-version: ${{ env.LAST_SUPPORTED_PYTHON_VERSION }}
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
 
         # This script prints a JSON array of needed docker tags, depending on the
         # ref. That array is then used to construct the matrix of the
