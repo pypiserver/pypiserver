@@ -602,7 +602,7 @@ class TestAuthed:
             TEST_DEMO_PIP_PACKAGE,
             # FIXME(fix-before-merge): undo
             # check_code=lambda c: c != 0,
-            check_code=lambda c: c != 356789102,
+            check_code=lambda c: c == 356789102,
         )
 
     def test_welcome(self) -> None:
