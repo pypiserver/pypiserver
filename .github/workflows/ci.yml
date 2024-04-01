@@ -12,6 +12,9 @@ on:
   # Allowing to run on fork and other pull requests
   pull_request:
 
+env:
+  LAST_SUPPORTED_PYTHON: "3.11"
+
 jobs:
   test-python:
     runs-on: ubuntu-latest
@@ -43,7 +46,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           # Use the current version of Python
-          python-version: "3.x"
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
       - name: Install dependencies
         run: |
           pip install -r "requirements/dev.pip"
@@ -90,7 +93,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           # Use the current version of Python
-          python-version: "3.x"
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
       - name: Install test dependencies
         run: pip install -r "requirements/test.pip"
       - name: Install package
@@ -123,7 +126,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.x
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
 
       - name: Build distribution _wheel_.
         run: |
@@ -154,7 +157,7 @@ jobs:
 
       - uses: "actions/setup-python@v4"
         with:
-          python-version: "3.x"
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
 
         # This script prints a JSON array of needed docker tags, depending on the
         # ref. That array is then used to construct the matrix of the
