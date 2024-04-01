@@ -16,6 +16,7 @@ import itertools
 import os
 import shutil
 import socket
+import re
 import sys
 import time
 import typing as t
@@ -99,11 +100,11 @@ def build_url(port: t.Union[int, str], user: str = "", pswd: str = "") -> str:
     return f"http://{auth}localhost:{port}"
 
 
-def run_setup_py(path: Path, arguments: str):
+def run_setup_py(path: Path, arguments: str) -> int:
     return os.system(f"{sys.executable} {path / 'setup.py'} {arguments}")
 
 
-def run_py_build(srcdir: Path, flags: str):
+def run_py_build(srcdir: Path, flags: str) -> int:
     return os.system(f"{sys.executable} -m build {flags} {srcdir}")
 
 
@@ -144,10 +145,13 @@ def server_root(tmp_path_factory):
 @pytest.fixture(scope="module")
 def wheel_file(project, tmp_path_factory):
     distdir = tmp_path_factory.mktemp("dist")
-    assert run_py_build(project, f"--wheel --outdir {distdir}") == 0
-    # FIXME: deprecate the `setup.py` usage
-    # assert run_setup_py(project, f"bdist_wheel -d {distdir}") == 0
-    return list(distdir.glob("centodeps*.whl"))[0]
+    if re.match("^3\.7", sys.version):
+        assert run_setup_py(project, f"bdist_wheel -d {distdir}") == 0
+    else:
+        assert run_py_build(project, f"--wheel --outdir {distdir}") == 0
+    wheels = list(distdir.glob("centodeps*.whl"))
+    assert len(wheels) > 0
+    return wheels[0]
 
 
 @pytest.fixture()

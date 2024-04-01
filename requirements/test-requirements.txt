@@ -9,6 +9,7 @@ tox
 twine
 webtest
 wheel>=0.25.0
+build>=1.2.0; python_version>'3.8'
 mdformat-gfm
 mdformat-frontmatter
 mdformat-footnote
