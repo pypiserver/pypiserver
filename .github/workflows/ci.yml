@@ -13,7 +13,7 @@ on:
   pull_request:
 
 env:
-  LAST_SUPPORTED_PYTHON: "3.11"
+  LAST_SUPPORTED_PYTHON: "3.12"
 
 jobs:
   test-python:
@@ -21,7 +21,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "pypy3.9", "3.11"] # "3.12-dev"
+        # make sure to align the `python-version`s in the Matrix with env.LAST_SUPPORTED_PYTHON
+        python-version: [
+            "3.7",
+            "3.8",
+            "3.9",
+            "3.10",
+            "pypy3.9",
+            "3.11",
+            "3.12",
+            "3.x", # make sure to test the current stable Python version
+          ]
 
     steps:
       - uses: actions/checkout@v3

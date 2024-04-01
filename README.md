@@ -11,12 +11,12 @@
 | :---------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Version     | 2.0.1                                                                                                                                                                                                                                           |
 | Date:       | 2023-10-01                                                                                                                                                                                                                                      |
-| Source      | https://github.com/pypiserver/pypiserver                                                                                                                                                                                                        |
-| PyPI        | https://pypi.org/project/pypiserver/                                                                                                                                                                                                            |
-| Tests       | https://github.com/pypiserver/pypiserver/actions                                                                                                                                                                                                |
+| Source      | <https://github.com/pypiserver/pypiserver>                                                                                                                                                                                                      |
+| PyPI        | <https://pypi.org/project/pypiserver/>                                                                                                                                                                                                          |
+| Tests       | <https://github.com/pypiserver/pypiserver/actions>                                                                                                                                                                                              |
 | Maintainers | Kostis Anagnostopoulos <ankostis@gmail.com>, Matthew Planchard <mplanchard@gmail.com>,  Dmitrii Orlov <dmtree.dev@yahoo.com>,  **Someone new?** We are looking for new maintainers! [#397](https://github.com/pypiserver/pypiserver/issues/397) |
 | License     | zlib/libpng + MIT                                                                                                                                                                                                                               |
-| Community   | https://pypiserver.zulipchat.com                                                                                                                                                                                                                |
+| Community   | <https://pypiserver.zulipchat.com>                                                                                                                                                                                                              |
 
 Chat with us on [Zulip](https://pypiserver.zulipchat.com)!
 
@@ -44,47 +44,47 @@ making it much easier to get a running index server.
 
 Table of Contents
 
-- [pypiserver - minimal PyPI server for use with pip/easy_install](#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install)
-  - [Quickstart Installation and Usage](#Quickstart-Installation-and-Usage)
-    - [More details about pypi-server run](#More-details-about-pypi-server-run)
-    - [More details about pypi-server update](#More-details-about-pypi-server-update)
-  - [Client-Side Configurations](#Client-Side-Configurations)
-    - [Configuring pip](#Configuring-pip)
-    - [Configuring easy_install](#Configuring-easy_install)
-  - [Uploading Packages Remotely](#Uploading-Packages-Remotely)
-    - [Apache like Authentication ( htpasswd )](#Apache-like-Authentication)
-    - [Upload with setuptools](#Upload-with-setuptools)
-    - [Upload with twine](#Upload-with-twine)
-  - [Using the Docker Image](#Using-the-Docker-Image)
-  - [Alternative Installation methods](#Alternative-Installation-methods)
-    - [Installing the Very Latest Version](#Installing-the-Very-Latest-Version)
-  - [Recipes](#Recipes)
-    - [Managing the Package Directory](#Managing-the-Package-Directory)
-    - [Serving Thousands of Packages](#Serving-Thousands-of-Packages)
-    - [Managing Automated Startup](#Managing-Automated-Startup)
-      - [Running as a systemd service](#Running-as-a-systemd-service)
-      - [Launching through supervisor](#Launching-through-supervisor)
-      - [Running as a service with NSSM (Windows)](#Running-as-a-service-with-NSSM)
-    - [Using a Different WSGI Server](#Using-a-Different-WSGI-Server)
-      - [Apache](#Apache)
-      - [Gunicorn](#Gunicorn)
-      - [Paste](#Paste)
-    - [Behind a Reverse Proxy](#Behind-a-Reverse-Proxy)
-      - [Nginx](#Nginx)
-      - [Supporting HTTPS](#Supporting-HTTPS)
-      - [Traefik](#Traefik)
-    - [Utilizing the API](#Utilizing-the-API)
-      - [Using Ad-Hoc Authentication Providers](#Using-Ad-Hoc-Authentication-Providers)
-    - [Use with MicroPython](#Use-with-MicroPython)
-    - [Custom Health Check Endpoint](#Custom-Health-Check-Endpoint)
-      - [Configure a custom health check by CLI arguments](#Configure-a-custom-health-check-by-CLI-arguments)
-      - [Configure a custom health endpoint by script](#Configure-a-custom-health-endpoint-by-script)
-    - [Sources](#Sources)
-    - [Known Limitations](#known-limitations)
-    - [Similar Projects](#similar-projects)
-      - [Unmaintained or archived](#unmaintained-or-archived)
-    - [Related Projects](#related-projects)
-    - [License](#license)
+- [pypiserver](#pypiserver)
+  - [Quickstart Installation and Usage](#quickstart-installation-and-usage)
+    - [More details about pypi server run](#more-details-about-pypi-server-run)
+    - [More details about pypi-server update](#more-details-about-pypi-server-update)
+  - [Client-Side Configurations](#client-side-configurations)
+    - [Configuring pip](#configuring-pip)
+    - [Configuring easy_install](#configuring-easy_install)
+    - [Uploading Packages Remotely](#uploading-packages-remotely)
+      - [Apache Like Authentication (htpasswd)](#apache-like-authentication-htpasswd)
+      - [Upload with setuptools](#upload-with-setuptools)
+      - [Upload with twine](#upload-with-twine)
+  - [Using the Docker Image](#using-the-docker-image)
+  - [Alternative Installation Methods](#alternative-installation-methods)
+    - [Installing the Very Latest Version](#installing-the-very-latest-version)
+  - [Recipes](#recipes)
+    - [Managing the Package Directory](#managing-the-package-directory)
+    - [Serving Thousands of Packages](#serving-thousands-of-packages)
+    - [Managing Automated Startup](#managing-automated-startup)
+      - [Running As a systemd Service](#running-as-a-systemd-service)
+      - [Launching through supervisor](#launching-through-supervisor)
+      - [Running As a service with NSSM](#running-as-a-service-with-nssm)
+    - [Using a Different WSGI Server](#using-a-different-wsgi-server)
+      - [Apache](#apache)
+      - [gunicorn](#gunicorn)
+      - [paste](#paste)
+    - [Behind a Reverse Proxy](#behind-a-reverse-proxy)
+      - [Nginx](#nginx)
+      - [Supporting HTTPS](#supporting-https)
+      - [Traefik](#traefik)
+    - [Utilizing the API](#utilizing-the-api)
+      - [Using Ad-Hoc Authentication Providers](#using-ad-hoc-authentication-providers)
+    - [Use with MicroPython](#use-with-micropython)
+    - [Custom Health Check Endpoint](#custom-health-check-endpoint)
+      - [Configure a custom health endpoint by CLI arguments](#configure-a-custom-health-endpoint-by-cli-arguments)
+      - [Configure a custom health endpoint by script](#configure-a-custom-health-endpoint-by-script)
+  - [Sources](#sources)
+  - [Known Limitations](#known-limitations)
+  - [Similar Projects](#similar-projects)
+    - [Unmaintained or archived](#unmaintained-or-archived)
+  - [Related Software](#related-software)
+- [Licensing](#licensing)
 
 ## Quickstart Installation and Usage
 
@@ -134,7 +134,7 @@ See also [Alternative Installation methods](<>)
    # Note that pip search does not currently work with the /simple/ endpoint.
 ```
 
-See also [Client-side configurations](#Client-Side-Configurations) for avoiding tedious typing.
+See also [Client-side configurations](#client-side-configurations) for avoiding tedious typing.
 
 4. Enter **pypi-server -h** in the cmd-line to print a detailed usage message
 
@@ -461,7 +461,7 @@ Please see `Using Ad-hoc authentication providers`\_ for more information.
      password: <some_passwd>
 ```
 
-2. Then from within the directory of the python-project you wish to upload,
+1. Then from within the directory of the python-project you wish to upload,
    issue this command:
 
 ```shell
@@ -693,7 +693,7 @@ Adjusting the paths and adding this file as **pypiserver.service** into your
 **systemctl**, e.g. **systemctl start pypiserver**.
 
 More useful information about *systemd* can be found at
-https://www.digitalocean.com/community/tutorials/how-to-use-systemctl-to-manage-systemd-services-and-units
+<https://www.digitalocean.com/community/tutorials/how-to-use-systemctl-to-manage-systemd-services-and-units>
 
 #### Launching through supervisor
 
@@ -716,7 +716,7 @@ From there, the process can be managed via **supervisord** using **supervisorctl
 
 #### Running As a service with NSSM
 
-For Windows download NSSM from https://nssm.cc unzip to a desired location such as Program Files. Decide whether you are going
+For Windows download NSSM from <https://nssm.cc> unzip to a desired location such as Program Files. Decide whether you are going
 to use win32 or win64, and add that exe to environment PATH.
 
 Create a start_pypiserver.bat
@@ -762,7 +762,7 @@ Other useful commands
 
 ```
 
-For detailed information please visit https://nssm.cc
+For detailed information please visit <https://nssm.cc>
 
 ### Using a Different WSGI Server
 
@@ -1057,7 +1057,7 @@ these steps:
 3. Invoke the python-script to start-up **pypiserver**
 
 ```shell
-   $ python pypiserver-start.py
+   python pypiserver-start.py
 ```
 
 Note
@@ -1092,7 +1092,7 @@ Installing packages from the REPL of an embedded device works in this way:
     upip.install("micropython-foobar")
 ```
 
-Further information on micropython-packaging can be found here: https://docs.micropython.org/en/latest/reference/packages.html
+Further information on micropython-packaging can be found here: <https://docs.micropython.org/en/latest/reference/packages.html>
 
 ### Custom Health Check Endpoint
 
@@ -1127,7 +1127,7 @@ Run pypiserver with **--health-endpoint** argument:
     bottle.run(app=app, host="0.0.0.0", port=8080, server="auto")
 ````
 
-Try **curl http://localhost:8080/action/health**
+Try **curl <http://localhost:8080/action/health>**
 
 ## Sources
 
