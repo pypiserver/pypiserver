@@ -383,7 +383,7 @@ class TestBasics:
                 for path in Path(tmpdir).iterdir()
             )
 
-    @pytest.mark.usefixtures("upload_mypkg", "cleanup")
+    @pytest.mark.usefixtures("cleanup", "upload_mypkg", "cleanup")
     def test_install(self, container: ContainerInfo) -> None:
         """Install mypkg from the container.
 
@@ -549,7 +549,7 @@ class TestAuthed:
                 check_code=lambda c: c != 0,
             )
 
-    @pytest.mark.usefixtures("upload_mypkg", "cleanup")
+    @pytest.mark.usefixtures("cleanup", "upload_mypkg", "cleanup")
     def test_install(self) -> None:
         """Install mypkg from the container.
 
@@ -568,7 +568,7 @@ class TestAuthed:
         )
         run("python", "-c", "'import pypiserver_mypkg; mypkg.pkg_name()'")
 
-    @pytest.mark.usefixtures("upload_mypkg", "cleanup")
+    @pytest.mark.usefixtures("cleanup", "upload_mypkg", "cleanup")
     def test_install_failed_auth(self) -> None:
         """Install mypkg from the container.
 
