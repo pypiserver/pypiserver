@@ -22,14 +22,16 @@ jobs:
     if: ${{ github.ref_name == 'master' }}
     runs-on: ubuntu-latest
     env:
-      CHANGES_FILE: CHANGES.rst
+      CHANGE_FILE: CHANGES.rst
       EXPECTED_DIFF_COUNT: 1
     steps:
       - uses: actions/checkout@v3
 
       - id: get-version
         run: |
+          CHANGE_FILE=${{ env.CHANGE_FILE }}
           LAST_VERSION=$(grep -m1 -E ' \([0-9]+-[0-9]+-[0-9]+\)$' ${CHANGE_FILE} | awk '{ print $1 }')
+          echo "👀 Version detected: ${LAST_VERSION}"
           echo "LAST_VERSION=${LAST_VERSION}" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-python@v4
@@ -45,7 +47,7 @@ jobs:
         run: |
           echo ${{ inputs.dryrun && '💡 Running in dry-run mode' || 'Preparing release...' }}
 
-          CHANGE_FILE=${{ env.CHANGES_FILE }}
+          CHANGE_FILE=${{ env.CHANGE_FILE }}
           LAST_VERSION=${{ steps.get-version.outputs.LAST_VERSION }}
           git config user.name github-actions
           git config user.email github-actions@github.com
