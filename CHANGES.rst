@@ -4,15 +4,15 @@ Changelog
 3.0.0 (tbd)
 -----------
 
-2.0.2rc04-24-2024 (__rc__)
+2.0.2 (2024-04-24)
 --------------------------
 
-- 2f0a56c fix: support Python 3.12 (#539)
-- 84bf12c chore: make the last supported python version explicit in `ci.yaml` (#558)
-- 946fbfe chore: Update setuptools requirement from <62.0.0,>=40.0 to >=40.0,<70.0.0 in /requirements (#557)
-- d588913 feat: Bump github action versions and add multiarch support (#553)
-- 50c7a78 chore: add tar xz test case (#538)
-- a558dbc Handle tar.xz archives (#536)
+- d588913 ENH: Bump github action versions and add multiarch support (#553)
+- a558dbc ENH:  Handle tar.xz archives (#536)
+- 2f0a56c FIX: support Python 3.12 (#539)
+- 84bf12c MAINT: make the last supported python version explicit in `ci.yaml` (#558)
+- 946fbfe MAINT: Update setuptools requirement from <62.0.0,>=40.0 to >=40.0,<70.0.0 in /requirements (#557)
+- 50c7a78 MAINT: add tar xz test case (#538)
 
 2.0.1 (2023-10-01)
 --------------------------
