@@ -4,7 +4,7 @@ Changelog
 3.0.0 (tbd)
 -----------
 
-2.0.2 (2024-04-24)
+2.1.0 (2024-04-24)
 --------------------------
 
 - d588913 ENH: Bump github action versions and add multiarch support (#553)
