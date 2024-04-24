@@ -129,8 +129,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - "tests"
-    # only if a tag is pushed
-    if: startsWith(github.event.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@master
       - name: Set up Python
@@ -144,6 +142,8 @@ jobs:
 
       - name: Publish distribution 📦 to PyPI.
         uses: pypa/gh-action-pypi-publish@release/v1
+        # Push to PyPi only if a tag is pushed
+        if: startsWith(github.event.ref, 'refs/tags/v')
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
           print-hash: true
