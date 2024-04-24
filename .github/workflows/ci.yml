@@ -136,6 +136,9 @@ jobs:
         with:
           python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
 
+      - name: Install dev dependencies
+        run: pip install -r "requirements/dev.pip"
+
       - name: Build distribution _wheel_.
         run: |
           ./bin/package.sh
