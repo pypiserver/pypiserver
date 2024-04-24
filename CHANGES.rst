@@ -4,6 +4,16 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.1.0 (2024-04-24)
+--------------------------
+
+- d588913 ENH: Bump github action versions and add multiarch support (#553)
+- a558dbc ENH:  Handle tar.xz archives (#536)
+- 2f0a56c FIX: support Python 3.12 (#539)
+- 84bf12c MAINT: make the last supported python version explicit in `ci.yaml` (#558)
+- 946fbfe MAINT: Update setuptools requirement from <62.0.0,>=40.0 to >=40.0,<70.0.0 in /requirements (#557)
+- 50c7a78 MAINT: add tar xz test case (#538)
+
 2.0.1 (2023-10-01)
 --------------------------
 
