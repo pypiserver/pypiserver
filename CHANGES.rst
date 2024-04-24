@@ -4,6 +4,12 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.1.1 (2024-04-24)
+--------------------------
+
+- 31c9cf1 FIX: deprecated `setuptools.py` when building in `package.sh` (#568)
+- 2619c17 FIX: use the right env variables in `release-tag` workflow (#569)
+
 2.1.0 (2024-04-24)
 --------------------------
 
