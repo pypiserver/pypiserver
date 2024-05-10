@@ -4,6 +4,6 @@
 !docker/docker-requirements.txt
 !docker/gunicorn.conf.py
 !docker/entrypoint.sh
-!README.rst
+!README.md
 !setup.cfg
 !setup.py

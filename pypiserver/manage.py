@@ -5,7 +5,8 @@ from __future__ import absolute_import, print_function, unicode_literals
 import itertools
 import os
 import sys
-from distutils.version import LooseVersion
+
+from packaging.version import parse as packaging_parse
 from pathlib import Path
 from subprocess import call
 from xmlrpc.client import Server
@@ -112,12 +113,14 @@ class PipCmd:
 
     @staticmethod
     def update_root(pip_version):
-        """Yield an appropriate root command depending on pip version."""
-        # legacy_pip = StrictVersion(pip_version) < StrictVersion('10.0')
-        legacy_pip = LooseVersion(pip_version) < LooseVersion("10.0")
-        for part in ("pip", "-q"):
+        """Yield an appropriate root command depending on pip version.
+
+        Use `pip install` for `pip` 9 or lower, and `pip download` otherwise.
+        """
+        legacy_pip = packaging_parse(pip_version).major < 10
+        pip_command = "install" if legacy_pip else "download"
+        for part in ("pip", "-q", pip_command):
             yield part
-        yield "install" if legacy_pip else "download"
 
     @staticmethod
     def update(

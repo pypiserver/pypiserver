@@ -10,6 +10,7 @@ files = [
     ("pytz-2012b.tgz", "pytz", "2012b"),
     ("pytz-2012b.ZIP", "pytz", "2012b"),
     ("pytz-2012a.zip", "pytz", "2012a"),
+    ("pytz-2012b.tar.xz", "pytz", "2012b"),
     ("gevent-1.0b1.win32-py2.6.exe", "gevent", "1.0b1"),
     ("gevent-1.0b1.win32-py2.7.msi", "gevent", "1.0b1"),
     ("greenlet-0.3.4-py3.1-win-amd64.egg", "greenlet", "0.3.4"),

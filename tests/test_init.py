@@ -1,6 +1,7 @@
 """
 Test module for app initialization
 """
+
 # Standard library imports
 import logging
 import pathlib
