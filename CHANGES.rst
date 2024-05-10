@@ -1,8 +1,64 @@
 Changelog
 =========
 
-2.0.0 (tbd)
+3.0.0 (tbd)
 -----------
+
+2.1.1 (2024-04-24)
+--------------------------
+
+- 31c9cf1 FIX: deprecated `setuptools.py` when building in `package.sh` (#568)
+- 2619c17 FIX: use the right env variables in `release-tag` workflow (#569)
+
+2.1.0 (2024-04-24)
+--------------------------
+
+- d588913 ENH: Bump github action versions and add multiarch support (#553)
+- a558dbc ENH:  Handle tar.xz archives (#536)
+- 2f0a56c FIX: support Python 3.12 (#539)
+- 84bf12c MAINT: make the last supported python version explicit in `ci.yaml` (#558)
+- 946fbfe MAINT: Update setuptools requirement from <62.0.0,>=40.0 to >=40.0,<70.0.0 in /requirements (#557)
+- 50c7a78 MAINT: add tar xz test case (#538)
+
+2.0.1 (2023-10-01)
+--------------------------
+
+- e788785 FIX: dockerhub description readme (#533)
+- 904f50f FIX: specify long_description as MD type (#532)
+- ad9fb4a MAINT: simpler release_tag action (#530)
+
+
+2.0.0 (2023-10-01)
+--------------------------
+
+- df99872 FIX: Json Info for the same version (#511)
+- c235ef4 ENH: Switch default hash-algo to sha256 (#459)
+- 6417769 MAINT: add GitHub container registry for stable images (#521)
+- 4645f7b MAINT: cleanup release process (#516)
+- e542702 MAINT: TOC internal links  (#520)
+- f14b92c MAINT: readme output diff on format error (#512)
+- 9edae77 ENH: Feature/markdown conversion (#503)
+
+1.5.2 (2023-07-30)
+--------------------------
+
+- 3f520cd FIX: Add missing pip dependency (#500)
+- 85e065e MAINT: Feat/dependabot (#493)
+- 73dbe15 FIX: Health endpoint usage is missing. (#481)
+- e0c9723 MAINT: Bump waitress from 1.4.4 to 2.1.2 in /docker (#454)
+- a95f456 MAINT: update docs folder (#479)
+- 8cc8e80 MAINT: Update README.rst and config.py (#470)
+- 754b0f4 MAINT: add help output for `run` and `update` to README (#478)
+- 5fd6400 MAINT: Update README to reflect run/update commands (#451)
+- abc4bfb MAINT: Upgrade to psf/black stable style 2023 (#474)
+- 383c936 MAINT: disable tests on Python3.6 (#471)
+- d716d0f FIX: explicit optional types in `config.py` (#472)
+- ae3dcf2 ENH: :stethoscope: allow customized health check endpoint (#442)
+- 2f3b997 FIX: correct 1.5.1 tag date in CHANGES (#457)
+- 4a0c6fb MAINT: from importlib import reload for Python 3 (#448)
+- 0ba44b5 FIX: force setuptools update + no duplicate runs in GH Actions (#445)
+- 530852b MAINT: Support current versions of CPython (#453)
+- 6ea316c MAINT: Upgrade GitHub Actions (#447)
 
 1.5.1 (2022-10-18)
 --------------------------

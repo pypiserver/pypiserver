@@ -43,9 +43,26 @@ import re
 import sys
 import textwrap
 import typing as t
-from distutils.util import strtobool as strtoint
 
-import pkg_resources
+try:
+    # `importlib_resources` is required for Python versions below 3.12
+    # See more in the package docs: https://pypi.org/project/importlib-resources/
+    try:
+        from importlib_resources import files as import_files
+    except ImportError:
+        from importlib.resources import files as import_files
+
+    def get_resource_bytes(package: str, resource: str) -> bytes:
+        ref = import_files(package).joinpath(resource)
+        return ref.read_bytes()
+
+except ImportError:
+    # The `pkg_resources` is deprecated in Python 3.12
+    import pkg_resources
+
+    def get_resource_bytes(package: str, resource: str) -> bytes:
+        return pkg_resources.resource_string(package, resource)
+
 
 from pypiserver.backend import (
     SimpleFileBackend,
@@ -63,10 +80,29 @@ except ImportError:
     HtpasswdFile = None
 
 
-# The "strtobool" function in distutils does a nice job at parsing strings,
-# but returns an integer. This just wraps it in a boolean call so that we
-# get a bool.
-strtobool: t.Callable[[str], bool] = lambda val: bool(strtoint(val))
+def legacy_strtoint(val: str) -> int:
+    """Convert a string representation of truth to true (1) or false (0).
+
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+
+    The "strtobool" function in distutils does a nice job at parsing strings,
+    but returns an integer. This just wraps it in a boolean call so that we
+    get a bool.
+
+    Borrowed from deprecated distutils.
+    """
+    val = val.lower()
+    if val in ("y", "yes", "t", "true", "on", "1"):
+        return 1
+    elif val in ("n", "no", "f", "false", "off", "0"):
+        return 0
+    else:
+        raise ValueError("invalid truth value {!r}".format(val))
+
+
+strtobool: t.Callable[[str], bool] = lambda val: bool(legacy_strtoint(val))
 
 
 # Specify defaults here so that we can use them in tests &c. and not need
@@ -77,7 +113,7 @@ class DEFAULTS:
     AUTHENTICATE = ["update"]
     FALLBACK_URL = "https://pypi.org/simple/"
     HEALTH_ENDPOINT = "/health"
-    HASH_ALGO = "md5"
+    HASH_ALGO = "sha256"
     INTERFACE = "0.0.0.0"
     LOG_FRMT = "%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s"
     LOG_ERR_FRMT = "%(body)s: %(exception)s \n%(traceback)s"
@@ -155,9 +191,7 @@ def health_endpoint_arg(arg: str) -> str:
 def html_file_arg(arg: t.Optional[str]) -> str:
     """Parse the provided HTML file and return its contents."""
     if arg is None or arg == "pypiserver/welcome.html":
-        return pkg_resources.resource_string(__name__, "welcome.html").decode(
-            "utf-8"
-        )
+        return get_resource_bytes(__name__, "welcome.html").decode("utf-8")
     with open(arg, "r", encoding="utf-8") as f:
         msg = f.read()
     return msg
