@@ -54,6 +54,9 @@ class CacheManager:
         # We assume that the hash_algo value will never be erased
         self.digest_cache = {}
 
+        # Cache for requires-python
+        self.requires_python_cache = {}
+
         self.observer = Observer()
         self.observer.start()
 
@@ -63,6 +66,7 @@ class CacheManager:
         self.watch_lock = threading.Lock()
         self.digest_lock = threading.Lock()
         self.listdir_lock = threading.Lock()
+        self.requires_python_lock = threading.Lock()
 
     def listdir(
         self,
@@ -106,6 +110,24 @@ class CacheManager:
             v = impl_fn(fpath, hash_algo)
             cache[fpath] = v
             return v
+
+    def requires_python(self, fpath, impl_fn):
+        with self.requires_python_lock:
+            try:
+                return self.requires_python_cache[fpath]
+            except KeyError as e:
+                root = dirname(fpath)
+                # check to see if we're watching
+                with self.watch_lock:
+                    if root not in self.watched:
+                        self._watch(root)
+
+                # TODO: move this outside of the lock... but there's not a good
+                #       way to do this without a race condition if the file
+                #       gets modified
+                v = impl_fn(fpath)
+                self.requires_python_cache[fpath] = v
+                return v
 
     def _watch(self, root: str):
         self.watched.add(root)
