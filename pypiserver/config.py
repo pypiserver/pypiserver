@@ -34,10 +34,12 @@ the legacy commandline format is used.
 """
 
 import argparse
+from collections.abc import Mapping
 import contextlib
 import hashlib
 import io
 import logging
+import os
 import pathlib
 import re
 import sys
@@ -110,7 +112,7 @@ strtobool: t.Callable[[str], bool] = lambda val: bool(legacy_strtoint(val))
 class DEFAULTS:
     """Config defaults."""
 
-    AUTHENTICATE = ["update"]
+    AUTHENTICATE = {"update": None}
     FALLBACK_URL = "https://pypi.org/simple/"
     HEALTH_ENDPOINT = "/health"
     HASH_ALGO = "sha256"
@@ -126,27 +128,36 @@ class DEFAULTS:
     BACKEND = "auto"
 
 
-def auth_arg(arg: str) -> t.List[str]:
+def auth_arg(arg: str) -> t.Dict[str, t.Optional[t.List[str]]]:
     """Parse the authentication argument."""
     # Split on commas, remove duplicates, remove whitespace, ensure lowercase.
     # Sort so that they'll have a consistent ordering.
-    items = sorted(list(set(i.strip().lower() for i in arg.split(","))))
+    items = {}
+    for action in arg.split(","):
+        action, sep, users_s = action.partition("=")
+        if sep:
+            users = list(filter(None, map(str.strip, users_s.split(":"))))
+        else:
+            users = None
+        items[action.strip().lower()] = users
     # Throw for any invalid options
     if any(i not in ("download", "list", "update", ".") for i in items):
         raise ValueError(
             "Invalid authentication option. Valid values are download, list, "
             "and update, or . (for no authentication)."
         )
-    # The "no authentication" option must be specified in isolation.
-    if "." in items and len(items) > 1:
-        raise argparse.ArgumentTypeError(
-            "Invalid authentication options. `.` (no authentication) "
-            "must be specified alone."
-        )
-
-    # The "." is just an indicator for no auth, so we return an empty auth list
-    # if it was present.
-    return [i for i in items if not i == "."]
+    if "." in items:
+        # The "no authentication" option must be specified in isolation.
+        if len(items) > 1 or items["."] is not None:
+            raise argparse.ArgumentTypeError(
+                "Invalid authentication options. `.` (no authentication) "
+                "must be specified alone."
+            )
+        # The "." is just an indicator for no auth, so we return an empty auth
+        # list if it was present.
+        return {}
+    else:
+        return items
 
 
 def hash_algo_arg(arg: str) -> t.Optional[str]:
@@ -393,7 +404,17 @@ def get_parser() -> argparse.ArgumentParser:
             "\n\n"
             "  pypi-server -a . -P ."
             "\n\n"
-            "See the `-P` option for configuring users and passwords. "
+            "To restrict the action to specific users, follow the action with "
+            "an equal sign and a colon-separated list of allowed users. To use "
+            "a group, preceed the group name with an @. To allow any "
+            "authenticated user to download but limit uploading to a specific "
+            "group of uploaders, use:"
+            "\n\n"
+            "  pypi-server -a 'download, update=@uploaders' "
+            "-P ./passwords.txt -g ./groups.txt"
+            "\n\n"
+            "See the `-P` option for configuring users and passwords. See the "
+            "`-g` option for configuring groups."
             "\n\n"
             "Note that when uploads are not protected, the `register` command "
             "is not necessary, but `~/.pypirc` still needs username and "
@@ -412,6 +433,15 @@ def get_parser() -> argparse.ArgumentParser:
             "\n\n"
             "  pypi-server -a . -P ."
             "\n\n"
+        ),
+    )
+    run_parser.add_argument(
+        "-g",
+        "--groups",
+        metavar="GROUP_FILE",
+        help=(
+            "Use an apache group file GROUP_FILE to create user groups for "
+            "authentication."
         ),
     )
     run_parser.add_argument(
@@ -711,8 +741,11 @@ class RunConfig(_ConfigCommon):
         self,
         port: int,
         host: str,
-        authenticate: t.List[str],
+        authenticate: t.Union[
+            t.Dict[str, t.Optional[t.List[str]]], t.List[str]
+        ],
         password_file: t.Optional[str],
+        group_file: t.Optional[str],
         disable_fallback: bool,
         fallback_url: str,
         health_endpoint: str,
@@ -724,14 +757,18 @@ class RunConfig(_ConfigCommon):
         log_res_frmt: str,
         log_err_frmt: str,
         auther: t.Optional[t.Callable[[str, str], bool]] = None,
+        groups: t.Optional[t.Dict[str, t.List[str]]] = None,
         **kwargs: t.Any,
     ) -> None:
         """Construct a RuntimeConfig."""
         super().__init__(**kwargs)
         self.port = port
         self.host = host
+        if not isinstance(authenticate, dict):
+            authenticate = {action: None for action in authenticate}
         self.authenticate = authenticate
         self.password_file = password_file
+        self.group_file = group_file
         self.disable_fallback = disable_fallback
         self.fallback_url = fallback_url
         self.health_endpoint = health_endpoint
@@ -743,8 +780,12 @@ class RunConfig(_ConfigCommon):
         self.log_res_frmt = log_res_frmt
         self.log_err_frmt = log_err_frmt
         # Derived properties
-        self._derived_properties = self._derived_properties + ("auther",)
+        self._derived_properties = self._derived_properties + (
+            "auther",
+            "groups",
+        )
         self.auther = self.get_auther(auther)
+        self.groups = self.get_groups(groups)
 
     @classmethod
     def kwargs_from_namespace(
@@ -757,6 +798,7 @@ class RunConfig(_ConfigCommon):
             "host": namespace.host,
             "authenticate": namespace.authenticate,
             "password_file": namespace.passwords,
+            "group_file": namespace.groups,
             "disable_fallback": namespace.disable_fallback,
             "fallback_url": namespace.fallback_url,
             "health_endpoint": namespace.health_endpoint,
@@ -777,10 +819,10 @@ class RunConfig(_ConfigCommon):
         if passed_auther:
             return passed_auther
         # Otherwise we check to see if we need to authenticate
-        if self.password_file == "." or self.authenticate == []:
+        if self.password_file == "." or self.authenticate == {}:
             # It's illegal to specify no authentication without also specifying
             # no password file, and vice-versa.
-            if self.password_file != "." or self.authenticate != []:
+            if self.password_file != "." or self.authenticate != {}:
                 sys.exit(
                     "When auth-ops-list is empty (-a=.), password-file"
                     f" (-P={self.password_file!r}) must also be empty ('.')!"
@@ -810,6 +852,19 @@ class RunConfig(_ConfigCommon):
             return loaded_pw_file.check_password(uname, pw)
 
         return auther
+
+    def get_groups(
+        self, passed_groups: t.Optional[t.Dict[str, t.List[str]]]
+    ) -> t.Mapping[str, t.List[str]]:
+        """Create or retrieve a dictionary of user groups."""
+        # The groups may be specified directly as a kwarg in the API interface
+        if passed_groups is not None:
+            return passed_groups
+        # Otherwise we try to load groups from a group file
+        if self.group_file and self.group_file != ".":
+            return GroupFile(self.group_file)
+        else:
+            return {}
 
 
 class UpdateConfig(_ConfigCommon):
@@ -845,6 +900,48 @@ class UpdateConfig(_ConfigCommon):
 
 
 Configuration = t.Union[RunConfig, UpdateConfig]
+
+
+class GroupFile(Mapping):
+    """An apache-style group file."""
+
+    def __init__(self, path: str):
+        """Construct a GroupFile."""
+        self._path = path
+        self._mtime = 0.0
+        self._groups: t.Dict[str, t.List[str]] = {}
+        self.load()
+
+    def load(self) -> None:
+        """Loads the file."""
+        with open(self._path) as fp:
+            self._mtime = os.path.getmtime(self._path)
+            self._groups = {}
+            for line in fp:
+                line = line.strip()
+                if not line or line[0] == "#":
+                    continue
+                group, _, users = line.partition(":")
+                self._groups[group] = users.split()
+
+    def load_if_changed(self) -> bool:
+        """Reload group file only if file has changed since last load."""
+        if self._mtime and self._mtime == os.path.getmtime(self._path):
+            return False
+        self.load()
+        return True
+
+    def __getitem__(self, group: str) -> t.List[str]:
+        self.load_if_changed()
+        return self._groups[group]
+
+    def __len__(self) -> int:
+        self.load_if_changed()
+        return len(self._groups)
+
+    def __iter__(self) -> t.Iterator[str]:
+        self.load_if_changed()
+        return iter(self._groups)
 
 
 class Config:

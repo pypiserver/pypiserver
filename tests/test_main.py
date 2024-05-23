@@ -241,12 +241,12 @@ def test_password_alone(main, monkeypatch):
     monkeypatch.setitem(sys.modules, "passlib", mock.MagicMock())
     monkeypatch.setitem(sys.modules, "passlib.apache", mock.MagicMock())
     main(["-P", str(HTPASS_FILE)])
-    assert main.app._pypiserver_config.authenticate == ["update"]
+    assert main.app._pypiserver_config.authenticate == {"update": None}
 
 
 def test_dot_password_without_auth_list(main, monkeypatch):
     main(["-P", ".", "-a", "."])
-    assert main.app._pypiserver_config.authenticate == []
+    assert main.app._pypiserver_config.authenticate == {}
 
 
 def test_blacklist_file(main):
