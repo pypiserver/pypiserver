@@ -15,6 +15,7 @@ import webtest
 from tests.test_pkg_helpers import files, invalid_files
 from pypiserver import __main__, bottle, core, Bottle
 from pypiserver.backend import CachingFileBackend, SimpleFileBackend
+from pypiserver.config import DEFAULTS
 
 # Enable logging to detect any problems with it
 ##
@@ -218,7 +219,8 @@ def test_favicon(testapp):
 def test_fallback(testapp):
     assert not testapp.app._pypiserver_config.disable_fallback
     resp = testapp.get("/simple/pypiserver/", status=302)
-    assert resp.headers["Location"] == "https://pypi.org/simple/pypiserver/"
+    index_url = DEFAULTS.FALLBACK_URL.strip("/")
+    assert resp.headers["Location"] == index_url + "/pypiserver/"
 
 
 def test_no_fallback(testapp):
