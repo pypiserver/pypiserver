@@ -256,19 +256,20 @@ def handle_rpc():
 @auth("list")
 def simpleindex():
     links = sorted(config.backend.get_projects())
-    tmpl = """\
-    <!DOCTYPE html>
-    <html>
-        <head>
-            <title>Simple Index</title>
-        </head>
-        <body>
-            <h1>Simple Index</h1>
-            % for p in links:
-                 <a href="{{p}}/">{{p}}</a><br>
-            % end
-        </body>
-    </html>
+    tmpl = """<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Simple Index</title>
+    </head>
+    <body>
+        <h1>Simple Index</h1>
+        % for p in links:
+                <a href="{{p}}/">{{p}}</a><br>
+        % end
+    </body>
+</html>
     """
     return template(tmpl, links=links)
 
@@ -300,19 +301,20 @@ def simple(project):
         for pkg in packages
     )
 
-    tmpl = """\
-    <!DOCTYPE html>
-    <html>
-        <head>
-            <title>Links for {{project}}</title>
-        </head>
-        <body>
-            <h1>Links for {{project}}</h1>
-            % for file, href in links:
-                 <a href="{{href}}">{{file}}</a><br>
-            % end
-        </body>
-    </html>
+    tmpl = """<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Links for {{project}}</title>
+    </head>
+    <body>
+        <h1>Links for {{project}}</h1>
+        % for file, href in links:
+            <a href="{{href}}">{{file}}</a><br>
+        % end
+    </body>
+</html>
     """
     return template(tmpl, project=project, links=links)
 
@@ -330,19 +332,20 @@ def list_packages():
         (pkg.relfn_unix, urljoin(fp, pkg.fname_and_hash)) for pkg in packages
     )
 
-    tmpl = """\
-    <!DOCTYPE html>
-    <html>
-        <head>
-            <title>Index of packages</title>
-        </head>
-        <body>
-            <h1>Index of packages</h1>
-            % for file, href in links:
-                 <a href="{{href}}">{{file}}</a><br>
-            % end
-        </body>
-    </html>
+    tmpl = """<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Index of packages</title>
+    </head>
+    <body>
+        <h1>Index of packages</h1>
+        % for file, href in links:
+            <a href="{{href}}">{{file}}</a><br>
+        % end
+    </body>
+</html>
     """
     return template(tmpl, links=links)
 
