@@ -148,7 +148,10 @@ def wheel_file(project, tmp_path_factory):
     if re.match("^3\.7", sys.version):
         assert run_setup_py(project, f"bdist_wheel -d {distdir}") == 0
     else:
-        assert run_py_build(project, f"--wheel --outdir {distdir}") == 0
+        assert (
+            run_py_build(project, f"--wheel --no-isolation --outdir {distdir}")
+            == 0
+        )
     wheels = list(distdir.glob("centodeps*.whl"))
     assert len(wheels) > 0
     return wheels[0]
