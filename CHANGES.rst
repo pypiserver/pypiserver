@@ -4,6 +4,12 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.1.2rc07-01-2024 (__rc__)
+--------------------------
+
+- f740a84 test: Fix running `build` in offline test environment (#571)
+- a70b77d  Updated HTML formatting (#580) (#581)
+
 2.1.1 (2024-04-24)
 --------------------------
 
