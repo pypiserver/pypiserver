@@ -4,6 +4,14 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.1.2rc08-01-2024 (__rc__)
+--------------------------
+
+- f386a39 chore: Update setuptools requirement from <70.0.0,>=40.0 to >=40.0,<71.0.0 in /requirements (#579)
+- aa8217b Update Deprecated Compose Commands for Pypiserver Services (#583)
+- f740a84 test: Fix running `build` in offline test environment (#571)
+- a70b77d  Updated HTML formatting (#580) (#581)
+
 2.1.1 (2024-04-24)
 --------------------------
 
