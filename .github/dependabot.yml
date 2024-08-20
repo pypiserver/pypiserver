@@ -1,0 +1,13 @@
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/docker"
+    schedule:
+      interval: "monthly"
+  - package-ecosystem: "pip"
+    directory: "/requirements"
+    schedule:
+      interval: "monthly"
+

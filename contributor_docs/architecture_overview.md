@@ -1,3 +1,0 @@
-# Architecture Overview
-
-To be described...

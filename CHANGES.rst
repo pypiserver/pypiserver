@@ -1,8 +1,110 @@
 Changelog
 =========
 
-2.0.0 (tbd)
+3.0.0 (tbd)
 -----------
+
+2.1.1 (2024-04-24)
+--------------------------
+
+- 31c9cf1 FIX: deprecated `setuptools.py` when building in `package.sh` (#568)
+- 2619c17 FIX: use the right env variables in `release-tag` workflow (#569)
+
+2.1.0 (2024-04-24)
+--------------------------
+
+- d588913 ENH: Bump github action versions and add multiarch support (#553)
+- a558dbc ENH:  Handle tar.xz archives (#536)
+- 2f0a56c FIX: support Python 3.12 (#539)
+- 84bf12c MAINT: make the last supported python version explicit in `ci.yaml` (#558)
+- 946fbfe MAINT: Update setuptools requirement from <62.0.0,>=40.0 to >=40.0,<70.0.0 in /requirements (#557)
+- 50c7a78 MAINT: add tar xz test case (#538)
+
+2.0.1 (2023-10-01)
+--------------------------
+
+- e788785 FIX: dockerhub description readme (#533)
+- 904f50f FIX: specify long_description as MD type (#532)
+- ad9fb4a MAINT: simpler release_tag action (#530)
+
+
+2.0.0 (2023-10-01)
+--------------------------
+
+- df99872 FIX: Json Info for the same version (#511)
+- c235ef4 ENH: Switch default hash-algo to sha256 (#459)
+- 6417769 MAINT: add GitHub container registry for stable images (#521)
+- 4645f7b MAINT: cleanup release process (#516)
+- e542702 MAINT: TOC internal links  (#520)
+- f14b92c MAINT: readme output diff on format error (#512)
+- 9edae77 ENH: Feature/markdown conversion (#503)
+
+1.5.2 (2023-07-30)
+--------------------------
+
+- 3f520cd FIX: Add missing pip dependency (#500)
+- 85e065e MAINT: Feat/dependabot (#493)
+- 73dbe15 FIX: Health endpoint usage is missing. (#481)
+- e0c9723 MAINT: Bump waitress from 1.4.4 to 2.1.2 in /docker (#454)
+- a95f456 MAINT: update docs folder (#479)
+- 8cc8e80 MAINT: Update README.rst and config.py (#470)
+- 754b0f4 MAINT: add help output for `run` and `update` to README (#478)
+- 5fd6400 MAINT: Update README to reflect run/update commands (#451)
+- abc4bfb MAINT: Upgrade to psf/black stable style 2023 (#474)
+- 383c936 MAINT: disable tests on Python3.6 (#471)
+- d716d0f FIX: explicit optional types in `config.py` (#472)
+- ae3dcf2 ENH: :stethoscope: allow customized health check endpoint (#442)
+- 2f3b997 FIX: correct 1.5.1 tag date in CHANGES (#457)
+- 4a0c6fb MAINT: from importlib import reload for Python 3 (#448)
+- 0ba44b5 FIX: force setuptools update + no duplicate runs in GH Actions (#445)
+- 530852b MAINT: Support current versions of CPython (#453)
+- 6ea316c MAINT: Upgrade GitHub Actions (#447)
+
+1.5.1 (2022-10-18)
+--------------------------
+
+- 61e4487 ENH: add extremely basic /health endpoint (#396)
+- bbd2a47 FIX: docker tests in cicd (#444)
+- 784a9a1 MAINT: Replace usage of deprecated inspect.getargspec (#436)
+- 640a748 MAINT: Add traefik/ and auth/ dirs to gitignore (#398)
+- a67829e MAINT: Fix typos in README (#431)
+
+1.5.0 (2022-05-01)
+------------------
+
+- CHORE: pull CHANGES.rst from v1.4.x
+- DOC: add call for maintainers to README
+- DOC: Fixes in README examples (#380)
+- DOC: start of empty contributor documentation directory (#383)
+- ENH: added JSON Topic for use with micropython-upip (#395, thanks @awachtler)
+- ENH: Backwards-compatible argparse config (not yet in use) (#339)
+- ENH: Refactor storage operations into separate Backend classes (#348)
+- ENH: Restore ability to drop hashing in new config (#347)
+- ENH: Specify doctype for generated pages.
+  Fixed violation of PEP 503 warning with pip>=22.
+  (#413 and #414, thanks @domdfcoding and @luismsgomes)
+- ENH: Use argparse config throughout app (#349)
+- FIX: Fix silly typo in the readme :) (#362)
+- FIX: fix small typing and lint errors in config.py (#421)
+- FIX: fix version incompatibility that breaks twine in docker test (#356)
+- FIX: fix(setuptools-in-tests) add `packages=[]` in test setup (#425)
+- FIX: Gunicorn/gevent docker, log fixes, cache busting (#371)
+- MAINT: Add aggregate "tests" job (#370)
+- MAINT: Add release to PyPi job (#428)
+- MAINT: add github action for release management (#417)
+- MAINT: Add python 3.9 testing (#351, disabled in #407)
+- MAINT: Cleanup code to python 3.6 (#342)
+- MAINT: contributor update in README (#415)
+- MAINT: disable unstable test for Python 3.9 (#407, planned temporary)
+- MAINT: Docker improvements (#365)
+- MAINT: drop standalone, drop py 2.7 and 3.5 (#338)
+- MAINT: Merge branch 'v1.4.x'
+- MAINT: Push to Docker Hub from CI (#375)
+- MAINT: Refactor test_server to increase speed (#354)
+- MAINT: Run black on codebase (#336)
+- MAINT: run gh actions on PRs from forks #401
+- MAINT: small code style fixes
+- MAINT: Switch to GH actions (#361)
 
 1.4.2 (2020-10-10)
 ------------------

@@ -5,84 +5,89 @@ name: CI
 on:
   # This will run when any branch or tag is pushed
   push:
-    # standalone is an old branch containing a fully functional pypiserver
-    # executable, from back in the day before docker & a better pip.
-    branches-ignore:
-      - standalone
-  # Allowing to run on fork pull requests
+    branches:
+      - "master"
+    tags:
+      - "v**"
+  # Allowing to run on fork and other pull requests
   pull_request:
 
-jobs:
-  test-cpython:
+env:
+  LAST_SUPPORTED_PYTHON: "3.12"
 
+jobs:
+  test-python:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        # Commented out as tests with tox on python3.9 fail with updated dependencies.
-        # See https://github.com/pypiserver/pypiserver/issues/406.
-        # uncomment when the issue #406 is resolved.
-        # python-version: ["3.6", "3.7", "3.8", "3.9"]
-        python-version: ["3.6", "3.7", "3.8"]
+        # make sure to align the `python-version`s in the Matrix with env.LAST_SUPPORTED_PYTHON
+        python-version: [
+            "3.7",
+            "3.8",
+            "3.9",
+            "3.10",
+            "pypy3.9",
+            "3.11",
+            "3.12",
+            "3.x", # make sure to test the current stable Python version
+          ]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: pip install tox
-    - name: Run tests
-      # Create a tox env specification by stripping the dot out of the version
-      # specification and appending it to "py"
-      run: |
-        tox -e "py$(echo ${{ matrix.python-version }} | tr -d .)"
-
-  test-pypy:
-
-    # Run a a separate job so we don't need to mess with conditionally
-    # splitting the python version from the build matrix. Also the pypy
-    # tests take freaking forever.
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: pypy3
-    - name: Install dependencies
-      run: pip install tox
-    - name: Run tests
-      run: tox -e pypy3
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          pip install --upgrade setuptools
+          pip install tox==3.27.*
+      - name: Run tests
+        run: tox -e py
 
   check:
-
-    # These checks only need to be done once, not for every python version we s
-    # upport
+    # These checks only need to be done once, not for every python version we
+    # support
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        # Pretty much any python version will do
-        python-version: "3.9"
-    - name: Install dependencies
-      run: |
-        pip install -r "requirements/dev.pip"
-        pip install types-pkg_resources # one of mypy required stubs
-    - name: Check types
-      # individual mypy files for now, until we get the rest
-      # of the project typechecking
-      run: >-
-        mypy
-        docker/test_docker.py
-        pypiserver/config.py 
-        tests/test_init.py
-    - name: Check formatting
-      run: black --diff --check .
-    - name: Validate README
-      run: ./bin/check_readme.sh
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          # Use the current version of Python
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
+      - name: Install dependencies
+        run: |
+          pip install -r "requirements/dev.pip"
+          pip install types-pkg_resources # one of mypy required stubs
+      - name: Check types
+        # individual mypy files for now, until we get the rest
+        # of the project typechecking
+        run: >-
+          mypy
+          docker/test_docker.py
+          pypiserver/config.py 
+          tests/test_init.py
+      - name: Check formatting
+        run: black --diff --check .
+      - name: Validate README
+        id: validate_readme
+        run: mdformat --check README.md
+        continue-on-error: true
+      - name: check mdformat result
+        run: |
+          if [ "${{ steps.validate_readme.outcome }}" == "failure" ]; then
+              echo "copy readme to /tmp/pypiserver"
+              mkdir -p /tmp/pypiserver
+              cp README.md /tmp/pypiserver
+              echo "README.md is not formatted correctly. Please run 'mdformat README.md' and commit the result."
+              mdformat /tmp/pypiserver/README.md
+              diff -u README.md /tmp/pypiserver/README.md
+              exit 1
+          else
+              echo "README.md is formatted correctly."
+          fi
 
   # Full-flow docker tests, again not python version dependent
   # We _could_ test this on MacOS, but it takes forever to get docker
@@ -93,42 +98,79 @@ jobs:
   test-docker:
     runs-on: "ubuntu-latest"
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        # Pretty much any python version will do
-        python-version: "3.9"
-    - name: Install test dependencies
-      run: pip install -r "requirements/test.pip"
-    - name: Install package
-      run: pip install -r "requirements/exe.pip"
-    - name: Run tests
-      run: "pytest docker/test_docker.py"
-
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          # Use the current version of Python
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
+      - name: Install test dependencies
+        run: pip install -r "requirements/test.pip"
+      - name: Install package
+        run: pip install -r "requirements/exe.pip"
+      - name: Run tests
+        run: "pytest docker/test_docker.py"
 
   tests:
     runs-on: "ubuntu-latest"
     needs:
       - "check"
       - "test-docker"
-      - "test-cpython"
-      - "test-pypy"
+      - "test-python"
     steps:
       - name: "Everything is good!"
         run: "echo true"
+
+  # RELEASES
+
+  ## PYPI
+
+  build-wheel-and-push-to-pypi:
+    runs-on: ubuntu-latest
+    needs:
+      - "tests"
+    steps:
+      - uses: actions/checkout@master
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
+
+      - name: Install dev dependencies
+        run: pip install -r "requirements/dev.pip"
+
+      - name: Build distribution _wheel_.
+        run: |
+          ./bin/package.sh
+
+      - name: Publish distribution 📦 to PyPI.
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Push to PyPi only if a tag is pushed
+        if: startsWith(github.event.ref, 'refs/tags/v')
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          print-hash: true
+
+  ## DOCKER (DOCKER HUB & CONTAINER REGISTRY)
 
   # figure out which docker tags we need to push
   docker-determine-tags:
     runs-on: "ubuntu-latest"
     needs:
       - "tests"
+    env:
+      STABLE_IMAGES: '["pypiserver/pypiserver", "ghcr.io/pypiserver/pypiserver"]'
+      FLEXIBLE_IMAGES: '["pypiserver/pypiserver"]'
+    outputs:
+      tags: "${{ steps.tags.outputs.tags }}"
+      has_tags: "${{ steps.has_tags.outputs.has_tags }}"
+      images: ${{ contains(steps.tags.outputs.tags, 'unstable') && env.FLEXIBLE_IMAGES || env.STABLE_IMAGES }}
     steps:
-      - uses: "actions/checkout@v2"
+      - uses: "actions/checkout@v3"
 
-      - uses: "actions/setup-python@v2"
+      - uses: "actions/setup-python@v4"
         with:
-          python-version: "3.9"
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
 
         # This script prints a JSON array of needed docker tags, depending on the
         # ref. That array is then used to construct the matrix of the
@@ -147,25 +189,21 @@ jobs:
         run: >-
           echo "::set-output name=has_tags::$(bin/ci_helper.py ${{ github.ref }} has_tags)"
 
-    outputs:
-      tags: "${{ steps.tags.outputs.tags }}"
-      has_tags: "${{ steps.has_tags.outputs.has_tags }}"
-
   # Deploy any needed docker tags
   deploy-docker:
     runs-on: "ubuntu-latest"
     needs:
-      - "tests"
       - "docker-determine-tags"
     if: "${{ fromJson(needs.docker-determine-tags.outputs.has_tags) }}"
     strategy:
       matrix:
         tag: "${{ fromJson(needs.docker-determine-tags.outputs.tags) }}"
+        image: "${{ fromJson(needs.docker-determine-tags.outputs.images) }}"
     steps:
-      - uses: "actions/checkout@v2"
+      - uses: "actions/checkout@v3"
 
       - name: "Cache Docker layers"
-        uses: "actions/cache@v2"
+        uses: "actions/cache@v3"
         with:
           path: "/tmp/.buildx-cache"
           key: "${{ runner.os }}-buildx-${{ github.sha }}"
@@ -173,26 +211,62 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: "Login to Docker Hub"
-        uses: "docker/login-action@v1"
+        uses: "docker/login-action@v3"
         with:
           username: "${{ secrets.DOCKER_HUB_USER }}"
           password: "${{ secrets.DOCKER_HUB_TOKEN }}"
 
+      - name: "Login to GitHub Container Registry"
+        uses: "docker/login-action@v3"
+        with:
+          registry: "ghcr.io"
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Set up QEMU"
+        uses: "docker/setup-qemu-action@v3"
+
       - name: "Set up Docker Buildx"
         id: "buildx"
-        uses: "docker/setup-buildx-action@v1"
+        uses: "docker/setup-buildx-action@v3"
 
       - name: "Build and push"
         id: "docker_build"
-        uses: "docker/build-push-action@v2"
+        uses: "docker/build-push-action@v5"
         with:
           context: "./"
+          platforms: linux/amd64,linux/arm64
           file: "./Dockerfile"
           builder: "${{ steps.buildx.outputs.name }}"
           push: true
-          tags:  "pypiserver/pypiserver:${{ matrix.tag }}"
+          tags: "${{ matrix.image }}:${{ matrix.tag }}"
           cache-from: "type=local,src=/tmp/.buildx-cache"
           cache-to: "type=local,dest=/tmp/.buildx-cache"
 
       - name: "Image digest"
         run: "echo ${{ steps.docker_build.outputs.digest }}"
+
+      - name: "Docker Hub Description"
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          repository: pypiserver/pypiserver
+
+  ## GITHUB RELEASE DRAFT
+
+  create_release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: "ubuntu-latest"
+    needs:
+      - "tests"
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: softprops/action-gh-release@v1
+        with:
+          body: 👋 This is a draft release. Please update it manually.
+          prerelease: false
+          draft: true
+          files: |
+            CHANGES.rst

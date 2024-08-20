@@ -39,7 +39,6 @@ class main_wrapper:
 
 @pytest.fixture()
 def main(monkeypatch):
-
     main = main_wrapper()
 
     def run(**kwargs):
@@ -131,12 +130,12 @@ def test_fallback_url_default(main):
 
 def test_hash_algo_default(main):
     main([])
-    assert main.app._pypiserver_config.hash_algo == "md5"
+    assert main.app._pypiserver_config.hash_algo == "sha256"
 
 
 def test_hash_algo(main):
-    main(["--hash-algo=sha256"])
-    assert main.app._pypiserver_config.hash_algo == "sha256"
+    main(["--hash-algo=md5"])
+    assert main.app._pypiserver_config.hash_algo == "md5"
 
 
 def test_hash_algo_off(main):
@@ -278,7 +277,7 @@ def test_auto_servers() -> None:
     # adapters are defined in the AutoServer
     our_check_order = tuple(i[0] for i in __main__.AUTO_SERVER_IMPORTS)
 
-    # Some of the servers have more than one check, so we need to rmeove
+    # Some of the servers have more than one check, so we need to remove
     # duplicates before we check for identity with the AutoServer definition.
     seen: t.Dict[__main__.AutoServer, __main__.AutoServer] = {}
     our_check_order = tuple(
@@ -294,3 +293,20 @@ def test_auto_servers() -> None:
         us.name.lower() in them
         for us, them in zip(our_check_order, bottle_adapters)
     )
+
+
+def test_health_endpoint_default(main):
+    main([])
+    assert main.app._pypiserver_config.health_endpoint == "/health"
+    assert "/health" in (route.rule for route in main.app.routes)
+
+
+def test_health_endpoint_customized(main):
+    main(["--health-endpoint", "/healthz"])
+    assert main.app._pypiserver_config.health_endpoint == "/healthz"
+    assert "/healthz" in (route.rule for route in main.app.routes)
+
+
+def test_health_endpoint_invalid_customized(main):
+    with pytest.raises(SystemExit):
+        main(["--health-endpoint", "/health!"])

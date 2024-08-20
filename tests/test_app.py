@@ -188,6 +188,29 @@ def test_packages_empty(testapp):
     assert len(resp.html("a")) == 0
 
 
+def test_health_default_endpoint(testapp):
+    resp = testapp.get("/health")
+    assert resp.status_int == 200
+    assert "Ok" in resp
+
+
+def test_health_customized_endpoint(root):
+    from pypiserver import app
+
+    _app = app(root=root.strpath, health_endpoint="/healthz")
+    testapp = webtest.TestApp(_app)
+    resp = testapp.get("/healthz")
+    assert resp.status_int == 200
+    assert "Ok" in resp
+
+
+def test_health_invalid_customized_endpoint(root):
+    from pypiserver import app
+
+    with pytest.raises(RuntimeError, match="overlaps with existing routes"):
+        app(root=root.strpath, health_endpoint="/simple")
+
+
 def test_favicon(testapp):
     testapp.get("/favicon.ico", status=404)
 
@@ -422,6 +445,7 @@ def test_simple_index_list_name_with_underscore_no_egg(root, testapp):
 def test_json_info(root, testapp):
     root.join("foobar-1.0.zip").write("")
     root.join("foobar-1.1.zip").write("")
+    root.join("foobar-1.1-linux.zip").write("")
     root.join("foobarX-1.1.zip").write("")
 
     resp = testapp.get("/foobar/json")
@@ -429,6 +453,8 @@ def test_json_info(root, testapp):
     assert "releases" in resp.json
     assert len(resp.json["info"]) == 1
     assert len(resp.json["releases"]) == 2
+    assert len(resp.json["releases"]["1.0"]) == 1
+    assert len(resp.json["releases"]["1.1"]) == 2
 
 
 def test_json_info_package_not_existing(root, testapp):
@@ -578,7 +604,7 @@ def test_search(root, testapp, search_xml, pkgs, matches):
     expected name and version matches for a search for the "test"
     package as specified by the search_xml fixture.
 
-    :param root: root temporry directory fixture; used as packages dir
+    :param root: root temporary directory fixture; used as packages dir
         for testapp
     :param testapp: webtest TestApp
     :param str search_xml: XML string roughly equivalent to a pip search

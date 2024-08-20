@@ -369,6 +369,21 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         exp_config_type=RunConfig,
         exp_config_values={"fallback_url": "foobar.com"},
     ),
+    # health-endpoint
+    ConfigTestCase(
+        case="Run: health-endpoint unspecified",
+        args=["run"],
+        legacy_args=[],
+        exp_config_type=RunConfig,
+        exp_config_values={"health_endpoint": DEFAULTS.HEALTH_ENDPOINT},
+    ),
+    ConfigTestCase(
+        case="Run: health-endpoint specified",
+        args=["run", "--health-endpoint", "/healthz"],
+        legacy_args=["--health-endpoint", "/healthz"],
+        exp_config_type=RunConfig,
+        exp_config_values={"health_endpoint": "/healthz"},
+    ),
     # server method
     ConfigTestCase(
         case="Run: server method unspecified",
@@ -563,7 +578,7 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
     # ******************************************************************
     # Update subcommand args
     # ******************************************************************
-    # exeucte
+    # execute
     ConfigTestCase(
         case="Update: execute not specified",
         args=["update"],
@@ -683,6 +698,14 @@ _CONFIG_ERROR_CASES = (
         )
         for val in ("true", "foo", "1", "md6")
     ),
+    *(
+        ConfigErrorCase(
+            case=f"Invalid health endpoint: {val}",
+            args=["run", "--health-endpoint", val],
+            exp_txt="Invalid path for the health endpoint",
+        )
+        for val in ("/", "health", "/health!", "/:health", "/health?check=True")
+    ),
 )
 # pylint: disable=unsubscriptable-object
 CONFIG_ERROR_PARAMS = (i[1:] for i in _CONFIG_ERROR_CASES)
@@ -725,7 +748,7 @@ def test_config(
 @pytest.mark.parametrize(
     "args, exp_txt",
     CONFIG_ERROR_PARAMS,
-    ids=CONFIG_TEST_IDS,
+    ids=CONFIG_ERROR_IDS,
 )
 def test_config_error(
     args: t.List[str],
@@ -735,7 +758,7 @@ def test_config_error(
     """Validate error cases."""
     with pytest.raises(SystemExit):
         Config.from_args(args)
-    # Unfortunatley the error text is printed before the SystemExit is
+    # Unfortunately the error text is printed before the SystemExit is
     # raised, rather than being raised _with_ the systemexit, so we
     # need to capture stderr and check it for our expected text, if
     # any was specified in the test case.

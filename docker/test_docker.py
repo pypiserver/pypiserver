@@ -16,6 +16,9 @@ import pypiserver
 import pytest
 
 
+PYPISERVER_PROCESS_NAME = "pypi-server"
+TEST_DEMO_PIP_PACKAGE = "pypiserver-mypkg"
+
 THIS_DIR = Path(__file__).parent
 ROOT_DIR = THIS_DIR.parent
 DOCKERFILE = ROOT_DIR / "Dockerfile"
@@ -24,13 +27,13 @@ MYPKG_ROOT = FIXTURES / "mypkg"
 HTPASS_FILE = FIXTURES / "htpasswd.a.a"
 
 
-# This is largely useless when using pytest because of the need to use the name
-# of the fixture as an argument to the test function or fixture using it
+# This rule is largely useless when using pytest because of the need to use the
+# name of the fixture as an argument to the test function or fixture using it
 # pylint: disable=redefined-outer-name
 #
-# Also useless for our test context, where we may want to group test functions
-# in a class to share common fixtures, but where we don't care about the
-# `self` instance.
+# Also useless rule for our test context, where we may want to group test
+# functions in a class to share common fixtures, but where we don't care about
+# the `self` instance.
 # pylint: disable=no-self-use
 
 
@@ -144,9 +147,10 @@ def uninstall_pkgs() -> None:
     """Uninstall any packages we've installed."""
     res = run("pip", "freeze", capture=True)
     if any(
-        ln.strip().startswith("pypiserver-mypkg") for ln in res.out.splitlines()
+        ln.strip().startswith(TEST_DEMO_PIP_PACKAGE)
+        for ln in res.out.splitlines()
     ):
-        run("pip", "uninstall", "-y", "pypiserver-mypkg")
+        run("pip", "uninstall", "-y", TEST_DEMO_PIP_PACKAGE)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -169,7 +173,7 @@ class TestCommands:
     def test_help(self, image: str) -> None:
         """We can get help from the docker container."""
         res = run("docker", "run", image, "--help", capture=True)
-        assert "pypi-server" in res.out
+        assert PYPISERVER_PROCESS_NAME in res.out
 
     def test_version(self, image: str) -> None:
         """We can get the version from the docker container."""
@@ -267,7 +271,7 @@ class TestPermissions:
             proc_line = next(
                 filter(
                     # grab the process line for the pypi-server process
-                    lambda ln: "pypi-server" in ln,
+                    lambda ln: PYPISERVER_PROCESS_NAME in ln,
                     res.out.splitlines(),
                 )
             )
@@ -330,7 +334,7 @@ class TestBasics:
             ".",
             "--authenticate",
             ".",
-            *request.param,  # type: ignore
+            *request.param,
         )
         res = run(*args, capture=True)
         wait_for_container(port)
@@ -392,9 +396,10 @@ class TestBasics:
             "-m",
             "pip",
             "install",
+            "--force-reinstall",
             "--index-url",
             f"http://localhost:{container.port}/simple",
-            "pypiserver-mypkg",
+            TEST_DEMO_PIP_PACKAGE,
         )
         run("python", "-c", "'import pypiserver_mypkg; mypkg.pkg_name()'")
 
@@ -558,9 +563,10 @@ class TestAuthed:
             "-m",
             "pip",
             "install",
+            "--force-reinstall",
             "--index-url",
             f"http://a:a@localhost:{self.HOST_PORT}/simple",
-            "pypiserver-mypkg",
+            TEST_DEMO_PIP_PACKAGE,
         )
         run("python", "-c", "'import pypiserver_mypkg; mypkg.pkg_name()'")
 
@@ -577,10 +583,11 @@ class TestAuthed:
             "-m",
             "pip",
             "install",
+            "--force-reinstall",
             "--no-cache",
             "--index-url",
-            f"http://localhost:{self.HOST_PORT}/simple",
-            "pypiserver-mypkg",
+            f"http://foo:bar@localhost:{self.HOST_PORT}/simple",
+            TEST_DEMO_PIP_PACKAGE,
             check_code=lambda c: c != 0,
         )
 

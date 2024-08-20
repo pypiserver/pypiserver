@@ -204,7 +204,7 @@ def write_file(fh: t.BinaryIO, destination: PathLike) -> None:
     """write a byte stream into a destination file. Writes are chunked to reduce
     the memory footprint
     """
-    chunk_size = 2 ** 20  # 1 MB
+    chunk_size = 2**20  # 1 MB
     offset = fh.tell()
     try:
         with open(destination, "wb") as dest:
@@ -259,7 +259,7 @@ def digest_file(file_path: PathLike, hash_algo: str) -> str:
 
     From http://stackoverflow.com/a/21565932/548792
     """
-    blocksize = 2 ** 16
+    blocksize = 2**16
     digester = hashlib.new(hash_algo)
     with open(file_path, "rb") as f:
         for block in iter(lambda: f.read(blocksize), b""):

@@ -41,7 +41,6 @@ import base64, cgi, email.utils, functools, hmac, itertools, mimetypes,\
 from datetime import date as datedate, datetime, timedelta
 from tempfile import TemporaryFile
 from traceback import format_exc, print_exc
-from inspect import getargspec
 from unicodedata import normalize
 
 
@@ -79,6 +78,7 @@ except IOError:
 # Lots of stdlib and builtin differences.
 if py3k:
     import http.client as httplib
+    from inspect import getfullargspec as getargspec
     import _thread as thread
     from urllib.parse import urljoin, SplitResult as UrlSplitResult
     from urllib.parse import urlencode, quote as urlquote, unquote as urlunquote
@@ -101,6 +101,7 @@ if py3k:
     def _raise(*a): raise a[0](a[1]).with_traceback(a[2])
 else: # 2.x
     import httplib
+    from inspect import getargspec
     import thread
     from urlparse import urljoin, SplitResult as UrlSplitResult
     from urllib import urlencode, quote as urlquote, unquote as urlunquote
@@ -1752,7 +1753,7 @@ class JSONPlugin(object):
             if isinstance(rv, dict):
                 #Attempt to serialize, raises exception on failure
                 json_response = dumps(rv)
-                #Set content type only if serialization succesful
+                #Set content type only if serialization successful
                 response.content_type = 'application/json'
                 return json_response
             elif isinstance(rv, HTTPResponse) and isinstance(rv.body, dict):
@@ -2327,7 +2328,7 @@ class ResourceManager(object):
         ''' Search for a resource and return an absolute file path, or `None`.
 
             The :attr:`path` list is searched in order. The first match is
-            returend. Symlinks are followed. The result is cached to speed up
+            returned. Symlinks are followed. The result is cached to speed up
             future lookups. '''
         if name not in self.cache or DEBUG:
             for path in self.path:

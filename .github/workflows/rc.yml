@@ -1,0 +1,77 @@
+# Release Candidate GitHub Action
+
+name: release_candidate
+
+# Performed actions:
+# - [x] create a new AUTO-RC-<DATE> branch
+# - [x] prepare RC metadata and description
+# - [x] update CHANGES.rst (+ rc-title, + date)
+# - [x] create changes commit
+# - [x] push to GH
+# - [x] open a PR to `master`
+
+on:
+  schedule:
+    - cron: "0 0 1 * *" # each 1st day of the month
+  workflow_dispatch: # on manual trigger
+
+jobs:
+  new-rc:
+    runs-on: ubuntu-latest
+    env:
+      CHANGES_FILE: CHANGES.rst
+      PR_BODY_FILE: /tmp/pr-body.md
+      RF_DOCS_FILE: ./docs/contents/repo-maintenance/release-work.md
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # Flag to fetch all history.
+          #   @see https://github.com/marketplace/actions/checkout#Fetch-all-history-for-all-tags-and-branches
+          fetch-depth: 0
+
+      - id: get-rc-date
+        run: echo "RC_DATE=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
+      - id: make-pr-body-file
+        run: |
+          PR_BODY_FILE=${{ env.PR_BODY_FILE }}
+          RC_DATE=${{ steps.get-rc-date.outputs.RC_DATE }}
+
+          touch ${PR_BODY_FILE}
+          echo "📦 Automated release candidate for ${RC_DATE}."     >> ${PR_BODY_FILE}
+          echo ""                                                   >> ${PR_BODY_FILE}
+          echo "_TODO:_"                                            >> ${PR_BODY_FILE}
+          echo "- [ ] Manually adjust generated CHANGES lines"      >> ${PR_BODY_FILE}
+          echo "- [ ] Manually adjust generated CHANGES title"      >> ${PR_BODY_FILE}
+          echo "- [ ] Manually adjust generated CHANGES date"       >> ${PR_BODY_FILE}
+          echo "- [ ] Approve and merge this PR"                    >> ${PR_BODY_FILE}
+          echo "- [ ] See \`${{ env.RF_DOCS_FILE }}\` to continue"  >> ${PR_BODY_FILE}
+
+          echo "${PR_BODY_FILE}:"
+          cat ${PR_BODY_FILE}
+
+      - id: propose-rc
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CHANGES_FILE=${{ env.CHANGES_FILE }}
+          PR_BODY_FILE=${{ env.PR_BODY_FILE }}
+          RC_DATE=${{ steps.get-rc-date.outputs.RC_DATE }}
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git checkout -b auto-release-candidate-${RC_DATE}
+          git push -u origin auto-release-candidate-${RC_DATE}
+
+          git status
+          git fetch
+
+          ./bin/update_changelog.sh
+
+          git add ${CHANGES_FILE}
+          git commit -m "chore(rc-changes): update ${CHANGES_FILE}"
+          git push
+
+          gh pr create  --title "chore(auto-release-candidate-${RC_DATE})" \
+                        --body-file ${PR_BODY_FILE} \
+                        --base master \
+                        --draft

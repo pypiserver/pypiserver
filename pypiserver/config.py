@@ -43,9 +43,26 @@ import re
 import sys
 import textwrap
 import typing as t
-from distutils.util import strtobool as strtoint
 
-import pkg_resources
+try:
+    # `importlib_resources` is required for Python versions below 3.12
+    # See more in the package docs: https://pypi.org/project/importlib-resources/
+    try:
+        from importlib_resources import files as import_files
+    except ImportError:
+        from importlib.resources import files as import_files
+
+    def get_resource_bytes(package: str, resource: str) -> bytes:
+        ref = import_files(package).joinpath(resource)
+        return ref.read_bytes()
+
+except ImportError:
+    # The `pkg_resources` is deprecated in Python 3.12
+    import pkg_resources
+
+    def get_resource_bytes(package: str, resource: str) -> bytes:
+        return pkg_resources.resource_string(package, resource)
+
 
 from pypiserver.backend import (
     SimpleFileBackend,
@@ -63,10 +80,29 @@ except ImportError:
     HtpasswdFile = None
 
 
-# The "strtobool" function in distutils does a nice job at parsing strings,
-# but returns an integer. This just wraps it in a boolean call so that we
-# get a bool.
-strtobool: t.Callable[[str], bool] = lambda val: bool(strtoint(val))
+def legacy_strtoint(val: str) -> int:
+    """Convert a string representation of truth to true (1) or false (0).
+
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+
+    The "strtobool" function in distutils does a nice job at parsing strings,
+    but returns an integer. This just wraps it in a boolean call so that we
+    get a bool.
+
+    Borrowed from deprecated distutils.
+    """
+    val = val.lower()
+    if val in ("y", "yes", "t", "true", "on", "1"):
+        return 1
+    elif val in ("n", "no", "f", "false", "off", "0"):
+        return 0
+    else:
+        raise ValueError("invalid truth value {!r}".format(val))
+
+
+strtobool: t.Callable[[str], bool] = lambda val: bool(legacy_strtoint(val))
 
 
 # Specify defaults here so that we can use them in tests &c. and not need
@@ -76,7 +112,8 @@ class DEFAULTS:
 
     AUTHENTICATE = ["update"]
     FALLBACK_URL = "https://pypi.org/simple/"
-    HASH_ALGO = "md5"
+    HEALTH_ENDPOINT = "/health"
+    HASH_ALGO = "sha256"
     INTERFACE = "0.0.0.0"
     LOG_FRMT = "%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s"
     LOG_ERR_FRMT = "%(body)s: %(exception)s \n%(traceback)s"
@@ -134,12 +171,23 @@ def hash_algo_arg(arg: str) -> t.Optional[str]:
     )
 
 
+def health_endpoint_arg(arg: str) -> str:
+    """Verify the health_endpoint and raises ValueError if invalid."""
+    rule_regex = r"^/[a-z0-9/_-]+$"
+    if re.fullmatch(rule_regex, arg, re.I) is not None:
+        return arg
+
+    raise argparse.ArgumentTypeError(
+        "Invalid path for the health endpoint. Make sure that it contains only "
+        "alphanumeric characters, hyphens, forward slashes and underscores. "
+        f"In other words, make sure to match the following regex: {rule_regex}"
+    )
+
+
 def html_file_arg(arg: t.Optional[str]) -> str:
     """Parse the provided HTML file and return its contents."""
     if arg is None or arg == "pypiserver/welcome.html":
-        return pkg_resources.resource_string(__name__, "welcome.html").decode(
-            "utf-8"
-        )
+        return get_resource_bytes(__name__, "welcome.html").decode("utf-8")
     with open(arg, "r", encoding="utf-8") as f:
         msg = f.read()
     return msg
@@ -383,6 +431,15 @@ def get_parser() -> argparse.ArgumentParser:
         ),
     )
     run_parser.add_argument(
+        "--health-endpoint",
+        default=DEFAULTS.HEALTH_ENDPOINT,
+        type=health_endpoint_arg,
+        help=(
+            "Configure a custom liveness endpoint. It always returns 200 Ok if "
+            "the service is up. Otherwise, it means that the service is not responsive."
+        ),
+    )
+    run_parser.add_argument(
         "--server",
         metavar="METHOD",
         default=DEFAULTS.SERVER_METHOD,
@@ -430,6 +487,7 @@ def get_parser() -> argparse.ArgumentParser:
         help=(
             'Add "Cache-Control: max-age=AGE" header to package downloads. '
             "Pip 6+ requires this for caching."
+            "AGE is specified in seconds."
         ),
     )
     run_parser.add_argument(
@@ -598,7 +656,6 @@ class _ConfigCommon:
         return levels.get(self.verbosity, logging.NOTSET)
 
     def get_backend(self, arg: str) -> IBackend:
-
         available_backends: t.Dict[str, BackendFactory] = {
             "auto": get_file_backend,
             "simple-dir": SimpleFileBackend,
@@ -615,7 +672,7 @@ class _ConfigCommon:
         The current config is used as a base. Any properties not specified in
         keyword arguments will remain unchanged.
         """
-        return self.__class__(**{**dict(self), **kwargs})  # type: ignore
+        return self.__class__(**{**dict(self), **kwargs})
 
     def __repr__(self) -> str:
         """A string representation indicating the class and its properties."""
@@ -635,7 +692,7 @@ class _ConfigCommon:
         return all(
             getattr(other, k) == v
             for k, v in self
-            if not k in self._derived_properties
+            if k not in self._derived_properties
         )
 
     def __iter__(self) -> t.Iterator[t.Tuple[str, t.Any]]:
@@ -658,6 +715,7 @@ class RunConfig(_ConfigCommon):
         password_file: t.Optional[str],
         disable_fallback: bool,
         fallback_url: str,
+        health_endpoint: str,
         server_method: str,
         overwrite: bool,
         welcome_msg: str,
@@ -665,7 +723,7 @@ class RunConfig(_ConfigCommon):
         log_req_frmt: str,
         log_res_frmt: str,
         log_err_frmt: str,
-        auther: t.Callable[[str, str], bool] = None,
+        auther: t.Optional[t.Callable[[str, str], bool]] = None,
         **kwargs: t.Any,
     ) -> None:
         """Construct a RuntimeConfig."""
@@ -676,6 +734,7 @@ class RunConfig(_ConfigCommon):
         self.password_file = password_file
         self.disable_fallback = disable_fallback
         self.fallback_url = fallback_url
+        self.health_endpoint = health_endpoint
         self.server_method = server_method
         self.overwrite = overwrite
         self.welcome_msg = welcome_msg
@@ -700,6 +759,7 @@ class RunConfig(_ConfigCommon):
             "password_file": namespace.passwords,
             "disable_fallback": namespace.disable_fallback,
             "fallback_url": namespace.fallback_url,
+            "health_endpoint": namespace.health_endpoint,
             "server_method": namespace.server,
             "overwrite": namespace.overwrite,
             "welcome_msg": namespace.welcome,
@@ -802,7 +862,9 @@ class Config:
         return default_config.with_updates(**overrides)
 
     @classmethod
-    def from_args(cls, args: t.Sequence[str] = None) -> Configuration:
+    def from_args(
+        cls, args: t.Optional[t.Sequence[str]] = None
+    ) -> Configuration:
         """Construct a Config from the passed args or sys.argv."""
         # If pulling args from sys.argv (commandline arguments), argv[0] will
         # be the program name, (i.e. pypi-server), so we don't need to
@@ -879,7 +941,7 @@ class Config:
     def _adjust_old_args(args: t.Sequence[str]) -> t.List[str]:
         """Adjust args for backwards compatibility.
 
-        Should only be called once args have been verified to be unparseable.
+        Should only be called once args have been verified to be unparsable.
         """
         # Backwards compatibility hack: for most of pypiserver's life, "run"
         # and "update" were not separate subcommands. The `-U` flag being

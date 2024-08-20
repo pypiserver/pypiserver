@@ -14,7 +14,6 @@ try:
     ENABLE_CACHING = True
 
 except ImportError:
-
     Observer = None
 
     ENABLE_CACHING = False
