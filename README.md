@@ -1016,7 +1016,7 @@ server {
 #### Traefik
 
 It is also possible to use [Traefik](https://docs.traefik.io/) to put pypiserver
-behind HTTPS on port 443, with automatic HTTP redirection using Docker Compose. 
+behind HTTPS on port 443, with automatic HTTP redirection using Docker Compose.
 Please see the provided
 [docker-compose.yml](https://github.com/pypiserver/pypiserver/blob/master/docker-compose.yml)
 example for more information.
