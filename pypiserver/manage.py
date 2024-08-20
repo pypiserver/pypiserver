@@ -9,11 +9,10 @@ import sys
 from distutils.version import LooseVersion
 from pathlib import Path
 from subprocess import call
-
-import pip
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
+import pip
 from packaging.version import parse as packaging_parse
 
 from .backend import listdir
