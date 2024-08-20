@@ -60,7 +60,6 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r "requirements/dev.pip"
-          pip install types-pkg_resources # one of mypy required stubs
       - name: Check types
         # individual mypy files for now, until we get the rest
         # of the project typechecking
