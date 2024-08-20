@@ -3,39 +3,22 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import itertools
+import json
 import os
 import sys
-
-from packaging.version import parse as packaging_parse
+from distutils.version import LooseVersion
 from pathlib import Path
 from subprocess import call
 
 import pip
-import requests as requests
+from urllib.error import URLError
+from urllib.request import Request, urlopen
+
+from packaging.version import parse as packaging_parse
 
 from .backend import listdir
 from .core import PkgFile
 from .pkg_helpers import normalize_pkgname, parse_version
-
-
-class Pypi(object):
-    def __init__(self, url):
-        self.url = url
-
-    def package_releases(self, pkg_name):
-        # noinspection PyBroadException
-        try:
-            resp = requests.get(f"{self.url}{pkg_name}/json")
-            resp.raise_for_status()
-            meta = resp.json()
-            return [str(v) for v in meta['releases'].keys()]
-        except Exception:
-            pass
-        return []
-
-
-def make_pypi_client(url):
-    return Pypi(url)
 
 
 def is_stable_version(pversion):
@@ -77,6 +60,23 @@ def build_releases(pkg, versions):
             yield PkgFile(pkgname=pkg.pkgname, version=x, replaces=pkg)
 
 
+def get_package_releases(pkgname):
+    pypi_json_content_type = "application/vnd.pypi.simple.v1+json"
+
+    req = Request(
+        f"https://pypi.org/simple/{pkgname}",
+        headers={"Accept": pypi_json_content_type},
+    )
+    try:
+        with urlopen(req) as resp:
+            parsed = json.load(resp)
+            return parsed["versions"]
+    except URLError as error:
+        # TODO(tech-debt): use a proper logging approach
+        print(type(error), error.reason, sep=": ")
+        return None
+
+
 def find_updates(pkgset, stable_only=True):
     no_releases = set()
     filter_releases = filter_stable_releases if stable_only else (lambda x: x)
@@ -92,13 +92,11 @@ def find_updates(pkgset, stable_only=True):
     )
     need_update = set()
 
-    pypi = make_pypi_client("https://pypi.org/pypi/")
-
     for count, pkg in enumerate(latest_pkgs):
         if count % 40 == 0:
             write("\n")
 
-        pypi_versions = pypi.package_releases(pkg.pkgname)
+        pypi_versions = get_package_releases(pkg.pkgname)
         if pypi_versions:
             releases = filter_releases(build_releases(pkg, pypi_versions))
             status = "."
