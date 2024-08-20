@@ -14,7 +14,7 @@
 | Source      | <https://github.com/pypiserver/pypiserver>                                                                                                                              |
 | PyPI        | <https://pypi.org/project/pypiserver/>                                                                                                                                  |
 | Tests       | <https://github.com/pypiserver/pypiserver/actions>                                                                                                                      |
-| Maintainers | @ankostis, @mplanchard, @dee-me-tree-or-love, @pawamoy, **Someone new?** *We are open for new maintainers! [#397](https://github.com/pypiserver/pypiserver/issues/397)* |
+| Maintainers | [`@ankostis`](https://github.com/ankostis), [`@mplanchard`](https://github.com/mplanchard), [`@dee-me-tree-or-love`](https://github.com/dee-me-tree-or-love), [`@pawamoy`](https://github.com/pawamoy), **Someone new?** *We are open for new maintainers! [#397](https://github.com/pypiserver/pypiserver/issues/397)* |
 | License     | zlib/libpng + MIT                                                                                                                                                       |
 | Community   | <https://pypiserver.zulipchat.com>                                                                                                                                      |
 
@@ -46,14 +46,14 @@ making it much easier to get a running index server.
 
 Table of Contents
 
-- [**pypiserver - minimal PyPI server for use with pip/easy_install**](#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install)
+- [**pypiserver - minimal PyPI server for use with pip/easy\_install**](#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install)
 - [pypiserver](#pypiserver)
   - [Quickstart Installation and Usage](#quickstart-installation-and-usage)
     - [More details about pypi server run](#more-details-about-pypi-server-run)
     - [More details about pypi-server update](#more-details-about-pypi-server-update)
   - [Client-Side Configurations](#client-side-configurations)
     - [Configuring pip](#configuring-pip)
-    - [Configuring easy_install](#configuring-easy_install)
+    - [Configuring easy\_install](#configuring-easy_install)
     - [Uploading Packages Remotely](#uploading-packages-remotely)
       - [Apache Like Authentication (htpasswd)](#apache-like-authentication-htpasswd)
       - [Upload with setuptools](#upload-with-setuptools)
@@ -920,13 +920,13 @@ unstable packages on different paths
 > You need to install some more dependencies for this to work, like::
 >
 > ```shell
->   pip install paste pastedeploy gunicorn pypiserver
+> pip install paste pastedeploy gunicorn pypiserver
 > ```
 >
 > The server can then start with
 >
 > ```shell
->   gunicorn_paster paste.ini
+> gunicorn_paster paste.ini
 > ```
 
 ### Behind a Reverse Proxy
