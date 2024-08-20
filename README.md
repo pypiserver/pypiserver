@@ -19,8 +19,8 @@
 | Community   | <https://pypiserver.zulipchat.com>                                                                                                                                                                                                                                                                                      |
 
 > \[!TIP\]
-> Reach out in [Discussions](https://github.com/pypiserver/pypiserver/discussions)
-> Or chat with us on [Zulip](https://pypiserver.zulipchat.com)
+> Reach out in [**Discussions**](https://github.com/pypiserver/pypiserver/discussions),
+> or chat with us on [**Zulip**](https://pypiserver.zulipchat.com)
 
 **pypiserver** is a minimal [PyPI](https://pypi.org/) compatible server for **pip** or **easy_install**.
 It is based on [bottle](http://bottlepy.org/) and serves packages from regular directories.
