@@ -1,6 +1,6 @@
 ![pypi server logo](docs/__resources__/pypiserver_logo.png)
 
-[**pypiserver - minimal PyPI server for use with pip/easy_install**](<>)
+# [**pypiserver - minimal PyPI server for use with pip/easy_install**](#pypiserver)
 
 [![pypi badge](https://img.shields.io/pypi/v/pypiserver.svg)](https://shields.io/)
 [![ci workflow](https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml/badge.svg)](https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml)
@@ -14,11 +14,13 @@
 | Source      | <https://github.com/pypiserver/pypiserver>                                                                                                                                                                                                      |
 | PyPI        | <https://pypi.org/project/pypiserver/>                                                                                                                                                                                                          |
 | Tests       | <https://github.com/pypiserver/pypiserver/actions>                                                                                                                                                                                              |
-| Maintainers | Kostis Anagnostopoulos <ankostis@gmail.com>, Matthew Planchard <mplanchard@gmail.com>,  Dmitrii Orlov <dmtree.dev@yahoo.com>,  **Someone new?** We are looking for new maintainers! [#397](https://github.com/pypiserver/pypiserver/issues/397) |
+| Maintainers | @ankostis, @mplanchard, @dee-me-tree-or-love, @pawamoy, **Someone new?** *We are open for new maintainers! [#397](https://github.com/pypiserver/pypiserver/issues/397)* |
 | License     | zlib/libpng + MIT                                                                                                                                                                                                                               |
 | Community   | <https://pypiserver.zulipchat.com>                                                                                                                                                                                                              |
 
-Chat with us on [Zulip](https://pypiserver.zulipchat.com)!
+> [!TIP]
+> Reach out in [Discussions](https://github.com/pypiserver/pypiserver/discussions)
+> Or chat with us on [Zulip](https://pypiserver.zulipchat.com)
 
 **pypiserver** is a minimal [PyPI](https://pypi.org/) compatible server for **pip** or **easy_install**.
 It is based on [bottle](http://bottlepy.org/) and serves packages from regular directories.
@@ -26,14 +28,14 @@ Wheels, bdists, eggs and accompanying PGP-signatures can be uploaded
 either with **pip**, **setuptools**, **twine**, **pypi-uploader**, or simply copied
 with **scp**.
 
-Note
-The official software powering [PyPI](https://pypi.org/) is
-[Warehouse](https://github.com/pypa/warehouse/). However,
-[Warehouse](https://github.com/pypa/warehouse/)
-is fairly specialized to be **pypi.org**'s own software, and should not
-be used in other contexts. In particular, it does not officially support
-being used as a custom package index by users wishing to serve their own
-packages.
+> [!Note]
+> The official software powering [PyPI](https://pypi.org/) is
+> [Warehouse](https://github.com/pypa/warehouse/). However,
+> [Warehouse](https://github.com/pypa/warehouse/)
+> is fairly specialized to be **pypi.org**'s own software, and should not
+> be used in other contexts. In particular, it does not officially support
+> being used as a custom package index by users wishing to serve their own
+> packages.
 
 **pypiserver** implements the same interfaces as [PyPI](https://pypi.org/), allowing
 standard Python packaging tooling such as **pip** and **twine** to
@@ -44,13 +46,14 @@ making it much easier to get a running index server.
 
 Table of Contents
 
+- [**pypiserver - minimal PyPI server for use with pip/easy\_install**](#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install)
 - [pypiserver](#pypiserver)
   - [Quickstart Installation and Usage](#quickstart-installation-and-usage)
     - [More details about pypi server run](#more-details-about-pypi-server-run)
     - [More details about pypi-server update](#more-details-about-pypi-server-update)
   - [Client-Side Configurations](#client-side-configurations)
     - [Configuring pip](#configuring-pip)
-    - [Configuring easy_install](#configuring-easy_install)
+    - [Configuring easy\_install](#configuring-easy_install)
     - [Uploading Packages Remotely](#uploading-packages-remotely)
       - [Apache Like Authentication (htpasswd)](#apache-like-authentication-htpasswd)
       - [Upload with setuptools](#upload-with-setuptools)
@@ -95,10 +98,10 @@ Older Python versions may still work, but they are not tested.
 For legacy Python versions, use **pypiserver-1.x** series. Note that these are
 not officially supported, and will not receive bugfixes or new features.
 
-Tip
-
-The commands below work on a unix-like operating system with a posix shell.
-The **'~'** character expands to user's home directory.
+> [!TIP]
+>
+> The commands below work on a unix-like operating system with a posix shell.
+> The **'~'** character expands to user's home directory.
 
 If you're using Windows, you'll have to use their "Windows counterparts".
 The same is true for the rest of this documentation.
@@ -362,12 +365,12 @@ or by adding the following lines to **~/.pip/pip.conf**
 extra-index-url = http://localhost:8080/simple/
 ```
 
-Note
-
-If you have installed **pypiserver** on a remote url without *https*
-you will receive an "untrusted" warning from *pip*, urging you to append
-the **--trusted-host** option.  You can also include this option permanently
-in your configuration-files or environment variables.
+> [!NOTE]
+>
+> If you have installed **pypiserver** on a remote url without *https*
+> you will receive an "untrusted" warning from *pip*, urging you to append
+> the **--trusted-host** option.  You can also include this option permanently
+> in your configuration-files or environment variables.
 
 ### Configuring easy_install
 
@@ -385,9 +388,9 @@ Instead of copying packages directly to the server's folder (i.e. with **scp**),
 you may use python tools for the task, e.g. **python setup.py upload**.
 In that case, **pypiserver** is responsible for authenticating the upload-requests.
 
-Note
-
-We strongly advise to password-protected your uploads!
+> [!NOTE]
+>
+> We strongly advise to ***password-protect*** your uploads!
 
 It is possible to disable authentication for uploads (e.g. in intranets).
 To avoid lazy security decisions, read help for **-P** and **-a** options.
@@ -399,74 +402,75 @@ To avoid lazy security decisions, read help for **-P** and **-a** options.
    *htpasswd* file specified by the **-P**, **--passwords** option
    (see next steps)
 
-```shell
-    pip install passlib
-```
+    ```shell
+        pip install passlib
+    ```
 
 2. Create the Apache **htpasswd** file with at least one user/password pair
    with this command (you'll be prompted for a password)
 
-```shell
-    htpasswd -sc htpasswd.txt <some_username>
+    ```shell
+        htpasswd -sc htpasswd.txt <some_username>
+    ```
 
-```
+> [!TIP]
+>
+> Read this [SO](http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u)
+> question for running `htpasswd` cmd under *Windows*
+> or if you have bogus passwords that you don't care because they are for
+> an internal service (which is still "bad", from a security perspective...)
+> you may use this [public service](http://www.htaccesstools.com/htpasswd-generator/)
 
-Tip
+<!-- 2 tips separately -->
 
-Read this [SO](http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u) question for running `htpasswd` cmd under *Windows*
-or if you have bogus passwords that you don't care because they are for
-an internal service (which is still "bad", from a security perspective...)
-you may use this [public service](http://www.htaccesstools.com/htpasswd-generator/)
-
-Tip
-
-When accessing pypiserver via the api, alternate authentication
-methods are available via the **auther** config flag. Any callable
-returning a boolean can be passed through to the pypiserver config in
-order to provide custom authentication. For example, to configure
-pypiserver to authenticate using the [python-pam](https://pypi.org/project/python-pam/)
-
-```shell
-    import pam
-    pypiserver.default_config(auther=pam.authenticate)
-
-```
+> [!TIP]
+>
+> When accessing pypiserver via the api, alternate authentication
+> methods are available via the **auther** config flag. Any callable
+> returning a boolean can be passed through to the pypiserver config in
+> order to provide custom authentication. For example, to configure
+> pypiserver to authenticate using the [python-pam](https://pypi.org/project/python-pam/)
+>
+> ```shell
+>     import pam
+>     pypiserver.default_config(auther=pam.authenticate)
+> ```
 
 Please see `Using Ad-hoc authentication providers`\_ for more information.
 
-3. You  need to restart the server with the **-P** option only once
+1. You  need to restart the server with the **-P** option only once
    (but user/password pairs can later be added or updated on the fly)
 
-```shell
-    ./pypi-server run -p 8080 -P htpasswd.txt ~/packages &
-```
+    ```shell
+        ./pypi-server run -p 8080 -P htpasswd.txt ~/packages &
+    ```
 
 #### Upload with setuptools
 
 1. On client-side, edit or create a **~/.pypirc** file with a similar content:
 
-```shell
-     [distutils]
-     index-servers =
-       pypi
-       local
+    ```shell
+        [distutils]
+        index-servers =
+          pypi
+          local
 
-     [pypi]
-     username:<your_pypi_username>
-     password:<your_pypi_passwd>
+        [pypi]
+        username:<your_pypi_username>
+        password:<your_pypi_passwd>
 
-     [local]
-     repository: http://localhost:8080
-     username: <some_username>
-     password: <some_passwd>
-```
+        [local]
+        repository: http://localhost:8080
+        username: <some_username>
+        password: <some_passwd>
+    ```
 
-1. Then from within the directory of the python-project you wish to upload,
+2. Then from within the directory of the python-project you wish to upload,
    issue this command:
 
-```shell
-     python setup.py sdist upload -r local
-```
+    ```shell
+        python setup.py sdist upload -r local
+    ```
 
 #### Upload with twine
 
@@ -475,18 +479,18 @@ To avoid storing you passwords on disk, in clear text, you may either:
 - use the **register** *setuptools*'s command with the **-r** option,
   like that
 
-```shell
-  python setup.py sdist register -r local upload -r local
-```
+    ```shell
+      python setup.py sdist register -r local upload -r local
+    ```
 
 - use *twine* library, which
   breaks the procedure in two steps.  In addition, it supports signing
   your files with PGP-Signatures and uploading the generated *.asc* files
   to **pypiserver**::
 
-```shell
-  twine upload -r local --sign -identity user_name ./foo-1.zip
-```
+    ```shell
+      twine upload -r local --sign -identity user_name ./foo-1.zip
+    ```
 
 ## Using the Docker Image
 
@@ -794,9 +798,9 @@ For detailed information please visit <https://nssm.cc>
 To use your *Apache2* with **pypiserver**, prefer to utilize **mod_wsgi** as
 explained in [bottle's documentation](http://bottlepy.org/docs/dev/deployment.html#apache-mod-wsgi%3E).
 
-Note
-If you choose instead to go with **mod_proxy**, mind that you may bump into problems
-with the prefix-path (see [#155](https://github.com/pypiserver/pypiserver/issues/155%3E)).
+> [!NOTE]
+> If you choose instead to go with **mod_proxy**, mind that you may bump into problems
+> with the prefix-path (see [#155](https://github.com/pypiserver/pypiserver/issues/155%3E)).
 
 1. Adapt and place the following *Apache* configuration either into top-level scope,
    or inside some **<VirtualHost>** (contributed by Thomas Waldmann):
@@ -838,24 +842,28 @@ or if using older **Apache \< 2.4**, substitute the last part with this::
 
 ```
 
-Tip
-If you have installed **pypiserver** in a virtualenv, follow **mod_wsgi**'s
-[instructions](http://modwsgi.readthedocs.io/en/develop/user-guides/virtual-environments.html)
-and prepend the python code above with the following
+> [!TIP]
+> If you have installed **pypiserver** in a virtualenv, follow **mod_wsgi**'s
+> [instructions](http://modwsgi.readthedocs.io/en/develop/user-guides/virtual-environments.html)
+> and prepend the python code above with the following
+>
+> ```python
+>     import site
+> 
+>     site.addsitedir('/yoursite/venv/lib/pythonX.X/site-packages')
+> ```
 
-```python
-    import site
+<!-- tip and a note separately -->
 
-    site.addsitedir('/yoursite/venv/lib/pythonX.X/site-packages')
-```
+> [!NOTE]
+> For security reasons, notice that the **Directory** directive grants access
+> to a directory holding the **wsgi** start-up script, alone; nothing else.
 
-Note
-For security reasons, notice that the **Directory** directive grants access
-to a directory holding the **wsgi** start-up script, alone; nothing else.
+<!-- 2 notes separately -->
 
-Note
-To enable HTTPS support on Apache, configure the directive that contains the
-WSGI configuration to use SSL.
+> [!NOTE]
+> To enable HTTPS support on Apache, configure the directive that contains the
+> WSGI configuration to use SSL.
 
 #### gunicorn
 
@@ -904,18 +912,18 @@ unstable packages on different paths
 
 ```
 
-Note
-You need to install some more dependencies for this to work, like::
-
-```shell
-  pip install paste pastedeploy gunicorn pypiserver
-```
-
-The server can then start with
-
-```shell
-  gunicorn_paster paste.ini
-```
+> [!NOTE]
+> You need to install some more dependencies for this to work, like::
+>
+> ```shell
+>   pip install paste pastedeploy gunicorn pypiserver
+> ```
+>
+> The server can then start with
+>
+> ```shell
+>   gunicorn_paster paste.ini
+> ```
 
 ### Behind a Reverse Proxy
 
@@ -1060,10 +1068,10 @@ these steps:
    python pypiserver-start.py
 ```
 
-Note
-The [python-pam](https://pypi.org/project/python-pam/) module, requires *read* access to **/etc/shadow** file;
-you may add the user under which **pypiserver** runs into the *shadow*
-group, with a command like this: **sudo usermod -a -G shadow pypy-user**.
+> [!NOTE]
+> The [python-pam](https://pypi.org/project/python-pam/) module, requires *read* access to **/etc/shadow** file;
+> you may add the user under which **pypiserver** runs into the *shadow*
+> group, with a command like this: **sudo usermod -a -G shadow pypy-user**.
 
 ### Use with MicroPython
 
