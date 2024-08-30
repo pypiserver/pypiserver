@@ -1,4 +1,4 @@
-FROM python:3.8-alpine3.12 as base
+FROM python:3.12.5-alpine3.20 as base
 
 # Copy the requirements & code and install them
 # Do this in a separate image in a separate directory
