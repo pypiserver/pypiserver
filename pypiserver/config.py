@@ -40,6 +40,7 @@ import io
 import logging
 import pathlib
 import re
+import subprocess
 import sys
 import textwrap
 import typing as t
@@ -105,13 +106,33 @@ def legacy_strtoint(val: str) -> int:
 strtobool: t.Callable[[str], bool] = lambda val: bool(legacy_strtoint(val))
 
 
+def get_shell_result(cmd: str) -> str:
+    """Get the stdout of a shell command, returns empty string if it failed."""
+    try:
+        r = subprocess.run(cmd, shell=True, capture_output=True)
+    except TypeError:
+        # Compatible for Python3.6
+        r = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+    if r.returncode == 0:
+        s = r.stdout.decode().strip()
+        if s:
+            return s
+    return ""
+
+
+def get_default_index() -> str:
+    """Return the global config of index-url if it exists, otherwise `pypi.org`."""
+    cmd = "pip config get global.index-url"
+    return get_shell_result(cmd) or "https://pypi.org/simple/"
+
+
 # Specify defaults here so that we can use them in tests &c. and not need
 # to update things in multiple places if a default changes.
 class DEFAULTS:
     """Config defaults."""
 
     AUTHENTICATE = ["update"]
-    FALLBACK_URL = "https://pypi.org/simple/"
+    FALLBACK_URL = get_default_index()
     HEALTH_ENDPOINT = "/health"
     HASH_ALGO = "sha256"
     INTERFACE = "0.0.0.0"
