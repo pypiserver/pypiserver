@@ -4,16 +4,16 @@ Changelog
 3.0.0 (tbd)
 -----------
 
-2.1.2rc09-15-2024 (__rc__)
+2.2.0 (2024-09-15)
 --------------------------
 
-- d68355a chore: cleanup README (#591)
-- c21c1e8 feat: use json client for `update` (#588)
-- 6c43e19 chore: solve deprecated `types-pkg_resources` (#589)
-- f386a39 chore: Update setuptools requirement from <70.0.0,>=40.0 to >=40.0,<71.0.0 in /requirements (#579)
-- aa8217b Update Deprecated Compose Commands for Pypiserver Services (#583)
-- f740a84 test: Fix running `build` in offline test environment (#571)
-- a70b77d  Updated HTML formatting (#580) (#581)
+- c21c1e8 ENH: use json client for `update` (#588)
+- d68355a MAINT: cleanup README (#591)
+- 6c43e19 MAINT: solve deprecated `types-pkg_resources` (#589)
+- f386a39 MAINT: Update setuptools requirement from <70.0.0,>=40.0 to >=40.0,<71.0.0 in /requirements (#579)
+- aa8217b MAINT: Update Deprecated Compose Commands for Pypiserver Services (#583)
+- f740a84 MAINT: test: Fix running `build` in offline test environment (#571)
+- a70b77d MAINT: Updated HTML formatting (#580) (#581)
 
 2.1.1 (2024-04-24)
 --------------------------
