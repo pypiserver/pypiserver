@@ -10,6 +10,7 @@ from argparse import ArgumentParser, Namespace
 
 RELEASE_RE = re.compile(r"v[0-9]+\.[0-9]+\.[0-9]+(\.post[0-9]+)?")
 PRE_RELEASE_RE = re.compile(r"v[0-9]+\.[0-9]+\.[0-9]+(a|b|c|\.?dev)[0-9]+")
+BASE_BRANCH = "main"
 
 
 def parse_args() -> Namespace:
@@ -19,8 +20,8 @@ def parse_args() -> Namespace:
         "ref",
         help=(
             "The github ref for which CI is running. This may be a full ref "
-            "like refs/tags/v1.2.3 or refs/heads/master, or just a tag/branch "
-            "name like v1.2.3 or master."
+            f"like refs/tags/v1.2.3 or refs/heads/{BASE_BRANCH}, or just a tag/branch "
+            "name like v1.2.3 or main."
         ),
     )
     parser.add_argument(
@@ -43,8 +44,8 @@ def strip_ref_to_name(ref: str) -> str:
 def name_to_array(name: str) -> t.Tuple[str, ...]:
     """Convert a ref name to an array of tags to build."""
     tags: t.Dict[str, t.Callable[[str], bool]] = {
-        # unstable for any master build
-        "unstable": lambda i: i == "master",
+        # unstable for the regular, base, build
+        "unstable": lambda i: i == BASE_BRANCH,
         # latest goes for full releases
         "latest": lambda i: RELEASE_RE.fullmatch(i) is not None,
         # the tag itself for any release or pre-release tag
