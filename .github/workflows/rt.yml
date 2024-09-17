@@ -19,7 +19,7 @@ on:
 
 jobs:
   new-tag:
-    if: ${{ github.ref_name == 'master' }}
+    if: ${{ github.ref_name == 'master' || github.ref_name == 'main' }}
     runs-on: ubuntu-latest
     env:
       CHANGE_FILE: CHANGES.rst
