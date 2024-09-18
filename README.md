@@ -5,7 +5,7 @@
 [![pypi badge](https://img.shields.io/pypi/v/pypiserver.svg)](https://shields.io/)
 [![ci workflow](https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml/badge.svg)](https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml)
 [![Generic badge](https://img.shields.io/badge/python-3.6%7C3.7%7C3.8+-blue.svg)](https://pypi.org/project/pypiserver/)
-[![Generic badge](https://img.shields.io/badge/license-MIT%7Czlib/libpng-blue.svg)](https://raw.githubusercontent.com/pypiserver/pypiserver/master/LICENSE.txt)
+[![Generic badge](https://img.shields.io/badge/license-MIT%7Czlib/libpng-blue.svg)](https://raw.githubusercontent.com/pypiserver/pypiserver/main/LICENSE.txt)
 
 | name        | description                                                                                                                                                                                                                                                                                                             |
 | :---------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -497,9 +497,9 @@ To avoid storing you passwords on disk, in clear text, you may either:
 ## Using the Docker Image
 
 Starting with version 1.2.5, official Docker images will be built for each
-push to master, each dev, alpha, or beta release, and each final release.
+push to `main`, each dev, alpha, or beta release, and each final release.
 The most recent full release will always be available under the tag **latest**,
-and the current master branch will always be available under the tag
+and the current `main` branch will always be available under the tag
 **unstable**.
 
 You can always check to see what tags are currently available at our
@@ -540,7 +540,8 @@ To authenticate against a local **.htpasswd** file::
 ```
 
 You can also specify **pypiserver** to run as a Docker service using a
-composefile. An example composefile is [provided](https://github.com/pypiserver/pypiserver/blob/master/docker-compose.yml)
+composefile. An example composefile is provided as
+[`docker-compose.yaml`](./docker-compose.yml)
 
 ## Alternative Installation Methods
 
@@ -1020,7 +1021,7 @@ server {
 It is also possible to use [Traefik](https://docs.traefik.io/) to put pypiserver
 behind HTTPS on port 443, with automatic HTTP redirection using Docker Compose.
 Please see the provided
-[docker-compose.yml](https://github.com/pypiserver/pypiserver/blob/master/docker-compose.yml)
+[docker-compose.yml](./docker-compose.yml)
 example for more information.
 
 ### Utilizing the API
@@ -1030,12 +1031,12 @@ not supported by *bottle* out-of-the-box, you needed to launch **pypiserver**
 via its API.
 
 - The main entry-point for configuring **pypiserver** is the
-  [pypiserver:app()](https://github.com/pypiserver/pypiserver/blob/master/pypiserver/__init__.py#L116)
+  [pypiserver:app()](./pypiserver/__init__.py#L116)
   function. This function returns the internal WSGI-app that you my then
   send to any WSGI-server you like.
 
 - To get all **pypiserver:app()** keywords and their explanations, read the
-  function [pypiserver:default_config()](https://github.com/pypiserver/pypiserver/blob/master/pypiserver/__init__.py#L35)
+  function [pypiserver:default_config()](./pypiserver/__init__.py#L35)
 
 - Finally, to fire-up a WSGI-server with the configured app, invoke
   the **bottle:run(app, host, port, server)** function.
@@ -1171,9 +1172,9 @@ The following limitations are known:
   discussion)
 - It does not handle misspelled packages as *pypi-repo* does,
   therefore it is suggested to use it with **--extra-index-url** instead
-  of **--index-url** (see [#38](https://github.com/pypiserver/pypiserver/issues/38%3E)).
+  of **--index-url** (see [#38](https://github.com/pypiserver/pypiserver/issues/38)).
 
-Please use Github's [bugtracker](https://github.com/pypiserver/pypiserver/issues%3E)
+Please use Github's [bugtracker](https://github.com/pypiserver/pypiserver/issues)
 for other bugs you find.
 
 ## Similar Projects
