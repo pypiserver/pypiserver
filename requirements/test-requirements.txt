@@ -4,7 +4,7 @@ pip
 passlib>=1.6
 pytest>=6.2.2
 pytest-cov
-setuptools>=40.0,<71.0.0
+setuptools>=40.0,<76.0.0
 tox
 twine
 webtest
