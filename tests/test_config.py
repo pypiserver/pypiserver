@@ -289,7 +289,9 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         exp_config_type=RunConfig,
         exp_config_values={
             "authenticate": [],
-            "_test": lambda conf: bool(conf.auther("foo", "bar")) is True,
+            "_test": lambda conf: (
+                bool(conf.auther("foo", "bar", "download")) is True
+            ),
         },
     ),
     # passwords
@@ -308,8 +310,8 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         exp_config_values={
             "password_file": HTPASS_TEST_FILE,
             "_test": lambda conf: (
-                bool(conf.auther("foo", "bar")) is False
-                and bool(conf.auther("a", "a")) is True
+                bool(conf.auther("foo", "bar", "download")) is False
+                and bool(conf.auther("a", "a", "download")) is True
             ),
         },
     ),
@@ -322,8 +324,8 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
             "password_file": HTPASS_TEST_FILE,
             "_test": (
                 lambda conf: (
-                    bool(conf.auther("foo", "bar")) is False
-                    and conf.auther("a", "a") is True
+                    bool(conf.auther("foo", "bar", "download")) is False
+                    and conf.auther("a", "a", "download") is True
                 )
             ),
         },
@@ -336,7 +338,9 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         exp_config_type=RunConfig,
         exp_config_values={
             "password_file": ".",
-            "_test": lambda conf: bool(conf.auther("foo", "bar")) is True,
+            "_test": lambda conf: (
+                bool(conf.auther("foo", "bar", "download")) is True
+            ),
         },
     ),
     # disable-fallback
