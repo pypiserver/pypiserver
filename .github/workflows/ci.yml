@@ -6,7 +6,8 @@ on:
   # This will run when any branch or tag is pushed
   push:
     branches:
-      - "master"
+      - "master" # TODO(tech-debt): remove after switching the default branch
+      - "main"
     tags:
       - "v**"
   # Allowing to run on fork and other pull requests
@@ -129,7 +130,7 @@ jobs:
     needs:
       - "tests"
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:

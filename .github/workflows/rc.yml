@@ -8,7 +8,7 @@ name: release_candidate
 # - [x] update CHANGES.rst (+ rc-title, + date)
 # - [x] create changes commit
 # - [x] push to GH
-# - [x] open a PR to `master`
+# - [x] open a PR to `main`
 
 on:
   schedule:
@@ -53,12 +53,15 @@ jobs:
       - id: propose-rc
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: github-actions[bot]
+          GITHUB_EMAIL: github-actions[bot]@users.noreply.github.com
+          BASE_BRANCH: main
         run: |
           CHANGES_FILE=${{ env.CHANGES_FILE }}
           PR_BODY_FILE=${{ env.PR_BODY_FILE }}
           RC_DATE=${{ steps.get-rc-date.outputs.RC_DATE }}
-          git config user.name github-actions
-          git config user.email github-actions@github.com
+          git config user.name ${{ env.GITHUB_USERNAME }}
+          git config user.email ${{ env.GITHUB_EMAIL }}
           git checkout -b auto-release-candidate-${RC_DATE}
           git push -u origin auto-release-candidate-${RC_DATE}
 
@@ -73,5 +76,5 @@ jobs:
 
           gh pr create  --title "chore(auto-release-candidate-${RC_DATE})" \
                         --body-file ${PR_BODY_FILE} \
-                        --base master \
+                        --base ${{ env.BASE_BRANCH }} \
                         --draft
