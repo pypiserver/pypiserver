@@ -19,6 +19,7 @@ on:
 
 jobs:
   new-tag:
+    # TODO(tech-debt): cleanup after switching the default branch
     if: ${{ github.ref_name == 'master' || github.ref_name == 'main' }}
     runs-on: ubuntu-latest
     env:
