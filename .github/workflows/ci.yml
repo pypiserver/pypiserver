@@ -6,7 +6,6 @@ on:
   # This will run when any branch or tag is pushed
   push:
     branches:
-      - "master" # TODO(tech-debt): remove after switching the default branch
       - "main"
     tags:
       - "v**"
