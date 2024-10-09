@@ -51,7 +51,9 @@ class WsgiHandler(WSGIRequestHandler):
         return self.client_address[0]
 
     def log_message(
-        self, format: str, *args: t.Any  # pylint: disable=redefined-builtin
+        self,
+        format: str,
+        *args: t.Any,  # pylint: disable=redefined-builtin
     ) -> None:
         """Log a message."""
         # The log_message method on the `HttpRequestHandler` base class just
@@ -76,7 +78,7 @@ class AutoServer(enum.Enum):
 
 
 # Possible automatically selected servers. This MUST match the available
-# auto servers in bottle.py
+# auto servers in bottle
 AUTO_SERVER_IMPORTS = (
     (AutoServer.Waitress, "waitress"),
     (AutoServer.Paste, "paste"),
@@ -159,7 +161,7 @@ def main(argv: t.Sequence[str] = None) -> None:
 
         gevent.monkey.patch_all()
 
-    from pypiserver import bottle
+    import bottle
 
     bottle.debug(config.verbosity > 1)
     bottle._stderr = ft.partial(  # pylint: disable=protected-access
@@ -184,9 +186,7 @@ def main(argv: t.Sequence[str] = None) -> None:
 
     if config.server_method == "auto":
         expected_server = guess_auto_server()
-        extra_kwargs = (
-            wsgi_kwargs if expected_server is AutoServer.WsgiRef else {}
-        )
+        extra_kwargs = wsgi_kwargs if expected_server is AutoServer.WsgiRef else {}
         log.debug(
             "Server 'auto' selected. Expecting bottle to run '%s'. "
             "Passing extra keyword args: %s",
@@ -195,9 +195,7 @@ def main(argv: t.Sequence[str] = None) -> None:
         )
     else:
         extra_kwargs = wsgi_kwargs if config.server_method == "wsgiref" else {}
-        log.debug(
-            "Running bottle with selected server '%s'", config.server_method
-        )
+        log.debug("Running bottle with selected server '%s'", config.server_method)
 
     bottle.run(
         app=app,

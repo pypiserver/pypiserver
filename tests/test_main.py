@@ -5,12 +5,11 @@ import sys
 import typing as t
 from unittest import mock
 
+import bottle
+from bottle import Bottle
 import pytest
 
-import pypiserver.bottle
 from pypiserver import __main__
-from pypiserver.bottle import Bottle
-
 
 THIS_DIR = pathlib.Path(__file__).parent
 HTPASS_FILE = THIS_DIR / "../fixtures/htpasswd.a.a"
@@ -51,7 +50,7 @@ def main(monkeypatch):
         main.update_args = args
         main.update_kwargs = kwargs
 
-    monkeypatch.setattr("pypiserver.bottle.run", run)
+    monkeypatch.setattr("bottle.run", run)
     monkeypatch.setattr("pypiserver.manage.update_all_packages", update)
 
     return main
@@ -116,16 +115,12 @@ def test_root_multiple(main):
 
 def test_fallback_url(main):
     main(["--fallback-url", "https://pypi.mirror/simple"])
-    assert (
-        main.app._pypiserver_config.fallback_url == "https://pypi.mirror/simple"
-    )
+    assert main.app._pypiserver_config.fallback_url == "https://pypi.mirror/simple"
 
 
 def test_fallback_url_default(main):
     main([])
-    assert (
-        main.app._pypiserver_config.fallback_url == "https://pypi.org/simple/"
-    )
+    assert main.app._pypiserver_config.fallback_url == "https://pypi.org/simple/"
 
 
 def test_hash_algo_default(main):
@@ -261,17 +256,13 @@ def test_blacklist_file(main):
 def test_auto_servers() -> None:
     """Test auto servers."""
     # A list of bottle ServerAdapters
-    bottle_adapters = tuple(
-        a.__name__.lower() for a in pypiserver.bottle.AutoServer.adapters
-    )
+    bottle_adapters = tuple(a.__name__.lower() for a in bottle.AutoServer.adapters)
     # We are going to expect that our AutoServer enum names must match those
     # at least closely enough to be recognizable.
     our_mappings = tuple(map(str.lower, __main__.AutoServer.__members__))
 
     # Assert that all of our mappings are represented in bottle adapters
-    assert all(
-        any(mapping in a for a in bottle_adapters) for mapping in our_mappings
-    )
+    assert all(any(mapping in a for a in bottle_adapters) for mapping in our_mappings)
 
     # Assert that our import checking order matches the order in which the
     # adapters are defined in the AutoServer
@@ -290,8 +281,7 @@ def test_auto_servers() -> None:
 
     # And the order should be the same
     assert all(
-        us.name.lower() in them
-        for us, them in zip(our_check_order, bottle_adapters)
+        us.name.lower() in them for us, them in zip(our_check_order, bottle_adapters)
     )
 
 
