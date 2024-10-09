@@ -17,10 +17,10 @@ tests_require = [
 setup_requires = [
     "setuptools",
     "setuptools-git>=0.3",
-    "bottle>=0.13.0,<0.14.0",
     "wheel>=0.25.0",
 ]
 install_requires = [
+    "bottle>=0.13.0,<0.14.0",
     "pip>=7",
     "packaging>=23.2",
     "importlib_resources;python_version>'3.8' and python_version<'3.12'",
