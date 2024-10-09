@@ -3256,8 +3256,8 @@ class BaseTemplate(object):
             if not fname.startswith(spath): continue
             if os.path.isfile(fname): return fname
             for ext in cls.extensions:
-                if os.path.isfile('%s.%s' % (fname, ext)):
-                    return '%s.%s' % (fname, ext)
+                if os.path.isfile(f'{fname}.{ext}'):
+                    return f'{fname}.{ext}'
 
     @classmethod
     def global_config(cls, key, *args):
