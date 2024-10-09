@@ -4,7 +4,7 @@ import re as _re
 import sys
 import typing as t
 
-from pypiserver.bottle import Bottle
+from bottle import Bottle
 from pypiserver.config import Config, RunConfig, strtobool
 
 version = __version__ = "2.2.0"
@@ -100,9 +100,7 @@ def backwards_compat_kwargs(kwargs: dict, warn: bool = True) -> dict:
     if len(updated_kwargs) != len(kwargs):
         legacy_to_modern = {k: v[0] for k, v in backwards_compat.items()}
         dupes = [
-            (k, v)
-            for k, v in legacy_to_modern.items()
-            if k in kwargs and v in kwargs
+            (k, v) for k, v in legacy_to_modern.items() if k in kwargs and v in kwargs
         ]
         raise ValueError(
             "Keyword arguments for pypiserver app() constructor contained "
@@ -146,9 +144,7 @@ def setup_routes_from_config(app: Bottle, config: RunConfig) -> Bottle:
 
     def _setup_health_endpoint(app, config):
         if config.health_endpoint in [route.rule for route in app.routes]:
-            raise RuntimeError(
-                "Provided health endpoint overlaps with existing routes"
-            )
+            raise RuntimeError("Provided health endpoint overlaps with existing routes")
         app.route(config.health_endpoint, "GET", lambda: "Ok")
 
     _setup_health_endpoint(app, config)

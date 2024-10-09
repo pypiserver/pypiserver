@@ -1,3 +1,4 @@
+bottle=1.13.1
 # We use gunicorn as the default server in the docker container, with gevent
 # workers
 gevent==21.12.0

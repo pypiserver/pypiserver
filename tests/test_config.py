@@ -569,9 +569,7 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         exp_config_type=RunConfig,
         exp_config_values={
             "_test": (
-                lambda conf: (
-                    isinstance(conf.backend.backend, SimpleFileBackend)
-                )
+                lambda conf: (isinstance(conf.backend.backend, SimpleFileBackend))
             ),
         },
     ),
@@ -730,9 +728,7 @@ def test_config(
 
     assert isinstance(conf, exp_config_type)
     assert all(
-        getattr(conf, k) == v
-        for k, v in exp_config_values.items()
-        if k != "_test"
+        getattr(conf, k) == v for k, v in exp_config_values.items() if k != "_test"
     ), {
         k: (getattr(conf, k), v)
         for k, v in exp_config_values.items()

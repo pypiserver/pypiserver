@@ -17,6 +17,7 @@ tests_require = [
 setup_requires = [
     "setuptools",
     "setuptools-git>=0.3",
+    "bottle>=0.13.0,<0.14.0",
     "wheel>=0.25.0",
 ]
 install_requires = [
@@ -32,9 +33,7 @@ def read_file(rel_path: str):
 
 def get_version():
     locals_ = {}
-    version_line = re.compile(
-        r'^[\w =]*__version__ = "\d+\.\d+\.\d+\.?\w*\d*"$'
-    )
+    version_line = re.compile(r'^[\w =]*__version__ = "\d+\.\d+\.\d+\.?\w*\d*"$')
     try:
         for ln in filter(
             version_line.match,

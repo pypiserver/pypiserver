@@ -14,7 +14,7 @@ from urllib.parse import urljoin, urlparse
 from pypiserver.config import RunConfig
 from . import __version__
 from . import core
-from .bottle import (
+from bottle import (
     static_file,
     redirect,
     request,
@@ -148,10 +148,7 @@ def file_upload():
     )
     if not ufiles.pkg:
         raise HTTPError(400, "Missing 'content' file-field!")
-    if (
-        ufiles.sig
-        and f"{ufiles.pkg.raw_filename}.asc" != ufiles.sig.raw_filename
-    ):
+    if ufiles.sig and f"{ufiles.pkg.raw_filename}.asc" != ufiles.sig.raw_filename:
         raise HTTPError(
             400,
             f"Unrelated signature {ufiles.sig!r} for package {ufiles.pkg!r}!",
@@ -208,7 +205,7 @@ def update():
 
 
 @app.route("/simple")
-@app.route("/simple/:project")
+@app.route("/simple/<project>")
 @app.route("/packages")
 @auth("list")
 def pep_503_redirects(project=None):
@@ -221,17 +218,11 @@ def handle_rpc():
     """Handle pip-style RPC2 search requests"""
     parser = xml.dom.minidom.parse(request.body)
     methodname = (
-        parser.getElementsByTagName("methodName")[0]
-        .childNodes[0]
-        .wholeText.strip()
+        parser.getElementsByTagName("methodName")[0].childNodes[0].wholeText.strip()
     )
     log.debug(f"Processing RPC2 request for '{methodname}'")
     if methodname == "search":
-        value = (
-            parser.getElementsByTagName("string")[0]
-            .childNodes[0]
-            .wholeText.strip()
-        )
+        value = parser.getElementsByTagName("string")[0].childNodes[0].wholeText.strip()
         response = []
         ordering = 0
         for p in config.backend.get_all_packages():
@@ -246,9 +237,7 @@ def handle_rpc():
                 }
                 response.append(d)
             ordering += 1
-        call_string = xmlrpclib.dumps(
-            (response,), "search", methodresponse=True
-        )
+        call_string = xmlrpclib.dumps((response,), "search", methodresponse=True)
         return call_string
 
 
@@ -274,7 +263,7 @@ def simpleindex():
     return template(tmpl, links=links)
 
 
-@app.route("/simple/:project/")
+@app.route("/simple/<project>/")
 @auth("list")
 def simple(project):
     # PEP 503: require normalized project
@@ -328,9 +317,7 @@ def list_packages():
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
     )
 
-    links = (
-        (pkg.relfn_unix, urljoin(fp, pkg.fname_and_hash)) for pkg in packages
-    )
+    links = ((pkg.relfn_unix, urljoin(fp, pkg.fname_and_hash)) for pkg in packages)
 
     tmpl = """<!DOCTYPE html>
 <html lang="en">
@@ -350,7 +337,7 @@ def list_packages():
     return template(tmpl, links=links)
 
 
-@app.route("/packages/:filename#.*#")
+@app.route("/packages/<filename>#.*#")
 @auth("download")
 def server_static(filename):
     entries = config.backend.get_all_packages()
@@ -371,7 +358,7 @@ def server_static(filename):
     return HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
 
 
-@app.route("/:project/json")
+@app.route("/<project>/json")
 @auth("list")
 def json_info(project):
     # PEP 503: require normalized project
@@ -401,8 +388,8 @@ def json_info(project):
     return dumps(rv)
 
 
-@app.route("/:project")
-@app.route("/:project/")
+@app.route("/<project>")
+@app.route("/<project>/")
 def bad_url(project):
     """Redirect unknown root URLs to /simple/."""
     return redirect(core.get_bad_url_redirect_path(request, project))
