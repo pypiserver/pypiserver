@@ -35,13 +35,18 @@ if __name__ == '__main__':
     if _cmd_options.server and _cmd_options.server.startswith('gevent'):
         import gevent.monkey; gevent.monkey.patch_all()
 
-import base64, cgi, email.utils, functools, hmac, itertools, mimetypes,\
+import base64, email.utils, functools, hmac, itertools, mimetypes,\
         os, re, subprocess, sys, tempfile, threading, time, warnings, hashlib
 
 from datetime import date as datedate, datetime, timedelta
 from tempfile import TemporaryFile
 from traceback import format_exc, print_exc
 from unicodedata import normalize
+
+from email import message_from_bytes
+from email.policy import HTTP
+from io import BytesIO
+from urllib.parse import parse_qsl
 
 
 try: from simplejson import dumps as json_dumps, loads as json_lds
@@ -209,7 +214,12 @@ class lazy_attribute(object):
         return value
 
 
-
+class FileUpload:
+    def __init__(self, file, name, filename, headers):
+        self.file = file
+        self.name = name
+        self.filename = filename
+        self.headers = headers
 
 
 
@@ -1216,35 +1226,40 @@ class BaseRequest(object):
     def POST(self):
         """ The values of :attr:`forms` and :attr:`files` combined into a single
             :class:`FormsDict`. Values are either strings (form values) or
-            instances of :class:`cgi.FieldStorage` (file uploads).
+            instances of :class:`FileUpload` (file uploads).
         """
         post = FormsDict()
-        # We default to application/x-www-form-urlencoded for everything that
-        # is not multipart and take the fast path (also: 3.1 workaround)
+        
         if not self.content_type.startswith('multipart/'):
-            pairs = _parse_qsl(tonat(self._get_body_string(), 'latin1'))
+            # Handle non-multipart data (unchanged)
+            pairs = parse_qsl(tonat(self._get_body_string(), 'latin1'))
             for key, value in pairs:
                 post[key] = value
             return post
-
-        safe_env = {'QUERY_STRING':''} # Build a safe environment for cgi
-        for key in ('REQUEST_METHOD', 'CONTENT_TYPE', 'CONTENT_LENGTH'):
-            if key in self.environ: safe_env[key] = self.environ[key]
-        args = dict(fp=self.body, environ=safe_env, keep_blank_values=True)
-        if py31:
-            args['fp'] = NCTextIOWrapper(args['fp'], encoding='utf8',
-                                         newline='\n')
-        elif py3k:
-            args['encoding'] = 'utf8'
-        data = cgi.FieldStorage(**args)
-        self['_cgi.FieldStorage'] = data #http://bugs.python.org/issue18394#msg207958
-        data = data.list or []
-        for item in data:
-            if item.filename:
-                post[item.name] = FileUpload(item.file, item.name,
-                                             item.filename, item.headers)
+        
+        # Handle multipart data
+        content_type = self.environ.get('CONTENT_TYPE', '')
+        content_length = int(self.environ.get('CONTENT_LENGTH', 0))
+        
+        # Read the entire body
+        body = self.body.read(content_length)
+        
+        # Parse the multipart body
+        message = message_from_bytes(body, policy=HTTP)
+        
+        for part in message.iter_parts():
+            name = part.get_param('name', header='content-disposition')
+            filename = part.get_filename()
+            
+            if filename:
+                # This is a file upload
+                file_data = part.get_payload(decode=True)
+                file_obj = BytesIO(file_data)
+                post[name] = FileUpload(file_obj, name, filename, dict(part.items()))
             else:
-                post[item.name] = item.value
+                # This is a regular form field
+                post[name] = part.get_payload(decode=True).decode(part.get_content_charset('utf-8'))
+        
         return post
 
     @property
