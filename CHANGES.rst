@@ -4,6 +4,13 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.2.1rc11-01-2024 (__rc__)
+--------------------------
+
+- 16c9cec chore: finish move to `main` (#612)
+- f3d6dde chore: prepare for renaming to main (#611)
+- 0430375 chore: update alpine image to 3.20 and python version to 3.10 (#608)
+
 2.2.0 (2024-09-15)
 --------------------------
 
