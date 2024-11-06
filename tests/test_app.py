@@ -104,9 +104,14 @@ def welcome_file_all_vars(request, root):
 def add_file_to_root(app):
     def file_adder(root, filename, content=""):
         root.join(filename).write(content)
-        backend = app.config.backend
-        if isinstance(backend, CachingFileBackend):
-            backend.cache_manager.invalidate_root_cache(root)
+        # bottle has deprecated the use of attribute access
+        # in configdicts
+        try:
+            backend = app.config.backend
+            if isinstance(backend, CachingFileBackend):
+                backend.cache_manager.invalidate_root_cache(root)
+        except AttributeError:
+            pass
 
     return file_adder
 
