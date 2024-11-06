@@ -30,6 +30,11 @@ config: RunConfig
 app = Bottle()
 
 
+def request_fullpath(request):
+    parsed = urlparse(request.urlparts.scheme + "://" + request.urlparts.netloc)
+    return parsed.path.rstrip("/") + "/" + request.fullpath.lstrip("/")
+
+
 class auth:
     """decorator to apply authentication if specified for the decorated method & action"""
 
@@ -53,15 +58,8 @@ class auth:
 @app.hook("before_request")
 def log_request():
     log.info(config.log_req_frmt, request.environ)
-
-
-@app.hook("before_request")
-def print_request():
-    parsed = urlparse(request.urlparts.scheme + "://" + request.urlparts.netloc)
-    request.custom_host = parsed.netloc
-    request.custom_fullpath = (
-        parsed.path.rstrip("/") + "/" + request.fullpath.lstrip("/")
-    )
+    request.custom_host = urlparse(
+            f"{request.urlparts.scheme}://{request.urlparts.netloc}")
 
 
 @app.hook("after_request")
@@ -90,7 +88,8 @@ def favicon():
 
 @app.route("/")
 def root():
-    fp = request.custom_fullpath
+    parsed = urlparse(request.urlparts.scheme + "://" + request.urlparts.netloc)
+    fp = parsed.path.rstrip("/") + "/" + request.fullpath.lstrip("/")
 
     # Ensure template() does not consider `msg` as filename!
     msg = config.welcome_msg + "\n"
@@ -212,7 +211,7 @@ def update():
 @app.route("/packages")
 @auth("list")
 def pep_503_redirects(project=None):
-    return redirect(request.custom_fullpath + "/", 301)
+    return redirect(request_fullpath(request) + "/", 301)
 
 
 @app.post("/RPC2")
@@ -291,7 +290,7 @@ def simple(project):
             return redirect(f"{config.fallback_url.rstrip('/')}/{project}/")
         return HTTPError(404, f"Not Found ({normalized} does not exist)\n\n")
 
-    current_uri = request.custom_fullpath
+    current_uri = request_fullpath(request)
 
     links = (
         (
@@ -322,7 +321,7 @@ def simple(project):
 @app.route("/packages/")
 @auth("list")
 def list_packages():
-    fp = request.custom_fullpath
+    fp = request_fullpath(request)
     packages = sorted(
         config.backend.get_all_packages(),
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
