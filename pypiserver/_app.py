@@ -13,7 +13,6 @@ from urllib.parse import urljoin, urlparse, quote
 
 from pypiserver.config import RunConfig
 from . import __version__
-from . import core
 from .bottle import (
     static_file,
     redirect,
