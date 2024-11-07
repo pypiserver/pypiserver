@@ -22,7 +22,7 @@ setup_requires = [
 install_requires = [
     "pip>=7",
     "packaging>=23.2",
-    "importlib_resources;python_version>'3.8' and python_version<'3.12'",
+    "importlib_resources;python_version>'3.8'",
 ]
 
 
