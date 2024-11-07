@@ -58,8 +58,6 @@ class auth:
 @app.hook("before_request")
 def log_request():
     log.info(config.log_req_frmt, request.environ)
-    request.custom_host = urlparse(
-            f"{request.urlparts.scheme}://{request.urlparts.netloc}")
 
 
 @app.hook("after_request")
