@@ -9,7 +9,7 @@ from collections import defaultdict
 from collections import namedtuple
 from io import BytesIO
 from json import dumps
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, quote
 
 from pypiserver.config import RunConfig
 from . import __version__
@@ -33,6 +33,17 @@ app = Bottle()
 def request_fullpath(request):
     parsed = urlparse(request.urlparts.scheme + "://" + request.urlparts.netloc)
     return parsed.path.rstrip("/") + "/" + request.fullpath.lstrip("/")
+
+
+def get_bad_url_redirect_path(request, project):
+    """Get the path for a bad root url."""
+    uri = request_fullpath(request)
+    if uri.endswith("/"):
+        uri = uri[:-1]
+    uri = uri.rsplit("/", 1)[0]
+    project = quote(project)
+    uri += f"/simple/{project}/"
+    return uri
 
 
 class auth:
@@ -402,4 +413,4 @@ def json_info(project):
 @app.route("/:project/")
 def bad_url(project):
     """Redirect unknown root URLs to /simple/."""
-    return redirect(core.get_bad_url_redirect_path(request, project))
+    return redirect(get_bad_url_redirect_path(request, project))
