@@ -732,6 +732,7 @@ class TestRemovePkg:
 def test_redirect_project_encodes_newlines():
     """Ensure raw newlines are url encoded in the generated redirect."""
     project = "\nSet-Cookie:malicious=1;"
-    uri = "/\nSet-Cookie:malicious=1;"
-    newpath = _app.get_bad_url_redirect_path(uri, project)
+    request = bottle.Request({"HTTP_X_FORWARDED_PROTO":
+                              "/\nSet-Cookie:malicious=1;"})
+    newpath = _app.get_bad_url_redirect_path(request, project)
     assert "\n" not in newpath
