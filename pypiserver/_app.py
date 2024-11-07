@@ -12,6 +12,7 @@ from json import dumps
 from urllib.parse import urljoin, urlparse, quote
 
 from pypiserver.config import RunConfig
+from pypiserver.manage import fetch_package
 from . import __version__
 from .bottle import (
     static_file,
@@ -294,9 +295,18 @@ def simple(project):
         key=lambda x: (x.parsed_version, x.relfn),
     )
     if not packages:
-        if not config.disable_fallback:
+        if config.pull_through:
+            fetch_package(project, str(config.roots[0]))
+            packages = sorted(
+                config.backend.find_project_packages(project),
+                key=lambda x: (x.parsed_version, x.relfn),
+            )
+        if config.disable_fallback:
+            return HTTPError(
+                404, f"Not Found ({normalized} does not exist)\n\n"
+            )
+        else:
             return redirect(f"{config.fallback_url.rstrip('/')}/{project}/")
-        return HTTPError(404, f"Not Found ({normalized} does not exist)\n\n")
 
     current_uri = request_fullpath(request)
 
