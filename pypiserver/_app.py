@@ -12,6 +12,7 @@ from json import dumps
 from urllib.parse import urljoin, urlparse, quote
 
 from pypiserver.config import RunConfig
+from pypiserver.manage import fetch_package
 from . import __version__
 from .bottle import (
     static_file,
@@ -25,6 +26,10 @@ from .bottle import (
 from .pkg_helpers import guess_pkgname_and_version, normalize_pkgname_for_url
 
 log = logging.getLogger(__name__)
+# your edito may complain about `config` being undefined.
+# To understand why this code work, see how pypiserver/__init__.py
+# imports the _app module and sets the `config` variable in _app.py
+# insidet the function app_from_config.
 config: RunConfig
 app = Bottle()
 
@@ -289,14 +294,37 @@ def simple(project):
     if project != normalized:
         return redirect(f"/simple/{normalized}/", 301)
 
+    # pip install always uses 2 requests, first to get the list of versions
+    # and then to download the package.
+    # If we only search for the package on the local filesystem, we will
+    # might not be able to return the list containing the version.
+    # Hence, if pull_through is enabled, we will fetch the version list
+    # from pypi.org and then return the list of versions.
+
+    # If the packages version is not found, in pypi.org, we will return a 404
+
+    # Serving the actual package is handled by the /packages/ route
+    # And in this route, we will first attempt to fetch the package from the
+    # local filesystem, if not found, we will fetch it from pypi.org and save
+    # it to the local filesystem and then serve it.
+
     packages = sorted(
         config.backend.find_project_packages(project),
         key=lambda x: (x.parsed_version, x.relfn),
     )
     if not packages:
-        if not config.disable_fallback:
+        if config.pull_through:
+            fetch_package(project, str(config.roots[0]))
+            packages = sorted(
+                config.backend.find_project_packages(project),
+                key=lambda x: (x.parsed_version, x.relfn),
+            )
+        if config.disable_fallback:
+            return HTTPError(
+                404, f"Not Found ({normalized} does not exist)\n\n"
+            )
+        else:
             return redirect(f"{config.fallback_url.rstrip('/')}/{project}/")
-        return HTTPError(404, f"Not Found ({normalized} does not exist)\n\n")
 
     current_uri = request_fullpath(request)
 

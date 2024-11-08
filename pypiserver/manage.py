@@ -140,7 +140,7 @@ class PipCmd:
         cmd_root,
         destdir,
         pkg_name,
-        pkg_version,
+        pkg_version=None,
         index="https://pypi.org/simple",
     ):
         """Yield an update command for pip."""
@@ -148,7 +148,26 @@ class PipCmd:
             yield part
         for part in ("--no-deps", "-i", index, "-d", destdir):
             yield part
-        yield "{}=={}".format(pkg_name, pkg_version)
+        if pkg_version:
+            yield "{}=={}".format(pkg_name, pkg_version)
+        yield "{}".format(pkg_name)
+
+
+def fetch_package(pkg: str, destdir: str):
+    """fetch a package."""
+    print(
+        f"# fetch {pkg} "
+    )
+
+    cmd = tuple(
+        PipCmd.update(
+            PipCmd.update_root(pip.__version__),
+            destdir or os.path.dirname(pkg.replaces.fn),
+            pkg,
+        )
+    )
+    print(" ".join(cmd), end="\n\n")
+    call(cmd)
 
 
 def update_package(pkg, destdir, dry_run=False):
