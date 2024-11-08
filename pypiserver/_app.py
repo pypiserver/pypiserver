@@ -26,6 +26,10 @@ from .bottle import (
 from .pkg_helpers import guess_pkgname_and_version, normalize_pkgname_for_url
 
 log = logging.getLogger(__name__)
+# your editor may complain about `config` being undefined.
+# To understand why this code work, see how pypiserver/__init__.py
+# imports the _app module and sets the `config` variable in _app.py
+# insidet the function app_from_config.
 config: RunConfig
 app = Bottle()
 
