@@ -3,24 +3,12 @@
 
 import mimetypes
 import typing as t
-from urllib.parse import quote
 
 from pypiserver.pkg_helpers import normalize_pkgname, parse_version
 
 mimetypes.add_type("application/octet-stream", ".egg")
 mimetypes.add_type("application/octet-stream", ".whl")
 mimetypes.add_type("text/plain", ".asc")
-
-
-def get_bad_url_redirect_path(request, project):
-    """Get the path for a bad root url."""
-    uri = request.custom_fullpath
-    if uri.endswith("/"):
-        uri = uri[:-1]
-    uri = uri.rsplit("/", 1)[0]
-    project = quote(project)
-    uri += f"/simple/{project}/"
-    return uri
 
 
 class PkgFile:

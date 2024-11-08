@@ -9,11 +9,10 @@ from collections import defaultdict
 from collections import namedtuple
 from io import BytesIO
 from json import dumps
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, quote
 
 from pypiserver.config import RunConfig
 from . import __version__
-from . import core
 from .bottle import (
     static_file,
     redirect,
@@ -28,6 +27,22 @@ from .pkg_helpers import guess_pkgname_and_version, normalize_pkgname_for_url
 log = logging.getLogger(__name__)
 config: RunConfig
 app = Bottle()
+
+
+def request_fullpath(request):
+    parsed = urlparse(request.urlparts.scheme + "://" + request.urlparts.netloc)
+    return parsed.path.rstrip("/") + "/" + request.fullpath.lstrip("/")
+
+
+def get_bad_url_redirect_path(request, project):
+    """Get the path for a bad root url."""
+    uri = request_fullpath(request)
+    if uri.endswith("/"):
+        uri = uri[:-1]
+    uri = uri.rsplit("/", 1)[0]
+    project = quote(project)
+    uri += f"/simple/{project}/"
+    return uri
 
 
 class auth:
@@ -53,15 +68,6 @@ class auth:
 @app.hook("before_request")
 def log_request():
     log.info(config.log_req_frmt, request.environ)
-
-
-@app.hook("before_request")
-def print_request():
-    parsed = urlparse(request.urlparts.scheme + "://" + request.urlparts.netloc)
-    request.custom_host = parsed.netloc
-    request.custom_fullpath = (
-        parsed.path.rstrip("/") + "/" + request.fullpath.lstrip("/")
-    )
 
 
 @app.hook("after_request")
@@ -90,7 +96,8 @@ def favicon():
 
 @app.route("/")
 def root():
-    fp = request.custom_fullpath
+    parsed = urlparse(request.urlparts.scheme + "://" + request.urlparts.netloc)
+    fp = parsed.path.rstrip("/") + "/" + request.fullpath.lstrip("/")
 
     # Ensure template() does not consider `msg` as filename!
     msg = config.welcome_msg + "\n"
@@ -212,7 +219,7 @@ def update():
 @app.route("/packages")
 @auth("list")
 def pep_503_redirects(project=None):
-    return redirect(request.custom_fullpath + "/", 301)
+    return redirect(request_fullpath(request) + "/", 301)
 
 
 @app.post("/RPC2")
@@ -291,7 +298,7 @@ def simple(project):
             return redirect(f"{config.fallback_url.rstrip('/')}/{project}/")
         return HTTPError(404, f"Not Found ({normalized} does not exist)\n\n")
 
-    current_uri = request.custom_fullpath
+    current_uri = request_fullpath(request)
 
     links = (
         (
@@ -322,7 +329,7 @@ def simple(project):
 @app.route("/packages/")
 @auth("list")
 def list_packages():
-    fp = request.custom_fullpath
+    fp = request_fullpath(request)
     packages = sorted(
         config.backend.get_all_packages(),
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
@@ -405,4 +412,4 @@ def json_info(project):
 @app.route("/:project/")
 def bad_url(project):
     """Redirect unknown root URLs to /simple/."""
-    return redirect(core.get_bad_url_redirect_path(request, project))
+    return redirect(get_bad_url_redirect_path(request, project))

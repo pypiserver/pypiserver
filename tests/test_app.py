@@ -13,7 +13,7 @@ import webtest
 
 # Local Imports
 from tests.test_pkg_helpers import files, invalid_files
-from pypiserver import __main__, bottle, core, Bottle
+from pypiserver import __main__, bottle, core, Bottle, _app
 from pypiserver.backend import CachingFileBackend, SimpleFileBackend
 
 # Enable logging to detect any problems with it
@@ -104,9 +104,14 @@ def welcome_file_all_vars(request, root):
 def add_file_to_root(app):
     def file_adder(root, filename, content=""):
         root.join(filename).write(content)
-        backend = app.config.backend
-        if isinstance(backend, CachingFileBackend):
-            backend.cache_manager.invalidate_root_cache(root)
+        # bottle has deprecated the use of attribute access
+        # in configdicts
+        try:
+            backend = app.config.backend
+            if isinstance(backend, CachingFileBackend):
+                backend.cache_manager.invalidate_root_cache(root)
+        except AttributeError:
+            pass
 
     return file_adder
 
@@ -722,3 +727,13 @@ class TestRemovePkg:
         )
         assert resp.status == "404 Not Found"
         assert "foo (123) not found" in unescape(resp.text)
+
+
+def test_redirect_project_encodes_newlines():
+    """Ensure raw newlines are url encoded in the generated redirect."""
+    project = "\nSet-Cookie:malicious=1;"
+    request = bottle.Request(
+        {"HTTP_X_FORWARDED_PROTO": "/\nSet-Cookie:malicious=1;"}
+    )
+    newpath = _app.get_bad_url_redirect_path(request, project)
+    assert "\n" not in newpath

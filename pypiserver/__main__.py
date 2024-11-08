@@ -69,9 +69,10 @@ class AutoServer(enum.Enum):
     """Expected servers that can be automaticlaly selected by bottle."""
 
     Waitress = enum.auto()
-    Paste = enum.auto()
+    PasteServer = enum.auto()
     Twisted = enum.auto()
     CherryPy = enum.auto()
+    Cheroot = enum.auto()
     WsgiRef = enum.auto()
 
 
@@ -79,10 +80,10 @@ class AutoServer(enum.Enum):
 # auto servers in bottle.py
 AUTO_SERVER_IMPORTS = (
     (AutoServer.Waitress, "waitress"),
-    (AutoServer.Paste, "paste"),
+    (AutoServer.PasteServer, "paste"),
     (AutoServer.Twisted, "twisted.web"),
-    (AutoServer.CherryPy, "cheroot.wsgi"),
-    (AutoServer.CherryPy, "cherrypy.wsgiserver"),
+    (AutoServer.CherryPy, "cherrypy"),
+    (AutoServer.Cheroot, "cheroot"),
     # this should always be available because it's part of the stdlib
     (AutoServer.WsgiRef, "wsgiref"),
 )
