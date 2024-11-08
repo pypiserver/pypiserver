@@ -294,6 +294,20 @@ def simple(project):
     if project != normalized:
         return redirect(f"/simple/{normalized}/", 301)
 
+    # pip install always uses 2 requests, first to get the list of versions
+    # and then to download the package.
+    # If we only search for the package on the local filesystem, we will
+    # might not be able to return the list containing the version.
+    # Hence, if pull_through is enabled, we will fetch the version list
+    # from pypi.org and then return the list of versions.
+
+    # If the packages version is not found, in pypi.org, we will return a 404
+
+    # Serving the actual package is handled by the /packages/ route
+    # And in this route, we will first attempt to fetch the package from the
+    # local filesystem, if not found, we will fetch it from pypi.org and save
+    # it to the local filesystem and then serve it.
+
     packages = sorted(
         config.backend.find_project_packages(project),
         key=lambda x: (x.parsed_version, x.relfn),
