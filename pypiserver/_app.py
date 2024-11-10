@@ -1,7 +1,9 @@
+import json
 import logging
 import mimetypes
 import os
 import re
+import urllib.request
 import xml.dom.minidom
 import xmlrpc.client as xmlrpclib
 import zipfile
@@ -9,8 +11,9 @@ from collections import defaultdict
 from collections import namedtuple
 from io import BytesIO
 from json import dumps
-from urllib.parse import urljoin, urlparse, quote
+from urllib.parse import urljoin, urlparse, quote, urlsplit
 
+from pypiserver.backend import with_digester
 from pypiserver.config import RunConfig
 from pypiserver.manage import fetch_package
 from . import __version__
@@ -20,6 +23,7 @@ from .bottle import (
     request,
     response,
     HTTPError,
+    HTTPResponse,
     Bottle,
     template,
 )
@@ -307,18 +311,32 @@ def simple(project):
     # And in this route, we will first attempt to fetch the package from the
     # local filesystem, if not found, we will fetch it from pypi.org and save
     # it to the local filesystem and then serve it.
+    if config.pull_through:
+        # Getting a list of packages and hashes
+        rgx = re.compile(r'href=\"(?P<url>.*)#sha256=(?P<meta>.*\") ?>(?P<pkgversion>.*)</a><br />')
+        res = urllib.request.urlopen(f"{config.fallback_url.rstrip('/')}/{project}/")
+        content = res.read().decode('utf-8').split('\n')
+        new_content = []
+        for line in content:
+            m = rgx.search(line)
+            if m:
+                gdict = m.groupdict()
+                vrsn = gdict['pkgversion']
+                meta = gdict['meta']
+                val = f'<a href="http://{config.host}:{config.port}/packages/{vrsn}#{meta}>{vrsn}</a><br />'
+            else:
+                val = line
+            new_content.append(val)
+        body = '\n'.join(new_content)
+        response = HTTPResponse(body=body, status=200)
+        return response
 
     packages = sorted(
         config.backend.find_project_packages(project),
         key=lambda x: (x.parsed_version, x.relfn),
     )
+
     if not packages:
-        if config.pull_through:
-            fetch_package(project, str(config.roots[0]))
-            packages = sorted(
-                config.backend.find_project_packages(project),
-                key=lambda x: (x.parsed_version, x.relfn),
-            )
         if config.disable_fallback:
             return HTTPError(
                 404, f"Not Found ({normalized} does not exist)\n\n"
@@ -335,7 +353,6 @@ def simple(project):
         )
         for pkg in packages
     )
-
     tmpl = """<!DOCTYPE html>
 <html lang="en">
     <head>
@@ -385,25 +402,52 @@ def list_packages():
     return template(tmpl, links=links)
 
 
-@app.route("/packages/:filename#.*#")
+@app.route(f"/packages/<pkg_version:re:(.*-.*)-.*-.*-.*\.whl\.metadata>")
+@auth("download")
+def serve_metadata(pkg_version):
+    pkg, version, _ = pkg_version.split("-", 2)
+    urs = urlsplit(config.fallback_url.rstrip('/'))
+    json_url = f"{urs.scheme}://{urs.hostname}/pypi/{pkg}/json"
+    response = urllib.request.urlopen(json_url)
+    content = json.loads(response.read().decode('utf-8'))
+    metadata_url = [i['url'] for i in content['releases'][version] if i['packagetype'] == 'bdist_wheel'][0]
+    response = urllib.request.urlopen(metadata_url+".metadata")
+    content = response.read().decode('utf-8')
+    response = HTTPResponse(body=content, status=200)
+    return response
+
+
+@app.route("/packages/<filename:re:.*(whl|tar.gz|zip)>")
 @auth("download")
 def server_static(filename):
+    response = HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
     entries = config.backend.get_all_packages()
     for x in entries:
         f = x.relfn_unix
         if f == filename:
+            log.debug(f"Package {filename} found localy, serving")
             response = static_file(
                 filename,
                 root=x.root,
                 mimetype=mimetypes.guess_type(filename)[0],
             )
-            if config.cache_control:
-                response.set_header(
-                    "Cache-Control", f"public, max-age={config.cache_control}"
-                )
-            return response
+    if response.status_code == 404 and config.pull_through:
+        # Fetche the package from pypi.org
+        # and save it the local filesystem
+        log.debug(f"Package {filename} not found localy, pulling it")
+        fetch_package(filename, str(config.roots[0]))
+        response = static_file(
+             filename,
+             root=str(config.roots[0]),
+             mimetype=mimetypes.guess_type(filename)[0]
+        )
 
-    return HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
+    if config.cache_control:
+        response.set_header(
+            "Cache-Control", f"public, max-age={config.cache_control}"
+        )
+
+    return response
 
 
 @app.route("/:project/json")
