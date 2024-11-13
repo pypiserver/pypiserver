@@ -123,7 +123,7 @@ def find_updates(pkgset, stable_only=True):
 
 class PipCmd:
     """Methods for generating pip commands."""
-    
+
     @staticmethod
     def update_root(pip_version):
         """Yield an appropriate root command depending on pip version.
@@ -165,26 +165,20 @@ class PipCmd:
 
 def fetch_package(pkg: str, destdir: str):
     """fetch a package."""
-    print(
-        f"# fetch {pkg} "
-    )
+    print(f"# fetch {pkg} ")
     # convert pkg-version to pkg==version
     pkg, version, _, frmt = re.search(
         r"(?P<project>.*)-(?P<version>.*)-(?P<constraints>.*-.*-.*)(?P<frmt>\.whl|\.zip|\.tar\.gz)$",
-        pkg).groups()
-    
+        pkg,
+    ).groups()
+
     if frmt.endswith(("tar.gz", "zip")):
         wheel = False
     else:
         wheel = True
     cmd = tuple(
         PipCmd.update(
-            ("pip", "download"),
-            destdir,
-            pkg,
-            version,
-            deps=True,
-            wheel=wheel
+            ("pip", "download"), destdir, pkg, version, deps=True, wheel=wheel
         )
     )
     print(" ".join(cmd), end="\n\n")

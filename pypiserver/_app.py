@@ -313,21 +313,25 @@ def simple(project):
     # it to the local filesystem and then serve it.
     if config.pull_through:
         # Getting a list of packages and hashes
-        rgx = re.compile(r'href=\"(?P<url>.*)#sha256=(?P<meta>.*\") ?>(?P<pkgversion>.*)</a><br />')
-        res = urllib.request.urlopen(f"{config.fallback_url.rstrip('/')}/{project}/")
-        content = res.read().decode('utf-8').split('\n')
+        rgx = re.compile(
+            r"href=\"(?P<url>.*)#sha256=(?P<meta>.*\") ?>(?P<pkgversion>.*)</a><br />"
+        )
+        res = urllib.request.urlopen(
+            f"{config.fallback_url.rstrip('/')}/{project}/"
+        )
+        content = res.read().decode("utf-8").split("\n")
         new_content = []
         for line in content:
             m = rgx.search(line)
             if m:
                 gdict = m.groupdict()
-                vrsn = gdict['pkgversion']
-                meta = gdict['meta']
+                vrsn = gdict["pkgversion"]
+                meta = gdict["meta"]
                 val = f'<a href="http://{config.host}:{config.port}/packages/{vrsn}#{meta}>{vrsn}</a><br />'
             else:
                 val = line
             new_content.append(val)
-        body = '\n'.join(new_content)
+        body = "\n".join(new_content)
         response = HTTPResponse(body=body, status=200)
         return response
 
@@ -406,13 +410,17 @@ def list_packages():
 @auth("download")
 def serve_metadata(pkg_version):
     pkg, version, _ = pkg_version.split("-", 2)
-    urs = urlsplit(config.fallback_url.rstrip('/'))
+    urs = urlsplit(config.fallback_url.rstrip("/"))
     json_url = f"{urs.scheme}://{urs.hostname}/pypi/{pkg}/json"
     response = urllib.request.urlopen(json_url)
-    content = json.loads(response.read().decode('utf-8'))
-    metadata_url = [i['url'] for i in content['releases'][version] if i['packagetype'] == 'bdist_wheel'][0]
-    response = urllib.request.urlopen(metadata_url+".metadata")
-    content = response.read().decode('utf-8')
+    content = json.loads(response.read().decode("utf-8"))
+    metadata_url = [
+        i["url"]
+        for i in content["releases"][version]
+        if i["packagetype"] == "bdist_wheel"
+    ][0]
+    response = urllib.request.urlopen(metadata_url + ".metadata")
+    content = response.read().decode("utf-8")
     response = HTTPResponse(body=content, status=200)
     return response
 
@@ -437,9 +445,9 @@ def server_static(filename):
         log.debug(f"Package {filename} not found localy, pulling it")
         fetch_package(filename, str(config.roots[0]))
         response = static_file(
-             filename,
-             root=str(config.roots[0]),
-             mimetype=mimetypes.guess_type(filename)[0]
+            filename,
+            root=str(config.roots[0]),
+            mimetype=mimetypes.guess_type(filename)[0],
         )
 
     if config.cache_control:

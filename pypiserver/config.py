@@ -319,8 +319,8 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         help=(
             "Enable pull-through caching. This will cache packages from "
             "pypi.org."
-            )
-        )
+        ),
+    )
 
     parser.add_argument(
         "--version",
@@ -354,7 +354,10 @@ def get_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser(
         "run",
         formatter_class=PreserveWhitespaceRawTextHelpFormatter,
-        help="Run pypiserver, serving packages from PACKAGES_DIRECTORY",
+        help=(
+            "Run pypiserver, serving packages from one or more "
+            "package directories"
+        ),
     )
 
     add_common_args(run_parser)
