@@ -4,6 +4,14 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.3.0 (2024-11-23)
+--------------------------
+
+- e6926d5 ENH: bump bottle to version 0.14-dev (#619)
+- 0430375 ENH: update alpine image to 3.20 and python version to 3.10 (#608)
+- 16c9cec MAINT: finish move to `main` (#612)
+- f3d6dde MAINT: prepare for renaming to main (#611)
+
 2.2.0 (2024-09-15)
 --------------------------
 
