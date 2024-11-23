@@ -154,7 +154,7 @@ jobs:
   create-docker-images:
     runs-on: "ubuntu-latest"
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+      group: ${{ github.workflow }}-${{ github.ref }}-docker
       cancel-in-progress: ${{ github.ref_type != 'tag' }}
     env:
       DOCKER_IMAGE_BASE: pypiserver/pypiserver
