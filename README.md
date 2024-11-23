@@ -18,7 +18,7 @@
 | License     | zlib/libpng + MIT                                                                                                                                                                                                                                                                                                       |
 | Community   | <https://pypiserver.zulipchat.com>                                                                                                                                                                                                                                                                                      |
 
-> \[!TIP\]
+> [!TIP]
 > Reach out in [**Discussions**](https://github.com/pypiserver/pypiserver/discussions),
 > or chat with us on [**Zulip**](https://pypiserver.zulipchat.com)
 
@@ -28,7 +28,7 @@ Wheels, bdists, eggs and accompanying PGP-signatures can be uploaded
 either with **pip**, **setuptools**, **twine**, **pypi-uploader**, or simply copied
 with **scp**.
 
-> \[!Note\]
+> [!Note]
 > The official software powering [PyPI](https://pypi.org/) is
 > [Warehouse](https://github.com/pypa/warehouse/). However,
 > [Warehouse](https://github.com/pypa/warehouse/)
@@ -98,7 +98,7 @@ Older Python versions may still work, but they are not tested.
 For legacy Python versions, use **pypiserver-1.x** series. Note that these are
 not officially supported, and will not receive bugfixes or new features.
 
-> \[!TIP\]
+> [!TIP]
 >
 > The commands below work on a unix-like operating system with a posix shell.
 > The **'~'** character expands to user's home directory.
@@ -113,7 +113,7 @@ The same is true for the rest of this documentation.
    mkdir ~/packages                      # Copy packages into this directory.
    ```
 
-   > \[!TIP\]
+   > [!TIP]
    > See also [Alternative Installation methods](#alternative-installation-methods)
 
 1. Copy some packages into your **~/packages** folder and then
@@ -138,7 +138,7 @@ The same is true for the rest of this documentation.
    # Note that pip search does not currently work with the /simple/ endpoint.
    ```
 
-   > \[!TIP\]
+   > [!TIP]
    > See also [Client-side configurations](#client-side-configurations) for avoiding tedious typing.
 
 1. Enter **pypi-server -h** in the cmd-line to print a detailed usage message
@@ -367,11 +367,11 @@ or by adding the following lines to **~/.pip/pip.conf**
 extra-index-url = http://localhost:8080/simple/
 ```
 
-> \[!NOTE\]
+> [!NOTE]
 >
 > If you have installed **pypiserver** on a remote url without *https*
 > you will receive an "untrusted" warning from *pip*, urging you to append
-> the **--trusted-host** option.  You can also include this option permanently
+> the **--trusted-host** option. You can also include this option permanently
 > in your configuration-files or environment variables.
 
 ### Configuring easy_install
@@ -390,7 +390,7 @@ Instead of copying packages directly to the server's folder (i.e. with **scp**),
 you may use python tools for the task, e.g. **python setup.py upload**.
 In that case, **pypiserver** is responsible for authenticating the upload-requests.
 
-> \[!NOTE\]
+> [!NOTE]
 >
 > We strongly advise to ***password-protect*** your uploads!
 
@@ -415,7 +415,7 @@ To avoid lazy security decisions, read help for **-P** and **-a** options.
        htpasswd -sc htpasswd.txt <some_username>
    ```
 
-> \[!TIP\]
+> [!TIP]
 >
 > Read this [SO](http://serverfault.com/questions/152950/how-to-create-and-edit-htaccess-and-htpasswd-locally-on-my-computer-and-then-u)
 > question for running `htpasswd` cmd under *Windows*
@@ -425,7 +425,7 @@ To avoid lazy security decisions, read help for **-P** and **-a** options.
 
 <!-- 2 tips separately -->
 
-> \[!TIP\]
+> [!TIP]
 >
 > When accessing pypiserver via the api, alternate authentication
 > methods are available via the **auther** config flag. Any callable
@@ -440,7 +440,7 @@ To avoid lazy security decisions, read help for **-P** and **-a** options.
 
 Please see [`Using Ad-hoc authentication providers`](#using-ad-hoc-authentication-providers) for more information.
 
-1. You  need to restart the server with the **-P** option only once
+1. You need to restart the server with the **-P** option only once
    (but user/password pairs can later be added or updated on the fly)
 
    ```shell
@@ -486,7 +486,7 @@ To avoid storing you passwords on disk, in clear text, you may either:
   ```
 
 - use *twine* library, which
-  breaks the procedure in two steps.  In addition, it supports signing
+  breaks the procedure in two steps. In addition, it supports signing
   your files with PGP-Signatures and uploading the generated *.asc* files
   to **pypiserver**::
 
@@ -559,7 +559,7 @@ pip uninstall pypiserver
 ### Installing the Very Latest Version
 
 In case the latest version in *pypi* is a pre-release, you have to use
-*pip*'s *--pre* option.  And to update an existing installation combine it
+*pip*'s *--pre* option. And to update an existing installation combine it
 with `--ignore-installed`
 
 ```shell
@@ -615,7 +615,7 @@ releases won't be considered.
 
 ### Serving Thousands of Packages
 
-> \[!IMPORTANT\]
+> [!IMPORTANT]
 > By default, **pypiserver** scans the entire packages directory each time an
 > incoming HTTP request occurs. This isn't a problem for a small number of
 > packages, but causes noticeable slow-downs when serving thousands of packages.
@@ -652,7 +652,7 @@ server {
 }
 ```
 
-> \[!TIP\]
+> [!TIP]
 > Using webserver caching is especially helpful if you have high request
 > volume. Using nginx caching, a real-world pypiserver installation was
 > able to easily support over 1000 package downloads/min at peak load.
@@ -734,7 +734,7 @@ Create a start_pypiserver.bat
 pypi-server run -p 8080 C:\Path\To\Packages &
 ```
 
-> \[!TIP\]
+> [!TIP]
 > Test the batch file by running it first before creating the service.
 > Make sure you can access the server remotely, and install packages. If you can,
 > proceed, if not troubleshoot until you can. This will ensure you know the server
@@ -763,7 +763,7 @@ Start the service
 nssm start pypiserver
 ```
 
-> \[!TIP\]
+> [!TIP]
 > Other useful commands
 >
 > ```shell
@@ -804,7 +804,7 @@ nssm start pypiserver
 To use your *Apache2* with **pypiserver**, prefer to utilize **mod_wsgi** as
 explained in [bottle's documentation](http://bottlepy.org/docs/dev/deployment.html#apache-mod-wsgi%3E).
 
-> \[!NOTE\]
+> [!NOTE]
 > If you choose instead to go with **mod_proxy**, mind that you may bump into problems
 > with the prefix-path (see [#155](https://github.com/pypiserver/pypiserver/issues/155%3E)).
 
@@ -824,7 +824,7 @@ explained in [bottle's documentation](http://bottlepy.org/docs/dev/deployment.ht
    </Directory>
    ```
 
-   or if using older **Apache \< 2.4**, substitute the last part with this::
+   or if using older **Apache < 2.4**, substitute the last part with this::
 
    ```shell
    <Directory /yoursite/wsgi >
@@ -848,7 +848,7 @@ explained in [bottle's documentation](http://bottlepy.org/docs/dev/deployment.ht
 
    ```
 
-   > \[!TIP\]
+   > [!TIP]
    > If you have installed **pypiserver** in a virtualenv, follow **mod_wsgi**'s
    > [instructions](http://modwsgi.readthedocs.io/en/develop/user-guides/virtual-environments.html)
    > and prepend the python code above with the following
@@ -861,13 +861,13 @@ explained in [bottle's documentation](http://bottlepy.org/docs/dev/deployment.ht
 
 <!-- tip and a note separately -->
 
-> \[!NOTE\]
+> [!NOTE]
 > For security reasons, notice that the **Directory** directive grants access
 > to a directory holding the **wsgi** start-up script, alone; nothing else.
 
 <!-- 2 notes separately -->
 
-> \[!NOTE\]
+> [!NOTE]
 > To enable HTTPS support on Apache, configure the directive that contains the
 > WSGI configuration to use SSL.
 
@@ -917,7 +917,7 @@ unstable packages on different paths
   accesslog = -
 ```
 
-> \[!NOTE\]
+> [!NOTE]
 > You need to install some more dependencies for this to work, like::
 >
 > ```shell
@@ -1010,7 +1010,7 @@ server {
 }
 ```
 
-> \[!TIP\]
+> [!TIP]
 > Please see [nginx's HTTPS docs for more details](http://nginx.org/en/docs/http/configuring_https_servers.html).
 >
 > Getting and keeping your certificates up-to-date can be simplified using,
@@ -1078,7 +1078,7 @@ these steps:
    python pypiserver-start.py
    ```
 
-> \[!NOTE\]
+> [!NOTE]
 > The [python-pam](https://pypi.org/project/python-pam/) module, requires *read* access to **/etc/shadow** file;
 > you may add the user under which **pypiserver** runs into the *shadow*
 > group, with a command like this: **sudo usermod -a -G shadow pypy-user**.
@@ -1157,7 +1157,7 @@ git pull
 
 ## Known Limitations
 
-> \[!IMPORTANT\]
+> [!IMPORTANT]
 > **pypiserver** does not implement the full API as seen on [PyPI](https://pypi.org/).
 > It implements just enough to make **easy_install**, **pip install**, and
 > **search** work.
