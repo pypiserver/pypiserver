@@ -168,7 +168,6 @@ jobs:
             ${{ github.ref_type == 'tag' && format('ghcr.io/{0}', env.DOCKER_IMAGE_BASE)  || '' }}
           tags: |
             type=ref,event=pr
-            type=ref,event=branch
             type=edge,event=branch,branch=main
             type=raw,value=unstable,event=branch,branch=main
             type=semver,pattern=v{{version}}
