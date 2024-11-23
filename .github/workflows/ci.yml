@@ -206,9 +206,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           file: "./Dockerfile"
           builder: "${{ steps.buildx.outputs.name }}"
-          # FIXME(before-merge): fix the push flag
-          # push: ${{ github.ref_type == 'tag' || github.ref_name == 'main' }}
-          push: false
+          push: ${{ github.ref_type == 'tag' || (github.ref_type == 'branch' && github.ref_name == 'main') }}
           tags: ${{ steps.docker-metadata.outputs.tags }}
           labels: ${{ steps.docker-metadata.outputs.labels }}
           cache-from: "type=local,src=/tmp/.buildx-cache"
