@@ -4,10 +4,10 @@ Changelog
 3.0.0 (tbd)
 -----------
 
-2.3.1rc11-23-2024 (__rc__)
+2.3.1 (2024-11-23)
 --------------------------
 
-- db93d0f chore: Bump gevent from 21.12.0 to 24.11.1 in /docker
+- db93d0f MAINT: Bump gevent from 21.12.0 to 24.11.1 in /docker
 
 2.3.0 (2024-11-23)
 --------------------------
