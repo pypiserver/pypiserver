@@ -7,9 +7,9 @@ import typing as t
 from pypiserver.bottle import Bottle
 from pypiserver.config import Config, RunConfig, strtobool
 
-version = __version__ = "2.2.0"
+version = __version__ = "2.3.0"
 __version_info__ = tuple(_re.split("[.-]", __version__))
-__updated__ = "2024-09-15 21:42:19"
+__updated__ = "2024-11-23 19:44:52"
 
 __title__ = "pypiserver"
 __summary__ = "A minimal PyPI server for use with pip/easy_install."
