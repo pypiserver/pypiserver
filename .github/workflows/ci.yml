@@ -193,11 +193,12 @@ jobs:
     runs-on: "ubuntu-latest"
     needs:
       - "docker-determine-tags"
-    if: "${{ fromJson(needs.docker-determine-tags.outputs.has_tags) }}"
-    strategy:
-      matrix:
-        tag: "${{ fromJson(needs.docker-determine-tags.outputs.tags) }}"
-        image: "${{ fromJson(needs.docker-determine-tags.outputs.images) }}"
+    # FIXME(before-merge): disable the docker build
+    # if: "${{ fromJson(needs.docker-determine-tags.outputs.has_tags) }}"
+    # strategy:
+      # matrix:
+        # tag: "${{ fromJson(needs.docker-determine-tags.outputs.tags) }}"
+        # image: "${{ fromJson(needs.docker-determine-tags.outputs.images) }}"
     steps:
       - uses: "actions/checkout@v3"
 
@@ -237,8 +238,11 @@ jobs:
           platforms: linux/amd64,linux/arm64
           file: "./Dockerfile"
           builder: "${{ steps.buildx.outputs.name }}"
-          push: true
-          tags: "${{ matrix.image }}:${{ matrix.tag }}"
+          # FIXME(before-merge): revert the changes
+          push: false
+          tags: "test-pypiserver-image:test-gevent-24.11.1"
+          # push: true
+          # tags: "${{ matrix.image }}:${{ matrix.tag }}"
           cache-from: "type=local,src=/tmp/.buildx-cache"
           cache-to: "type=local,dest=/tmp/.buildx-cache"
 
