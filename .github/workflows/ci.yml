@@ -18,9 +18,6 @@ env:
 jobs:
   test-python:
     runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: ${{ github.ref_type != 'tag' }}
     strategy:
       fail-fast: false
       matrix:
