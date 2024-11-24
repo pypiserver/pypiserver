@@ -4,6 +4,12 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.3.2 (2024-11-24)
+--------------------------
+
+- 6e4ccd8 MAINT: use `importlib_resources` only when needed (#627)
+- 1e7d6ca MAINT: use the official `docker-meta` action instead of `ci-helper` (#625)
+
 2.3.1 (2024-11-23)
 --------------------------
 
