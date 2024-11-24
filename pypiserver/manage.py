@@ -5,8 +5,8 @@ from __future__ import absolute_import, print_function, unicode_literals
 import itertools
 import json
 import os
+import re
 import sys
-from distutils.version import LooseVersion
 from pathlib import Path
 from subprocess import call
 from urllib.error import URLError
@@ -140,15 +140,49 @@ class PipCmd:
         cmd_root,
         destdir,
         pkg_name,
-        pkg_version,
+        pkg_version=None,
         index="https://pypi.org/simple",
+        deps=False,
+        wheel=True,
     ):
         """Yield an update command for pip."""
         for part in cmd_root:
             yield part
-        for part in ("--no-deps", "-i", index, "-d", destdir):
-            yield part
-        yield "{}=={}".format(pkg_name, pkg_version)
+        if deps:
+            for part in ("-i", index, "-d", destdir):
+                yield part
+        else:
+            for part in ("--no-deps", "-i", index, "-d", destdir):
+                yield part
+        if not wheel:
+            for part in ("--no-binary", ":all:", "--no-build-isolation"):
+                yield part
+        if pkg_version:
+            yield "{}=={}".format(pkg_name, pkg_version)
+        else:
+            yield "{}".format(pkg_name)
+
+
+def fetch_package(pkg: str, destdir: str):
+    """fetch a package."""
+    print(f"# fetch {pkg} ")
+    # convert pkg-version to pkg==version
+    pkg, version, _, frmt = re.search(
+        r"(?P<project>.*)-(?P<version>.*)-(?P<constraints>.*-.*-.*)(?P<frmt>\.whl|\.zip|\.tar\.gz)$",
+        pkg,
+    ).groups()
+
+    if frmt.endswith(("tar.gz", "zip")):
+        wheel = False
+    else:
+        wheel = True
+    cmd = tuple(
+        PipCmd.update(
+            ("pip", "download"), destdir, pkg, version, deps=True, wheel=wheel
+        )
+    )
+    print(" ".join(cmd), end="\n\n")
+    call(cmd)
 
 
 def update_package(pkg, destdir, dry_run=False):
@@ -165,7 +199,7 @@ def update_package(pkg, destdir, dry_run=False):
             pkg.version,
         )
     )
-
+    print(cmd)
     print(" ".join(cmd), end="\n\n")
     if not dry_run:
         call(cmd)

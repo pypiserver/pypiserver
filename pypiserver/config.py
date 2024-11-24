@@ -314,6 +314,15 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     )
 
     parser.add_argument(
+        "--pull-through",
+        action="store_true",
+        help=(
+            "Enable pull-through caching. This will cache packages from "
+            "pypi.org."
+        ),
+    )
+
+    parser.add_argument(
         "--version",
         action="version",
         version=__version__,
@@ -345,7 +354,10 @@ def get_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser(
         "run",
         formatter_class=PreserveWhitespaceRawTextHelpFormatter,
-        help="Run pypiserver, serving packages from PACKAGES_DIRECTORY",
+        help=(
+            "Run pypiserver, serving packages from one or more "
+            "package directories"
+        ),
     )
 
     add_common_args(run_parser)
@@ -596,6 +608,7 @@ class _ConfigCommon:
         log_stream: t.Optional[t.IO],
         hash_algo: t.Optional[str],
         backend_arg: str,
+        pull_through: bool = False,
     ) -> None:
         """Construct a RuntimeConfig."""
         # Global arguments
@@ -607,6 +620,7 @@ class _ConfigCommon:
         self.roots = roots
         self.hash_algo = hash_algo
         self.backend_arg = backend_arg
+        self.pull_through = pull_through
 
         # Derived properties are directly based on other properties and are not
         # included in equality checks.
@@ -641,6 +655,7 @@ class _ConfigCommon:
             roots=namespace.package_directory,
             hash_algo=namespace.hash_algo,
             backend_arg=namespace.backend_arg,
+            pull_through=namespace.pull_through,
         )
 
     @property
@@ -724,6 +739,7 @@ class RunConfig(_ConfigCommon):
         log_res_frmt: str,
         log_err_frmt: str,
         auther: t.Optional[t.Callable[[str, str], bool]] = None,
+        pull_through: bool = False,
         **kwargs: t.Any,
     ) -> None:
         """Construct a RuntimeConfig."""
@@ -745,6 +761,7 @@ class RunConfig(_ConfigCommon):
         # Derived properties
         self._derived_properties = self._derived_properties + ("auther",)
         self.auther = self.get_auther(auther)
+        self.pull_through = pull_through
 
     @classmethod
     def kwargs_from_namespace(
@@ -767,6 +784,7 @@ class RunConfig(_ConfigCommon):
             "log_req_frmt": namespace.log_req_frmt,
             "log_res_frmt": namespace.log_res_frmt,
             "log_err_frmt": namespace.log_err_frmt,
+            "pull_through": namespace.pull_through,
         }
 
     def get_auther(
