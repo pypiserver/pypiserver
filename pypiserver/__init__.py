@@ -158,6 +158,12 @@ def setup_routes_from_config(app: Bottle, config: RunConfig) -> Bottle:
 T = t.TypeVar("T")
 
 
+def _split_eq(s: str) -> t.Tuple[str, t.Optional[str]]:
+    """Provide a generic key/value split method to pass as a callback."""
+    key, _, value = s.strip().partition("=")
+    return (key.strip(), value.strip())
+
+
 def paste_app_factory(_global_config, **local_conf):
     """Parse a paste config and return an app.
 
@@ -189,9 +195,35 @@ def paste_app_factory(_global_config, **local_conf):
             return val
         return list(filter(None, map(transform, val.split(sep))))
 
+    def to_dict(
+        val: t.Optional[str],
+        sep: str = " ",
+        transform: t.Callable[[str], t.Tuple[str, T]] = _split_eq,
+    ) -> t.Optional[t.Dict[str, T]]:
+        """Convert a string value, if provided, to a dictionary.
+
+        :param sep: the separator between items in the string representation
+            of the dictionary
+        :param transform: an optional function to call on each string item after
+            splitting that returns a (key, value) tuple
+        """
+        if val is None:
+            return val
+        return {k: v for k, v in map(transform, val.split(sep)) if k}
+
     def _make_root(root: str) -> pathlib.Path:
         """Convert a specified string root into an absolute Path instance."""
         return pathlib.Path(root.strip()).expanduser().resolve()
+
+    def _parse_action_users(
+        action: str,
+    ) -> t.Tuple[str, t.Optional[t.List[str]]]:
+        action, sep, users = action.partition("=")
+        if sep:
+            users = lisst(filter(None, map(str.strip, users.split(":"))))
+        else:
+            users = None
+        return (action.strip(), users)
 
     # A map of config keys we expect in the paste config to the appropriate
     # function to parse the string config value. This map includes both
@@ -205,9 +237,13 @@ def paste_app_factory(_global_config, **local_conf):
         # redirect_to_fallback is a deprecated argument for disable_fallback
         "redirect_to_fallback": to_bool,
         "overwrite": to_bool,
-        "authenticate": functools.partial(to_list, sep=" "),
+        "authenticate": functools.partial(
+            to_dict, sep=" ", transform=_parse_action_users
+        ),
         # authenticated is a deprecated argument for authenticate
-        "authenticated": functools.partial(to_list, sep=" "),
+        "authenticated": functools.partial(
+            to_dict, sep=" ", transform=_parse_action_users
+        ),
         "verbosity": to_int,
     }
 
