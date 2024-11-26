@@ -58,9 +58,12 @@ class auth:
                     raise HTTPError(
                         401, headers={"WWW-Authenticate": 'Basic realm="pypi"'}
                     )
-                if not config.auther(*request.auth):
-                    raise HTTPError(403)
-            return method(*args, **kwargs)
+                if (
+                    config.auther(*request.auth)
+                    and config.authorizer(request.auth[0], request.auth[1], self.action)
+                ):
+                    return method(*args, **kwargs)
+                raise HTTPError(403)
 
         return protector
 
