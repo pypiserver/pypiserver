@@ -22,7 +22,11 @@ from .bottle import (
     Bottle,
     template,
 )
-from .pkg_helpers import guess_pkgname_and_version, normalize_pkgname_for_url
+from .pkg_helpers import (
+    guess_pkgname_and_version,
+    normalize_pkgname_for_url,
+    parse_version,
+)
 
 log = logging.getLogger(__name__)
 config: RunConfig
@@ -167,22 +171,29 @@ def file_upload():
     for uf in ufiles:
         if not uf:
             continue
-        if (
-            not is_valid_pkg_filename(uf.raw_filename)
-            or guess_pkgname_and_version(uf.raw_filename) is None
-        ):
+        if is_valid_pkg_filename(uf.raw_filename):
+            name_version = guess_pkgname_and_version(uf.raw_filename)
+        else:
+            name_version = None
+        if name_version is None:
             raise HTTPError(400, f"Bad filename: {uf.raw_filename}")
 
-        if not config.overwrite and config.backend.exists(uf.raw_filename):
-            log.warning(
-                f"Cannot upload {uf.raw_filename!r} since it already exists! \n"
-                "  You may start server with `--overwrite` option. "
-            )
-            raise HTTPError(
-                409,
-                f"Package {uf.raw_filename!r} already exists!\n"
-                "  You may start server with `--overwrite` option.",
-            )
+        if config.backend.exists(uf.raw_filename):
+            if config.overwrite == "dev":
+                allow_overwrite = "*@" in parse_version(name_version[1])
+            else:
+                allow_overwrite = config.overwrite
+            if not allow_overwrite:
+                log.warning(
+                    f"Cannot upload {uf.raw_filename!r} since it already "
+                    "exists! \n"
+                    "  You may start server with `--overwrite` option. "
+                )
+                raise HTTPError(
+                    409,
+                    f"Package {uf.raw_filename!r} already exists!\n"
+                    "  You may start server with `--overwrite` option.",
+                )
 
         config.backend.add_package(uf.raw_filename, uf.file)
         if request.auth:

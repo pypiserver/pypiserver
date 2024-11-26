@@ -467,6 +467,16 @@ def get_parser() -> argparse.ArgumentParser:
         help="Allow overwriting existing package files during upload.",
     )
     run_parser.add_argument(
+        "--overwrite-dev",
+        action="store_const",
+        const="dev",
+        dest="overwrite",
+        help=(
+            "Allow overwriting existing package files during upload, only for "
+            "development releases."
+        ),
+    )
+    run_parser.add_argument(
         "--welcome",
         metavar="HTML_FILE",
         # we want to run our `html_file_arg` function to get our default value
@@ -717,7 +727,7 @@ class RunConfig(_ConfigCommon):
         fallback_url: str,
         health_endpoint: str,
         server_method: str,
-        overwrite: bool,
+        overwrite: t.Union[bool, str],
         welcome_msg: str,
         cache_control: t.Optional[int],
         log_req_frmt: str,
