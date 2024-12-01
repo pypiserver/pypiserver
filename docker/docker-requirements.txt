@@ -7,5 +7,5 @@ bcrypt==3.2.0
 # If a user overrides args but does not override the server arg, we fall back to
 # whatever bottle chooses as a default. Since the wsgiref server is not
 # production-ready, install waitress as a fallback for these cases.
-waitress==2.1.2
+waitress==3.0.2
 watchdog==1.0.2
