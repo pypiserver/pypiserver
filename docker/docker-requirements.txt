@@ -3,7 +3,7 @@
 gevent==24.11.1
 gunicorn==20.0.4
 passlib==1.7.4
-bcrypt==3.2.0
+bcrypt==4.2.1
 # If a user overrides args but does not override the server arg, we fall back to
 # whatever bottle chooses as a default. Since the wsgiref server is not
 # production-ready, install waitress as a fallback for these cases.
