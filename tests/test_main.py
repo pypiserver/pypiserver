@@ -7,9 +7,9 @@ from unittest import mock
 
 import pytest
 
-import pypiserver.bottle
+import pypiserver.bottle_wrapper
 from pypiserver import __main__
-from pypiserver.bottle import Bottle
+from pypiserver.bottle_wrapper import Bottle
 
 
 THIS_DIR = pathlib.Path(__file__).parent
@@ -51,7 +51,7 @@ def main(monkeypatch):
         main.update_args = args
         main.update_kwargs = kwargs
 
-    monkeypatch.setattr("pypiserver.bottle.run", run)
+    monkeypatch.setattr("pypiserver.bottle_wrapper.run", run)
     monkeypatch.setattr("pypiserver.manage.update_all_packages", update)
 
     return main
@@ -262,7 +262,7 @@ def test_auto_servers() -> None:
     """Test auto servers."""
     # A list of bottle ServerAdapters
     bottle_adapters = tuple(
-        a.__name__.lower() for a in pypiserver.bottle.AutoServer.adapters
+        a.__name__.lower() for a in pypiserver.bottle_wrapper.AutoServer.adapters
     )
     # We are going to expect that our AutoServer enum names must match those
     # at least closely enough to be recognizable.

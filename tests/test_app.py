@@ -1,7 +1,6 @@
 #! /usr/bin/env py.test
 
 # Builtin imports
-import logging
 import os
 import pathlib
 import xmlrpc.client as xmlrpclib
@@ -13,8 +12,8 @@ import webtest
 
 # Local Imports
 from tests.test_pkg_helpers import files, invalid_files
-from pypiserver import __main__, bottle, core, Bottle, _app
-from pypiserver.backend import CachingFileBackend, SimpleFileBackend
+from pypiserver import __main__, bottle, _app
+from pypiserver.backend import CachingFileBackend
 
 # Enable logging to detect any problems with it
 ##
