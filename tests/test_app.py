@@ -12,7 +12,7 @@ import webtest
 
 # Local Imports
 from tests.test_pkg_helpers import files, invalid_files
-from pypiserver import __main__, bottle, _app
+from pypiserver import __main__, bottle_wrapper, _app
 from pypiserver.backend import CachingFileBackend
 
 # Enable logging to detect any problems with it
@@ -36,7 +36,7 @@ def app(tmpdir):
 @pytest.fixture
 def testapp(app):
     """Return a webtest TestApp initiated with pypiserver app"""
-    bottle.debug(True)
+    bottle_wrapper.debug(True)
     return webtest.TestApp(app)
 
 
@@ -48,7 +48,7 @@ def root(tmpdir):
 
 @pytest.fixture
 def priv(app):
-    b = bottle.Bottle()
+    b = bottle_wrapper.Bottle()
     b.mount("/priv/", app)
     return b
 
@@ -731,7 +731,7 @@ class TestRemovePkg:
 def test_redirect_project_encodes_newlines():
     """Ensure raw newlines are url encoded in the generated redirect."""
     project = "\nSet-Cookie:malicious=1;"
-    request = bottle.Request(
+    request = bottle_wrapper.Request(
         {"HTTP_X_FORWARDED_PROTO": "/\nSet-Cookie:malicious=1;"}
     )
     newpath = _app.get_bad_url_redirect_path(request, project)
