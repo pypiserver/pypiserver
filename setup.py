@@ -3,7 +3,7 @@
 import re
 from pathlib import Path
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 tests_require = [
     "pytest>=2.3",
@@ -52,7 +52,7 @@ setup(
     long_description=read_file("README.md"),
     long_description_content_type="text/markdown",
     version=get_version(),
-    packages=["pypiserver"],
+    packages=find_packages(include=["pypiserver", "pypiserver.*"]),
     package_data={"pypiserver": ["welcome.html"]},
     python_requires=">=3.8",
     install_requires=install_requires,
