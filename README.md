@@ -370,7 +370,7 @@ export PIP_EXTRA_INDEX_URL=http://localhost:8080/simple/
 
 or by adding the following lines to **~/.pip/pip.conf**
 
-```shell
+```ini
 [global]
 extra-index-url = http://localhost:8080/simple/
 ```
@@ -387,7 +387,7 @@ extra-index-url = http://localhost:8080/simple/
 For **easy_install** command you may set the following configuration in
 **~/.pydistutils.cfg**
 
-```shell
+```ini
 [easy_install]
 index_url = http://localhost:8080/simple/
 ```
