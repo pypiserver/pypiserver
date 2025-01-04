@@ -94,21 +94,23 @@ Table of Contents
 
 > [!IMPORTANT]
 > **pypiserver** works with Python 3.8+ and PyPy3.
+
 <!--  -->
 
 > [!WARNING]
 > Older Python versions may still work, but they are not tested.
 >
-> For legacy Python versions, use **pypiserver-1.x** series.  
+> For legacy Python versions, use **pypiserver-1.x** series.\
 > Note that these are not officially supported, and will not receive bugfixes or new features.
+
 <!--  -->
 
 > [!TIP]
 >
-> The commands below work on a unix-like operating system with a posix shell.  
+> The commands below work on a unix-like operating system with a posix shell.\
 > The **'~'** character expands to user's home directory.
 >
-> If you're using Windows, you'll have to use their "Windows counterparts".  
+> If you're using Windows, you'll have to use their "Windows counterparts".\
 > The same is true for the rest of this documentation.
 
 1. Install **pypiserver** with this command
@@ -352,7 +354,7 @@ optional arguments:
 ## Client-Side Configurations
 
 Always specifying the pypi url on the command line is a bit
-cumbersome.  
+cumbersome.
 
 > [!TIP]
 > Since **pypiserver** redirects **pip/easy_install** to the **pypi.org** index
@@ -395,7 +397,7 @@ index_url = http://localhost:8080/simple/
 ### Uploading Packages Remotely
 
 Instead of copying packages directly to the server's folder (i.e. with **scp**),
-you may use python tools for the task, e.g. **python setup.py upload**.  
+you may use python tools for the task, e.g. **python setup.py upload**.\
 In that case, **pypiserver** is responsible for authenticating the upload-requests.
 
 > [!IMPORTANT]
