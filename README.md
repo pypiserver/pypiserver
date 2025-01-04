@@ -646,7 +646,7 @@ reverse-proxy as described below in `Behind a reverse proxy`, you can
 easily enable caching. For example, to allow nginx to cache up to
 10 gigabytes of data for up to 1 hour::
 
-```shell
+```nginx
 proxy_cache_path /data/nginx/cache
                   levels=1:2
                   keys_zone=pypiserver_cache:10m
@@ -739,7 +739,7 @@ For Windows download [NSSM](https://nssm.cc/) from <https://nssm.cc> unzip to a
 desired location such as Program Files. Decide whether you are going
 to use `win32` or `win64`, and add that `exe` to environment `PATH`.
 
-Create a start_pypiserver.bat
+Create a `start_pypiserver.bat`
 
 ```shell
 pypi-server run -p 8080 C:\Path\To\Packages &
@@ -822,7 +822,7 @@ explained in [bottle's documentation](http://bottlepy.org/docs/dev/deployment.ht
 1. Adapt and place the following *Apache* configuration either into top-level scope,
    or inside some **`<VirtualHost>`** (contributed by Thomas Waldmann):
 
-   ```shell
+   ```apache
    WSGIScriptAlias   /     /yoursite/wsgi/pypiserver-wsgi.py
    WSGIDaemonProcess       pypisrv user=pypisrv group=pypisrv umask=0007 \
                            processes=1 threads=5 maximum-requests=500 \
@@ -837,7 +837,7 @@ explained in [bottle's documentation](http://bottlepy.org/docs/dev/deployment.ht
 
    or if using older **Apache < 2.4**, substitute the last part with this::
 
-   ```shell
+   ```apache
    <Directory /yoursite/wsgi >
        Order deny,allow
        Allow from all
@@ -947,7 +947,7 @@ You can run **pypiserver** behind a reverse proxy as well.
 
 Extend your nginx configuration
 
-```shell
+```nginx
 upstream pypi {
   server              pypiserver.example.com:12345 fail_timeout=0;
 }
@@ -968,7 +968,7 @@ As of pypiserver 1.3, you may also use the `X-Forwarded-Host` header in your
 reverse proxy config to enable changing the base URL. For example if you
 want to host pypiserver under a particular path on your server
 
-```shell
+```nginx
 upstream pypi {
   server              localhost:8000;
 }
@@ -990,7 +990,7 @@ Using a reverse proxy is the preferred way of getting pypiserver behind
 HTTPS. For example, to put pypiserver behind HTTPS on port 443, with
 automatic HTTP redirection, using `nginx`
 
-```shell
+```nginx
 upstream pypi {
   server               localhost:8000;
 }
