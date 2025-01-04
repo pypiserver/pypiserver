@@ -23,7 +23,6 @@ jobs:
       matrix:
         # make sure to align the `python-version`s in the Matrix with env.LAST_SUPPORTED_PYTHON
         python-version: [
-            "3.7",
             "3.8",
             "3.9",
             "3.10",
