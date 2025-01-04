@@ -46,14 +46,14 @@ making it much easier to get a running index server.
 
 Table of Contents
 
-- [**pypiserver - minimal PyPI server for use with pip/easy_install**](#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install)
+- [**pypiserver - minimal PyPI server for use with pip/easy\_install**](#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install)
 - [pypiserver](#pypiserver)
   - [Quickstart Installation and Usage](#quickstart-installation-and-usage)
     - [More details about pypi server run](#more-details-about-pypi-server-run)
     - [More details about pypi-server update](#more-details-about-pypi-server-update)
   - [Client-Side Configurations](#client-side-configurations)
     - [Configuring pip](#configuring-pip)
-    - [Configuring easy_install](#configuring-easy_install)
+    - [Configuring easy\_install](#configuring-easy_install)
     - [Uploading Packages Remotely](#uploading-packages-remotely)
       - [Apache Like Authentication (htpasswd)](#apache-like-authentication-htpasswd)
       - [Upload with setuptools](#upload-with-setuptools)
@@ -784,7 +784,7 @@ nssm start pypiserver
 - You may view all supported WSGI servers using the following interactive code
 
   ```python
-  >>> from pypiserver import bottle
+  >>> from pypiserver import bottle_wrapper as bottle
   >>> list(bottle.server_names.keys())
   ['cgi', 'gunicorn', 'cherrypy', 'eventlet', 'tornado', 'geventSocketIO',
   'rocket', 'diesel', 'twisted', 'wsgiref', 'fapws3', 'bjoern', 'gevent',
@@ -1061,15 +1061,13 @@ these steps:
 
 1. Create a python-script along these lines
 
-   ```shell
-   $ cat > pypiserver-start.py
+   ```python
+   # pypiserver-start.py
    import pypiserver
-   from pypiserver import bottle
+   from pypiserver import bottle_wrapper as bottle
    import pam
    app = pypiserver.app(root='./packages', auther=pam.authenticate)
    bottle.run(app=app, host='0.0.0.0', port=80, server='auto')
-
-   [Ctrl+ D]
    ```
 
 1. Invoke the python-script to start-up **pypiserver**
@@ -1133,7 +1131,7 @@ pypi-server run --health-endpoint /action/health
 
 ```python
 import pypiserver
-from pypiserver import bottle
+from pypiserver import bottle_wrapper as bottle
 app = pypiserver.app(root="./packages", health_endpoint="/action/health")
 bottle.run(app=app, host="0.0.0.0", port=8080, server="auto")
 ```
