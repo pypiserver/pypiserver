@@ -6,5 +6,7 @@ from pypiserver.bottle_wrapper.bottle import *
 from pypiserver.environment import Environment
 
 BaseRequest.MEMFILE_MAX = (
-    Environment.PYPISERVER_BOTTLE_MEMFILE_MAX_OVERRIDE_BYTES
+    override
+    if (override := Environment.PYPISERVER_BOTTLE_MEMFILE_MAX_OVERRIDE_BYTES)
+    else BaseRequest.MEMFILE_MAX
 )
