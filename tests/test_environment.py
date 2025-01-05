@@ -1,4 +1,8 @@
+from importlib import reload
+
 import pytest
+
+import pypiserver.environment as environment
 
 
 def test_default_bottle_memfile(monkeypatch):
@@ -7,10 +11,11 @@ def test_default_bottle_memfile(monkeypatch):
         raising=False,
     )
 
-    from pypiserver.environment import Environment
+    reload(environment)
 
     assert (
-        Environment.PYPISERVER_BOTTLE_MEMFILE_MAX_OVERRIDE_BYTES == 102400
+        environment.Environment.PYPISERVER_BOTTLE_MEMFILE_MAX_OVERRIDE_BYTES
+        == 102400
     ), "expected default 100 kb value"
 
 
@@ -21,8 +26,9 @@ def test_override_bottle_memfile(monkeypatch):
         str(value_100_mb),
     )
 
-    from pypiserver.environment import Environment
+    reload(environment)
 
     assert (
-        Environment.PYPISERVER_BOTTLE_MEMFILE_MAX_OVERRIDE_BYTES == value_100_mb
-    ), "expected default 100 kb value"
+        environment.Environment.PYPISERVER_BOTTLE_MEMFILE_MAX_OVERRIDE_BYTES
+        == value_100_mb
+    ), "expected new 100 mb value"
