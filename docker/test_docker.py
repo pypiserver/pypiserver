@@ -18,12 +18,14 @@ import pytest
 
 PYPISERVER_PROCESS_NAME = "pypi-server"
 TEST_DEMO_PIP_PACKAGE = "pypiserver-mypkg"
+TEST_DEMO_HEAVY_PIP_PACKAGE = "pypiserver-mypkg-heavy"
 
 THIS_DIR = Path(__file__).parent
 ROOT_DIR = THIS_DIR.parent
 DOCKERFILE = ROOT_DIR / "Dockerfile"
 FIXTURES = ROOT_DIR / "fixtures"
 MYPKG_ROOT = FIXTURES / "mypkg"
+MYPKG_HEAVY_ROOT = FIXTURES / "mypkg_heavy"
 HTPASS_FILE = FIXTURES / "htpasswd.a.a"
 
 
@@ -57,11 +59,27 @@ def image() -> str:
     return tag
 
 
+def _make_fixture_package(package: str):
+    # Use make for this so that it will skip the build step if it's not needed
+    run("make", "package", cwd=ROOT_DIR)
+
+
+def _get_fixture_package_paths(root: Path, package: str) -> t.Dict[str, Path]:
+    dist_dir = Path(root) / "dist"
+    sdist = dist_dir / f"pypiserver_{package}-1.0.0.tar.gz"
+    wheel = dist_dir / f"pypiserver_{package}-1.0.0-py2.py3-none-any.whl"
+
+    return {
+        "dist_dir": dist_dir,
+        "sdist": sdist,
+        "wheel": wheel,
+    }
+
+
 @pytest.fixture(scope="session")
 def mypkg_build() -> None:
     """Ensure the mypkg test fixture package is build."""
-    # Use make for this so that it will skip the build step if it's not needed
-    run("make", "mypkg", cwd=ROOT_DIR)
+    _make_fixture_package("mypkg")
 
 
 @pytest.fixture(scope="session")
@@ -69,20 +87,13 @@ def mypkg_paths(
     mypkg_build: None,  # pylint: disable=unused-argument
 ) -> t.Dict[str, Path]:
     """The path to the mypkg sdist file."""
-    dist_dir = Path(MYPKG_ROOT) / "dist"
-    assert dist_dir.exists()
+    paths = _get_fixture_package_paths(MYPKG_ROOT, "mypkg")
 
-    sdist = dist_dir / "pypiserver_mypkg-1.0.0.tar.gz"
-    assert sdist.exists()
+    assert paths.dist_dir.exists()
+    assert paths.sdist.exists()
+    assert paths.wheel.exists()
 
-    wheel = dist_dir / "pypiserver_mypkg-1.0.0-py2.py3-none-any.whl"
-    assert wheel.exists()
-
-    return {
-        "dist_dir": dist_dir,
-        "sdist": sdist,
-        "wheel": wheel,
-    }
+    return paths
 
 
 def wait_for_container(port: int) -> None:
