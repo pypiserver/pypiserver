@@ -39,6 +39,36 @@ HTPASS_FILE = FIXTURES / "htpasswd.a.a"
 # pylint: disable=no-self-use
 
 
+class RunReturn(t.NamedTuple):
+    """Simple wrapper around a simple subprocess call's results."""
+
+    returncode: int
+    out: str
+    err: str
+
+
+def run(
+    *cmd: str,
+    capture: bool = False,
+    raise_on_err: bool = True,
+    check_code: t.Callable[[int], bool] = lambda c: c == 0,
+    **popen_kwargs: t.Any,
+) -> RunReturn:
+    """Run a command to completion."""
+    stdout = subprocess.PIPE if capture else None
+    stderr = subprocess.PIPE if capture else None
+    proc = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, **popen_kwargs)
+    out, err = proc.communicate()
+    result = RunReturn(
+        proc.returncode,
+        "" if out is None else out.decode(),
+        "" if err is None else err.decode(),
+    )
+    if raise_on_err and not check_code(result.returncode):
+        raise RuntimeError(result)
+    return result
+
+
 @pytest.fixture(scope="session")
 def image() -> str:
     """Build the docker image for pypiserver.
@@ -59,7 +89,35 @@ def image() -> str:
     return tag
 
 
-def _make_fixture_package(package: str):
+def wait_for_container(port: int) -> None:
+    """Wait for the container to be available."""
+    for _ in range(60):
+        try:
+            httpx.get(f"http://localhost:{port}").raise_for_status()
+        except (httpx.RequestError, httpx.HTTPStatusError):
+            time.sleep(1)
+        else:
+            return
+
+    # If we reach here, we've tried 60 times without success, meaning either
+    # the container is broken or it took more than about a minute to become
+    # functional, either of which cases is something we will want to look into.
+    raise RuntimeError("Could not connect to pypiserver container")
+
+
+def get_socket() -> int:
+    """Find a random, open socket and return it."""
+    # Close the socket automatically upon exiting the block
+    with contextlib.closing(
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ) as sock:
+        # Bind to a random open socket >=1024
+        sock.bind(("", 0))
+        # Return the socket number
+        return sock.getsockname()[1]
+
+
+def _make_fixture_package(package: str) -> RunReturn:
     # Use make for this so that it will skip the build step if it's not needed
     run("make", package, cwd=ROOT_DIR)
 
@@ -96,65 +154,7 @@ def mypkg_paths(
     return paths
 
 
-def wait_for_container(port: int) -> None:
-    """Wait for the container to be available."""
-    for _ in range(60):
-        try:
-            httpx.get(f"http://localhost:{port}").raise_for_status()
-        except (httpx.RequestError, httpx.HTTPStatusError):
-            time.sleep(1)
-        else:
-            return
-
-    # If we reach here, we've tried 60 times without success, meaning either
-    # the container is broken or it took more than about a minute to become
-    # functional, either of which cases is something we will want to look into.
-    raise RuntimeError("Could not connect to pypiserver container")
-
-
-def get_socket() -> int:
-    """Find a random, open socket and return it."""
-    # Close the socket automatically upon exiting the block
-    with contextlib.closing(
-        socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ) as sock:
-        # Bind to a random open socket >=1024
-        sock.bind(("", 0))
-        # Return the socket number
-        return sock.getsockname()[1]
-
-
-class RunReturn(t.NamedTuple):
-    """Simple wrapper around a simple subprocess call's results."""
-
-    returncode: int
-    out: str
-    err: str
-
-
-def run(
-    *cmd: str,
-    capture: bool = False,
-    raise_on_err: bool = True,
-    check_code: t.Callable[[int], bool] = lambda c: c == 0,
-    **popen_kwargs: t.Any,
-) -> RunReturn:
-    """Run a command to completion."""
-    stdout = subprocess.PIPE if capture else None
-    stderr = subprocess.PIPE if capture else None
-    proc = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, **popen_kwargs)
-    out, err = proc.communicate()
-    result = RunReturn(
-        proc.returncode,
-        "" if out is None else out.decode(),
-        "" if err is None else err.decode(),
-    )
-    if raise_on_err and not check_code(result.returncode):
-        raise RuntimeError(result)
-    return result
-
-
-def uninstall_pkgs() -> None:
+def uninstall_packages() -> None:
     """Uninstall any packages we've installed."""
     res = run("pip", "freeze", capture=True)
     if any(
@@ -168,14 +168,18 @@ def uninstall_pkgs() -> None:
 def session_cleanup() -> t.Iterator[None]:
     """Deal with any pollution of the local env."""
     yield
-    uninstall_pkgs()
+    uninstall_packages()
 
 
 @pytest.fixture()
 def cleanup() -> t.Iterator[None]:
     """Clean up after tests that may have affected the env."""
     yield
-    uninstall_pkgs()
+    uninstall_packages()
+
+
+# Test cases
+# ----------
 
 
 class TestCommands:
