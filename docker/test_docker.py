@@ -61,7 +61,7 @@ def image() -> str:
 
 def _make_fixture_package(package: str):
     # Use make for this so that it will skip the build step if it's not needed
-    run("make", "package", cwd=ROOT_DIR)
+    run("make", package, cwd=ROOT_DIR)
 
 
 def _get_fixture_package_paths(root: Path, package: str) -> t.Dict[str, Path]:
