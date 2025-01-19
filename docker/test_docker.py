@@ -89,9 +89,9 @@ def mypkg_paths(
     """The path to the mypkg sdist file."""
     paths = _get_fixture_package_paths(MYPKG_ROOT, "mypkg")
 
-    assert paths.dist_dir.exists()
-    assert paths.sdist.exists()
-    assert paths.wheel.exists()
+    assert paths["dist_dir"].exists()
+    assert paths["sdist"].exists()
+    assert paths["wheel"].exists()
 
     return paths
 
