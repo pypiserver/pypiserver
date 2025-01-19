@@ -119,7 +119,7 @@ def get_socket() -> int:
 
 def _make_fixture_package(package: str) -> RunReturn:
     # Use make for this so that it will skip the build step if it's not needed
-    run("make", package, cwd=ROOT_DIR)
+    return run("make", package, cwd=ROOT_DIR)
 
 
 def _get_fixture_package_paths(root: Path, package: str) -> t.Dict[str, Path]:
