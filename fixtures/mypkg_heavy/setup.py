@@ -6,5 +6,5 @@ setup(
     name="pypiserver_mypkg_heavy",
     description="Heavy test pkg",
     version="1.0.0",
-    packages=["mypkg"],
+    packages=["mypkg_heavy"],
 )
