@@ -4,6 +4,13 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.3.3rc02-01-2025 (__rc__)
+--------------------------
+
+- b0e9d6e fix: `Dockerfile` syntax warnings (#639)
+- d63ac97 chore: brush up some `README` content (#638)
+- f5b4dca chore: remove support for Python 3.7 (end-of-life) (#637)
+
 2.3.2 (2024-11-24)
 --------------------------
 
