@@ -4,7 +4,7 @@ import re as _re
 import sys
 import typing as t
 
-from pypiserver.bottle import Bottle
+from pypiserver.bottle_wrapper import Bottle
 from pypiserver.config import Config, RunConfig, strtobool
 
 version = __version__ = "2.3.2"

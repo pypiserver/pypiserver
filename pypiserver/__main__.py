@@ -160,7 +160,7 @@ def main(argv: t.Sequence[str] = None) -> None:
 
         gevent.monkey.patch_all()
 
-    from pypiserver import bottle
+    from pypiserver import bottle_wrapper as bottle
 
     bottle.debug(config.verbosity > 1)
     bottle._stderr = ft.partial(  # pylint: disable=protected-access
