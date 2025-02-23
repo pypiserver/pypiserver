@@ -682,7 +682,7 @@ class TestHeavyPackage:
             "twine",
             "upload",
             "--repository-url",
-            f"http://localhost:{self.patched_container.port}",
+            f"http://localhost:{patched_container.port}",
             "--username",
             "a",
             "--password",
