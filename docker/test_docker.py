@@ -160,7 +160,7 @@ def mypkg_heavy_build() -> None:
 
 @pytest.fixture(scope="session")
 def mypkg_heavy_paths(
-    mypkg_build: None,  # pylint: disable=unused-argument
+    mypkg_heavy_build: None,  # pylint: disable=unused-argument
 ) -> t.Dict[str, Path]:
     """The path to the mypkg sdist file."""
     paths = _get_fixture_package_paths(MYPKG_HEAVY_ROOT, MYPKG_HEAVY_NAME)
