@@ -672,7 +672,7 @@ class TestHeavyPackage:
     @pytest.fixture(scope="class")
     def upload_mypkg_heavy(
         self,
-        patched_container: str,  # pylint: disable=unused-argument
+        patched_container: ContainerInfo,
         mypkg_heavy_paths: t.Dict[str, Path],
     ) -> None:
         """Upload mypkg to the container."""
@@ -682,7 +682,7 @@ class TestHeavyPackage:
             "twine",
             "upload",
             "--repository-url",
-            f"http://localhost:{self.HOST_PORT}",
+            f"http://localhost:{self.patched_container.port}",
             "--username",
             "a",
             "--password",
