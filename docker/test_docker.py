@@ -24,8 +24,10 @@ THIS_DIR = Path(__file__).parent
 ROOT_DIR = THIS_DIR.parent
 DOCKERFILE = ROOT_DIR / "Dockerfile"
 FIXTURES = ROOT_DIR / "fixtures"
-MYPKG_ROOT = FIXTURES / "mypkg"
-MYPKG_HEAVY_ROOT = FIXTURES / "mypkg_heavy"
+MYPKG_NAME = "mypkg"
+MYPKG_ROOT = FIXTURES / MYPKG_NAME
+MYPKG_HEAVY_NAME = "mypkg_heavy"
+MYPKG_HEAVY_ROOT = FIXTURES / MYPKG_HEAVY_NAME
 HTPASS_FILE = FIXTURES / "htpasswd.a.a"
 
 
@@ -127,17 +129,13 @@ def _get_fixture_package_paths(root: Path, package: str) -> t.Dict[str, Path]:
     sdist = dist_dir / f"pypiserver_{package}-1.0.0.tar.gz"
     wheel = dist_dir / f"pypiserver_{package}-1.0.0-py2.py3-none-any.whl"
 
-    return {
-        "dist_dir": dist_dir,
-        "sdist": sdist,
-        "wheel": wheel,
-    }
+    return {"dist_dir": dist_dir, "sdist": sdist, "wheel": wheel}
 
 
 @pytest.fixture(scope="session")
 def mypkg_build() -> None:
     """Ensure the mypkg test fixture package is build."""
-    _make_fixture_package("mypkg")
+    _make_fixture_package(MYPKG_NAME)
 
 
 @pytest.fixture(scope="session")
@@ -145,7 +143,27 @@ def mypkg_paths(
     mypkg_build: None,  # pylint: disable=unused-argument
 ) -> t.Dict[str, Path]:
     """The path to the mypkg sdist file."""
-    paths = _get_fixture_package_paths(MYPKG_ROOT, "mypkg")
+    paths = _get_fixture_package_paths(MYPKG_ROOT, MYPKG_NAME)
+
+    assert paths["dist_dir"].exists()
+    assert paths["sdist"].exists()
+    assert paths["wheel"].exists()
+
+    return paths
+
+
+@pytest.fixture(scope="session")
+def mypkg_heavy_build() -> None:
+    """Ensure the mypkg_heavy test fixture package is build."""
+    _make_fixture_package(MYPKG_HEAVY_NAME)
+
+
+@pytest.fixture(scope="session")
+def mypkg_heavy_paths(
+    mypkg_build: None,  # pylint: disable=unused-argument
+) -> t.Dict[str, Path]:
+    """The path to the mypkg sdist file."""
+    paths = _get_fixture_package_paths(MYPKG_HEAVY_ROOT, MYPKG_HEAVY_NAME)
 
     assert paths["dist_dir"].exists()
     assert paths["sdist"].exists()
@@ -611,3 +629,83 @@ class TestAuthed:
         resp = httpx.get(f"http://localhost:{self.HOST_PORT}")
         assert resp.status_code == 200
         assert "pypiserver" in resp.text
+
+
+class TestHeavyPackage:
+    """Test for a workaround of https://github.com/pypiserver/pypiserver/issues/630."""
+
+    override_with_100_mb = (
+        f"PYPISERVER_BOTTLE_MEMFILE_MAX_OVERRIDE_BYTES={(2**20) * 100}"
+    )
+
+    @pytest.fixture(scope="class")
+    def patched_container(
+        self, request: pytest.FixtureRequest, image: str
+    ) -> t.Iterator[ContainerInfo]:
+        """Run the pypiserver container.
+
+        Returns the container ID.
+        """
+        port = get_socket()
+        args = (
+            "docker",
+            "run",
+            "--rm",
+            "--publish",
+            "--env",
+            self.override_with_100_mb,
+            f"{port}:8080",
+            "--detach",
+            image,
+            "run",
+            "--passwords",
+            ".",
+            "--authenticate",
+            ".",
+        )
+        res = run(*args, capture=True)
+        wait_for_container(port)
+        container_id = res.out.strip()
+        yield ContainerInfo(container_id, port, args)
+        run("docker", "container", "rm", "-f", container_id)
+
+    @pytest.fixture(scope="class")
+    def upload_mypkg_heavy(
+        self,
+        patched_container: str,  # pylint: disable=unused-argument
+        mypkg_heavy_paths: t.Dict[str, Path],
+    ) -> None:
+        """Upload mypkg to the container."""
+        run(
+            sys.executable,
+            "-m",
+            "twine",
+            "upload",
+            "--repository-url",
+            f"http://localhost:{self.HOST_PORT}",
+            "--username",
+            "a",
+            "--password",
+            "a",
+            f"{mypkg_heavy_paths['dist_dir']}/*",
+        )
+
+    @pytest.mark.usefixtures("upload_mypkg_heavy")
+    def test_download(self, patched_container: ContainerInfo) -> None:
+        """Download mypkg_heavy from the container."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run(
+                sys.executable,
+                "-m",
+                "pip",
+                "download",
+                "--index-url",
+                f"http://localhost:{patched_container.port}/simple",
+                "--dest",
+                tmpdir,
+                "pypiserver_mypkg_heavy",
+            )
+            assert any(
+                "pypiserver_mypkg_heavy" in path.name
+                for path in Path(tmpdir).iterdir()
+            )
