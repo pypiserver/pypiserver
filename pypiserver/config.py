@@ -47,11 +47,6 @@ from distutils.util import strtobool as strtoint
 
 import pkg_resources
 
-if sys.version_info < (3, 10):
-    from importlib_metadata import entry_points
-else:
-    from importlib.metadata import entry_points
-
 from pypiserver.backend import (
     BackendNotFound,
     Backend,
@@ -555,7 +550,6 @@ def get_parser() -> argparse.ArgumentParser:
             "version of the private package, containing arbitrary code."
         ),
     )
-
     return parser
 
 
