@@ -556,13 +556,6 @@ def get_parser() -> argparse.ArgumentParser:
         ),
     )
 
-    backends_parser = subparsers.add_parser(
-        "backends",
-        help=textwrap.dedent("Show available storage backends."),
-    )
-
-    add_common_args(backends_parser)
-
     return parser
 
 
@@ -837,37 +830,7 @@ class UpdateConfig(_ConfigCommon):
         }
 
 
-class BackendConfig(_ConfigCommon):
-    """A config for the Backend command."""
-
-    def __init__(
-        self,
-        verbosity: int,
-        log_frmt: str,
-        log_file: t.Optional[str],
-        log_stream: t.Optional[t.IO],
-    ) -> None:
-        """Construct a RuntimeConfig."""
-        # Global arguments
-        self.verbosity = verbosity
-        self.log_file = log_file
-        self.log_stream = log_stream
-        self.log_frmt = log_frmt
-
-    @classmethod
-    def kwargs_from_namespace(
-        cls, namespace: argparse.Namespace
-    ) -> t.Dict[str, t.Any]:
-        """Convert a namespace into __init__ kwargs for this class."""
-        return dict(
-            verbosity=namespace.verbose,
-            log_file=namespace.log_file,
-            log_stream=namespace.log_stream,
-            log_frmt=namespace.log_frmt,
-        )
-
-
-Configuration = t.Union[RunConfig, UpdateConfig, BackendConfig]
+Configuration = t.Union[RunConfig, UpdateConfig]
 
 
 class Config:
@@ -958,8 +921,6 @@ class Config:
             return RunConfig.from_namespace(parsed)
         if parsed.cmd == "update":
             return UpdateConfig.from_namespace(parsed)
-        if parsed.cmd == "backends":
-            return BackendConfig.from_namespace(parsed)
 
         raise SystemExit(parser.format_usage())
 
