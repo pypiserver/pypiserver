@@ -40,7 +40,7 @@ $(MYPKG_HEAVY_DIR)/dist/pypiserver_mypkg_heavy-1.0.0-py2.py3-none-any.whl: $(MYP
 
 $(MYPKG_HEAVY_PLACEHOLDER_PATH): $(MYPKG_HEAVY_DIR)
 	echo '"""' > $(MYPKG_HEAVY_PLACEHOLDER_PATH)
-	dd if=/dev/urandom bs=1048576 count=1 | base64 >> $(MYPKG_HEAVY_PLACEHOLDER_PATH)
+	dd if=/dev/urandom bs=150M count=1 | base64 >> $(MYPKG_HEAVY_PLACEHOLDER_PATH)
 	echo '"""' >> $(MYPKG_HEAVY_PLACEHOLDER_PATH)
 
 # end
