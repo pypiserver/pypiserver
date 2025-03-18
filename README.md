@@ -353,7 +353,7 @@ optional arguments:
                         containing arbitrary code.
 ```
 
-### Experimental configuration flags
+### Experimental Configuration Flags
 
 > [!WARNING]
 > This section describes temporary and experimental features of **pypiserver**.
