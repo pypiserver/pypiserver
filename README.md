@@ -52,6 +52,8 @@ Table of Contents
   - [Quickstart Installation and Usage](#quickstart-installation-and-usage)
     - [More details about pypi server run](#more-details-about-pypi-server-run)
     - [More details about pypi-server update](#more-details-about-pypi-server-update)
+    - [Experimental configuration flags](#experimental-configuration-flags)
+      - [Addressing #630](#addressing-630)
   - [Client-Side Configurations](#client-side-configurations)
     - [Configuring pip](#configuring-pip)
     - [Configuring easy_install](#configuring-easy_install)
@@ -349,6 +351,28 @@ optional arguments:
                         might pose a security risk - e.g. a malicious user
                         might publish a higher version of the private package,
                         containing arbitrary code.
+```
+
+### Experimental configuration flags
+
+> [!WARNING]
+> This section describes temporary and experimental features of **pypiserver**.
+>
+> They are likely to be promoted to standard features of the project or deprecated in the future.
+> If you are using these features, please pay attention to the release notes.
+
+Additional features of **pypiserver** can be configured as environment variables.
+
+#### Addressing #630
+
+> [!TIP]
+> For more context, see discussion in #630.
+
+This flag allows to override the `MEMFILE_MAX` setting used by `bottle` under the hood.
+Consider using it if you encounter: `MultipartError: Memory limit reached.` issue when uploading to **pypiserver**.
+
+```bash
+PYPISERVER_BOTTLE_MEMFILE_MAX_OVERRIDE_BYTES=<number in bytes, e.g. 10240000>
 ```
 
 ## Client-Side Configurations
