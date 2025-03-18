@@ -52,6 +52,8 @@ Table of Contents
   - [Quickstart Installation and Usage](#quickstart-installation-and-usage)
     - [More details about pypi server run](#more-details-about-pypi-server-run)
     - [More details about pypi-server update](#more-details-about-pypi-server-update)
+    - [Experimental configuration flags](#experimental-configuration-flags)
+      - [Addressing #630](#addressing-630)
   - [Client-Side Configurations](#client-side-configurations)
     - [Configuring pip](#configuring-pip)
     - [Configuring easy_install](#configuring-easy_install)
@@ -349,6 +351,28 @@ optional arguments:
                         might pose a security risk - e.g. a malicious user
                         might publish a higher version of the private package,
                         containing arbitrary code.
+```
+
+### Experimental Configuration Flags
+
+> [!WARNING]
+> This section describes temporary and experimental features of **pypiserver**.
+>
+> They are likely to be promoted to standard features of the project or deprecated in the future.
+> If you are using these features, please pay attention to the release notes.
+
+Additional features of **pypiserver** can be configured as environment variables.
+
+#### Addressing #630
+
+> [!TIP]
+> For more context, see discussion in #630.
+
+This flag allows to override the `MEMFILE_MAX` setting used by `bottle` under the hood.
+Consider using it if you encounter: `MultipartError: Memory limit reached.` issue when uploading to **pypiserver**.
+
+```bash
+PYPISERVER_BOTTLE_MEMFILE_MAX_OVERRIDE_BYTES=<number in bytes, e.g. 10240000>
 ```
 
 ## Client-Side Configurations
@@ -795,7 +819,7 @@ nssm start pypiserver
 - You may view all supported WSGI servers using the following interactive code
 
   ```python
-  >>> from pypiserver import bottle
+  >>> from pypiserver import bottle_wrapper as bottle
   >>> list(bottle.server_names.keys())
   ['cgi', 'gunicorn', 'cherrypy', 'eventlet', 'tornado', 'geventSocketIO',
   'rocket', 'diesel', 'twisted', 'wsgiref', 'fapws3', 'bjoern', 'gevent',
@@ -1070,15 +1094,13 @@ these steps:
 
 1. Create a python-script along these lines
 
-   ```shell
-   $ cat > pypiserver-start.py
+   ```python
+   # pypiserver-start.py
    import pypiserver
-   from pypiserver import bottle
+   from pypiserver import bottle_wrapper as bottle
    import pam
    app = pypiserver.app(root='./packages', auther=pam.authenticate)
    bottle.run(app=app, host='0.0.0.0', port=80, server='auto')
-
-   [Ctrl+ D]
    ```
 
 1. Invoke the python-script to start-up **pypiserver**
@@ -1142,7 +1164,7 @@ pypi-server run --health-endpoint /action/health
 
 ```python
 import pypiserver
-from pypiserver import bottle
+from pypiserver import bottle_wrapper as bottle
 app = pypiserver.app(root="./packages", health_endpoint="/action/health")
 bottle.run(app=app, host="0.0.0.0", port=8080, server="auto")
 ```
