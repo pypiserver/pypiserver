@@ -723,7 +723,7 @@ class RunConfig(_ConfigCommon):
         log_req_frmt: str,
         log_res_frmt: str,
         log_err_frmt: str,
-        auther: t.Optional[t.Callable[[str, str], bool]] = None,
+        auther: t.Callable[[str, str, str], bool] = None,
         **kwargs: t.Any,
     ) -> None:
         """Construct a RuntimeConfig."""
@@ -770,7 +770,7 @@ class RunConfig(_ConfigCommon):
         }
 
     def get_auther(
-        self, passed_auther: t.Optional[t.Callable[[str, str], bool]]
+        self, passed_auther: t.Optional[t.Callable[[str, str, str], bool]]
     ) -> t.Callable[[str, str], bool]:
         """Create or retrieve an authentication function."""
         # The auther may be specified directly as a kwarg in the API interface
@@ -786,11 +786,11 @@ class RunConfig(_ConfigCommon):
                     f" (-P={self.password_file!r}) must also be empty ('.')!"
                 )
             # Return an auther that always returns true.
-            return lambda _uname, _pw: True
+            return lambda _uname, _pw, _action: True
         # Now, if there was no password file specified, we can return an auther
         # that always returns False, since there is no way to authenticate.
         if self.password_file is None:
-            return lambda _uname, _pw: False
+            return lambda _uname, _pw, _action: False
         # Finally, if a password file was specified, we'll load it up with
         # Htpasswd and return a callable that checks it.
         if HtpasswdFile is None:
@@ -805,7 +805,7 @@ class RunConfig(_ConfigCommon):
 
         # Construct a local closure over the loaded PW file and return as our
         # authentication function.
-        def auther(uname: str, pw: str) -> bool:
+        def auther(uname: str, pw: str, action: str) -> bool:
             loaded_pw_file.load_if_changed()
             return loaded_pw_file.check_password(uname, pw)
 
