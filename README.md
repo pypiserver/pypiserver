@@ -1201,9 +1201,6 @@ The following limitations are known:
 - It accepts documentation uploads but does not save them to
   disk (see [#47](https://github.com/pypiserver/pypiserver/issues/47) for a
   discussion)
-- It does not handle misspelled packages as *pypi-repo* does,
-  therefore it is suggested to use it with **--extra-index-url** instead
-  of **--index-url** (see [#38](https://github.com/pypiserver/pypiserver/issues/38)).
 
 Please use Github's [bugtracker](https://github.com/pypiserver/pypiserver/issues)
 for other bugs you find.
