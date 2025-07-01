@@ -4,6 +4,17 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.3.3rc07-01-2025 (__rc__)
+--------------------------
+
+- 5f7ae4f chore: update Docker Hub description only on tags (#650)
+- 4dea916 chore: Remove obsolete known limitation relating to misspellings (#649)
+- 9038897 chore: remove unused `buildout` configs and related `bootstrap` script (#642)
+- e205083 feat: wrap local `bottle` and allow overriding `MEMFILE_MAX` with an env variable (#636)
+- b0e9d6e fix: `Dockerfile` syntax warnings (#639)
+- d63ac97 chore: brush up some `README` content (#638)
+- f5b4dca chore: remove support for Python 3.7 (end-of-life) (#637)
+
 2.3.2 (2024-11-24)
 --------------------------
 
