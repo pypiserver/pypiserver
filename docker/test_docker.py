@@ -632,14 +632,8 @@ class TestAuthed:
 
 
 class TestHeavyPackage:
-    """Test for a workaround of https://github.com/pypiserver/pypiserver/issues/630."""
-
-    override_with_100_mb = (
-        f"PYPISERVER_BOTTLE_MEMFILE_MAX_OVERRIDE_BYTES={(2**20) * 100}"
-    )
-
     @pytest.fixture(scope="class")
-    def patched_container(
+    def container(
         self, request: pytest.FixtureRequest, image: str
     ) -> t.Iterator[ContainerInfo]:
         """Run the pypiserver container.
@@ -651,8 +645,6 @@ class TestHeavyPackage:
             "docker",
             "run",
             "--rm",
-            "--env",
-            self.override_with_100_mb,
             "--publish",
             f"{port}:8080",
             "--detach",
@@ -672,7 +664,7 @@ class TestHeavyPackage:
     @pytest.fixture(scope="class")
     def upload_mypkg_heavy(
         self,
-        patched_container: ContainerInfo,
+        container: ContainerInfo,
         mypkg_heavy_paths: t.Dict[str, Path],
     ) -> None:
         """Upload mypkg to the container."""
@@ -682,7 +674,7 @@ class TestHeavyPackage:
             "twine",
             "upload",
             "--repository-url",
-            f"http://localhost:{patched_container.port}",
+            f"http://localhost:{container.port}",
             "--username",
             "a",
             "--password",
@@ -691,7 +683,7 @@ class TestHeavyPackage:
         )
 
     @pytest.mark.usefixtures("upload_mypkg_heavy")
-    def test_download(self, patched_container: ContainerInfo) -> None:
+    def test_download(self, container: ContainerInfo) -> None:
         """Download mypkg_heavy from the container."""
         with tempfile.TemporaryDirectory() as tmpdir:
             run(
@@ -700,7 +692,7 @@ class TestHeavyPackage:
                 "pip",
                 "download",
                 "--index-url",
-                f"http://localhost:{patched_container.port}/simple",
+                f"http://localhost:{container.port}/simple",
                 "--dest",
                 tmpdir,
                 "pypiserver_mypkg_heavy",
