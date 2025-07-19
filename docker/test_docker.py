@@ -760,7 +760,7 @@ class TestServerPrefix:
             f"{mypkg_paths['dist_dir']}/*",
         )
 
-    @pytest.mark.usefixtures("upload_mypkg_heavy")
+    @pytest.mark.usefixtures("upload_mypkg")
     def test_download(self, container: ContainerInfo) -> None:
         """Download mypkg from the container."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -773,9 +773,9 @@ class TestServerPrefix:
                 f"http://localhost:{container.port}{self.prefix_url}simple",
                 "--dest",
                 tmpdir,
-                "pypiserver_mypkg_heavy",
+                "pypiserver_mypkg",
             )
             assert any(
-                "pypiserver_mypkg_heavy" in path.name
+                "pypiserver_mypkg" in path.name
                 for path in Path(tmpdir).iterdir()
             )
