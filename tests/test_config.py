@@ -575,6 +575,21 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
             ),
         },
     ),
+    # server prefix
+    ConfigTestCase(
+        case="Run: default server base prefix is /",
+        args=["run"],
+        legacy_args=[],
+        exp_config_type=RunConfig,
+        exp_config_values={"server_base_url": "/"},
+    ),
+    ConfigTestCase(
+        case="Run: specified server base prefix is set",
+        args=["run", "--server-base-url", "/prefix"],
+        legacy_args=["--server-base-url", "/prefix"],
+        exp_config_type=RunConfig,
+        exp_config_values={"server_base_url": "/prefix"},
+    ),
     # ******************************************************************
     # Update subcommand args
     # ******************************************************************
