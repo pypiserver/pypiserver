@@ -91,11 +91,11 @@ def image() -> str:
     return tag
 
 
-def wait_for_container(port: int) -> None:
+def wait_for_container(port: int, url_path: str = None) -> None:
     """Wait for the container to be available."""
     for _ in range(60):
         try:
-            httpx.get(f"http://localhost:{port}").raise_for_status()
+            httpx.get(f"http://localhost:{port}" + url_path if url_path else "").raise_for_status()
         except (httpx.RequestError, httpx.HTTPStatusError):
             time.sleep(1)
         else:
@@ -704,6 +704,8 @@ class TestHeavyPackage:
 
 
 class TestServerPrefix:
+    prefix_url = "/prefix/"
+
     @pytest.fixture(scope="class")
     def container(
         self, request: pytest.FixtureRequest, image: str
@@ -727,10 +729,10 @@ class TestServerPrefix:
             "--authenticate",
             ".",
             "--server-base-url",
-            "/prefix/",
+            self.prefix_url,
         )
         res = run(*args, capture=True)
-        wait_for_container(port)
+        wait_for_container(port, url_path=self.prefix_url)
         container_id = res.out.strip()
         yield ContainerInfo(container_id, port, args)
         run("docker", "container", "rm", "-f", container_id)
@@ -748,7 +750,7 @@ class TestServerPrefix:
             "twine",
             "upload",
             "--repository-url",
-            f"http://localhost:{container.port}/prefix/",
+            f"http://localhost:{container.port}{self.prefix_url}",
             "--username",
             "a",
             "--password",
@@ -766,7 +768,7 @@ class TestServerPrefix:
                 "pip",
                 "download",
                 "--index-url",
-                f"http://localhost:{container.port}/prefix/simple",
+                f"http://localhost:{container.port}{self.prefix_url}simple",
                 "--dest",
                 tmpdir,
                 "pypiserver_mypkg_heavy",
