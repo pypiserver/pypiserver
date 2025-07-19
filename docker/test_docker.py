@@ -96,7 +96,7 @@ def wait_for_container(port: int, url_path: t.Optional[str] = None) -> None:
     for _ in range(60):
         try:
             httpx.get(
-                f"http://localhost:{port}" + url_path if url_path else ""
+                f"http://localhost:{port}" + (url_path if url_path else "")
             ).raise_for_status()
         except (httpx.RequestError, httpx.HTTPStatusError):
             time.sleep(1)
