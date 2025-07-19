@@ -91,7 +91,7 @@ def image() -> str:
     return tag
 
 
-def wait_for_container(port: int, url_path: str = None) -> None:
+def wait_for_container(port: int, url_path: t.Optional[str] = None) -> None:
     """Wait for the container to be available."""
     for _ in range(60):
         try:
