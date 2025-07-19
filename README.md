@@ -52,8 +52,6 @@ Table of Contents
   - [Quickstart Installation and Usage](#quickstart-installation-and-usage)
     - [More details about pypi server run](#more-details-about-pypi-server-run)
     - [More details about pypi-server update](#more-details-about-pypi-server-update)
-    - [Experimental configuration flags](#experimental-configuration-flags)
-      - [Addressing #630](#addressing-630)
   - [Client-Side Configurations](#client-side-configurations)
     - [Configuring pip](#configuring-pip)
     - [Configuring easy_install](#configuring-easy_install)
