@@ -124,7 +124,9 @@ class DEFAULTS:
     PORT = 8080
     SERVER_METHOD = "auto"
     BACKEND = "auto"
-    SERVER_BASE_URL = "/"  # if server need to served under example.com/<SERVER_BASE_URL>
+    SERVER_BASE_URL = (
+        "/"  # if server need to served under example.com/<SERVER_BASE_URL>
+    )
 
 
 def auth_arg(arg: str) -> t.List[str]:
