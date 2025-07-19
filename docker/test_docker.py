@@ -701,3 +701,77 @@ class TestHeavyPackage:
                 "pypiserver_mypkg_heavy" in path.name
                 for path in Path(tmpdir).iterdir()
             )
+
+
+class TestServerPrefix:
+    @pytest.fixture(scope="class")
+    def container(
+        self, request: pytest.FixtureRequest, image: str
+    ) -> t.Iterator[ContainerInfo]:
+        """Run the pypiserver container.
+
+        Returns the container ID.
+        """
+        port = get_socket()
+        args = (
+            "docker",
+            "run",
+            "--rm",
+            "--publish",
+            f"{port}:8080",
+            "--detach",
+            image,
+            "run",
+            "--passwords",
+            ".",
+            "--authenticate",
+            ".",
+            "--server-base-url",
+            "/prefix/",
+        )
+        res = run(*args, capture=True)
+        wait_for_container(port)
+        container_id = res.out.strip()
+        yield ContainerInfo(container_id, port, args)
+        run("docker", "container", "rm", "-f", container_id)
+
+    @pytest.fixture(scope="class")
+    def upload_mypkg(
+        self,
+        container: ContainerInfo,  # pylint: disable=unused-argument
+        mypkg_paths: t.Dict[str, Path],
+    ) -> None:
+        """Upload mypkg to the container."""
+        run(
+            sys.executable,
+            "-m",
+            "twine",
+            "upload",
+            "--repository-url",
+            f"http://localhost:{container.port}/prefix/",
+            "--username",
+            "a",
+            "--password",
+            "a",
+            f"{mypkg_paths['dist_dir']}/*",
+        )
+
+    @pytest.mark.usefixtures("upload_mypkg_heavy")
+    def test_download(self, container: ContainerInfo) -> None:
+        """Download mypkg from the container."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run(
+                sys.executable,
+                "-m",
+                "pip",
+                "download",
+                "--index-url",
+                f"http://localhost:{container.port}/prefix/simple",
+                "--dest",
+                tmpdir,
+                "pypiserver_mypkg_heavy",
+            )
+            assert any(
+                "pypiserver_mypkg_heavy" in path.name
+                for path in Path(tmpdir).iterdir()
+            )
