@@ -83,6 +83,7 @@ Table of Contents
     - [Custom Health Check Endpoint](#custom-health-check-endpoint)
       - [Configure a custom health endpoint by CLI arguments](#configure-a-custom-health-endpoint-by-cli-arguments)
       - [Configure a custom health endpoint by script](#configure-a-custom-health-endpoint-by-script)
+    - [Exposing `pypi-server` on a URL with a custom prefix](#exposing-pypi-server-on-a-url-with-a-custom-prefix)
   - [Sources](#sources)
   - [Known Limitations](#known-limitations)
   - [Similar Projects](#similar-projects)
@@ -1150,9 +1151,9 @@ bottle.run(app=app, host="0.0.0.0", port=8080, server="auto")
 
 Try **curl <http://localhost:8080/action/health>**
 
-### Exposing `pypi-server` on a custom prefix URL
+### Exposing `pypi-server` on a URL with a custom prefix
 
-The `--server-base-url` config option enables hosting your `pypi-server` deployment behind a URL prefix.  
+The `--server-base-url` config option enables hosting your `pypi-server` deployment behind a URL prefix.
 
 It can come handy when you are exposing `pypi-server` through a proxy or ingress.
 
@@ -1164,7 +1165,7 @@ It can come handy when you are exposing `pypi-server` through a proxy or ingress
 
 1. And it is accessible at the following URL:
 
-  ```bash
+   ```bash
    $ curl http://localhost:8080/prefix/
    <html lang="en">
    <head>
