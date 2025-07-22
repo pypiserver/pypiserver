@@ -124,6 +124,9 @@ class DEFAULTS:
     PORT = 8080
     SERVER_METHOD = "auto"
     BACKEND = "auto"
+    SERVER_BASE_URL = (
+        "/"  # if server need to served under example.com/<SERVER_BASE_URL>
+    )
 
 
 def auth_arg(arg: str) -> t.List[str]:
@@ -518,6 +521,14 @@ def get_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    run_parser.add_argument(
+        "--server-base-url",
+        default=DEFAULTS.SERVER_BASE_URL,
+        help=(
+            "Serve all routes under SERVER_BASE_URL prefix (default: {DEFAULTS.SERVER_BASE_URL})"
+        ),
+    )
+
     update_parser = subparsers.add_parser(
         "update",
         help=textwrap.dedent(
@@ -723,6 +734,7 @@ class RunConfig(_ConfigCommon):
         log_req_frmt: str,
         log_res_frmt: str,
         log_err_frmt: str,
+        server_base_url: str,
         auther: t.Optional[t.Callable[[str, str], bool]] = None,
         **kwargs: t.Any,
     ) -> None:
@@ -742,6 +754,7 @@ class RunConfig(_ConfigCommon):
         self.log_req_frmt = log_req_frmt
         self.log_res_frmt = log_res_frmt
         self.log_err_frmt = log_err_frmt
+        self.server_base_url = server_base_url
         # Derived properties
         self._derived_properties = self._derived_properties + ("auther",)
         self.auther = self.get_auther(auther)
@@ -767,6 +780,7 @@ class RunConfig(_ConfigCommon):
             "log_req_frmt": namespace.log_req_frmt,
             "log_res_frmt": namespace.log_res_frmt,
             "log_err_frmt": namespace.log_err_frmt,
+            "server_base_url": namespace.server_base_url,
         }
 
     def get_auther(
