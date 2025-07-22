@@ -154,9 +154,9 @@ Table of Contents
 
    ```text
    usage: pypi-server [-h] [-v] [--log-file FILE] [--log-stream STREAM]
-                     [--log-frmt FORMAT] [--hash-algo HASH_ALGO]
-                     [--backend {auto,simple-dir,cached-dir}] [--version]
-                     {run,update} ...
+                      [--log-frmt FORMAT] [--hash-algo HASH_ALGO]
+                      [--backend {auto,simple-dir,cached-dir}] [--version]
+                      {run,update} ...
 
    start PyPI compatible package server serving packages from PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the command line, it uses the default ~/packages. pypiserver scans this directory recursively for packages. It skips packages and directories starting with a dot. Multiple package directories may be specified.
 
@@ -169,7 +169,7 @@ Table of Contents
                            printed to stdout for introspection or pipelining. See
                            the `-x` option for updating packages directly.
 
-   optional arguments:
+   options:
      -h, --help            show this help message and exit
      -v, --verbose         Enable verbose logging; repeat for more verbosity.
      --log-file FILE       Write logging info into this FILE, as well as to
@@ -208,12 +208,13 @@ usage: pypi-server run [-h] [-v] [--log-file FILE] [--log-stream STREAM]
                        [-o] [--welcome HTML_FILE] [--cache-control AGE]
                        [--log-req-frmt FORMAT] [--log-res-frmt FORMAT]
                        [--log-err-frmt FORMAT]
-                       [package_directory [package_directory ...]]
+                       [--server-base-url SERVER_BASE_URL]
+                       [package_directory ...]
 
 positional arguments:
   package_directory     The directory from which to serve packages.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -v, --verbose         Enable verbose logging; repeat for more verbosity.
   --log-file FILE       Write logging info into this FILE, as well as to
@@ -295,7 +296,9 @@ optional arguments:
   --log-err-frmt FORMAT
                         A format-string selecting Http-Error properties to
                         log; set to '%s' to see them all.
-
+  --server-base-url SERVER_BASE_URL
+                        Serve all routes under SERVER_BASE_URL prefix
+                        (default: {DEFAULTS.SERVER_BASE_URL})
 ```
 
 ### More details about pypi-server update
@@ -308,12 +311,12 @@ usage: pypi-server update [-h] [-v] [--log-file FILE] [--log-stream STREAM]
                           [--backend {auto,simple-dir,cached-dir}] [--version]
                           [-x] [-d DOWNLOAD_DIRECTORY] [-u]
                           [--blacklist-file IGNORELIST_FILE]
-                          [package_directory [package_directory ...]]
+                          [package_directory ...]
 
 positional arguments:
   package_directory     The directory from which to serve packages.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -v, --verbose         Enable verbose logging; repeat for more verbosity.
   --log-file FILE       Write logging info into this FILE, as well as to
@@ -1146,6 +1149,31 @@ bottle.run(app=app, host="0.0.0.0", port=8080, server="auto")
 ```
 
 Try **curl <http://localhost:8080/action/health>**
+
+### Exposing `pypi-server` on a custom prefix URL
+
+The `--server-base-url` config option enables hosting your `pypi-server` deployment behind a URL prefix.  
+
+It can come handy when you are exposing `pypi-server` through a proxy or ingress.
+
+1. Start the server with a custom URL prefix:
+
+   ```bash
+   pypi-server run --server-base-url /prefix/
+   ```
+
+1. And it is accessible at the following URL:
+
+  ```bash
+   $ curl http://localhost:8080/prefix/
+   <html lang="en">
+   <head>
+     <meta charset="utf-8">
+     <title>Welcome to pypiserver!</title>
+   </head>
+   <body>
+   # ...
+   ```
 
 ## Sources
 

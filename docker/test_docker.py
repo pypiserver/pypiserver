@@ -742,7 +742,7 @@ class TestServerPrefix:
     @pytest.fixture(scope="class")
     def upload_mypkg(
         self,
-        container: ContainerInfo,  # pylint: disable=unused-argument
+        container: ContainerInfo,
         mypkg_paths: t.Dict[str, Path],
     ) -> None:
         """Upload mypkg to the container."""
