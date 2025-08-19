@@ -8,4 +8,4 @@ bcrypt==3.2.0
 # whatever bottle chooses as a default. Since the wsgiref server is not
 # production-ready, install waitress as a fallback for these cases.
 waitress==2.1.2
-watchdog==1.0.2
+watchdog==6.0.0
