@@ -3,18 +3,27 @@
 import re
 from pathlib import Path
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 tests_require = [
     "pytest>=2.3",
     "tox",
     "twine",
-    "pip>=7",
     "passlib>=1.6",
     "webtest",
+    "build>=1.2.0;python_version>='3.8'",
 ]
 
-setup_requires = ["setuptools", "setuptools-git >= 0.3", "wheel >= 0.25.0"]
+setup_requires = [
+    "setuptools",
+    "setuptools-git>=0.3",
+    "wheel>=0.25.0",
+]
+install_requires = [
+    "pip>=7",
+    "packaging>=23.2",
+    "importlib_resources;python_version>'3.8' and python_version<'3.12'",
+]
 
 
 def read_file(rel_path: str):
@@ -40,11 +49,13 @@ def get_version():
 setup(
     name="pypiserver",
     description="A minimal PyPI server for use with pip/easy_install.",
-    long_description=read_file("README.rst"),
+    long_description=read_file("README.md"),
+    long_description_content_type="text/markdown",
     version=get_version(),
-    packages=["pypiserver"],
+    packages=find_packages(include=["pypiserver", "pypiserver.*"]),
     package_data={"pypiserver": ["welcome.html"]},
-    python_requires=">=3.6",
+    python_requires=">=3.8",
+    install_requires=install_requires,
     setup_requires=setup_requires,
     extras_require={"passlib": ["passlib>=1.6"], "cache": ["watchdog"]},
     tests_require=tests_require,
@@ -66,12 +77,11 @@ setup(
         "Operating System :: POSIX",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Build Tools",

@@ -59,14 +59,6 @@ def test_fname_and_hash(tmp_path, hash_algo):
     assert pkgfile.fname_and_hash == f"{f.name}#{digester(pkgfile)}"
 
 
-def test_redirect_project_encodes_newlines():
-    """Ensure raw newlines are url encoded in the generated redirect."""
-    request = Namespace(custom_fullpath="/\nSet-Cookie:malicious=1;")
-    project = "\nSet-Cookie:malicious=1;"
-    newpath = core.get_bad_url_redirect_path(request, project)
-    assert "\n" not in newpath
-
-
 def test_normalize_pkgname_for_url_encodes_newlines():
     """Ensure newlines are url encoded in package names for urls."""
     assert "\n" not in normalize_pkgname_for_url("/\nSet-Cookie:malicious=1;")

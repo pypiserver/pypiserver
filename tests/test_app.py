@@ -1,7 +1,6 @@
 #! /usr/bin/env py.test
 
 # Builtin imports
-import logging
 import os
 import pathlib
 import xmlrpc.client as xmlrpclib
@@ -13,9 +12,8 @@ import webtest
 
 # Local Imports
 from tests.test_pkg_helpers import files, invalid_files
-from pypiserver import __main__, bottle, core, Bottle
-from pypiserver.backend import CachingFileBackend, SimpleFileBackend
-from pypiserver.config import DEFAULTS
+from pypiserver import __main__, bottle_wrapper, _app
+from pypiserver.backend import CachingFileBackend
 
 # Enable logging to detect any problems with it
 ##
@@ -38,7 +36,7 @@ def app(tmpdir):
 @pytest.fixture
 def testapp(app):
     """Return a webtest TestApp initiated with pypiserver app"""
-    bottle.debug(True)
+    bottle_wrapper.debug(True)
     return webtest.TestApp(app)
 
 
@@ -50,7 +48,7 @@ def root(tmpdir):
 
 @pytest.fixture
 def priv(app):
-    b = bottle.Bottle()
+    b = bottle_wrapper.Bottle()
     b.mount("/priv/", app)
     return b
 
@@ -105,9 +103,14 @@ def welcome_file_all_vars(request, root):
 def add_file_to_root(app):
     def file_adder(root, filename, content=""):
         root.join(filename).write(content)
-        backend = app.config.backend
-        if isinstance(backend, CachingFileBackend):
-            backend.cache_manager.invalidate_root_cache(root)
+        # bottle has deprecated the use of attribute access
+        # in configdicts
+        try:
+            backend = app.config.backend
+            if isinstance(backend, CachingFileBackend):
+                backend.cache_manager.invalidate_root_cache(root)
+        except AttributeError:
+            pass
 
     return file_adder
 
@@ -447,6 +450,7 @@ def test_simple_index_list_name_with_underscore_no_egg(root, testapp):
 def test_json_info(root, testapp):
     root.join("foobar-1.0.zip").write("")
     root.join("foobar-1.1.zip").write("")
+    root.join("foobar-1.1-linux.zip").write("")
     root.join("foobarX-1.1.zip").write("")
 
     resp = testapp.get("/foobar/json")
@@ -454,6 +458,8 @@ def test_json_info(root, testapp):
     assert "releases" in resp.json
     assert len(resp.json["info"]) == 1
     assert len(resp.json["releases"]) == 2
+    assert len(resp.json["releases"]["1.0"]) == 1
+    assert len(resp.json["releases"]["1.1"]) == 2
 
 
 def test_json_info_package_not_existing(root, testapp):
@@ -721,3 +727,13 @@ class TestRemovePkg:
         )
         assert resp.status == "404 Not Found"
         assert "foo (123) not found" in unescape(resp.text)
+
+
+def test_redirect_project_encodes_newlines():
+    """Ensure raw newlines are url encoded in the generated redirect."""
+    project = "\nSet-Cookie:malicious=1;"
+    request = bottle_wrapper.Request(
+        {"HTTP_X_FORWARDED_PROTO": "/\nSet-Cookie:malicious=1;"}
+    )
+    newpath = _app.get_bad_url_redirect_path(request, project)
+    assert "\n" not in newpath

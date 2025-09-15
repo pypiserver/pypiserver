@@ -4,12 +4,12 @@ import re as _re
 import sys
 import typing as t
 
-from pypiserver.bottle import Bottle
+from pypiserver.bottle_wrapper import Bottle
 from pypiserver.config import Config, RunConfig, strtobool
 
-version = __version__ = "1.5.1"
+version = __version__ = "2.4.0"
 __version_info__ = tuple(_re.split("[.-]", __version__))
-__updated__ = "2022-10-18 16:06:16"
+__updated__ = "2025-08-18 14:31:51"
 
 __title__ = "pypiserver"
 __summary__ = "A minimal PyPI server for use with pip/easy_install."

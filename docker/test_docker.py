@@ -18,12 +18,16 @@ import pytest
 
 PYPISERVER_PROCESS_NAME = "pypi-server"
 TEST_DEMO_PIP_PACKAGE = "pypiserver-mypkg"
+TEST_DEMO_HEAVY_PIP_PACKAGE = "pypiserver-mypkg-heavy"
 
 THIS_DIR = Path(__file__).parent
 ROOT_DIR = THIS_DIR.parent
 DOCKERFILE = ROOT_DIR / "Dockerfile"
 FIXTURES = ROOT_DIR / "fixtures"
-MYPKG_ROOT = FIXTURES / "mypkg"
+MYPKG_NAME = "mypkg"
+MYPKG_ROOT = FIXTURES / MYPKG_NAME
+MYPKG_HEAVY_NAME = "mypkg_heavy"
+MYPKG_HEAVY_ROOT = FIXTURES / MYPKG_HEAVY_NAME
 HTPASS_FILE = FIXTURES / "htpasswd.a.a"
 
 
@@ -35,82 +39,6 @@ HTPASS_FILE = FIXTURES / "htpasswd.a.a"
 # functions in a class to share common fixtures, but where we don't care about
 # the `self` instance.
 # pylint: disable=no-self-use
-
-
-@pytest.fixture(scope="session")
-def image() -> str:
-    """Build the docker image for pypiserver.
-
-    Return the tag.
-    """
-    tag = "pypiserver:test"
-    run(
-        "docker",
-        "build",
-        "--file",
-        str(DOCKERFILE),
-        "--tag",
-        tag,
-        str(ROOT_DIR),
-        cwd=ROOT_DIR,
-    )
-    return tag
-
-
-@pytest.fixture(scope="session")
-def mypkg_build() -> None:
-    """Ensure the mypkg test fixture package is build."""
-    # Use make for this so that it will skip the build step if it's not needed
-    run("make", "mypkg", cwd=ROOT_DIR)
-
-
-@pytest.fixture(scope="session")
-def mypkg_paths(
-    mypkg_build: None,  # pylint: disable=unused-argument
-) -> t.Dict[str, Path]:
-    """The path to the mypkg sdist file."""
-    dist_dir = Path(MYPKG_ROOT) / "dist"
-    assert dist_dir.exists()
-
-    sdist = dist_dir / "pypiserver_mypkg-1.0.0.tar.gz"
-    assert sdist.exists()
-
-    wheel = dist_dir / "pypiserver_mypkg-1.0.0-py2.py3-none-any.whl"
-    assert wheel.exists()
-
-    return {
-        "dist_dir": dist_dir,
-        "sdist": sdist,
-        "wheel": wheel,
-    }
-
-
-def wait_for_container(port: int) -> None:
-    """Wait for the container to be available."""
-    for _ in range(60):
-        try:
-            httpx.get(f"http://localhost:{port}").raise_for_status()
-        except (httpx.RequestError, httpx.HTTPStatusError):
-            time.sleep(1)
-        else:
-            return
-
-    # If we reach here, we've tried 60 times without success, meaning either
-    # the container is broken or it took more than about a minute to become
-    # functional, either of which cases is something we will want to look into.
-    raise RuntimeError("Could not connect to pypiserver container")
-
-
-def get_socket() -> int:
-    """Find a random, open socket and return it."""
-    # Close the socket automatically upon exiting the block
-    with contextlib.closing(
-        socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ) as sock:
-        # Bind to a random open socket >=1024
-        sock.bind(("", 0))
-        # Return the socket number
-        return sock.getsockname()[1]
 
 
 class RunReturn(t.NamedTuple):
@@ -143,7 +71,110 @@ def run(
     return result
 
 
-def uninstall_pkgs() -> None:
+@pytest.fixture(scope="session")
+def image() -> str:
+    """Build the docker image for pypiserver.
+
+    Return the tag.
+    """
+    tag = "pypiserver:test"
+    run(
+        "docker",
+        "build",
+        "--file",
+        str(DOCKERFILE),
+        "--tag",
+        tag,
+        str(ROOT_DIR),
+        cwd=ROOT_DIR,
+    )
+    return tag
+
+
+def wait_for_container(port: int, url_path: t.Optional[str] = None) -> None:
+    """Wait for the container to be available."""
+    for _ in range(60):
+        try:
+            httpx.get(
+                f"http://localhost:{port}" + (url_path if url_path else "")
+            ).raise_for_status()
+        except (httpx.RequestError, httpx.HTTPStatusError):
+            time.sleep(1)
+        else:
+            return
+
+    # If we reach here, we've tried 60 times without success, meaning either
+    # the container is broken or it took more than about a minute to become
+    # functional, either of which cases is something we will want to look into.
+    raise RuntimeError("Could not connect to pypiserver container")
+
+
+def get_socket() -> int:
+    """Find a random, open socket and return it."""
+    # Close the socket automatically upon exiting the block
+    with contextlib.closing(
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ) as sock:
+        # Bind to a random open socket >=1024
+        sock.bind(("", 0))
+        # Return the socket number
+        return sock.getsockname()[1]
+
+
+def _make_fixture_package(package: str) -> RunReturn:
+    # Use make for this so that it will skip the build step if it's not needed
+    return run("make", package, cwd=ROOT_DIR)
+
+
+def _get_fixture_package_paths(root: Path, package: str) -> t.Dict[str, Path]:
+    dist_dir = Path(root) / "dist"
+    sdist = dist_dir / f"pypiserver_{package}-1.0.0.tar.gz"
+    wheel = dist_dir / f"pypiserver_{package}-1.0.0-py2.py3-none-any.whl"
+
+    return {"dist_dir": dist_dir, "sdist": sdist, "wheel": wheel}
+
+
+@pytest.fixture(scope="session")
+def mypkg_build() -> None:
+    """Ensure the mypkg test fixture package is build."""
+    _make_fixture_package(MYPKG_NAME)
+
+
+@pytest.fixture(scope="session")
+def mypkg_paths(
+    mypkg_build: None,  # pylint: disable=unused-argument
+) -> t.Dict[str, Path]:
+    """The path to the mypkg sdist file."""
+    paths = _get_fixture_package_paths(MYPKG_ROOT, MYPKG_NAME)
+
+    assert paths["dist_dir"].exists()
+    assert paths["sdist"].exists()
+    assert paths["wheel"].exists()
+
+    return paths
+
+
+@pytest.fixture(scope="session")
+def mypkg_heavy_build() -> None:
+    """Ensure the mypkg_heavy test fixture package is build."""
+    _make_fixture_package(MYPKG_HEAVY_NAME)
+
+
+@pytest.fixture(scope="session")
+def mypkg_heavy_paths(
+    mypkg_heavy_build: None,  # pylint: disable=unused-argument
+) -> t.Dict[str, Path]:
+    """The path to the mypkg sdist file."""
+    paths = _get_fixture_package_paths(MYPKG_HEAVY_ROOT, MYPKG_HEAVY_NAME)
+
+    assert paths["dist_dir"].exists()
+    assert paths["sdist"].exists()
+    assert paths["wheel"].exists()
+
+    return paths
+
+
+def uninstall_packages() -> None:
     """Uninstall any packages we've installed."""
     res = run("pip", "freeze", capture=True)
     if any(
@@ -157,14 +188,18 @@ def uninstall_pkgs() -> None:
 def session_cleanup() -> t.Iterator[None]:
     """Deal with any pollution of the local env."""
     yield
-    uninstall_pkgs()
+    uninstall_packages()
 
 
 @pytest.fixture()
 def cleanup() -> t.Iterator[None]:
     """Clean up after tests that may have affected the env."""
     yield
-    uninstall_pkgs()
+    uninstall_packages()
+
+
+# Test cases
+# ----------
 
 
 class TestCommands:
@@ -396,6 +431,7 @@ class TestBasics:
             "-m",
             "pip",
             "install",
+            "--force-reinstall",
             "--index-url",
             f"http://localhost:{container.port}/simple",
             TEST_DEMO_PIP_PACKAGE,
@@ -562,6 +598,7 @@ class TestAuthed:
             "-m",
             "pip",
             "install",
+            "--force-reinstall",
             "--index-url",
             f"http://a:a@localhost:{self.HOST_PORT}/simple",
             TEST_DEMO_PIP_PACKAGE,
@@ -581,9 +618,10 @@ class TestAuthed:
             "-m",
             "pip",
             "install",
+            "--force-reinstall",
             "--no-cache",
             "--index-url",
-            f"http://localhost:{self.HOST_PORT}/simple",
+            f"http://foo:bar@localhost:{self.HOST_PORT}/simple",
             TEST_DEMO_PIP_PACKAGE,
             check_code=lambda c: c != 0,
         )
@@ -593,3 +631,151 @@ class TestAuthed:
         resp = httpx.get(f"http://localhost:{self.HOST_PORT}")
         assert resp.status_code == 200
         assert "pypiserver" in resp.text
+
+
+class TestHeavyPackage:
+    @pytest.fixture(scope="class")
+    def container(
+        self, request: pytest.FixtureRequest, image: str
+    ) -> t.Iterator[ContainerInfo]:
+        """Run the pypiserver container.
+
+        Returns the container ID.
+        """
+        port = get_socket()
+        args = (
+            "docker",
+            "run",
+            "--rm",
+            "--publish",
+            f"{port}:8080",
+            "--detach",
+            image,
+            "run",
+            "--passwords",
+            ".",
+            "--authenticate",
+            ".",
+        )
+        res = run(*args, capture=True)
+        wait_for_container(port)
+        container_id = res.out.strip()
+        yield ContainerInfo(container_id, port, args)
+        run("docker", "container", "rm", "-f", container_id)
+
+    @pytest.fixture(scope="class")
+    def upload_mypkg_heavy(
+        self,
+        container: ContainerInfo,
+        mypkg_heavy_paths: t.Dict[str, Path],
+    ) -> None:
+        """Upload mypkg to the container."""
+        run(
+            sys.executable,
+            "-m",
+            "twine",
+            "upload",
+            "--repository-url",
+            f"http://localhost:{container.port}",
+            "--username",
+            "a",
+            "--password",
+            "a",
+            f"{mypkg_heavy_paths['dist_dir']}/*",
+        )
+
+    @pytest.mark.usefixtures("upload_mypkg_heavy")
+    def test_download(self, container: ContainerInfo) -> None:
+        """Download mypkg_heavy from the container."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run(
+                sys.executable,
+                "-m",
+                "pip",
+                "download",
+                "--index-url",
+                f"http://localhost:{container.port}/simple",
+                "--dest",
+                tmpdir,
+                "pypiserver_mypkg_heavy",
+            )
+            assert any(
+                "pypiserver_mypkg_heavy" in path.name
+                for path in Path(tmpdir).iterdir()
+            )
+
+
+class TestServerPrefix:
+    prefix_url = "/prefix/"
+
+    @pytest.fixture(scope="class")
+    def container(
+        self, request: pytest.FixtureRequest, image: str
+    ) -> t.Iterator[ContainerInfo]:
+        """Run the pypiserver container.
+
+        Returns the container ID.
+        """
+        port = get_socket()
+        args = (
+            "docker",
+            "run",
+            "--rm",
+            "--publish",
+            f"{port}:8080",
+            "--detach",
+            image,
+            "run",
+            "--passwords",
+            ".",
+            "--authenticate",
+            ".",
+            "--server-base-url",
+            self.prefix_url,
+        )
+        res = run(*args, capture=True)
+        wait_for_container(port, url_path=self.prefix_url)
+        container_id = res.out.strip()
+        yield ContainerInfo(container_id, port, args)
+        run("docker", "container", "rm", "-f", container_id)
+
+    @pytest.fixture(scope="class")
+    def upload_mypkg(
+        self,
+        container: ContainerInfo,
+        mypkg_paths: t.Dict[str, Path],
+    ) -> None:
+        """Upload mypkg to the container."""
+        run(
+            sys.executable,
+            "-m",
+            "twine",
+            "upload",
+            "--repository-url",
+            f"http://localhost:{container.port}{self.prefix_url}",
+            "--username",
+            "a",
+            "--password",
+            "a",
+            f"{mypkg_paths['dist_dir']}/*",
+        )
+
+    @pytest.mark.usefixtures("upload_mypkg")
+    def test_download(self, container: ContainerInfo) -> None:
+        """Download mypkg from the container."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run(
+                sys.executable,
+                "-m",
+                "pip",
+                "download",
+                "--index-url",
+                f"http://localhost:{container.port}{self.prefix_url}simple",
+                "--dest",
+                tmpdir,
+                "pypiserver_mypkg",
+            )
+            assert any(
+                "pypiserver_mypkg" in path.name
+                for path in Path(tmpdir).iterdir()
+            )

@@ -1,0 +1,15 @@
+gevent>=1.1b4; python_version >= '3'
+httpx
+pip
+passlib>=1.6
+pytest>=6.2.2
+pytest-cov
+setuptools>=40.0,<71.0.0
+tox
+twine
+webtest
+wheel>=0.25.0
+build>=1.2.0; python_version >= '3.8'
+mdformat-gfm
+mdformat-frontmatter
+mdformat-footnote

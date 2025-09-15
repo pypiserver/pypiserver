@@ -1,6 +1,7 @@
 """
 Test module for app initialization
 """
+
 # Standard library imports
 import logging
 import pathlib
@@ -98,7 +99,7 @@ def test_backwards_compat_kwargs_conversion(
     ),
 )
 def test_backwards_compat_kwargs_duplicate_check(
-    kwargs: t.Dict[str, t.Any]
+    kwargs: t.Dict[str, t.Any],
 ) -> None:
     """Duplicate legacy and modern kwargs cause an error."""
     with pytest.raises(ValueError) as err:

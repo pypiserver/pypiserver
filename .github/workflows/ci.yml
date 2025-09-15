@@ -6,11 +6,14 @@ on:
   # This will run when any branch or tag is pushed
   push:
     branches:
-      - "master"
+      - "main"
     tags:
       - "v**"
   # Allowing to run on fork and other pull requests
   pull_request:
+
+env:
+  LAST_SUPPORTED_PYTHON: "3.12"
 
 jobs:
   test-python:
@@ -18,7 +21,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "pypy3.9"]  # "3.11-dev"
+        # make sure to align the `python-version`s in the Matrix with env.LAST_SUPPORTED_PYTHON
+        python-version: [
+            "3.8",
+            "3.9",
+            "3.10",
+            "pypy3.9",
+            "3.11",
+            "3.12",
+            "3.x", # make sure to test the current stable Python version
+          ]
 
     steps:
       - uses: actions/checkout@v3
@@ -43,11 +55,10 @@ jobs:
         uses: actions/setup-python@v4
         with:
           # Use the current version of Python
-          python-version: "3.x"
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
       - name: Install dependencies
         run: |
           pip install -r "requirements/dev.pip"
-          pip install types-pkg_resources # one of mypy required stubs
       - name: Check types
         # individual mypy files for now, until we get the rest
         # of the project typechecking
@@ -59,7 +70,22 @@ jobs:
       - name: Check formatting
         run: black --diff --check .
       - name: Validate README
-        run: ./bin/check_readme.sh
+        id: validate_readme
+        run: mdformat --check README.md
+        continue-on-error: true
+      - name: check mdformat result
+        run: |
+          if [ "${{ steps.validate_readme.outcome }}" == "failure" ]; then
+              echo "copy readme to /tmp/pypiserver"
+              mkdir -p /tmp/pypiserver
+              cp README.md /tmp/pypiserver
+              echo "README.md is not formatted correctly. Please run 'mdformat README.md' and commit the result."
+              mdformat /tmp/pypiserver/README.md
+              diff -u README.md /tmp/pypiserver/README.md
+              exit 1
+          else
+              echo "README.md is formatted correctly."
+          fi
 
   # Full-flow docker tests, again not python version dependent
   # We _could_ test this on MacOS, but it takes forever to get docker
@@ -75,7 +101,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           # Use the current version of Python
-          python-version: "3.x"
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
       - name: Install test dependencies
         run: pip install -r "requirements/test.pip"
       - name: Install package
@@ -97,77 +123,59 @@ jobs:
 
   ## PYPI
 
-  build-wheel-and-push-to-pypi:
+  create-pypi-wheels:
     runs-on: ubuntu-latest
     needs:
       - "tests"
-    # only if a tag is pushed
-    if: startsWith(github.event.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@master
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
-          python-version: 3.x
+          python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
+
+      - name: Install dev dependencies
+        run: pip install -r "requirements/dev.pip"
 
       - name: Build distribution _wheel_.
         run: |
           ./bin/package.sh
 
       - name: Publish distribution 📦 to PyPI.
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Push to PyPi only if a tag is pushed
+        if: startsWith(github.event.ref, 'refs/tags/v')
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
-          print_hash: true
+          print-hash: true
 
-  ## DOCKER
+  ## DOCKER (DOCKER HUB & CONTAINER REGISTRY)
 
-  # figure out which docker tags we need to push
-  docker-determine-tags:
+  create-docker-images:
     runs-on: "ubuntu-latest"
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-docker
+      cancel-in-progress: ${{ github.ref_type != 'tag' }}
+    env:
+      DOCKER_IMAGE_BASE: pypiserver/pypiserver
     needs:
       - "tests"
     steps:
       - uses: "actions/checkout@v3"
 
-      - uses: "actions/setup-python@v4"
+      - id: docker-metadata
+        uses: docker/metadata-action@v5
         with:
-          python-version: "3.x"
+          images: |
+            ${{ env.DOCKER_IMAGE_BASE }}
+            ${{ github.ref_type == 'tag' && format('ghcr.io/{0}', env.DOCKER_IMAGE_BASE)  || '' }}
+          tags: |
+            type=ref,event=pr
+            type=edge,event=branch,branch=main
+            type=raw,value=unstable,event=branch,branch=main
+            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{major}}.{{minor}}
 
-        # This script prints a JSON array of needed docker tags, depending on the
-        # ref. That array is then used to construct the matrix of the
-        # deploy-docker job
-      - name: "Get expected docker tags"
-        id: "tags"
-        run: >-
-          echo "::set-output name=tags::$(bin/ci_helper.py ${{ github.ref }} docker_tags)"
-
-        # This is needed because GH actions will fail on an empty matrix, so
-        # we need to be sure the `if` condition is false on the next job if
-        # the matrix will be empty. The script prints 'true' if the array is
-        # not empty, or 'false' otherwise.
-      - name: "Determine whether any tags are needed"
-        id: "has_tags"
-        run: >-
-          echo "::set-output name=has_tags::$(bin/ci_helper.py ${{ github.ref }} has_tags)"
-
-    outputs:
-      tags: "${{ steps.tags.outputs.tags }}"
-      has_tags: "${{ steps.has_tags.outputs.has_tags }}"
-
-  # Deploy any needed docker tags
-  deploy-docker:
-    runs-on: "ubuntu-latest"
-    needs:
-      - "docker-determine-tags"
-    if: "${{ fromJson(needs.docker-determine-tags.outputs.has_tags) }}"
-    strategy:
-      matrix:
-        tag: "${{ fromJson(needs.docker-determine-tags.outputs.tags) }}"
-    steps:
-      - uses: "actions/checkout@v3"
-
-      - name: "Cache Docker layers"
+      - name: Cache Docker layers
         uses: "actions/cache@v3"
         with:
           path: "/tmp/.buildx-cache"
@@ -175,27 +183,64 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      - name: "Login to Docker Hub"
-        uses: "docker/login-action@v1"
+      - name: Login to Docker Hub
+        if: github.ref_type == 'tag' || (github.ref_type == 'branch' && github.ref_name == 'main')
+        uses: "docker/login-action@v3"
         with:
           username: "${{ secrets.DOCKER_HUB_USER }}"
           password: "${{ secrets.DOCKER_HUB_TOKEN }}"
 
-      - name: "Set up Docker Buildx"
-        id: "buildx"
-        uses: "docker/setup-buildx-action@v1"
+      - name: Login to GitHub Container Registry
+        if: github.ref_type == 'tag' || (github.ref_type == 'branch' && github.ref_name == 'main')
+        uses: "docker/login-action@v3"
+        with:
+          registry: "ghcr.io"
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "Build and push"
-        id: "docker_build"
-        uses: "docker/build-push-action@v2"
+      - uses: "docker/setup-qemu-action@v3"
+      - id: buildx
+        uses: "docker/setup-buildx-action@v3"
+
+      - name: Build and push
+        id: docker_build
+        uses: "docker/build-push-action@v5"
         with:
           context: "./"
+          platforms: linux/amd64,linux/arm64
           file: "./Dockerfile"
           builder: "${{ steps.buildx.outputs.name }}"
-          push: true
-          tags: "pypiserver/pypiserver:${{ matrix.tag }}"
+          push: ${{ github.ref_type == 'tag' || (github.ref_type == 'branch' && github.ref_name == 'main') }}
+          tags: ${{ steps.docker-metadata.outputs.tags }}
+          labels: ${{ steps.docker-metadata.outputs.labels }}
           cache-from: "type=local,src=/tmp/.buildx-cache"
           cache-to: "type=local,dest=/tmp/.buildx-cache"
 
-      - name: "Image digest"
+      - name: Image digest
         run: "echo ${{ steps.docker_build.outputs.digest }}"
+
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@v3
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          repository: ${{ env.DOCKER_IMAGE_BASE }}
+
+  ## GITHUB RELEASE DRAFT
+
+  create_release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: "ubuntu-latest"
+    needs:
+      - "tests"
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: softprops/action-gh-release@v1
+        with:
+          body: 👋 This is a draft release. Please update it manually.
+          prerelease: false
+          draft: true
+          files: |
+            CHANGES.rst

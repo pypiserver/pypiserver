@@ -1,4 +1,4 @@
-""" NOT YET IMPLEMENTED
+"""NOT YET IMPLEMENTED
 
 Plugins are callable setuptools entrypoints that are invoked at startup that
 a developer may use to extend the behaviour of pypiserver. A plugin for example
@@ -18,6 +18,7 @@ with the following keyword arguments
 In the future, the plugin callable may be called with additional keyword
 arguments, so a plugin should accept a **kwargs variadic keyword argument.
 """
+
 from pypiserver.backend import SimpleFileBackend, CachingFileBackend
 from pypiserver import get_file_backend
 

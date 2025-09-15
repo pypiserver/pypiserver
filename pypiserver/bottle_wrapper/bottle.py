@@ -16,7 +16,7 @@ License: MIT (see LICENSE for details)
 from __future__ import with_statement
 
 __author__ = 'Marcel Hellkamp'
-__version__ = '0.12.18'
+__version__ = '0.12.25'
 __license__ = 'MIT'
 
 # The gevent server adapter needs to patch some modules before they are imported
@@ -78,7 +78,6 @@ except IOError:
 # Lots of stdlib and builtin differences.
 if py3k:
     import http.client as httplib
-    from inspect import getfullargspec as getargspec
     import _thread as thread
     from urllib.parse import urljoin, SplitResult as UrlSplitResult
     from urllib.parse import urlencode, quote as urlquote, unquote as urlunquote
@@ -93,6 +92,12 @@ if py3k:
     import pickle
     from io import BytesIO
     from configparser import ConfigParser
+    from inspect import getfullargspec
+    def getargspec(func):
+        spec = getfullargspec(func)
+        kwargs = makelist(spec[0]) + makelist(spec.kwonlyargs)
+        return kwargs, spec[1], spec[2], spec[3]
+
     basestring = str
     unicode = str
     json_loads = lambda s: json_lds(touni(s))
@@ -101,7 +106,6 @@ if py3k:
     def _raise(*a): raise a[0](a[1]).with_traceback(a[2])
 else: # 2.x
     import httplib
-    from inspect import getargspec
     import thread
     from urlparse import urljoin, SplitResult as UrlSplitResult
     from urllib import urlencode, quote as urlquote, unquote as urlunquote
@@ -111,6 +115,7 @@ else: # 2.x
     from imp import new_module
     from StringIO import StringIO as BytesIO
     from ConfigParser import SafeConfigParser as ConfigParser
+    from inspect import getargspec
     if py25:
         msg  = "Python 2.5 support may be dropped in future versions of Bottle."
         warnings.warn(msg, DeprecationWarning)
@@ -303,7 +308,7 @@ class Router(object):
     rule_syntax = re.compile('(\\\\*)'\
         '(?:(?::([a-zA-Z_][a-zA-Z_0-9]*)?()(?:#(.*?)#)?)'\
           '|(?:<([a-zA-Z_][a-zA-Z_0-9]*)?(?::([a-zA-Z_]*)'\
-            '(?::((?:\\\\.|[^\\\\>]+)+)?)?)?>))')
+            '(?::((?:\\\\.|[^\\\\>])+)?)?)?>))')
 
     def _itertokens(self, rule):
         offset, prefix = 0, ''
@@ -441,7 +446,7 @@ class Router(object):
         nocheck = set(methods)
         for method in set(self.static) - nocheck:
             if path in self.static[method]:
-                allowed.add(verb)
+                allowed.add(method)
         for method in set(self.dyna_regexes) - allowed - nocheck:
             for combined, rules in self.dyna_regexes[method]:
                 match = combined(path)
@@ -560,7 +565,7 @@ class Route(object):
     def get_config(self, key, default=None):
         ''' Lookup a config field and return its value, first checking the
             route.config, then route.app.config.'''
-        for conf in (self.config, self.app.conifg):
+        for conf in (self.config, self.app.config):
             if key in conf: return conf[key]
         return default
 
@@ -849,17 +854,19 @@ class Bottle(object):
         return tob(template(ERROR_PAGE_TEMPLATE, e=res))
 
     def _handle(self, environ):
-        path = environ['bottle.raw_path'] = environ['PATH_INFO']
-        if py3k:
-            try:
-                environ['PATH_INFO'] = path.encode('latin1').decode('utf8')
-            except UnicodeError:
-                return HTTPError(400, 'Invalid path string. Expected UTF-8')
-
         try:
+
             environ['bottle.app'] = self
             request.bind(environ)
             response.bind()
+
+            path = environ['bottle.raw_path'] = environ['PATH_INFO']
+            if py3k:
+                try:
+                    environ['PATH_INFO'] = path.encode('latin1').decode('utf8')
+                except UnicodeError:
+                    return HTTPError(400, 'Invalid path string. Expected UTF-8')
+
             try:
                 self.trigger_hook('before_request')
                 route, args = self.router.match(environ)
@@ -1088,6 +1095,7 @@ class BaseRequest(object):
             :class:`FormsDict`. All keys and values are strings. File uploads
             are stored separately in :attr:`files`. """
         forms = FormsDict()
+        forms.recode_unicode = self.POST.recode_unicode
         for name, item in self.POST.allitems():
             if not isinstance(item, FileUpload):
                 forms[name] = item
@@ -1111,6 +1119,7 @@ class BaseRequest(object):
 
         """
         files = FormsDict()
+        files.recode_unicode = self.POST.recode_unicode
         for name, item in self.POST.allitems():
             if isinstance(item, FileUpload):
                 files[name] = item
@@ -1236,15 +1245,16 @@ class BaseRequest(object):
                                          newline='\n')
         elif py3k:
             args['encoding'] = 'utf8'
+            post.recode_unicode = False
         data = cgi.FieldStorage(**args)
         self['_cgi.FieldStorage'] = data #http://bugs.python.org/issue18394#msg207958
         data = data.list or []
         for item in data:
-            if item.filename:
+            if item.filename is None:
+                post[item.name] = item.value
+            else:
                 post[item.name] = FileUpload(item.file, item.name,
                                              item.filename, item.headers)
-            else:
-                post[item.name] = item.value
         return post
 
     @property
@@ -1747,13 +1757,13 @@ class JSONPlugin(object):
         def wrapper(*a, **ka):
             try:
                 rv = callback(*a, **ka)
-            except HTTPError:
+            except HTTPResponse:
                 rv = _e()
 
             if isinstance(rv, dict):
                 #Attempt to serialize, raises exception on failure
                 json_response = dumps(rv)
-                #Set content type only if serialization successful
+                #Set content type only if serialization succesful
                 response.content_type = 'application/json'
                 return json_response
             elif isinstance(rv, HTTPResponse) and isinstance(rv.body, dict):
@@ -2328,7 +2338,7 @@ class ResourceManager(object):
         ''' Search for a resource and return an absolute file path, or `None`.
 
             The :attr:`path` list is searched in order. The first match is
-            returned. Symlinks are followed. The result is cached to speed up
+            returend. Symlinks are followed. The result is cached to speed up
             future lookups. '''
         if name not in self.cache or DEBUG:
             for path in self.path:
@@ -2586,7 +2596,7 @@ def parse_range_header(header, maxlen=0):
 
 def _parse_qsl(qs):
     r = []
-    for pair in qs.replace(';','&').split('&'):
+    for pair in qs.split('&'):
         if not pair: continue
         nv = pair.split('=', 1)
         if len(nv) != 2: nv.append('')
@@ -2690,6 +2700,7 @@ def auth_basic(check, realm="private", text="Access denied"):
     ''' Callback decorator to require HTTP auth (basic).
         TODO: Add route(check_auth=...) parameter. '''
     def decorator(func):
+        @functools.wraps(func)
         def wrapper(*a, **ka):
             user, password = request.auth or (None, None)
             if user is None or not check(user, password):
@@ -2793,10 +2804,11 @@ class WSGIRefServer(ServerAdapter):
 
 class CherryPyServer(ServerAdapter):
     def run(self, handler): # pragma: no cover
-        try:
-            from cheroot.wsgi import Server as CherryPyWSGIServer
-        except ImportError:
-            from cherrypy.wsgiserver import CherryPyWSGIServer
+        depr("The wsgi server part of cherrypy was split into a new "
+             "project called 'cheroot'. Use the 'cheroot' server "
+             "adapter instead of cherrypy.")
+        from cherrypy import wsgiserver # This will fail for CherryPy >= 9
+
         self.options['bind_addr'] = (self.host, self.port)
         self.options['wsgi_app'] = handler
 
@@ -2807,12 +2819,31 @@ class CherryPyServer(ServerAdapter):
         if keyfile:
             del self.options['keyfile']
 
-        server = CherryPyWSGIServer(**self.options)
+        server = wsgiserver.CherryPyWSGIServer(**self.options)
         if certfile:
             server.ssl_certificate = certfile
         if keyfile:
             server.ssl_private_key = keyfile
 
+        try:
+            server.start()
+        finally:
+            server.stop()
+
+
+class CherootServer(ServerAdapter):
+    def run(self, handler): # pragma: no cover
+        from cheroot import wsgi
+        from cheroot.ssl import builtin
+        self.options['bind_addr'] = (self.host, self.port)
+        self.options['wsgi_app'] = handler
+        certfile = self.options.pop('certfile', None)
+        keyfile = self.options.pop('keyfile', None)
+        chainfile = self.options.pop('chainfile', None)
+        server = wsgi.Server(**self.options)
+        if certfile and keyfile:
+            server.ssl_adapter = builtin.BuiltinSSLAdapter(
+                    certfile, keyfile, chainfile)
         try:
             server.start()
         finally:
@@ -2842,7 +2873,7 @@ class MeinheldServer(ServerAdapter):
 
 
 class FapwsServer(ServerAdapter):
-    """ Extremely fast webserver using libev. See http://www.fapws.org/ """
+    """ Extremely fast webserver using libev. See https://github.com/william-os4y/fapws3 """
     def run(self, handler): # pragma: no cover
         import fapws._evwsgi as evwsgi
         from fapws import base, config
@@ -2986,7 +3017,9 @@ class BjoernServer(ServerAdapter):
 
 class AutoServer(ServerAdapter):
     """ Untested. """
-    adapters = [WaitressServer, PasteServer, TwistedServer, CherryPyServer, WSGIRefServer]
+    adapters = [WaitressServer, PasteServer, TwistedServer, CherryPyServer,
+                CherootServer, WSGIRefServer]
+
     def run(self, handler):
         for sa in self.adapters:
             try:
@@ -3000,6 +3033,7 @@ server_names = {
     'wsgiref': WSGIRefServer,
     'waitress': WaitressServer,
     'cherrypy': CherryPyServer,
+    'cheroot': CherootServer,
     'paste': PasteServer,
     'fapws3': FapwsServer,
     'tornado': TornadoServer,
@@ -3455,7 +3489,7 @@ class StplParser(object):
     # Match the start tokens of code areas in a template
     _re_split = '(?m)^[ \t]*(\\\\?)((%(line_start)s)|(%(block_start)s))(%%?)'
     # Match inline statements (may contain python strings)
-    _re_inl = '(?m)%%(inline_start)s((?:%s|[^\'"\n]*?)+)%%(inline_end)s' % _re_inl
+    _re_inl = '(?m)%%(inline_start)s((?:%s|[^\'"\n])*?)%%(inline_end)s' % _re_inl
     _re_tok = '(?m)' + _re_tok
 
     default_syntax = '<% %> % {{ }}'
@@ -3657,7 +3691,7 @@ def view(tpl_name, **defaults):
                 tplvars.update(result)
                 return template(tpl_name, **tplvars)
             elif result is None:
-                return template(tpl_name, defaults)
+                return template(tpl_name, **defaults)
             return result
         return wrapper
     return decorator

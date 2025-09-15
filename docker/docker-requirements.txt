@@ -1,11 +1,11 @@
 # We use gunicorn as the default server in the docker container, with gevent
 # workers
-gevent==21.12.0
+gevent==24.11.1
 gunicorn==20.0.4
 passlib==1.7.4
 bcrypt==3.2.0
 # If a user overrides args but does not override the server arg, we fall back to
 # whatever bottle chooses as a default. Since the wsgiref server is not
 # production-ready, install waitress as a fallback for these cases.
-waitress==1.4.4
+waitress==2.1.2
 watchdog==1.0.2

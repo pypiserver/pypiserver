@@ -1,11 +1,11 @@
-FROM python:3.8-alpine3.12 as base
+FROM python:3.10-alpine3.20 AS base
 
 # Copy the requirements & code and install them
 # Do this in a separate image in a separate directory
 # to not have all the build stuff in the final image
 FROM base AS builder_gosu
 
-ENV GOSU_VERSION 1.12
+ENV GOSU_VERSION=1.12
 
 RUN apk add --no-cache --virtual .build-deps \
         ca-certificates \
@@ -51,7 +51,7 @@ RUN apk add --no-cache --virtual .build-deps \
 COPY pypiserver pypiserver
 COPY setup.cfg .
 COPY setup.py .
-COPY README.rst .
+COPY README.md .
 RUN python -m pip install --no-warn-script-location --prefix=/install .
 
 FROM base

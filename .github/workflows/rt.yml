@@ -1,0 +1,57 @@
+# Release Tag workflow
+
+name: release_tag
+
+# Performed actions:
+# - [x] infer the last RC version
+# - [x] run bumpver.py with the new version
+# - [x] push the commit and new tag
+# - [x] support dry-run mode
+
+on:
+  workflow_dispatch: # on manual trigger
+    inputs:
+      dryrun:
+        description: "Whether to run the release in a dry-run mode"
+        default: true
+        required: true
+        type: boolean
+
+jobs:
+  new-tag:
+    # TODO(tech-debt): cleanup after switching the default branch
+    if: ${{ github.ref_name == 'main' }}
+    runs-on: ubuntu-latest
+    env:
+      CHANGE_FILE: CHANGES.rst
+      EXPECTED_DIFF_COUNT: 1
+    steps:
+      - uses: actions/checkout@v3
+
+      - id: get-version
+        run: |
+          CHANGE_FILE=${{ env.CHANGE_FILE }}
+          LAST_VERSION=$(grep -m1 -E ' \([0-9]+-[0-9]+-[0-9]+\)$' ${CHANGE_FILE} | awk '{ print $1 }')
+          echo "👀 Version detected: ${LAST_VERSION}"
+          echo "LAST_VERSION=${LAST_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - id: install-requirements
+        run: pip install -r "requirements/dev.pip"
+
+      - name: run `bumpver`
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo ${{ inputs.dryrun && '💡 Running in dry-run mode' || 'Preparing release...' }}
+
+          CHANGE_FILE=${{ env.CHANGE_FILE }}
+          LAST_VERSION=${{ steps.get-version.outputs.LAST_VERSION }}
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          python3 bin/bumpver.py ${{ inputs.dryrun && '-n' || '' }} -t "Automated release ${LAST_VERSION}" ${LAST_VERSION}
+          git push --follow-tags
