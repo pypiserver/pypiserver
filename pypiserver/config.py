@@ -44,6 +44,7 @@ import subprocess
 import sys
 import textwrap
 import typing as t
+from functools import cached_property
 
 try:
     # `importlib_resources` is required for Python versions below 3.12
@@ -106,24 +107,13 @@ def legacy_strtoint(val: str) -> int:
 strtobool: t.Callable[[str], bool] = lambda val: bool(legacy_strtoint(val))
 
 
-def get_shell_result(cmd: str) -> str:
-    """Get the stdout of a shell command, returns empty string if it failed."""
-    try:
-        r = subprocess.run(cmd, shell=True, capture_output=True)
-    except TypeError:
-        # Compatible for Python3.6
-        r = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
-    if r.returncode == 0:
-        s = r.stdout.decode().strip()
-        if s:
-            return s
-    return ""
-
-
-def get_default_index() -> str:
+def get_pip_global_index() -> str:
     """Return the global config of index-url if it exists, otherwise `pypi.org`."""
     cmd = "pip config get global.index-url"
-    return get_shell_result(cmd) or "https://pypi.org/simple/"
+    r = subprocess.run(cmd.split(), capture_output=True, encoding="utf-8")
+    if r.returncode == 0:
+        return r.stdout.strip()
+    return ""
 
 
 # Specify defaults here so that we can use them in tests &c. and not need
@@ -132,7 +122,7 @@ class DEFAULTS:
     """Config defaults."""
 
     AUTHENTICATE = ["update"]
-    FALLBACK_URL = get_default_index()
+    FALLBACK_URL = "https://pypi.org/simple/"
     HEALTH_ENDPOINT = "/health"
     HASH_ALGO = "sha256"
     INTERFACE = "0.0.0.0"
@@ -448,7 +438,7 @@ def get_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument(
         "--fallback-url",
-        default=DEFAULTS.FALLBACK_URL,
+        default="",
         help=(
             "Redirect to FALLBACK_URL for packages not found in the local "
             "index."
@@ -766,7 +756,7 @@ class RunConfig(_ConfigCommon):
         self.authenticate = authenticate
         self.password_file = password_file
         self.disable_fallback = disable_fallback
-        self.fallback_url = fallback_url
+        self._fallback_url = fallback_url
         self.health_endpoint = health_endpoint
         self.server_method = server_method
         self.overwrite = overwrite
@@ -779,6 +769,14 @@ class RunConfig(_ConfigCommon):
         # Derived properties
         self._derived_properties = self._derived_properties + ("auther",)
         self.auther = self.get_auther(auther)
+
+    @cached_property
+    def fallback_url(self) -> str:
+        return (
+            self._fallback_url
+            or get_pip_global_index()
+            or DEFAULTS.FALLBACK_URL
+        )
 
     @classmethod
     def kwargs_from_namespace(
