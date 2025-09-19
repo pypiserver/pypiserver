@@ -44,7 +44,6 @@ import subprocess
 import sys
 import textwrap
 import typing as t
-from functools import cached_property
 
 try:
     # `importlib_resources` is required for Python versions below 3.12
@@ -108,10 +107,10 @@ strtobool: t.Callable[[str], bool] = lambda val: bool(legacy_strtoint(val))
 
 
 def get_pip_global_index() -> str:
-    """Return the global config of index-url if it exists, otherwise `pypi.org`."""
+    """Return the global config of index-url if it exists, otherwise return empty string."""
     cmd = "pip config get global.index-url"
     r = subprocess.run(cmd.split(), capture_output=True, encoding="utf-8")
-    if r.returncode == 0:
+    if r.returncode == 0 and r.stdout:  # Sometimes `r.stdout` is None
         return r.stdout.strip()
     return ""
 
@@ -438,7 +437,7 @@ def get_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument(
         "--fallback-url",
-        default="",
+        default="PYPI",
         help=(
             "Redirect to FALLBACK_URL for packages not found in the local "
             "index."
@@ -756,7 +755,9 @@ class RunConfig(_ConfigCommon):
         self.authenticate = authenticate
         self.password_file = password_file
         self.disable_fallback = disable_fallback
-        self._fallback_url = fallback_url
+        if not fallback_url or fallback_url == "PYPI":
+            fallback_url = get_pip_global_index() or DEFAULTS.FALLBACK_URL
+        self.fallback_url = fallback_url
         self.health_endpoint = health_endpoint
         self.server_method = server_method
         self.overwrite = overwrite
@@ -769,14 +770,6 @@ class RunConfig(_ConfigCommon):
         # Derived properties
         self._derived_properties = self._derived_properties + ("auther",)
         self.auther = self.get_auther(auther)
-
-    @cached_property
-    def fallback_url(self) -> str:
-        return (
-            self._fallback_url
-            or get_pip_global_index()
-            or DEFAULTS.FALLBACK_URL
-        )
 
     @classmethod
     def kwargs_from_namespace(
