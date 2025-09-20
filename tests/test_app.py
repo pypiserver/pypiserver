@@ -223,9 +223,9 @@ def test_favicon(testapp):
 def test_fallback(testapp):
     assert not testapp.app._pypiserver_config.disable_fallback
     resp = testapp.get("/simple/pypiserver/", status=302)
-    global_index = get_pip_global_index
+    global_index = get_pip_global_index().rstrip("/")
     if global_index:
-        assert resp.headers["Location"] == f"{global_index.rstrip('/')}/pypiserver/"
+        assert resp.headers["Location"] == f"{global_index}/pypiserver/"
     else:
         assert resp.headers["Location"] == "https://pypi.org/simple/pypiserver/"
 
