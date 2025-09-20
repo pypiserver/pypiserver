@@ -40,6 +40,7 @@ import io
 import logging
 import pathlib
 import re
+import subprocess
 import sys
 import textwrap
 import typing as t
@@ -103,6 +104,15 @@ def legacy_strtoint(val: str) -> int:
 
 
 strtobool: t.Callable[[str], bool] = lambda val: bool(legacy_strtoint(val))
+
+
+def get_pip_global_index() -> str:
+    """Return the global config of index-url if it exists, otherwise return empty string."""
+    cmd = "pip config get global.index-url"
+    r = subprocess.run(cmd.split(), capture_output=True, encoding="utf-8")
+    if r.returncode == 0 and r.stdout:  # Sometimes `r.stdout` is None
+        return r.stdout.strip()
+    return ""
 
 
 # Specify defaults here so that we can use them in tests &c. and not need
@@ -427,10 +437,12 @@ def get_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument(
         "--fallback-url",
-        default=DEFAULTS.FALLBACK_URL,
+        default="GLOBAL_INDEX/PYPI",
         help=(
             "Redirect to FALLBACK_URL for packages not found in the local "
-            "index."
+            "index. If FALLBACK_URL is not given on the command line, it uses "
+            "the global index of pip config. If global index not set, use "
+            "https://pypi.org/simple."
         ),
     )
     run_parser.add_argument(
@@ -745,6 +757,14 @@ class RunConfig(_ConfigCommon):
         self.authenticate = authenticate
         self.password_file = password_file
         self.disable_fallback = disable_fallback
+        if not disable_fallback:
+            if not fallback_url or fallback_url == "GLOBAL_INDEX/PYPI":
+                fallback_url = get_pip_global_index() or DEFAULTS.FALLBACK_URL
+            elif fallback_url == "PYPI":
+                fallback_url = DEFAULTS.FALLBACK_URL
+            elif fallback_url == "GLOBAL_INDEX":
+                fallback_url = get_pip_global_index()
+                assert fallback_url
         self.fallback_url = fallback_url
         self.health_endpoint = health_endpoint
         self.server_method = server_method
