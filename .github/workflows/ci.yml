@@ -13,7 +13,7 @@ on:
   pull_request:
 
 env:
-  LAST_SUPPORTED_PYTHON: "3.12"
+  LAST_SUPPORTED_PYTHON: "3.13"
 
 jobs:
   test-python:
@@ -29,13 +29,14 @@ jobs:
             "pypy3.9",
             "3.11",
             "3.12",
+            "3.13",
             "3.x", # make sure to test the current stable Python version
           ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -50,9 +51,9 @@ jobs:
     # support
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           # Use the current version of Python
           python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
@@ -96,9 +97,9 @@ jobs:
   test-docker:
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           # Use the current version of Python
           python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
@@ -128,8 +129,8 @@ jobs:
     needs:
       - "tests"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
 
@@ -160,7 +161,7 @@ jobs:
     needs:
       - "tests"
     steps:
-      - uses: "actions/checkout@v3"
+      - uses: actions/checkout@v5
 
       - id: docker-metadata
         uses: docker/metadata-action@v5
@@ -235,7 +236,7 @@ jobs:
     needs:
       - "tests"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
 
       - uses: softprops/action-gh-release@v1
         with:
