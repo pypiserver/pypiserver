@@ -7,6 +7,6 @@
 -r test.pip
 
 black
-docopt  # For `/bin/bumpver.py`.
+docopt-ng  # For `/bin/bumpver.py`.
 types-setuptools==75.8.0.20250225 # For mypy stubs
 mypy; implementation_name == 'cpython'

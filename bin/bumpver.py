@@ -34,12 +34,14 @@ EXAMPLE:
     bumpver -t 'Mostly model changes' 1.6.2b0
 
 """
+from __future__ import annotations
 
 import functools as fnt
 import os.path as osp
 import re
 import sys
 from datetime import datetime
+from typing import Generator
 
 import docopt
 
@@ -59,7 +61,7 @@ class CmdException(Exception):
     pass
 
 
-def get_current_date_info() -> (str, str):
+def get_current_date_info() -> tuple[str, str]:
     now = datetime.now()
     new_datetime = now.strftime("%Y-%m-%d %H:%M:%S%z")
     new_date = now.strftime("%Y-%m-%d")
@@ -67,12 +69,12 @@ def get_current_date_info() -> (str, str):
 
 
 @fnt.lru_cache()
-def read_txtfile(fpath):
+def read_txtfile(fpath: str) -> str:
     with open(fpath, "rt", encoding="utf-8") as fp:
         return fp.read()
 
 
-def extract_file_regexes(fpath, regexes):
+def extract_file_regexes(fpath: str, regexes: list[re.Pattern]) -> list[str]:
     """
     :param regexes:
         A sequence of regexes to "search", having a single capturing-group.
@@ -88,10 +90,12 @@ def extract_file_regexes(fpath, regexes):
             "\n  matches: %s" % (regexes, matches)
         )
 
-    return [m.group(1) for m in matches]
+    return [m.group(1) for m in matches]  # type:ignore[union-attr]
 
 
-def replace_substrings(files, subst_pairs):
+def replace_substrings(
+    files: list[str], subst_pairs: list[tuple[str, str]]
+) -> Generator[tuple[str, str, list[tuple[str, str, int]]]]:
     for fpath in files:
         txt = read_txtfile(fpath)
 
@@ -103,7 +107,7 @@ def replace_substrings(files, subst_pairs):
         yield (txt, fpath, replacements)
 
 
-def format_syscmd(cmd):
+def format_syscmd(cmd: str | list[str] | tuple[str, ...]) -> str:
     if isinstance(cmd, (list, tuple)):
         cmd = " ".join('"%s"' % s if " " in s else s for s in cmd)
     else:
@@ -112,7 +116,7 @@ def format_syscmd(cmd):
     return cmd
 
 
-def strip_ver2_commonprefix(ver1, ver2):
+def strip_ver2_commonprefix(ver1: str, ver2: str) -> str:
     cprefix = osp.commonprefix([ver1, ver2])
     if cprefix:
         striplen = cprefix.rfind(".")
@@ -125,7 +129,7 @@ def strip_ver2_commonprefix(ver1, ver2):
     return ver2
 
 
-def run_testcases():
+def run_testcases() -> None:
     import pytest
 
     retcode = pytest.main(PYTEST_ARGS)
@@ -135,7 +139,7 @@ def run_testcases():
         )
 
 
-def exec_cmd(cmd):
+def exec_cmd(cmd: str | list[str] | tuple[str, ...]) -> None:
     import subprocess as sbp
 
     err = sbp.call(cmd, stderr=sbp.STDOUT)
@@ -143,7 +147,9 @@ def exec_cmd(cmd):
         raise CmdException("Failed(%i) on: %s" % (err, format_syscmd(cmd)))
 
 
-def do_commit(new_ver, old_ver, dry_run, amend, ver_files):
+def do_commit(
+    new_ver: str, old_ver: str, dry_run: bool, amend: bool, ver_files: list[str]
+) -> Generator[str]:
     import pathlib
 
     cmt_msg = "chore(ver): bump %s-->%s" % (old_ver, new_ver)
@@ -164,7 +170,9 @@ def do_commit(new_ver, old_ver, dry_run, amend, ver_files):
             exec_cmd(cmd)
 
 
-def do_tag(tag, tag_msg, dry_run, force):
+def do_tag(
+    tag: str, tag_msg: str, dry_run: bool, force: bool
+) -> Generator[str]:
     cmd = ["git", "tag", tag, "-s", "-m", tag_msg]
     if force:
         cmd.append("--force")
@@ -177,8 +185,12 @@ def do_tag(tag, tag_msg, dry_run, force):
 
 
 def bumpver(
-    new_ver, dry_run=False, force=False, amend=False, tag_name_or_commit=None
-):
+    new_ver: str,
+    dry_run: bool = False,
+    force: bool = False,
+    amend: bool = False,
+    tag_name_or_commit: str | None = None,
+) -> Generator[str]:
     """
     :param tag_name_or_commit:
         if true, do `git commit`, if string, also `git tag` with that as msg.
@@ -237,8 +249,8 @@ def bumpver(
                 yield from do_tag(tag, tag_name_or_commit, dry_run, force)
 
 
-def main(*args):
-    opts = docopt.docopt(__doc__, argv=args)
+def main(*args: str) -> None:
+    opts = docopt.docopt(__doc__, argv=list(args))
 
     new_ver = opts["<new-ver>"]
 
