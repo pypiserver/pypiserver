@@ -93,7 +93,9 @@ def extract_file_regexes(fpath: str, regexes: list[re.Pattern]) -> list[str]:
     return [m.group(1) for m in matches]  # type:ignore[union-attr]
 
 
-def replace_substrings(files: list[str], subst_pairs: list[tuple[str, str]]) -> Generator[tuple[str, str, list[tuple[str, str, int]]]]:
+def replace_substrings(
+    files: list[str], subst_pairs: list[tuple[str, str]]
+) -> Generator[tuple[str, str, list[tuple[str, str, int]]]]:
     for fpath in files:
         txt = read_txtfile(fpath)
 
@@ -145,7 +147,9 @@ def exec_cmd(cmd: str | list[str] | tuple[str, ...]) -> None:
         raise CmdException("Failed(%i) on: %s" % (err, format_syscmd(cmd)))
 
 
-def do_commit(new_ver: str, old_ver: str, dry_run: bool, amend: bool, ver_files: list[str]) -> Generator[str]:
+def do_commit(
+    new_ver: str, old_ver: str, dry_run: bool, amend: bool, ver_files: list[str]
+) -> Generator[str]:
     import pathlib
 
     cmt_msg = "chore(ver): bump %s-->%s" % (old_ver, new_ver)
@@ -166,7 +170,9 @@ def do_commit(new_ver: str, old_ver: str, dry_run: bool, amend: bool, ver_files:
             exec_cmd(cmd)
 
 
-def do_tag(tag: str, tag_msg: str, dry_run: bool, force: bool) -> Generator[str]:
+def do_tag(
+    tag: str, tag_msg: str, dry_run: bool, force: bool
+) -> Generator[str]:
     cmd = ["git", "tag", tag, "-s", "-m", tag_msg]
     if force:
         cmd.append("--force")
@@ -179,7 +185,11 @@ def do_tag(tag: str, tag_msg: str, dry_run: bool, force: bool) -> Generator[str]
 
 
 def bumpver(
-    new_ver: str, dry_run: bool=False, force: bool=False, amend: bool=False, tag_name_or_commit: str|None=None
+    new_ver: str,
+    dry_run: bool = False,
+    force: bool = False,
+    amend: bool = False,
+    tag_name_or_commit: str | None = None,
 ) -> Generator[str]:
     """
     :param tag_name_or_commit:
