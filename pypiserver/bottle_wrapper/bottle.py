@@ -35,7 +35,7 @@ if __name__ == '__main__':
     if _cmd_options.server and _cmd_options.server.startswith('gevent'):
         import gevent.monkey; gevent.monkey.patch_all()
 
-import base64, cgi, email.utils, functools, hmac, itertools, mimetypes,\
+import base64, email.utils, functools, hmac, itertools, mimetypes,\
         os, re, subprocess, sys, tempfile, threading, time, warnings, hashlib
 
 from datetime import date as datedate, datetime, timedelta
@@ -43,6 +43,9 @@ from tempfile import TemporaryFile
 from traceback import format_exc, print_exc
 from unicodedata import normalize
 
+try: import legacy_cgi as cgi
+except ImportError: # pragma: no cover
+    import cgi
 
 try: from simplejson import dumps as json_dumps, loads as json_lds
 except ImportError: # pragma: no cover
