@@ -25,3 +25,8 @@ exclude =  '''
   )
 )
 '''
+
+[tool.ruff]
+line-length = 80
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401"]
