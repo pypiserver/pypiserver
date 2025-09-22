@@ -1,2 +1,2 @@
 [run]
-omit = pypiserver/bottle.py
+omit = pypiserver/bottle_wrapper/bottle.py

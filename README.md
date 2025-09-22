@@ -2,15 +2,16 @@
 
 # [**pypiserver - minimal PyPI server for use with pip/easy_install**](#pypiserver)
 
-[![pypi badge](https://img.shields.io/pypi/v/pypiserver.svg)](https://shields.io/)
-[![ci workflow](https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml/badge.svg)](https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml)
-[![Generic badge](https://img.shields.io/badge/python-3.6%7C3.7%7C3.8+-blue.svg)](https://pypi.org/project/pypiserver/)
-[![Generic badge](https://img.shields.io/badge/license-MIT%7Czlib/libpng-blue.svg)](https://raw.githubusercontent.com/pypiserver/pypiserver/main/LICENSE.txt)
+[![PyPi project badge](https://img.shields.io/pypi/v/pypiserver.svg)](https://pypi.org/project/pypiserver/)
+[![Python Versions](https://img.shields.io/badge/python-3.8%7C3.9+-blue.svg)](https://pypi.org/project/pypiserver/)
+[![CI workflow](https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml/badge.svg)](https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml)
+[![Licenses](https://img.shields.io/badge/license-MIT%7Czlib/libpng-blue.svg)](https://raw.githubusercontent.com/pypiserver/pypiserver/main/LICENSE.txt)
+[![Stable Docker Tag](https://img.shields.io/docker/v/pypiserver/pypiserver/latest?label=Docker%20Hub%20%28stable%29%0A)](https://hub.docker.com/r/pypiserver/pypiserver/tags)
 
 | name        | description                                                                                                                                                                                                                                                                                                             |
 | :---------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Version     | 2.3.0                                                                                                                                                                                                                                                                                                                   |
-| Date:       | 2024-11-23                                                                                                                                                                                                                                                                                                              |
+| Version     | 2.4.0                                                                                                                                                                                                                                                                                                                   |
+| Date:       | 2025-08-18                                                                                                                                                                                                                                                                                                              |
 | Source      | <https://github.com/pypiserver/pypiserver>                                                                                                                                                                                                                                                                              |
 | PyPI        | <https://pypi.org/project/pypiserver/>                                                                                                                                                                                                                                                                                  |
 | Tests       | <https://github.com/pypiserver/pypiserver/actions>                                                                                                                                                                                                                                                                      |
@@ -82,6 +83,7 @@ Table of Contents
     - [Custom Health Check Endpoint](#custom-health-check-endpoint)
       - [Configure a custom health endpoint by CLI arguments](#configure-a-custom-health-endpoint-by-cli-arguments)
       - [Configure a custom health endpoint by script](#configure-a-custom-health-endpoint-by-script)
+    - [Exposing `pypi-server` on a URL with a custom prefix](#exposing-pypi-server-on-a-url-with-a-custom-prefix)
   - [Sources](#sources)
   - [Known Limitations](#known-limitations)
   - [Similar Projects](#similar-projects)
@@ -91,20 +93,26 @@ Table of Contents
 
 ## Quickstart Installation and Usage
 
-**pypiserver** works with Python 3.6+ and PyPy3.
+> [!IMPORTANT]
+> **pypiserver** works with Python 3.8+ and PyPy3.
 
-Older Python versions may still work, but they are not tested.
+<!--  -->
 
-For legacy Python versions, use **pypiserver-1.x** series. Note that these are
-not officially supported, and will not receive bugfixes or new features.
+> [!WARNING]
+> Older Python versions may still work, but they are not tested.
+>
+> For legacy Python versions, use **pypiserver-1.x** series.\
+> Note that these are not officially supported, and will not receive bugfixes or new features.
+
+<!--  -->
 
 > [!TIP]
 >
-> The commands below work on a unix-like operating system with a posix shell.
+> The commands below work on a unix-like operating system with a posix shell.\
 > The **'~'** character expands to user's home directory.
-
-If you're using Windows, you'll have to use their "Windows counterparts".
-The same is true for the rest of this documentation.
+>
+> If you're using Windows, you'll have to use their "Windows counterparts".\
+> The same is true for the rest of this documentation.
 
 1. Install **pypiserver** with this command
 
@@ -147,9 +155,9 @@ The same is true for the rest of this documentation.
 
    ```text
    usage: pypi-server [-h] [-v] [--log-file FILE] [--log-stream STREAM]
-                     [--log-frmt FORMAT] [--hash-algo HASH_ALGO]
-                     [--backend {auto,simple-dir,cached-dir}] [--version]
-                     {run,update} ...
+                      [--log-frmt FORMAT] [--hash-algo HASH_ALGO]
+                      [--backend {auto,simple-dir,cached-dir}] [--version]
+                      {run,update} ...
 
    start PyPI compatible package server serving packages from PACKAGES_DIRECTORY. If PACKAGES_DIRECTORY is not given on the command line, it uses the default ~/packages. pypiserver scans this directory recursively for packages. It skips packages and directories starting with a dot. Multiple package directories may be specified.
 
@@ -162,7 +170,7 @@ The same is true for the rest of this documentation.
                            printed to stdout for introspection or pipelining. See
                            the `-x` option for updating packages directly.
 
-   optional arguments:
+   options:
      -h, --help            show this help message and exit
      -v, --verbose         Enable verbose logging; repeat for more verbosity.
      --log-file FILE       Write logging info into this FILE, as well as to
@@ -201,12 +209,13 @@ usage: pypi-server run [-h] [-v] [--log-file FILE] [--log-stream STREAM]
                        [-o] [--welcome HTML_FILE] [--cache-control AGE]
                        [--log-req-frmt FORMAT] [--log-res-frmt FORMAT]
                        [--log-err-frmt FORMAT]
-                       [package_directory [package_directory ...]]
+                       [--server-base-url SERVER_BASE_URL]
+                       [package_directory ...]
 
 positional arguments:
   package_directory     The directory from which to serve packages.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -v, --verbose         Enable verbose logging; repeat for more verbosity.
   --log-file FILE       Write logging info into this FILE, as well as to
@@ -288,7 +297,9 @@ optional arguments:
   --log-err-frmt FORMAT
                         A format-string selecting Http-Error properties to
                         log; set to '%s' to see them all.
-
+  --server-base-url SERVER_BASE_URL
+                        Serve all routes under SERVER_BASE_URL prefix
+                        (default: {DEFAULTS.SERVER_BASE_URL})
 ```
 
 ### More details about pypi-server update
@@ -301,12 +312,12 @@ usage: pypi-server update [-h] [-v] [--log-file FILE] [--log-stream STREAM]
                           [--backend {auto,simple-dir,cached-dir}] [--version]
                           [-x] [-d DOWNLOAD_DIRECTORY] [-u]
                           [--blacklist-file IGNORELIST_FILE]
-                          [package_directory [package_directory ...]]
+                          [package_directory ...]
 
 positional arguments:
   package_directory     The directory from which to serve packages.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -v, --verbose         Enable verbose logging; repeat for more verbosity.
   --log-file FILE       Write logging info into this FILE, as well as to
@@ -347,9 +358,12 @@ optional arguments:
 ## Client-Side Configurations
 
 Always specifying the pypi url on the command line is a bit
-cumbersome. Since **pypiserver** redirects **pip/easy_install** to the
-**pypi.org** index if it doesn't have a requested package, it is a
-good idea to configure them to always use your local pypi index.
+cumbersome.
+
+> [!TIP]
+> Since **pypiserver** redirects **pip/easy_install** to the **pypi.org** index
+> if it doesn't have a requested package, it is a good idea to configure them to
+> always use your local pypi index.
 
 ### Configuring pip
 
@@ -362,7 +376,7 @@ export PIP_EXTRA_INDEX_URL=http://localhost:8080/simple/
 
 or by adding the following lines to **~/.pip/pip.conf**
 
-```shell
+```ini
 [global]
 extra-index-url = http://localhost:8080/simple/
 ```
@@ -379,7 +393,7 @@ extra-index-url = http://localhost:8080/simple/
 For **easy_install** command you may set the following configuration in
 **~/.pydistutils.cfg**
 
-```shell
+```ini
 [easy_install]
 index_url = http://localhost:8080/simple/
 ```
@@ -387,10 +401,10 @@ index_url = http://localhost:8080/simple/
 ### Uploading Packages Remotely
 
 Instead of copying packages directly to the server's folder (i.e. with **scp**),
-you may use python tools for the task, e.g. **python setup.py upload**.
+you may use python tools for the task, e.g. **python setup.py upload**.\
 In that case, **pypiserver** is responsible for authenticating the upload-requests.
 
-> [!NOTE]
+> [!IMPORTANT]
 >
 > We strongly advise to ***password-protect*** your uploads!
 
@@ -405,14 +419,14 @@ To avoid lazy security decisions, read help for **-P** and **-a** options.
    (see next steps)
 
    ```shell
-       pip install passlib
+   pip install passlib
    ```
 
 1. Create the Apache **htpasswd** file with at least one user/password pair
    with this command (you'll be prompted for a password)
 
    ```shell
-       htpasswd -sc htpasswd.txt <some_username>
+   htpasswd -sc htpasswd.txt <some_username>
    ```
 
 > [!TIP]
@@ -433,9 +447,9 @@ To avoid lazy security decisions, read help for **-P** and **-a** options.
 > order to provide custom authentication. For example, to configure
 > pypiserver to authenticate using the [python-pam](https://pypi.org/project/python-pam/)
 >
-> ```shell
->     import pam
->     pypiserver.default_config(auther=pam.authenticate)
+> ```python
+> import pam
+> pypiserver.default_config(auther=pam.authenticate)
 > ```
 
 Please see [`Using Ad-hoc authentication providers`](#using-ad-hoc-authentication-providers) for more information.
@@ -444,34 +458,34 @@ Please see [`Using Ad-hoc authentication providers`](#using-ad-hoc-authenticatio
    (but user/password pairs can later be added or updated on the fly)
 
    ```shell
-       ./pypi-server run -p 8080 -P htpasswd.txt ~/packages &
+   ./pypi-server run -p 8080 -P htpasswd.txt ~/packages &
    ```
 
 #### Upload with setuptools
 
 1. On client-side, edit or create a **~/.pypirc** file with a similar content:
 
-   ```shell
-       [distutils]
-       index-servers =
-         pypi
-         local
+   ```ini
+   [distutils]
+   index-servers =
+     pypi
+     local
 
-       [pypi]
-       username:<your_pypi_username>
-       password:<your_pypi_passwd>
+   [pypi]
+   username:<your_pypi_username>
+   password:<your_pypi_passwd>
 
-       [local]
-       repository: http://localhost:8080
-       username: <some_username>
-       password: <some_passwd>
+   [local]
+   repository: http://localhost:8080
+   username: <some_username>
+   password: <some_passwd>
    ```
 
 1. Then from within the directory of the python-project you wish to upload,
    issue this command:
 
    ```shell
-       python setup.py sdist upload -r local
+   python setup.py sdist upload -r local
    ```
 
 #### Upload with twine
@@ -482,7 +496,7 @@ To avoid storing you passwords on disk, in clear text, you may either:
   like that
 
   ```shell
-    python setup.py sdist register -r local upload -r local
+  python setup.py sdist register -r local upload -r local
   ```
 
 - use *twine* library, which
@@ -491,13 +505,14 @@ To avoid storing you passwords on disk, in clear text, you may either:
   to **pypiserver**::
 
   ```shell
-    twine upload -r local --sign -identity user_name ./foo-1.zip
+  twine upload -r local --sign -identity user_name ./foo-1.zip
   ```
 
 ## Using the Docker Image
 
 Starting with version 1.2.5, official Docker images will be built for each
 push to `main`, each dev, alpha, or beta release, and each final release.
+
 The most recent full release will always be available under the tag **latest**,
 and the current `main` branch will always be available under the tag
 **unstable**.
@@ -508,7 +523,7 @@ You can always check to see what tags are currently available at our
 To run the most recent release of **pypiserver** with Docker, simply
 
 ```shell
-    docker run pypiserver/pypiserver:latest run
+docker run pypiserver/pypiserver:latest run
 ```
 
 This starts **pypiserver** serving packages from the **/data/packages**
@@ -522,7 +537,7 @@ Of course, just running a container isn't that interesting. To map
 port 80 on the host to port 8080 on the container::
 
 ```shell
-    docker run -p 80:8080 pypiserver/pypiserver:latest run
+docker run -p 80:8080 pypiserver/pypiserver:latest run
 ```
 
 You can now access your **pypiserver** at **localhost:80** in a web browser.
@@ -530,13 +545,13 @@ You can now access your **pypiserver** at **localhost:80** in a web browser.
 To serve packages from a directory on the host, e.g. **~/packages**
 
 ```shell
-    docker run -p 80:8080 -v ~/packages:/data/packages pypiserver/pypiserver:latest run
+docker run -p 80:8080 -v ~/packages:/data/packages pypiserver/pypiserver:latest run
 ```
 
 To authenticate against a local **.htpasswd** file::
 
 ```shell
-    docker run -p 80:8080 -v ~/.htpasswd:/data/.htpasswd pypiserver/pypiserver:latest run -P .htpasswd packages
+docker run -p 80:8080 -v ~/.htpasswd:/data/.htpasswd pypiserver/pypiserver:latest run -P .htpasswd packages
 ```
 
 You can also specify **pypiserver** to run as a Docker service using a
@@ -635,7 +650,7 @@ reverse-proxy as described below in `Behind a reverse proxy`, you can
 easily enable caching. For example, to allow nginx to cache up to
 10 gigabytes of data for up to 1 hour::
 
-```shell
+```nginx
 proxy_cache_path /data/nginx/cache
                   levels=1:2
                   keys_zone=pypiserver_cache:10m
@@ -670,7 +685,7 @@ an easy task without a third party tool such as *NSSM*.
 it is an excellent option for managing the pypiserver process. An example
 config file for **systemd** can be seen below
 
-```shell
+```ini
 [Unit]
 Description=A minimal PyPI server for use with pip/easy_install.
 After=network.target
@@ -709,7 +724,7 @@ More useful information about *systemd* can be found at
 package and as such, it provides excellent cross-platform support for process
 management. An example configuration file for **supervisor** is given below
 
-```shell
+```ini
 [program:pypi]
 command=/home/pypi/pypi-venv/bin/pypi-server run -p 7001 -P /home/pypi/.htpasswd /home/pypi/packages
 directory=/home/pypi
@@ -728,7 +743,7 @@ For Windows download [NSSM](https://nssm.cc/) from <https://nssm.cc> unzip to a
 desired location such as Program Files. Decide whether you are going
 to use `win32` or `win64`, and add that `exe` to environment `PATH`.
 
-Create a start_pypiserver.bat
+Create a `start_pypiserver.bat`
 
 ```shell
 pypi-server run -p 8080 C:\Path\To\Packages &
@@ -784,7 +799,7 @@ nssm start pypiserver
 - You may view all supported WSGI servers using the following interactive code
 
   ```python
-  >>> from pypiserver import bottle
+  >>> from pypiserver import bottle_wrapper as bottle
   >>> list(bottle.server_names.keys())
   ['cgi', 'gunicorn', 'cherrypy', 'eventlet', 'tornado', 'geventSocketIO',
   'rocket', 'diesel', 'twisted', 'wsgiref', 'fapws3', 'bjoern', 'gevent',
@@ -811,7 +826,7 @@ explained in [bottle's documentation](http://bottlepy.org/docs/dev/deployment.ht
 1. Adapt and place the following *Apache* configuration either into top-level scope,
    or inside some **`<VirtualHost>`** (contributed by Thomas Waldmann):
 
-   ```shell
+   ```apache
    WSGIScriptAlias   /     /yoursite/wsgi/pypiserver-wsgi.py
    WSGIDaemonProcess       pypisrv user=pypisrv group=pypisrv umask=0007 \
                            processes=1 threads=5 maximum-requests=500 \
@@ -826,7 +841,7 @@ explained in [bottle's documentation](http://bottlepy.org/docs/dev/deployment.ht
 
    or if using older **Apache < 2.4**, substitute the last part with this::
 
-   ```shell
+   ```apache
    <Directory /yoursite/wsgi >
        Order deny,allow
        Allow from all
@@ -838,14 +853,12 @@ explained in [bottle's documentation](http://bottlepy.org/docs/dev/deployment.ht
    (**pypisrv:pypisrv** in the example) have the read permission on it
 
    ```python
-
    import pypiserver
 
    conf = pypiserver.default_config(
        root =          "/yoursite/packages",
        password_file = "/yoursite/htpasswd", )
    application = pypiserver.app(**conf)
-
    ```
 
    > [!TIP]
@@ -894,27 +907,27 @@ of packages on different paths.
 The following example **paste.ini** could be used to serve stable and
 unstable packages on different paths
 
-```shell
-  [composite:main]
-  use = egg:Paste#urlmap
-  /unstable/ = unstable
-  / = stable
+```ini
+[composite:main]
+use = egg:Paste#urlmap
+/unstable/ = unstable
+/ = stable
 
-  [app:stable]
-  use = egg:pypiserver#main
-  root = ~/stable-packages
+[app:stable]
+use = egg:pypiserver#main
+root = ~/stable-packages
 
-  [app:unstable]
-  use = egg:pypiserver#main
-  root = ~/stable-packages
-      ~/unstable-packages
+[app:unstable]
+use = egg:pypiserver#main
+root = ~/stable-packages
+    ~/unstable-packages
 
-  [server:main]
-  use = egg:gunicorn#main
-  host = 0.0.0.0
-  port = 9000
-  workers = 5
-  accesslog = -
+[server:main]
+use = egg:gunicorn#main
+host = 0.0.0.0
+port = 9000
+workers = 5
+accesslog = -
 ```
 
 > [!NOTE]
@@ -938,7 +951,7 @@ You can run **pypiserver** behind a reverse proxy as well.
 
 Extend your nginx configuration
 
-```shell
+```nginx
 upstream pypi {
   server              pypiserver.example.com:12345 fail_timeout=0;
 }
@@ -959,7 +972,7 @@ As of pypiserver 1.3, you may also use the `X-Forwarded-Host` header in your
 reverse proxy config to enable changing the base URL. For example if you
 want to host pypiserver under a particular path on your server
 
-```shell
+```nginx
 upstream pypi {
   server              localhost:8000;
 }
@@ -981,7 +994,7 @@ Using a reverse proxy is the preferred way of getting pypiserver behind
 HTTPS. For example, to put pypiserver behind HTTPS on port 443, with
 automatic HTTP redirection, using `nginx`
 
-```shell
+```nginx
 upstream pypi {
   server               localhost:8000;
 }
@@ -1061,15 +1074,13 @@ these steps:
 
 1. Create a python-script along these lines
 
-   ```shell
-   $ cat > pypiserver-start.py
+   ```python
+   # pypiserver-start.py
    import pypiserver
-   from pypiserver import bottle
+   from pypiserver import bottle_wrapper as bottle
    import pam
    app = pypiserver.app(root='./packages', auther=pam.authenticate)
    bottle.run(app=app, host='0.0.0.0', port=80, server='auto')
-
-   [Ctrl+ D]
    ```
 
 1. Invoke the python-script to start-up **pypiserver**
@@ -1133,12 +1144,37 @@ pypi-server run --health-endpoint /action/health
 
 ```python
 import pypiserver
-from pypiserver import bottle
+from pypiserver import bottle_wrapper as bottle
 app = pypiserver.app(root="./packages", health_endpoint="/action/health")
 bottle.run(app=app, host="0.0.0.0", port=8080, server="auto")
 ```
 
 Try **curl <http://localhost:8080/action/health>**
+
+### Exposing `pypi-server` on a URL with a custom prefix
+
+The `--server-base-url` config option enables hosting your `pypi-server` deployment behind a URL prefix.
+
+It can come handy when you are exposing `pypi-server` through a proxy or ingress.
+
+1. Start the server with a custom URL prefix:
+
+   ```bash
+   pypi-server run --server-base-url /prefix/
+   ```
+
+1. And it is accessible at the following URL:
+
+   ```bash
+   $ curl http://localhost:8080/prefix/
+   <html lang="en">
+   <head>
+     <meta charset="utf-8">
+     <title>Welcome to pypiserver!</title>
+   </head>
+   <body>
+   # ...
+   ```
 
 ## Sources
 
@@ -1170,9 +1206,6 @@ The following limitations are known:
 - It accepts documentation uploads but does not save them to
   disk (see [#47](https://github.com/pypiserver/pypiserver/issues/47) for a
   discussion)
-- It does not handle misspelled packages as *pypi-repo* does,
-  therefore it is suggested to use it with **--extra-index-url** instead
-  of **--index-url** (see [#38](https://github.com/pypiserver/pypiserver/issues/38)).
 
 Please use Github's [bugtracker](https://github.com/pypiserver/pypiserver/issues)
 for other bugs you find.

@@ -4,6 +4,31 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.4.0 (2025-08-18)
+--------------------------
+
+- d7a9be6 ENH: integrating prefix server mounting option from #647 (#655)
+- 917a56c MAINT: fix toc in README.md (#654)
+- 0b6a351 MAINT: bottle down to 0.12.25 (#653)
+- 5f7ae4f MAINT: update Docker Hub description only on tags (#650)
+- 4dea916 MAINT: Remove obsolete known limitation relating to misspellings (#649)
+- 9038897 MAINT: remove unused `buildout` configs and related `bootstrap` script (#642)
+- e205083 ENH: wrap local `bottle` and allow overriding `MEMFILE_MAX` with an env variable (#636)
+- b0e9d6e FIX: `Dockerfile` syntax warnings (#639)
+- d63ac97 MAINT: brush up some `README` content (#638)
+- f5b4dca MAINT: remove support for Python 3.7 (end-of-life) (#637)
+
+2.3.2 (2024-11-24)
+--------------------------
+
+- 6e4ccd8 MAINT: use `importlib_resources` only when needed (#627)
+- 1e7d6ca MAINT: use the official `docker-meta` action instead of `ci-helper` (#625)
+
+2.3.1 (2024-11-23)
+--------------------------
+
+- db93d0f MAINT: Bump gevent from 21.12.0 to 24.11.1 in /docker
+
 2.3.0 (2024-11-23)
 --------------------------
 

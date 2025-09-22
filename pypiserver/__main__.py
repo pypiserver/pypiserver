@@ -160,7 +160,7 @@ def main(argv: t.Sequence[str] = None) -> None:
 
         gevent.monkey.patch_all()
 
-    from pypiserver import bottle
+    from pypiserver import bottle_wrapper as bottle
 
     bottle.debug(config.verbosity > 1)
     bottle._stderr = ft.partial(  # pylint: disable=protected-access
@@ -200,8 +200,15 @@ def main(argv: t.Sequence[str] = None) -> None:
             "Running bottle with selected server '%s'", config.server_method
         )
 
+    # We strip&check because bottle mount() will raise error if path has no segment.
+    if config.server_base_url.strip("/"):
+        main_app = bottle.Bottle()
+        main_app.mount(config.server_base_url, app)
+    else:
+        main_app = app
+
     bottle.run(
-        app=app,
+        app=main_app,
         host=config.host,
         port=config.port,
         server=config.server_method,

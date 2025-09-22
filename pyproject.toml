@@ -21,7 +21,7 @@ exclude =  '''
     | build
     | dist
     | venv
-    | pypiserver/bottle.py
+    | pypiserver/bottle_wrapper/bottle.py
   )
 )
 '''

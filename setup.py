@@ -3,7 +3,7 @@
 import re
 from pathlib import Path
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 tests_require = [
     "pytest>=2.3",
@@ -22,7 +22,7 @@ setup_requires = [
 install_requires = [
     "pip>=7",
     "packaging>=23.2",
-    "importlib_resources;python_version>'3.8'",
+    "importlib_resources;python_version>'3.8' and python_version<'3.12'",
 ]
 
 
@@ -52,9 +52,9 @@ setup(
     long_description=read_file("README.md"),
     long_description_content_type="text/markdown",
     version=get_version(),
-    packages=["pypiserver"],
+    packages=find_packages(include=["pypiserver", "pypiserver.*"]),
     package_data={"pypiserver": ["welcome.html"]},
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     install_requires=install_requires,
     setup_requires=setup_requires,
     extras_require={"passlib": ["passlib>=1.6"], "cache": ["watchdog"]},
@@ -77,6 +77,7 @@ setup(
         "Operating System :: POSIX",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",

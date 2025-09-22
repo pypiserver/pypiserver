@@ -1,11 +1,11 @@
-FROM python:3.10-alpine3.20 as base
+FROM python:3.10-alpine3.20 AS base
 
 # Copy the requirements & code and install them
 # Do this in a separate image in a separate directory
 # to not have all the build stuff in the final image
 FROM base AS builder_gosu
 
-ENV GOSU_VERSION 1.12
+ENV GOSU_VERSION=1.12
 
 RUN apk add --no-cache --virtual .build-deps \
         ca-certificates \

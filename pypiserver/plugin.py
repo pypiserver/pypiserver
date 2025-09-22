@@ -1,4 +1,4 @@
-""" NOT YET IMPLEMENTED
+"""NOT YET IMPLEMENTED
 
 Plugins are callable setuptools entrypoints that are invoked at startup that
 a developer may use to extend the behaviour of pypiserver. A plugin for example
