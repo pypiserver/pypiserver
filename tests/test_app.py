@@ -541,6 +541,19 @@ def test_upload_conflict_on_existing(root, testapp):
     assert resp.status_int == 409
     assert "Package 'foo_bar-1.0.tar.gz' already exists!" in unescape(resp.text)
 
+def test_upload_conflict_on_existing_for_twine_compatibility(root, testapp):
+    package = "foo_bar-1.0.tar.gz"
+    root.join("foo_bar-1.0.tar.gz").write("")
+
+    resp = testapp.post(
+        "/",
+        params={":action": "file_upload"},
+        upload_files=[("content", package, b"")],
+        headers={'User-Agent': 'twine'},
+        status=400,
+    )
+    assert resp.status_int == 400
+    assert "Package 'foo_bar-1.0.tar.gz' already exists!" in unescape(resp.text)
 
 @pytest.mark.parametrize(
     "package", [f[0] for f in files if f[1] and "/" not in f[0]]
