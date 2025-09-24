@@ -272,14 +272,16 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         args=["run", "-a", "list"],
         legacy_args=["-a", "list"],
         exp_config_type=RunConfig,
-        exp_config_values={"authenticate": ["list"]},
+        exp_config_values={"authenticate": {"list": None}},
     ),
     ConfigTestCase(
         case="Run: authenticate specified with multiple values",
         args=["run", "-a", "list, update,download"],
         legacy_args=["-a", "list, update,download"],
         exp_config_type=RunConfig,
-        exp_config_values={"authenticate": ["download", "list", "update"]},
+        exp_config_values={
+            "authenticate": {"download": None, "list": None, "update": None},
+        },
     ),
     ConfigTestCase(
         case="Run: authenticate specified with dot",
@@ -288,7 +290,7 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         legacy_args=["-a", ".", "-P", "."],
         exp_config_type=RunConfig,
         exp_config_values={
-            "authenticate": [],
+            "authenticate": {},
             "_test": lambda conf: bool(conf.auther("foo", "bar")) is True,
         },
     ),

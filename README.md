@@ -240,22 +240,32 @@ options:
                         Comma-separated list of (case-insensitive) actions to
                         authenticate (options: download, list, update;
                         default: update).
-                         
-                         Any actions not specified are not authenticated, so
-                         to authenticate downloads and updates, but allow
-                         unauthenticated viewing of the package list, you would
-                         use:
-                         
+                        
+                        Any actions not specified are not authenticated, so
+                        to authenticate downloads and updates, but allow
+                        unauthenticated viewing of the package list, you would
+                        use:
+                        
                           pypi-server -a 'download, update' -P
                           ./my_passwords.htaccess
-                         
+                        
                         To disable authentication, use:
-                         
+                        
                           pypi-server -a . -P .
-                         
+                        
+                        To restrict the action to specific users, follow the
+                        action with an equal sign and a colon-separated list of
+                        allowed users. To use a group, preceed the group name
+                        with an %. To allow any authenticated user to download
+                        but limit uploading to a specific group of uploaders,
+                        use:
+                        
+                          pypi-server -a 'download, update=%uploaders' -P
+                          ./passwords.txt -g ./groups.txt
+                        
                         See the `-P` option for configuring users and
-                        passwords.
-                         
+                        passwords. See the `-g` option for configuring groups.
+                        
                         Note that when uploads are not protected, the
                         `register` command is not necessary, but `~/.pypirc`
                         still needs username and password fields, even if
@@ -267,7 +277,10 @@ options:
                         To allow unauthorized access, use:
                          
                           pypi-server -a . -P .
-                         
+  -g, --groups GROUP_FILE
+                        Use apache-style group file to associate group names to
+                        a list of users. Only used when giving specific groups
+                        permission to perform certain (see -a option).
   --disable-fallback    Disable the default redirect to PyPI for packages not
                         found in the local index.
   --fallback-url FALLBACK_URL
