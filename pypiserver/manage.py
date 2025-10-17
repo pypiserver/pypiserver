@@ -6,7 +6,11 @@ import itertools
 import json
 import os
 import sys
-from distutils.version import LooseVersion
+try:
+    from distutils.version import LooseVersion
+except ImportError:
+    # distutils is deprecated in Python 3.12+, use packaging instead
+    from packaging.version import Version as LooseVersion
 from pathlib import Path
 from subprocess import call
 from urllib.error import URLError
