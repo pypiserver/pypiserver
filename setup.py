@@ -11,7 +11,7 @@ tests_require = [
     "twine",
     "passlib>=1.6",
     "webtest",
-    "build>=1.2.0;python_version>='3.8'",
+    "build>=1.2.0;python_version>='3.10'",
 ]
 
 setup_requires = [
@@ -22,7 +22,7 @@ setup_requires = [
 install_requires = [
     "pip>=7",
     "packaging>=23.2",
-    "importlib_resources;python_version>'3.8' and python_version<'3.12'",
+    "importlib_resources;python_version>'3.10' and python_version<'3.12'",
 ]
 
 
@@ -54,7 +54,7 @@ setup(
     version=get_version(),
     packages=find_packages(include=["pypiserver", "pypiserver.*"]),
     package_data={"pypiserver": ["welcome.html"]},
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=install_requires,
     setup_requires=setup_requires,
     extras_require={"passlib": ["passlib>=1.6"], "cache": ["watchdog"]},
@@ -77,8 +77,6 @@ setup(
         "Operating System :: POSIX",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
