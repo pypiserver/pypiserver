@@ -47,14 +47,14 @@ making it much easier to get a running index server.
 
 Table of Contents
 
-- [**pypiserver - minimal PyPI server for use with pip/easy\_install**](#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install)
+- [**pypiserver - minimal PyPI server for use with pip/easy_install**](#pypiserver---minimal-pypi-server-for-use-with-pipeasy_install)
 - [pypiserver](#pypiserver)
   - [Quickstart Installation and Usage](#quickstart-installation-and-usage)
     - [More details about pypi server run](#more-details-about-pypi-server-run)
     - [More details about pypi-server update](#more-details-about-pypi-server-update)
   - [Client-Side Configurations](#client-side-configurations)
     - [Configuring pip](#configuring-pip)
-    - [Configuring easy\_install](#configuring-easy_install)
+    - [Configuring easy_install](#configuring-easy_install)
     - [Uploading Packages Remotely](#uploading-packages-remotely)
       - [Apache Like Authentication (htpasswd)](#apache-like-authentication-htpasswd)
       - [Upload with setuptools](#upload-with-setuptools)
