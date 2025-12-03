@@ -182,7 +182,7 @@ def file_upload():
             http_code = 409
             # twine 1.7.0+ expects status 400 to match compatibility with pypi.org
             # see: https://github.com/pypa/twine/issues/1265
-            if "twine" in request.headers.get("User-Agent"):
+            if "twine" in request.headers.get("User-Agent", ""):
                 http_code = 400
 
             raise HTTPError(
