@@ -178,8 +178,15 @@ def file_upload():
                 f"Cannot upload {uf.raw_filename!r} since it already exists! \n"
                 "  You may start server with `--overwrite` option. "
             )
+
+            http_code = 409
+            # twine 1.7.0+ expects status 400 to match compatibility with pypi.org
+            # see: https://github.com/pypa/twine/issues/1265
+            if 'twine' in request.headers.get('User-Agent'):
+                http_code = 400
+
             raise HTTPError(
-                409,
+                http_code,
                 f"Package {uf.raw_filename!r} already exists!\n"
                 "  You may start server with `--overwrite` option.",
             )

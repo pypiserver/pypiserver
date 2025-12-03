@@ -286,7 +286,7 @@ options:
   --welcome HTML_FILE   Use the contents of HTML_FILE as a custom welcome
                         message on the home page.
   --cache-control AGE   Add "Cache-Control: max-age=AGE" header to package
-                        downloads. Pip 6+ requires this for caching.AGE is
+                        downloads. Pip 6+ requires this for caching. AGE is
                         specified in seconds.
   --log-req-frmt FORMAT
                         A format-string selecting Http-Request properties to
