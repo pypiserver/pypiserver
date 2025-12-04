@@ -145,7 +145,7 @@ def server_root(tmp_path_factory):
 @pytest.fixture(scope="module")
 def wheel_file(project, tmp_path_factory):
     distdir = tmp_path_factory.mktemp("dist")
-    if re.match("^3\.7", sys.version):
+    if re.match(r"^3\.7", sys.version):
         assert run_setup_py(project, f"bdist_wheel -d {distdir}") == 0
     else:
         assert (
