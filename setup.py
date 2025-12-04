@@ -23,6 +23,7 @@ install_requires = [
     "pip>=7",
     "packaging>=23.2",
     "importlib_resources;python_version>='3.10' and python_version<'3.12'",
+    "legacy-cgi; python_version>='3.13'",
 ]
 
 
@@ -80,6 +81,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Build Tools",
