@@ -3,7 +3,7 @@
 # [**pypiserver - minimal PyPI server for use with pip/easy_install**](#pypiserver)
 
 [![PyPi project badge](https://img.shields.io/pypi/v/pypiserver.svg)](https://pypi.org/project/pypiserver/)
-[![Python Versions](https://img.shields.io/badge/python-3.8%7C3.9+-blue.svg)](https://pypi.org/project/pypiserver/)
+[![Python Versions](https://img.shields.io/badge/python-3.10+-blue.svg)](https://pypi.org/project/pypiserver/)
 [![CI workflow](https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml/badge.svg)](https://github.com/pypiserver/pypiserver/actions/workflows/ci.yml)
 [![Licenses](https://img.shields.io/badge/license-MIT%7Czlib/libpng-blue.svg)](https://raw.githubusercontent.com/pypiserver/pypiserver/main/LICENSE.txt)
 [![Stable Docker Tag](https://img.shields.io/docker/v/pypiserver/pypiserver/latest?label=Docker%20Hub%20%28stable%29%0A)](https://hub.docker.com/r/pypiserver/pypiserver/tags)
@@ -94,7 +94,7 @@ Table of Contents
 ## Quickstart Installation and Usage
 
 > [!IMPORTANT]
-> **pypiserver** works with Python 3.8+ and PyPy3.
+> **pypiserver** works with Python 3.10+ and PyPy3.
 
 <!--  -->
 
@@ -286,7 +286,7 @@ options:
   --welcome HTML_FILE   Use the contents of HTML_FILE as a custom welcome
                         message on the home page.
   --cache-control AGE   Add "Cache-Control: max-age=AGE" header to package
-                        downloads. Pip 6+ requires this for caching.AGE is
+                        downloads. Pip 6+ requires this for caching. AGE is
                         specified in seconds.
   --log-req-frmt FORMAT
                         A format-string selecting Http-Request properties to
