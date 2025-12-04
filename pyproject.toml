@@ -25,3 +25,23 @@ exclude =  '''
   )
 )
 '''
+
+[tool.mypy]
+check_untyped_defs = true
+follow_imports = "silent"
+ignore_missing_imports = true
+show_column_numbers = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = [
+    'tests.*',
+    'test_docker.*',
+]
+disallow_untyped_decorators = false
