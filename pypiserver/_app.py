@@ -296,6 +296,11 @@ def simple(project):
     if project != normalized:
         return redirect(f"/simple/{normalized}/", 301)
 
+    # Check if the client accepts JSON format (PEP 691)
+    accept_header = request.headers.get('Accept', '')
+    if 'application/vnd.pypi.simple.v1+json' in accept_header:
+        return simple_json(project, normalized)
+
     packages = sorted(
         config.backend.find_project_packages(project),
         key=lambda x: (x.parsed_version, x.relfn),
@@ -315,12 +320,26 @@ def simple(project):
         for pkg in packages
     )
 
+    # Get PEP 708 metadata if available
+    pep708_meta = {}
+    if hasattr(config.backend, 'get_pep708_metadata'):
+        pep708_meta = config.backend.get_pep708_metadata(project)
+
+    # Add meta tags for PEP 708 if present
+    meta_tags = ""
+    if pep708_meta:
+        for url in pep708_meta.get("tracks", []):
+            meta_tags += f'<meta name="tracks" content="{url}">\n'
+        for url in pep708_meta.get("alternate-locations", []):
+            meta_tags += f'<meta name="alternate-locations" content="{url}">\n'
+
     tmpl = """<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Links for {{project}}</title>
+        {{!meta_tags}}
     </head>
     <body>
         <h1>Links for {{project}}</h1>
@@ -330,7 +349,7 @@ def simple(project):
     </body>
 </html>
     """
-    return template(tmpl, project=project, links=links)
+    return template(tmpl, project=project, links=links, meta_tags=meta_tags)
 
 
 @app.route("/packages/")
@@ -384,6 +403,44 @@ def server_static(filename):
 
     return HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
 
+
+def simple_json(project, normalized):
+    """Return PEP 691 simple API JSON format with PEP 708 support"""
+    packages = sorted(
+        config.backend.find_project_packages(project),
+        key=lambda x: (x.parsed_version, x.relfn),
+    )
+    if not packages:
+        if not config.disable_fallback:
+            return redirect(f"{config.fallback_url.rstrip('/')}/{project}/")
+        return HTTPError(404, f"Not Found ({normalized} does not exist)\n\n")
+
+    current_uri = request_fullpath(request)
+
+    files = []
+    for pkg in packages:
+        files.append({
+            "filename": os.path.basename(pkg.relfn),
+            "url": urljoin(current_uri, f"../../packages/{pkg.fname_and_hash}")
+        })
+
+    data = {
+        "name": project,
+        "files": files,
+        "meta": {"api-version": "1.1"}
+    }
+
+    # Get PEP 708 metadata if available
+    if hasattr(config.backend, 'get_pep708_metadata'):
+        pep708_meta = config.backend.get_pep708_metadata(project)
+        if pep708_meta:
+            if pep708_meta.get("tracks"):
+                data["tracks"] = pep708_meta["tracks"]
+            if pep708_meta.get("alternate-locations"):
+                data["alternate-locations"] = pep708_meta["alternate-locations"]
+
+    response.content_type = "application/json"
+    return dumps(data)
 
 @app.route("/:project/json")
 @auth("list")
