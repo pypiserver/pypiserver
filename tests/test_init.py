@@ -10,7 +10,6 @@ import typing as t
 # Third party imports
 import pytest
 
-
 # Local imports
 import pypiserver
 from pypiserver.config import Config
