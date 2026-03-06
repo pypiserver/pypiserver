@@ -1,31 +1,65 @@
 # pypi-server Makefile
-# --------------------
+# ********************
 # 
 # This Makefile contains various developer-oriented scripts
 
 # Dev utilities
 # =============
-.PHONY: cleanup
-cleanup: pyproject.toml
-	uv run isort pypiserver
-	uv run black pypiserver
+
+# Cleanups
+# --------
 
 .PHONY: clean-cache
-clean-cache: pyproject.toml
+clean-cache:
 	find . -type d -name "__pycache__" -exec rm -r {} +
 	find . -type f -name "*.pyc" -exec rm -f {} +
 	find . -type f -name "*.pyo" -exec rm -f {} +
 
+.PHONY: clean-build
+clean-build:
+	@echo ">>> 🧹 Cleaning build artifacts..."
+	rm -rf build/ dist/ *.egg-info .pytest_cache .config.cache
+	uv cache clean
+
+# Code style
+# ----------
+
+.PHONY: format
+format: pyproject.toml ./pypiserver
+	uv run isort pypiserver
+	uv run black pypiserver
+
 .PHONY: check
-check: pyproject.toml
+check: pyproject.toml ./pypiserver
 	uv run mypy pypiserver
 
-.PHONY: test
-test: pyproject.toml
-	uv run pytest
+# Testing
+# -------
 
-# TESTING FIXTURES
-# ================
+# Standard test run
+# :::::::::::::::::
+
+.PHONY: test
+test: pyproject.toml ./tests ./pypiserver
+	uv run pytest tests
+
+# Tests On Multiple Python Versions
+# :::::::::::::::::::::::::::::::::
+PY_VERSIONS := 3.10 3.11 3.12 3.13 3.14 pypy3
+
+.PHONY: test-all-python-versions
+test-all-python-versions test-px: $(addprefix test-,$(PY_VERSIONS))
+
+.PHONY: test-%
+test-%: pyproject.toml ./tests ./pypiserver
+	$(MAKE) clean-build
+	@echo ">>> 🧪 Running tests for Python $* ..."
+	uv run --isolated --python $* --group test pytest tests
+
+# ~~~~~~~~~~~~~~~~~~~~~~
+
+# DOCKER TESTING FIXTURES
+# =======================
 # These scripts are used to help with
 # building resources needed for testing
 

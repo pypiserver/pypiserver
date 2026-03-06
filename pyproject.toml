@@ -51,6 +51,20 @@ dependencies = [
 [project.optional-dependencies]
 passlib = ["passlib>=1.6"]
 cache = ["watchdog>=6.0.0"]
+testing = [
+  "build>=1.2.0 ; python_full_version >= '3.10'",
+  "gevent>=1.1b4 ; python_full_version >= '3'",
+  "httpx>=0.28.1",
+  "passlib>=1.6",
+  "pip>=26.0.1",
+  "pytest>=6.2.2",
+  "pytest-cov>=7.0.0",
+  "setuptools>=40.0,<81.0.0",
+  "tox>=4.48.1",
+  "twine>=6.2.0",
+  "webtest>=3.0.7",
+  "wheel>=0.25.0",
+]
 
 # --- Extra metadata ---
 
@@ -87,8 +101,10 @@ include = ["/pypiserver", "/README.md", "/LICENSE.txt"]
 
 # --- Development tools ---
 
+[tool.pytest]
+norecursedirs = ["bin", "parts", "develop-eggs", "eggs", "venv", ".*", "_*"]
+
 [tool.black]
-# Configuration for the Black autoformatter
 line-length = 80
 target-version = ['py36']
 exclude = '''
@@ -140,14 +156,14 @@ dev = [
   "isort>=8.0.1",
   "mypy>=1.19.1 ; implementation_name == 'cpython'",
   "types-setuptools>=82.0.0.20260210",
-]
-test = [
-  "build>=1.2.0 ; python_full_version >= '3.10'",
-  "gevent>=1.1b4 ; python_full_version >= '3'",
-  "httpx>=0.28.1",
   "mdformat-footnote>=0.1.3",
   "mdformat-frontmatter>=2.0.10",
   "mdformat-gfm>=1.0.0",
+]
+test = [
+  "build>=1.2.0 ; python_full_version >= '3.10'",
+  "gevent>=24.11.1 ; python_full_version >= '3'",
+  "httpx>=0.28.1",
   "passlib>=1.6",
   "pip>=26.0.1",
   "pytest>=6.2.2",
