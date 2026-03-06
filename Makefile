@@ -1,10 +1,33 @@
-##
-# pypiserver
-#
-# this makefile is used to help with building resources needed for testing
-#
-# @file
-# @version 0.1
+# pypi-server Makefile
+# --------------------
+# 
+# This Makefile contains various developer-oriented scripts
+
+# Dev utilities
+# =============
+.PHONY: cleanup
+cleanup: pyproject.toml
+	uv run isort pypiserver
+	uv run black pypiserver
+
+.PHONY: clean-cache
+clean-cache: pyproject.toml
+	find . -type d -name "__pycache__" -exec rm -r {} +
+	find . -type f -name "*.pyc" -exec rm -f {} +
+	find . -type f -name "*.pyo" -exec rm -f {} +
+
+.PHONY: check
+check: pyproject.toml
+	uv run mypy pypiserver
+
+.PHONY: test
+test: pyproject.toml
+	uv run pytest
+
+# TESTING FIXTURES
+# ================
+# These scripts are used to help with
+# building resources needed for testing
 
 SHELL = /bin/sh
 
@@ -16,7 +39,10 @@ MYPKG_HEAVY_SRC = $(MYPKG_HEAVY_DIR)/setup.py $(shell find $(MYPKG_HEAVY_DIR)/ -
 
 fixtures: mypkg mypkg_heavy
 
-# Build the test fixture package.
+# Basic Test Fixture
+# ------------------
+# Build the test fixture package
+
 mypkg: $(MYPKG_DIR)/dist/pypiserver_mypkg-1.0.0.tar.gz
 mypkg: $(MYPKG_DIR)/dist/pypiserver_mypkg-1.0.0-py2.py3-none-any.whl
 
@@ -25,9 +51,10 @@ $(MYPKG_DIR)/dist/pypiserver_mypkg-1.0.0.tar.gz: $(MYPKG_SRC)
 $(MYPKG_DIR)/dist/pypiserver_mypkg-1.0.0-py2.py3-none-any.whl: $(MYPKG_SRC)
 	cd $(MYPKG_DIR); python setup.py bdist_wheel
 
-# end
+# Heavy Test Fixture
+# ------------------
+# Build the heavy test fixture package
 
-# Build the heavy test fixture package.
 mypkg_heavy: $(MYPKG_HEAVY_DIR)/dist/pypiserver_mypkg_heavy-1.0.0.tar.gz
 mypkg_heavy: $(MYPKG_HEAVY_DIR)/dist/pypiserver_mypkg_heavy-1.0.0-py2.py3-none-any.whl
 
@@ -42,5 +69,3 @@ $(MYPKG_HEAVY_PLACEHOLDER_PATH): $(MYPKG_HEAVY_DIR)
 	echo '"""' > $(MYPKG_HEAVY_PLACEHOLDER_PATH)
 	dd if=/dev/urandom bs=150M count=1 | base64 >> $(MYPKG_HEAVY_PLACEHOLDER_PATH)
 	echo '"""' >> $(MYPKG_HEAVY_PLACEHOLDER_PATH)
-
-# end
