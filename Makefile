@@ -26,12 +26,15 @@ clean-build:
 
 .PHONY: format
 format: pyproject.toml ./pypiserver
-	uv run isort pypiserver
-	uv run black pypiserver
+	@echo ">>> 🎗️ Cleaning and formatting the source code"
+	uv run isort $(CHECK) pypiserver
+	uv run black $(CHECK) pypiserver
 
-.PHONY: check
-check: pyproject.toml ./pypiserver
+.PHONY: check-types
+check-types: pyproject.toml ./pypiserver
+	@echo ">>> 📋 Checking the Python types"
 	uv run mypy pypiserver
+	uv run mypy docker/test_docker.py tests/test_init.py
 
 # Testing
 # -------
