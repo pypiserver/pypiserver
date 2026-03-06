@@ -28,13 +28,28 @@ clean-build:
 format: pyproject.toml ./pypiserver
 	@echo ">>> 🎗️ Cleaning and formatting the source code"
 	uv run isort $(CHECK) pypiserver
-	uv run black $(CHECK) pypiserver
+	uv run black $(CHECK) $(DIFF) pypiserver
 
 .PHONY: check-types
-check-types: pyproject.toml ./pypiserver
+check-types: pyproject.toml ./pypiserver ./docker ./tests
 	@echo ">>> 📋 Checking the Python types"
 	uv run mypy pypiserver
 	uv run mypy docker/test_docker.py tests/test_init.py
+
+.PHONY: format-readme
+format-readme: pyproject.toml README.md
+	@echo ">>> 📜 Formatting README.md"
+	uv run mdformat $(CHECK) README.md
+
+.PHONY: format-readme-diff
+format-readme-diff: pyproject.toml README.md
+	@echo ">>> 📜 Checking README.md format differences"
+	@echo ">>> -- copy readme to /tmp/pypiserver"
+	@mkdir -p /tmp/pypiserver
+	@cp README.md /tmp/pypiserver
+	@$(MAKE) format-readme
+	diff -u README.md /tmp/pypiserver/README.md
+	@rm -rf /tmp/pypiserver/README.md
 
 # Testing
 # -------
@@ -56,7 +71,7 @@ test-all-python-versions test-px: $(addprefix test-,$(PY_VERSIONS))
 
 .PHONY: test-%
 test-%: pyproject.toml ./tests ./pypiserver
-	$(MAKE) clean-build
+	@$(MAKE) clean-build
 	@echo ">>> 🧪 Running tests for Python $* ..."
 	uv run --isolated --python $* --group test pytest tests
 
