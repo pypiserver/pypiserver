@@ -19,8 +19,8 @@ In the future, the plugin callable may be called with additional keyword
 arguments, so a plugin should accept a **kwargs variadic keyword argument.
 """
 
-from pypiserver.backend import SimpleFileBackend, CachingFileBackend
 from pypiserver import get_file_backend
+from pypiserver.backend import CachingFileBackend, SimpleFileBackend
 
 DEFAULT_PACKAGE_DIRECTORIES = ["~/packages"]
 

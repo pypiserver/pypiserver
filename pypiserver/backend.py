@@ -7,12 +7,12 @@ import os
 import typing as t
 from pathlib import Path
 
-from .cache import CacheManager, ENABLE_CACHING
+from .cache import ENABLE_CACHING, CacheManager
 from .core import PkgFile
 from .pkg_helpers import (
-    normalize_pkgname,
-    is_listed_path,
     guess_pkgname_and_version,
+    is_listed_path,
+    normalize_pkgname,
 )
 
 if t.TYPE_CHECKING:
