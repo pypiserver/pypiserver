@@ -110,6 +110,10 @@ exclude = '''
 )
 '''
 
+[tool.isort]
+profile = "black"
+extend_skip_glob = ["pypiserver/bottle_wrapper/*.py"]
+
 [tool.mypy]
 check_untyped_defs = true
 follow_imports = "silent"
@@ -133,6 +137,7 @@ disallow_untyped_decorators = false
 dev = [
   "black>=26.1.0",
   "docopt>=0.6.2",
+  "isort>=8.0.1",
   "mypy>=1.19.1 ; implementation_name == 'cpython'",
   "types-setuptools>=82.0.0.20260210",
 ]
