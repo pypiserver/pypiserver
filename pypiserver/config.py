@@ -65,12 +65,12 @@ except ImportError:
 
 
 from pypiserver.backend import (
-    SimpleFileBackend,
-    CachingFileBackend,
     Backend,
-    IBackend,
-    get_file_backend,
     BackendProxy,
+    CachingFileBackend,
+    IBackend,
+    SimpleFileBackend,
+    get_file_backend,
 )
 
 # The `passlib` requirement is optional, so we need to verify its import here.
