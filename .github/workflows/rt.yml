@@ -54,4 +54,9 @@ jobs:
           git config user.email github-actions@github.com
 
           python3 bin/bumpver.py ${{ inputs.dryrun && '-n' || '' }} -t "Automated release ${LAST_VERSION}" ${LAST_VERSION}
-          git push --follow-tags
+
+      - name: push tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ !(inputs.dryrun) }}
+        run: git push --follow-tags
