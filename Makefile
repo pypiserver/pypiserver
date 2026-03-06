@@ -40,8 +40,9 @@ check: pyproject.toml ./pypiserver
 # :::::::::::::::::
 
 .PHONY: test
-test: pyproject.toml ./tests ./pypiserver
-	uv run pytest tests
+test test-3.x: pyproject.toml ./tests ./pypiserver
+	@echo ">>> 🧪 Running tests for Current Python ..."
+	uv run --isolated --group test pytest tests
 
 # Tests On Multiple Python Versions
 # :::::::::::::::::::::::::::::::::

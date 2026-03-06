@@ -1212,7 +1212,7 @@ dev = [
 ]
 test = [
     { name = "build", marker = "python_full_version >= '3.10'", specifier = ">=1.2.0" },
-    { name = "gevent", marker = "python_full_version >= '3'", specifier = ">=1.1b4" },
+    { name = "gevent", marker = "python_full_version >= '3'", specifier = ">=24.11.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "passlib", specifier = ">=1.6" },
     { name = "pip", specifier = ">=26.0.1" },
