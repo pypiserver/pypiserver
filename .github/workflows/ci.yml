@@ -40,7 +40,6 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           version: "0.10.8"
-      - run: uv sync --locked --all-extras --test
       - name: 🧪 Run tests
         run: make test-${{ matrix.python-version }}
 
