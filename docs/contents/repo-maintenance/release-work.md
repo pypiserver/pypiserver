@@ -30,42 +30,42 @@ flowchart LR
 
 ## Process walkthrough
 
-> 🗺️ ***This description approximates the real GitHub workflows and steps.***  
-> 👀 *For a more detailed view, do check out the linked resources as you read.*
+> 🗺️ _**This description approximates the real GitHub workflows and steps.**_  
+> 👀 _For a more detailed view, do check out the linked resources as you read._
 
 ### Preparation 🌱
 
-> 🛠️ *These step are applicable only for maintainers.*
+> 🛠️ _These step are applicable only for maintainers._
 
 #### Release candidate ⭐️
 
-A new release candidate can be initiated ***manually** or **on a monthly schedule***.
+A new release candidate can be initiated _**manually** or **on a monthly schedule**_.
 
 This is done via the [`rc.yml`](../../../.github/workflows/rc.yml) GH
 Workflow's `workflow_dispatch` or `schedule` trigger.
 
 The workflow automatically prepares a list of changes for the `CHANGES.rst` and
-creates a new Pull Request *(rc PR)* named
+creates a new Pull Request _(rc PR)_ named
 `chore(auto-release-candidate-YYY-MM-DD)` including these draft change notes.
 
 #### Release notes 📝
 
 In the created rc PR, open the `CHANGES.rst` and:
 
-1. ***adjust the suggested changelog items***
-2. ***choose & set the next released version***
-3. ***set the right release date***
+1. _**adjust the suggested changelog items**_
+2. _**choose & set the next released version**_
+3. _**set the right release date**_
 
 Commit the changes and push them to the head branch of the rc PR.
 
 #### Confirmed tag ✅
 
-1. Once everything is looking good, ***approve and merge*** the rc PR.
+1. Once everything is looking good, _**approve and merge**_ the rc PR.
 
-    It will create the new *commit* with the updated `CHANGES.rst`
+    It will create the new _commit_ with the updated `CHANGES.rst`
     on the default branch.
 
-2. Next, to create a release tag, ***manually run*** the
+2. Next, to create a release tag, _**manually run**_ the
     [`rt.yml`](../../../.github/workflows/rt.yml) GH Workflow.
 
     First, it executes all the [`bumpver`](../../../bin/README.md) procedures.
@@ -76,27 +76,27 @@ Commit the changes and push them to the head branch of the rc PR.
 
 #### Code checks 🧪
 
-Once any *commmit* or *tag* is pushed to the default branch,
+Once any _commmit_ or _tag_ is pushed to the default branch,
 [`ci.yml`](../../../.github/workflows/ci.yml) GH Workflow automatically
-executes diverse code checks: e.g. *linting*, *formatting*, *tests*.
+executes diverse code checks: e.g. _linting_, _formatting_, _tests_.
 
 #### Build and pack 📦
 
 If all the checks are successful, [`ci.yml`](../../../.github/workflows/ci.yml)
-builds all the code artifacts: e.g. *wheels*, *docker images*.
+builds all the code artifacts: e.g. _wheels_, _docker images_.
 
 ### Deploy 🌳
 
 #### Publish to PyPi 🗃️
 
-> 🏷️ This happens only on new *version tags*.
+> 🏷️ This happens only on new _version tags_.
 
 Once everythig is built, [`ci.yml`](../../../.github/workflows/ci.yml) uploads
 the wheels to the [`pypiserver` PyPi project](https://pypi.org/project/pypiserver/).
 
 #### Publish to Docker Hub 🐳
 
-> 🏷️ Docker image *tags* are determined on the fly.
+> 🏷️ Docker image _tags_ are determined on the fly.
 
 If all is successful so far, [`ci.yml`](../../../.github/workflows/ci.yml) tags
 the built docker images and pushes them to the
@@ -104,20 +104,20 @@ the built docker images and pushes them to the
 
 #### Publish to GitHub Container Registry 🚀
 
-> 🏷️ Docker image *tags* are determined on the fly.
+> 🏷️ Docker image _tags_ are determined on the fly.
 
 For all `stable` (i.e. `latest`, tag, release ...) tags derived by
 [`ci.yml`](../../../.github/workflows/ci.yml) tags,
-the built docker images are *also* pushed to
+the built docker images are _also_ pushed to
 [`pypiserver` GitHub Container Registry](https://github.com/orgs/pypiserver/packages?repo_name=pypiserver).
 
 #### Publish a GitHub Release draft 📣
 
-> 🛠️ *This step is applicable only for maintainers.*  
-> 🏷️ This happens only on new *version tags*.  
+> 🛠️ _This step is applicable only for maintainers._  
+> 🏷️ This happens only on new _version tags_.  
 
 To make the release noticeable, [`ci.yml`](../../../.github/workflows/ci.yml)
-also creates a *draft*
+also creates a _draft_
 [GitHub Release entry in the `pypiserver` repository](https://github.com/pypiserver/pypiserver/releases).
 
-> 📝 Since it is a *draft*, the entry should be *manually* adjusted further.
+> 📝 Since it is a _draft_, the entry should be _manually_ adjusted further.

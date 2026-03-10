@@ -1,3 +1,0 @@
-# Just the absolutely necessary extra requirements for
-# running tests
--r test-requirements.txt

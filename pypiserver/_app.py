@@ -5,21 +5,21 @@ import re
 import xml.dom.minidom
 import xmlrpc.client as xmlrpclib
 import zipfile
-from collections import defaultdict
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from io import BytesIO
 from json import dumps
-from urllib.parse import urljoin, urlparse, quote
+from urllib.parse import quote, urljoin, urlparse
 
 from pypiserver.config import RunConfig
+
 from . import __version__
 from .bottle_wrapper import (
-    static_file,
+    Bottle,
+    HTTPError,
     redirect,
     request,
     response,
-    HTTPError,
-    Bottle,
+    static_file,
     template,
 )
 from .pkg_helpers import guess_pkgname_and_version, normalize_pkgname_for_url
