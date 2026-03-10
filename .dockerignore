@@ -1,9 +1,7 @@
 *
+!pyproject.toml
 !pypiserver
-!requirements
-!docker/docker-requirements.txt
 !docker/gunicorn.conf.py
 !docker/entrypoint.sh
 !README.md
-!setup.cfg
-!setup.py
+!LICENSE.txt

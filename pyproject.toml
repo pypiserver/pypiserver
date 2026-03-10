@@ -9,8 +9,8 @@ classifiers = [
   "Environment :: Web Environment",
   "Intended Audience :: Developers",
   "Intended Audience :: System Administrators",
-  "License :: OSI Approved :: BSD License",
   "License :: OSI Approved :: zlib/libpng License",
+  "License :: OSI Approved :: BSD License",
   "Operating System :: MacOS :: MacOS X",
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX",
@@ -20,6 +20,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   "Topic :: Software Development :: Build Tools",
@@ -49,22 +50,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-passlib = ["passlib>=1.6"]
-cache = ["watchdog>=6.0.0"]
-testing = [
-  "build>=1.2.0 ; python_full_version >= '3.10'",
-  "gevent>=1.1b4 ; python_full_version >= '3'",
-  "httpx>=0.28.1",
-  "passlib>=1.6",
-  "pip>=26.0.1",
-  "pytest>=6.2.2",
-  "pytest-cov>=7.0.0",
-  "setuptools>=40.0,<81.0.0",
-  "tox>=4.48.1",
-  "twine>=6.2.0",
-  "webtest>=3.0.7",
-  "wheel>=0.25.0",
-]
+passlib = ["passlib==1.7.4"]
+cache = ["watchdog==6.0.0"]
 
 # --- Extra metadata ---
 
@@ -85,8 +72,6 @@ main = "pypiserver:paste_app_factory"
 # --- Build system ---
 
 [build-system]
-# Minimum requirements for the build system to execute.
-# requires = ["setuptools", "wheel"] # PEP 508 specifications.
 requires = ["hatchling >= 1.26"]
 build-backend = "hatchling.build"
 
@@ -169,8 +154,19 @@ test = [
   "pytest>=6.2.2",
   "pytest-cov>=7.0.0",
   "setuptools>=40.0,<81.0.0",
-  "tox>=4.48.1",
   "twine>=6.2.0",
   "webtest>=3.0.7",
   "wheel>=0.25.0",
+]
+docker = [
+  # We use gunicorn as the default server in the docker container, with gevent workers
+  "gevent==24.11.1",
+  "gunicorn==20.0.4",
+  "passlib==1.7.4",
+  "bcrypt==3.2.0",
+  # If a user overrides args but does not override the server arg, we fall back to
+  # whatever bottle chooses as a default. Since the wsgiref server is not
+  # production-ready, install waitress as a fallback for these cases.
+  "waitress==3.0.2",
+  "watchdog==6.0.0",
 ]
