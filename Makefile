@@ -77,6 +77,13 @@ test-%: pyproject.toml ./tests ./pypiserver
 
 # ~~~~~~~~~~~~~~~~~~~~~~
 
+# Docker test run
+# :::::::::::::::
+
+.PHONY: test-docker
+test-docker: pyproject.toml ./docker/test_docker.py ./pypiserver
+	uv run --isolated --group test pytest docker/test_docker.py
+
 # DOCKER TESTING FIXTURES
 # =======================
 # These scripts are used to help with

@@ -11,4 +11,3 @@ run the tests with `sudo`.
 Tests are here rather than in `/tests` because there's no reason to run these
 tests as part of the usual `tox` process, which is run in CI against every
 supported Python version. We only need to run the Docker tests once.
-
