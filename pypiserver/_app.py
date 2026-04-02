@@ -23,10 +23,17 @@ from .bottle_wrapper import (
     template,
 )
 from .pkg_helpers import guess_pkgname_and_version, normalize_pkgname_for_url
+from .upload_time import format_upload_time
 
 log = logging.getLogger(__name__)
 config: RunConfig
 app = Bottle()
+
+PEP_691_JSON_CONTENT_TYPE = "application/vnd.pypi.simple.v1+json"
+PEP_691_JSON_ACCEPT_TYPES = (
+    PEP_691_JSON_CONTENT_TYPE,
+    "application/vnd.pypi.simple.latest+json",
+)
 
 
 def request_fullpath(request):
@@ -45,9 +52,40 @@ def get_bad_url_redirect_path(request, project):
     return uri
 
 
-class auth:
-    """decorator to apply authentication if specified for the decorated method & action"""
+def simple_project_url(current_uri, package):
+    return urljoin(current_uri, f"../../packages/{package.fname_and_hash}")
 
+
+def simple_project_hashes(package):
+    package.fname_and_hash
+    if not package.digest:
+        return {}
+
+    algo, sep, value = package.digest.partition("=")
+    if not sep or not value:
+        return {}
+    return {algo: value}
+
+
+def simple_project_file_json(current_uri, package):
+    assert package.fn is not None
+    assert package.relfn is not None
+    assert package.upload_time is not None
+
+    return {
+        "filename": os.path.basename(package.relfn),
+        "url": simple_project_url(current_uri, package),
+        "hashes": simple_project_hashes(package),
+        "size": os.path.getsize(package.fn),
+        "upload-time": format_upload_time(package.upload_time),
+    }
+
+
+def simple_project_versions(packages):
+    return list(dict.fromkeys(package.version for package in packages))
+
+
+class auth:
     def __init__(self, action):
         self.action = action
 
@@ -56,7 +94,8 @@ class auth:
             if self.action in config.authenticate:
                 if not request.auth or request.auth[1] is None:
                     raise HTTPError(
-                        401, headers={"WWW-Authenticate": 'Basic realm="pypi"'}
+                        401,
+                        headers={"WWW-Authenticate": 'Basic realm="pypi"'},
                     )
                 if not config.auther(*request.auth):
                     raise HTTPError(403)
@@ -150,15 +189,14 @@ Upload = namedtuple("Upload", "pkg sig")
 
 
 def file_upload():
-    ufiles = Upload._make(
-        request.files.get(f, None) for f in ("content", "gpg_signature")
-    )
+    files_get = getattr(request.files, "get")
+    package_file = files_get("content", None)
+    signature_file = files_get("gpg_signature", None)
+    ufiles = Upload(package_file, signature_file)
     if not ufiles.pkg:
         raise HTTPError(400, "Missing 'content' file-field!")
-    if (
-        ufiles.sig
-        and f"{ufiles.pkg.raw_filename}.asc" != ufiles.sig.raw_filename
-    ):
+    signature_name = f"{ufiles.pkg.raw_filename}.asc"
+    if ufiles.sig and signature_name != ufiles.sig.raw_filename:
         raise HTTPError(
             400,
             f"Unrelated signature {ufiles.sig!r} for package {ufiles.pkg!r}!",
@@ -167,10 +205,9 @@ def file_upload():
     for uf in ufiles:
         if not uf:
             continue
-        if (
-            not is_valid_pkg_filename(uf.raw_filename)
-            or guess_pkgname_and_version(uf.raw_filename) is None
-        ):
+        invalid_name = not is_valid_pkg_filename(uf.raw_filename)
+        unknown_package = guess_pkgname_and_version(uf.raw_filename) is None
+        if invalid_name or unknown_package:
             raise HTTPError(400, f"Bad filename: {uf.raw_filename}")
 
         if not config.overwrite and config.backend.exists(uf.raw_filename):
@@ -180,15 +217,17 @@ def file_upload():
             )
 
             http_code = 409
-            # twine 1.7.0+ expects status 400 to match compatibility with pypi.org
+            # twine 1.7.0+ expects status 400 to match compatibility
+            # with pypi.org
             # see: https://github.com/pypa/twine/issues/1265
             if "twine" in request.headers.get("User-Agent", ""):
                 http_code = 400
 
+            overwrite_msg = f"Package {uf.raw_filename!r} already exists!\n"
+            overwrite_msg += "  You may start server with `--overwrite` option."
             raise HTTPError(
                 http_code,
-                f"Package {uf.raw_filename!r} already exists!\n"
-                "  You may start server with `--overwrite` option.",
+                overwrite_msg,
             )
 
         config.backend.add_package(uf.raw_filename, uf.file)
@@ -234,18 +273,12 @@ def pep_503_redirects(project=None):
 def handle_rpc():
     """Handle pip-style RPC2 search requests"""
     parser = xml.dom.minidom.parse(request.body)
-    methodname = (
-        parser.getElementsByTagName("methodName")[0]
-        .childNodes[0]
-        .wholeText.strip()
-    )
+    method_name_node = parser.getElementsByTagName("methodName")[0]
+    methodname = method_name_node.childNodes[0].wholeText.strip()
     log.debug(f"Processing RPC2 request for '{methodname}'")
     if methodname == "search":
-        value = (
-            parser.getElementsByTagName("string")[0]
-            .childNodes[0]
-            .wholeText.strip()
-        )
+        string_node = parser.getElementsByTagName("string")[0]
+        value = string_node.childNodes[0].wholeText.strip()
         response = []
         ordering = 0
         for p in config.backend.get_all_packages():
@@ -261,7 +294,9 @@ def handle_rpc():
                 response.append(d)
             ordering += 1
         call_string = xmlrpclib.dumps(
-            (response,), "search", methodresponse=True
+            (response,),
+            "search",
+            methodresponse=True,
         )
         return call_string
 
@@ -270,6 +305,21 @@ def handle_rpc():
 @auth("list")
 def simpleindex():
     links = sorted(config.backend.get_projects())
+    accept_header = request.headers.get("Accept", "")
+    wants_json = False
+    for media_type in PEP_691_JSON_ACCEPT_TYPES:
+        if media_type in accept_header:
+            wants_json = True
+            break
+    if wants_json:
+        response.content_type = PEP_691_JSON_CONTENT_TYPE
+        return dumps(
+            {
+                "meta": {"api-version": "1.4"},
+                "projects": [{"name": project} for project in links],
+            }
+        )
+
     tmpl = """<!DOCTYPE html>
 <html lang="en">
     <head>
@@ -307,10 +357,30 @@ def simple(project):
 
     current_uri = request_fullpath(request)
 
+    accept_header = request.headers.get("Accept", "")
+    wants_json = False
+    for media_type in PEP_691_JSON_ACCEPT_TYPES:
+        if media_type in accept_header:
+            wants_json = True
+            break
+    if wants_json:
+        files = []
+        for package in packages:
+            files.append(simple_project_file_json(current_uri, package))
+        response.content_type = PEP_691_JSON_CONTENT_TYPE
+        return dumps(
+            {
+                "meta": {"api-version": "1.4"},
+                "name": project,
+                "files": files,
+                "versions": simple_project_versions(packages),
+            }
+        )
+
     links = (
         (
             os.path.basename(pkg.relfn),
-            urljoin(current_uri, f"../../packages/{pkg.fname_and_hash}"),
+            simple_project_url(current_uri, pkg),
         )
         for pkg in packages
     )
@@ -342,9 +412,9 @@ def list_packages():
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
     )
 
-    links = (
-        (pkg.relfn_unix, urljoin(fp, pkg.fname_and_hash)) for pkg in packages
-    )
+    links = []
+    for pkg in packages:
+        links.append((pkg.relfn_unix, urljoin(fp, pkg.fname_and_hash)))
 
     tmpl = """<!DOCTYPE html>
 <html lang="en">
@@ -378,7 +448,8 @@ def server_static(filename):
             )
             if config.cache_control:
                 response.set_header(
-                    "Cache-Control", f"public, max-age={config.cache_control}"
+                    "Cache-Control",
+                    f"public, max-age={config.cache_control}",
                 )
             return response
 
@@ -406,9 +477,8 @@ def json_info(project):
     releases = defaultdict(list)
     req_url = request.url
     for x in packages:
-        releases[x.version].append(
-            {"url": urljoin(req_url, "../../packages/" + x.relfn)}
-        )
+        package_url = urljoin(req_url, "../../packages/" + x.relfn)
+        releases[x.version].append({"url": package_url})
 
     rv = {"info": {"version": latest_version}, "releases": releases}
     response.content_type = "application/json"

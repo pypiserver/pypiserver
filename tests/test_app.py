@@ -1,24 +1,31 @@
 #! /usr/bin/env py.test
 
 # Builtin imports
+import hashlib
 import os
 import pathlib
+from datetime import UTC, datetime
+from typing import cast
 import xmlrpc.client as xmlrpclib
 from html import unescape
 
 # Third party imports
 import pytest
-import webtest
+import webtest  # pyright: ignore[reportMissingImports]
 
 # Local Imports
 from tests.test_pkg_helpers import files, invalid_files
 from pypiserver import __main__, bottle_wrapper, _app
 from pypiserver.backend import CachingFileBackend
+from pypiserver.upload_time import save_upload_times
 
 # Enable logging to detect any problems with it
 ##
 
 __main__.init_logging()
+
+SIMPLE_JSON_ACCEPT = "application/vnd.pypi.simple.v1+json"
+UPLOADABLE_PACKAGES = [f[0] for f in files if f[1] and "/" not in f[0]]
 
 
 @pytest.fixture
@@ -115,6 +122,27 @@ def add_file_to_root(app):
     return file_adder
 
 
+def listed_root_entries(root):
+    entries = []
+    for entry in root.listdir():
+        if not entry.basename.startswith("."):
+            entries.append(entry.basename)
+    return entries
+
+
+def format_test_upload_time(timestamp):
+    formatted = datetime.fromtimestamp(timestamp, tz=UTC).isoformat()
+    return formatted.replace("+00:00", "Z")
+
+
+def sha256_hexdigest(content):
+    return hashlib.sha256(content.encode()).hexdigest()
+
+
+def package_sha256_url(filename, content):
+    return f"/packages/{filename}#sha256={sha256_hexdigest(content)}"
+
+
 def test_root_count(root, testapp, add_file_to_root):
     """Test that the welcome page count updates with added packages
 
@@ -130,9 +158,9 @@ def test_root_count(root, testapp, add_file_to_root):
 
 def test_root_hostname(testapp):
     resp = testapp.get("/", headers={"Host": "systemexit.de"})
-    resp.mustcontain(
-        "easy_install --index-url http://systemexit.de/simple/ PACKAGE"
-    )
+    expected_url = "easy_install --index-url "
+    expected_url += "http://systemexit.de/simple/ PACKAGE"
+    resp.mustcontain(expected_url)
     # go("http://systemexit.de/")
 
 
@@ -248,6 +276,15 @@ def test_simple_redirect(testapp):
     assert resp.location.endswith("/simple/")
 
 
+def test_simple_json_accept_preserves_redirects(testapp):
+    resp = testapp.get(
+        "/simple",
+        headers={"Accept": SIMPLE_JSON_ACCEPT},
+        status=301,
+    )
+    assert resp.location.endswith("/simple/")
+
+
 def test_simple_list_no_dotfiles(root, testapp):
     root.join(".foo-1.0.zip").write("secret")
     resp = testapp.get("/simple/")
@@ -327,6 +364,197 @@ def test_simple_index_list(root, testapp):
     assert len(resp.html("a")) == 3
 
 
+def test_simple_index_list_defaults_to_html(root, testapp):
+    root.join("foobar-1.0.zip").write("")
+    root.join("foobarbaz-1.1.zip").write("")
+
+    resp = testapp.get("/simple/")
+
+    assert resp.content_type == "text/html"
+    assert len(resp.html("a")) == 2
+
+
+@pytest.mark.parametrize(
+    "accept_header",
+    [
+        "application/vnd.pypi.simple.v1+json",
+        "application/vnd.pypi.simple.latest+json",
+    ],
+)
+def test_simple_index_list_returns_json_for_simple_json_accept(
+    root,
+    testapp,
+    accept_header,
+):
+    root.join("foobar-1.0.zip").write("")
+    root.join("foobarbaz-1.1.zip").write("")
+
+    resp = testapp.get("/simple/", headers={"Accept": accept_header})
+
+    assert resp.content_type == "application/vnd.pypi.simple.v1+json"
+    assert resp.json == {
+        "meta": {"api-version": "1.4"},
+        "projects": [{"name": "foobar"}, {"name": "foobarbaz"}],
+    }
+
+
+@pytest.mark.parametrize(
+    "accept_header",
+    [
+        "application/vnd.pypi.simple.v1+json",
+        "application/vnd.pypi.simple.latest+json",
+    ],
+)
+def test_simple_project_returns_json_for_simple_json_accept(
+    root,
+    testapp,
+    accept_header,
+):
+    package_files = [
+        ("foobar-1.0.zip", "one", 1700000000),
+        ("foobar-1.1-linux.zip", "two", 1700000001),
+        ("foobar-1.1.zip", "three", 1700000002),
+    ]
+    for filename, content, timestamp in package_files:
+        package = root.join(filename)
+        package.write(content)
+        os.utime(package.strpath, (timestamp, timestamp))
+    root.join("foobarX-1.1.zip").write("ignored")
+
+    resp = testapp.get("/simple/foobar/", headers={"Accept": accept_header})
+
+    assert resp.content_type == "application/vnd.pypi.simple.v1+json"
+    assert resp.json == {
+        "meta": {"api-version": "1.4"},
+        "name": "foobar",
+        "files": [
+            {
+                "filename": "foobar-1.0.zip",
+                "url": package_sha256_url("foobar-1.0.zip", "one"),
+                "hashes": {"sha256": sha256_hexdigest("one")},
+                "size": 3,
+                "upload-time": format_test_upload_time(1700000000),
+            },
+            {
+                "filename": "foobar-1.1-linux.zip",
+                "url": package_sha256_url("foobar-1.1-linux.zip", "two"),
+                "hashes": {"sha256": sha256_hexdigest("two")},
+                "size": 3,
+                "upload-time": format_test_upload_time(1700000001),
+            },
+            {
+                "filename": "foobar-1.1.zip",
+                "url": package_sha256_url("foobar-1.1.zip", "three"),
+                "hashes": {"sha256": sha256_hexdigest("three")},
+                "size": 5,
+                "upload-time": format_test_upload_time(1700000002),
+            },
+        ],
+        "versions": ["1.0", "1.1"],
+    }
+
+
+def test_simple_project_json_accept_preserves_redirects(testapp):
+    resp = testapp.get(
+        "/simple/FooBar/",
+        headers={"Accept": SIMPLE_JSON_ACCEPT},
+    )
+    assert resp.status_code >= 300
+    assert resp.status_code < 400
+    assert resp.location.endswith("/simple/foobar/")
+
+    resp = testapp.get(
+        "/simple/pypiserver/",
+        headers={"Accept": SIMPLE_JSON_ACCEPT},
+        status=302,
+    )
+    assert resp.headers["Location"] == "https://pypi.org/simple/pypiserver/"
+
+
+def test_simple_project_defaults_to_html_without_json_accept(root, testapp):
+    root.join("foobar-1.0.zip").write("one")
+
+    resp = testapp.get("/simple/foobar/")
+
+    assert resp.content_type == "text/html"
+    links = resp.html("a")
+    assert len(links) == 1
+    assert links[0].text == "foobar-1.0.zip"
+
+
+def test_simple_project_json_prefers_sidecar_upload_time_over_mtime(
+    root,
+    testapp,
+):
+    sidecar_package = root.join("foobar-1.1.zip")
+    sidecar_package.write("three")
+    os.utime(sidecar_package.strpath, (1700000200, 1700000200))
+
+    fallback_package = root.join("foobar-1.0.zip")
+    fallback_package.write("one")
+    os.utime(fallback_package.strpath, (1700000100, 1700000100))
+
+    save_upload_times(
+        pathlib.Path(root.strpath),
+        {"foobar-1.1.zip": datetime(2024, 1, 2, 3, 4, 5, tzinfo=UTC)},
+    )
+
+    resp = testapp.get(
+        "/simple/foobar/",
+        headers={"Accept": SIMPLE_JSON_ACCEPT},
+    )
+
+    assert resp.content_type == "application/vnd.pypi.simple.v1+json"
+    assert resp.json["versions"] == ["1.0", "1.1"]
+    assert resp.json["files"] == [
+        {
+            "filename": "foobar-1.0.zip",
+            "url": package_sha256_url("foobar-1.0.zip", "one"),
+            "hashes": {"sha256": sha256_hexdigest("one")},
+            "size": 3,
+            "upload-time": format_test_upload_time(1700000100),
+        },
+        {
+            "filename": "foobar-1.1.zip",
+            "url": package_sha256_url("foobar-1.1.zip", "three"),
+            "hashes": {"sha256": sha256_hexdigest("three")},
+            "size": 5,
+            "upload-time": "2024-01-02T03:04:05Z",
+        },
+    ]
+
+
+def test_simple_project_json_returns_empty_hashes_without_digest(root):
+    from pypiserver import app
+
+    _app = app(
+        roots=[pathlib.Path(root.strpath)],
+        authenticate=[],
+        password_file=".",
+        backend_arg="simple-dir",
+        hash_algo=None,
+    )
+    testapp = webtest.TestApp(_app)
+    package = root.join("foobar-1.0.zip")
+    package.write("abc")
+    os.utime(package.strpath, (1700000003, 1700000003))
+
+    resp = testapp.get(
+        "/simple/foobar/",
+        headers={"Accept": "application/vnd.pypi.simple.v1+json"},
+    )
+
+    assert resp.json["files"] == [
+        {
+            "filename": "foobar-1.0.zip",
+            "url": "/packages/foobar-1.0.zip",
+            "hashes": {},
+            "size": 3,
+            "upload-time": format_test_upload_time(1700000003),
+        }
+    ]
+
+
 def test_simple_index_case(root, testapp):
     root.join("FooBar-1.0.zip").write("")
     root.join("FooBar-1.1.zip").write("")
@@ -336,24 +564,24 @@ def test_simple_index_case(root, testapp):
 
 def test_nonroot_root(testpriv):
     resp = testpriv.get("/priv/", headers={"Host": "nonroot"})
-    resp.mustcontain(
-        "easy_install --index-url http://nonroot/priv/simple/ PACKAGE"
-    )
+    expected_url = "easy_install --index-url "
+    expected_url += "http://nonroot/priv/simple/ PACKAGE"
+    resp.mustcontain(expected_url)
 
 
 def test_nonroot_root_with_x_forwarded_host(testapp):
     resp = testapp.get("/", headers={"X-Forwarded-Host": "forward.ed/priv/"})
-    resp.mustcontain(
-        "easy_install --index-url http://forward.ed/priv/simple/ PACKAGE"
-    )
+    expected_url = "easy_install --index-url "
+    expected_url += "http://forward.ed/priv/simple/ PACKAGE"
+    resp.mustcontain(expected_url)
     resp.mustcontain("""<a href="/priv/packages/">here</a>""")
 
 
 def test_nonroot_root_with_x_forwarded_host_without_trailing_slash(testapp):
     resp = testapp.get("/", headers={"X-Forwarded-Host": "forward.ed/priv"})
-    resp.mustcontain(
-        "easy_install --index-url http://forward.ed/priv/simple/ PACKAGE"
-    )
+    expected_url = "easy_install --index-url "
+    expected_url += "http://forward.ed/priv/simple/ PACKAGE"
+    resp.mustcontain(expected_url)
     resp.mustcontain("""<a href="/priv/packages/">here</a>""")
 
 
@@ -366,12 +594,15 @@ def test_nonroot_simple_index(root, testpriv, add_file_to_root):
 
 
 def test_nonroot_simple_index_with_x_forwarded_host(
-    root, testapp, add_file_to_root
+    root,
+    testapp,
+    add_file_to_root,
 ):
     add_file_to_root(root, "foobar-1.0.zip", "123")
 
     resp = testapp.get(
-        "/simple/foobar/", headers={"X-Forwarded-Host": "forwarded.ed/priv/"}
+        "/simple/foobar/",
+        headers={"X-Forwarded-Host": "forwarded.ed/priv/"},
     )
     links = resp.html("a")
     assert len(links) == 1
@@ -387,12 +618,15 @@ def test_nonroot_simple_packages(root, testpriv, add_file_to_root):
 
 
 def test_nonroot_simple_packages_with_x_forwarded_host(
-    root, testapp, add_file_to_root
+    root,
+    testapp,
+    add_file_to_root,
 ):
     add_file_to_root(root, "foobar-1.0.zip", "123")
 
     resp = testapp.get(
-        "/packages/", headers={"X-Forwarded-Host": "forwarded/priv/"}
+        "/packages/",
+        headers={"X-Forwarded-Host": "forwarded/priv/"},
     )
     links = resp.html("a")
     assert len(links) == 1
@@ -512,9 +746,7 @@ def test_upload_badAction(testapp):
     assert "Unsupported ':action' field: BAD" in unescape(resp.text)
 
 
-@pytest.mark.parametrize(
-    "package", [f[0] for f in files if f[1] and "/" not in f[0]]
-)
+@pytest.mark.parametrize("package", UPLOADABLE_PACKAGES)
 def test_upload(package, root, testapp):
     resp = testapp.post(
         "/",
@@ -522,7 +754,7 @@ def test_upload(package, root, testapp):
         upload_files=[("content", package, b"")],
     )
     assert resp.status_int == 200
-    uploaded_pkgs = [f.basename for f in root.listdir()]
+    uploaded_pkgs = listed_root_entries(root)
     assert len(uploaded_pkgs) == 1
     assert uploaded_pkgs[0].lower() == package.lower()
 
@@ -557,9 +789,7 @@ def test_upload_conflict_on_existing_for_twine_compatibility(root, testapp):
     assert "Package 'foo_bar-1.0.tar.gz' already exists!" in unescape(resp.text)
 
 
-@pytest.mark.parametrize(
-    "package", [f[0] for f in files if f[1] and "/" not in f[0]]
-)
+@pytest.mark.parametrize("package", UPLOADABLE_PACKAGES)
 def test_upload_with_signature(package, root, testapp):
     resp = testapp.post(
         "/",
@@ -570,7 +800,7 @@ def test_upload_with_signature(package, root, testapp):
         ],
     )
     assert resp.status_int == 200
-    uploaded_pkgs = [f.basename.lower() for f in root.listdir()]
+    uploaded_pkgs = [basename.lower() for basename in listed_root_entries(root)]
     assert len(uploaded_pkgs) == 2
     assert package.lower() in uploaded_pkgs
     assert f"{package.lower()}.asc" in uploaded_pkgs
@@ -636,7 +866,10 @@ def test_search(root, testapp, search_xml, pkgs, matches):
     for pkg in pkgs:
         root.join(pkg).write("")
     resp = testapp.post("/RPC2", search_xml)
-    parsed = xmlrpclib.loads(resp.text)
+    parsed = cast(
+        tuple[tuple[list[dict[str, str]]], str],
+        xmlrpclib.loads(resp.text),
+    )
     assert len(parsed) == 2 and parsed[1] == "search"
     if not matches:
         assert len(parsed[0]) == 1 and not parsed[0][0]
@@ -661,10 +894,10 @@ class TestRemovePkg:
     def test_remove_pkg(self, root, testapp, pkg, name, ver):
         """Packages can be removed via POST."""
         root.join(pkg).write("")
-        assert len(os.listdir(str(root))) == 1
+        assert listed_root_entries(root) == [pkg]
         params = {":action": "remove_pkg", "name": name, "version": ver}
         testapp.post("/", params=params)
-        assert len(os.listdir(str(root))) == 0
+        assert listed_root_entries(root) == []
 
     @pytest.mark.parametrize(
         "pkg, name, ver",
@@ -683,15 +916,21 @@ class TestRemovePkg:
         ),
     )
     def test_remove_pkg_only_targeted(
-        self, root, testapp, pkg, name, ver, other
+        self,
+        root,
+        testapp,
+        pkg,
+        name,
+        ver,
+        other,
     ):
         """Only the targeted package is removed."""
         root.join(pkg).write("")
         root.join(other).write("")
-        assert len(os.listdir(str(root))) == 2
+        assert sorted(listed_root_entries(root)) == sorted([pkg, other])
         params = {":action": "remove_pkg", "name": name, "version": ver}
         testapp.post("/", params=params)
-        assert len(os.listdir(str(root))) == 1
+        assert listed_root_entries(root) == [other]
 
     @pytest.mark.parametrize(
         "pkgs, name, ver",
@@ -707,10 +946,10 @@ class TestRemovePkg:
         """Test that all instances of the target are removed."""
         for pkg in pkgs:
             root.join(pkg).write("")
-        assert len(os.listdir(str(root))) == len(pkgs)
+        assert sorted(listed_root_entries(root)) == sorted(pkgs)
         params = {":action": "remove_pkg", "name": name, "version": ver}
         testapp.post("/", params=params)
-        assert len(os.listdir(str(root))) == 0
+        assert listed_root_entries(root) == []
 
     @pytest.mark.parametrize(
         ("name", "version"),
@@ -746,8 +985,8 @@ class TestRemovePkg:
 def test_redirect_project_encodes_newlines():
     """Ensure raw newlines are url encoded in the generated redirect."""
     project = "\nSet-Cookie:malicious=1;"
-    request = bottle_wrapper.Request(
-        {"HTTP_X_FORWARDED_PROTO": "/\nSet-Cookie:malicious=1;"}
-    )
+    forwarded_proto = "/\nSet-Cookie:malicious=1;"
+    environ = {"HTTP_X_FORWARDED_PROTO": forwarded_proto}
+    request = bottle_wrapper.Request(environ)
     newpath = _app.get_bad_url_redirect_path(request, project)
     assert "\n" not in newpath
