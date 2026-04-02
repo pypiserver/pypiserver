@@ -26,6 +26,9 @@ exclude =  '''
 )
 '''
 
+[tool.uv]
+line-length = 80
+
 [tool.mypy]
 check_untyped_defs = true
 follow_imports = "silent"
