@@ -5,6 +5,7 @@ import itertools
 import logging
 import os
 import typing as t
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .cache import CacheManager, ENABLE_CACHING
@@ -13,6 +14,12 @@ from .pkg_helpers import (
     normalize_pkgname,
     is_listed_path,
     guess_pkgname_and_version,
+)
+from .upload_time import (
+    fallback_upload_time,
+    load_upload_times,
+    normalize_upload_time_key,
+    save_upload_times,
 )
 
 if t.TYPE_CHECKING:
@@ -120,11 +127,10 @@ class Backend(IBackend, abc.ABC):
         Backend class, either use this method as is, or override it with a
         more performant version.
         """
-        return (
-            x
-            for x in self.get_all_packages()
-            if normalize_pkgname(project) == x.pkgname_norm
-        )
+        normalized_project = normalize_pkgname(project)
+        for package in self.get_all_packages():
+            if normalized_project == package.pkgname_norm:
+                yield package
 
     def find_version(self, name: str, version: str) -> t.Iterable[PkgFile]:
         """Return all packages that match PkgFile.pkgname == name and
@@ -147,7 +153,12 @@ class SimpleFileBackend(Backend):
         return itertools.chain.from_iterable(listdir(r) for r in self.roots)
 
     def add_package(self, filename: str, stream: t.BinaryIO) -> None:
-        write_file(stream, self.roots[0].joinpath(filename))
+        package_path = self.roots[0].joinpath(filename)
+        write_file(stream, package_path)
+        upload_times = load_upload_times(self.roots[0])
+        upload_time_key = normalize_upload_time_key(self.roots[0], package_path)
+        upload_times[upload_time_key] = datetime.now(UTC)
+        save_upload_times(self.roots[0], upload_times)
 
     def remove_package(self, pkg: PkgFile) -> None:
         if pkg.fn is not None:
@@ -155,18 +166,19 @@ class SimpleFileBackend(Backend):
                 os.remove(pkg.fn)
             except FileNotFoundError:
                 log.warning(
-                    "Tried to remove %s, but it is already gone", pkg.fn
+                    "Tried to remove %s, but it is already gone",
+                    pkg.fn,
                 )
             except OSError:
                 log.exception("Unexpected error removing package: %s", pkg.fn)
                 raise
 
     def exists(self, filename: str) -> bool:
-        return any(
-            filename == existing_file.name
-            for root in self.roots
-            for existing_file in all_listed_files(root)
-        )
+        for root in self.roots:
+            for existing_file in all_listed_files(root):
+                if filename == existing_file.name:
+                    return True
+        return False
 
 
 class CachingFileBackend(SimpleFileBackend):
@@ -185,18 +197,20 @@ class CachingFileBackend(SimpleFileBackend):
 
     def remove_package(self, pkg: PkgFile) -> None:
         super().remove_package(pkg)
+        assert pkg.root is not None
         self.cache_manager.invalidate_root_cache(pkg.root)
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
-        return itertools.chain.from_iterable(
-            self.cache_manager.listdir(r, listdir) for r in self.roots
-        )
+        for root in self.roots:
+            yield from self.cache_manager.listdir(root, listdir)
 
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
         if self.hash_algo is None or pkg.fn is None:
             return None
         return self.cache_manager.digest_file(
-            pkg.fn, self.hash_algo, digest_file
+            pkg.fn,
+            self.hash_algo,
+            digest_file,
         )
 
 
@@ -217,14 +231,17 @@ def write_file(fh: t.BinaryIO, destination: PathLike) -> None:
 def listdir(root: Path) -> t.Iterator[PkgFile]:
     root = root.resolve()
     files = all_listed_files(root)
-    yield from valid_packages(root, files)
+    upload_times = load_upload_times(root)
+    yield from valid_packages(root, files, upload_times)
 
 
 def all_listed_files(root: Path) -> t.Iterator[Path]:
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = (
-            dirname for dirname in dirnames if is_listed_path(Path(dirname))
-        )
+        listed_dirnames = []
+        for dirname in dirnames:
+            if is_listed_path(Path(dirname)):
+                listed_dirnames.append(dirname)
+        dirnames[:] = listed_dirnames
         for filename in filenames:
             if not is_listed_path(Path(filename)):
                 continue
@@ -233,19 +250,26 @@ def all_listed_files(root: Path) -> t.Iterator[Path]:
                 yield filepath
 
 
-def valid_packages(root: Path, files: t.Iterable[Path]) -> t.Iterator[PkgFile]:
+def valid_packages(
+    root: Path,
+    files: t.Iterable[Path],
+    upload_times: dict[str, datetime],
+) -> t.Iterator[PkgFile]:
     for file in files:
         res = guess_pkgname_and_version(str(file.name))
         if res is not None:
             pkgname, version = res
             fn = str(file)
             root_name = str(root)
+            relfn = file.relative_to(root).as_posix()
+            upload_time = upload_times.get(relfn) or fallback_upload_time(file)
             yield PkgFile(
                 pkgname=pkgname,
                 version=version,
                 fn=fn,
                 root=root_name,
-                relfn=fn[len(root_name) + 1 :],
+                relfn=relfn,
+                upload_time=upload_time,
             )
 
 
@@ -279,7 +303,9 @@ PkgFunc = t.TypeVar("PkgFunc", bound=t.Callable[..., t.Iterable[PkgFile]])
 def with_digester(func: PkgFunc) -> PkgFunc:
     @functools.wraps(func)
     def add_digester_method(
-        self: "BackendProxy", *args: t.Any, **kwargs: t.Any
+        self: "BackendProxy",
+        *args: t.Any,
+        **kwargs: t.Any,
     ) -> t.Iterable[PkgFile]:
         packages = func(self, *args, **kwargs)
         for package in packages:
