@@ -57,13 +57,9 @@ class PkgFile:
         self.upload_time = upload_time
 
     def __repr__(self) -> str:
-        parts = []
-        for key in sorted(self.__slots__):
-            parts.append(f"{key}={getattr(self, key, 'AttributeError')!r}")
-        attributes = ", ".join(parts)
         return "{}({})".format(
             self.__class__.__name__,
-            attributes,
+            ", ".join([f"{k}={getattr(self, k, 'AttributeError')!r}" for k in sorted(self.__slots__)]),
         )
 
     @property
