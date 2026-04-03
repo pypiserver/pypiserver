@@ -85,7 +85,8 @@ def simple_project_versions(packages):
 
 
 class auth:
-    """decorator to apply authentication if specified for the decorated method & action"""
+    """decorator to apply authentication if specified for the decorated
+    method & action"""
 
     def __init__(self, action):
         self.action = action
@@ -94,7 +95,10 @@ class auth:
         def protector(*args, **kwargs):
             if self.action in config.authenticate:
                 if not request.auth or request.auth[1] is None:
-                    raise HTTPError(401, headers={"WWW-Authenticate": 'Basic realm="pypi"'})
+                    raise HTTPError(
+                        401,
+                        headers={"WWW-Authenticate": 'Basic realm="pypi"'},
+                    )
                 if not config.auther(*request.auth):
                     raise HTTPError(403)
             return method(*args, **kwargs)
@@ -430,7 +434,10 @@ def server_static(filename):
                 mimetype=mimetypes.guess_type(filename)[0],
             )
             if config.cache_control:
-                response.set_header("Cache-Control", f"public, max-age={config.cache_control}")
+                response.set_header(
+                    "Cache-Control",
+                    f"public, max-age={config.cache_control}",
+                )
             return response
 
     return HTTPError(404, f"Not Found ({filename} does not exist)\n\n")

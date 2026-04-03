@@ -127,10 +127,7 @@ class Backend(IBackend, abc.ABC):
         Backend class, either use this method as is, or override it with a
         more performant version.
         """
-        normalized_project = normalize_pkgname(project)
-        for package in self.get_all_packages():
-            if normalized_project == package.pkgname_norm:
-                yield package
+        return (x for x in self.get_all_packages() if normalize_pkgname(project) == x.pkgname_norm)
 
     def find_version(self, name: str, version: str) -> t.Iterable[PkgFile]:
         """Return all packages that match PkgFile.pkgname == name and
@@ -174,11 +171,7 @@ class SimpleFileBackend(Backend):
                 raise
 
     def exists(self, filename: str) -> bool:
-        for root in self.roots:
-            for existing_file in all_listed_files(root):
-                if filename == existing_file.name:
-                    return True
-        return False
+        return any(filename == existing_file.name for root in self.roots for existing_file in all_listed_files(root))
 
 
 class CachingFileBackend(SimpleFileBackend):
@@ -201,8 +194,7 @@ class CachingFileBackend(SimpleFileBackend):
         self.cache_manager.invalidate_root_cache(pkg.root)
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
-        for root in self.roots:
-            yield from self.cache_manager.listdir(root, listdir)
+        return itertools.chain.from_iterable(self.cache_manager.listdir(r, listdir) for r in self.roots)
 
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
         if self.hash_algo is None or pkg.fn is None:
@@ -237,11 +229,7 @@ def listdir(root: Path) -> t.Iterator[PkgFile]:
 
 def all_listed_files(root: Path) -> t.Iterator[Path]:
     for dirpath, dirnames, filenames in os.walk(root):
-        listed_dirnames = []
-        for dirname in dirnames:
-            if is_listed_path(Path(dirname)):
-                listed_dirnames.append(dirname)
-        dirnames[:] = listed_dirnames
+        dirnames[:] = (dirname for dirname in dirnames if is_listed_path(Path(dirname)))
         for filename in filenames:
             if not is_listed_path(Path(filename)):
                 continue

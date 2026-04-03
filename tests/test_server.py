@@ -462,12 +462,21 @@ def test_partial_authed_open_download(partial_authed_server):
 @pytest.mark.usefixtures("hosted_wheel_file")
 def test_hash_algos(server_root, pipdir, hash_algo):
     """Test twine upload with no authentication"""
-    with run_server(server_root, other_cli="--hash-algo {}".format(hash_algo)) as srv:
+    with run_server(
+        server_root,
+        other_cli="--hash-algo {}".format(hash_algo),
+    ) as srv:
         assert pip_download("centodeps", srv.port, pipdir) == 0
 
 
 @pytest.mark.parametrize(["server_fixture", "pypirc_fixture"], all_servers)
-def test_twine_upload(server_fixture, pypirc_fixture, server_root, wheel_file, request):
+def test_twine_upload(
+    server_fixture,
+    pypirc_fixture,
+    server_root,
+    wheel_file,
+    request,
+):
     """Test twine upload with no authentication"""
     assert len(list(server_root.iterdir())) == 0
     request.getfixturevalue(server_fixture)
