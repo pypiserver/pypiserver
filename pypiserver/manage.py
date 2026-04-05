@@ -6,7 +6,6 @@ import itertools
 import json
 import os
 import sys
-from distutils.version import LooseVersion
 from pathlib import Path
 from subprocess import call
 from urllib.error import URLError

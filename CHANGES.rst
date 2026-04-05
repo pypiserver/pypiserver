@@ -4,6 +4,22 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.4.1 (2026-02-10)
+--------------------------
+
+- 9e5b9bb MAINT: Remove unused import LooseVersion from distutils.version (#681)
+- 945e23e MAINT: chore: move mypy config from setup.cfg to pyproject.toml (#664)
+- dc4dadb MAINT: fix: cgi import error for Python3.13+ (#663)
+- a5a715f MAINT: Fix partially broken tests from PRs #662 & #675 (#677)
+- 1828884 MAINT: fix: small fix for `mdformat`
+- ba381b1 MAINT: Remove support for Python 3.8 & 3.9 (#675)
+- 7148a5c MAINT: Merge pull request #672 from parmsib/patch-1
+- e0591a3 FIX: Fix compatibility with twine 1.7.0 (#662)
+- b5a67a8 MAINT: Merge branch 'main' into patch-1
+- 53f134c MAINT: chore: Update setuptools requirement from <71.0.0,>=40.0 to >=40.0,<81.0.0 in /requirements (#671)
+- 7af665c MAINT: fix whitespace in help output
+- 58f7162 MAINT: chore: Bump waitress from 2.1.2 to 3.0.1 in /docker (#615)
+
 2.4.0 (2025-08-18)
 --------------------------
 
