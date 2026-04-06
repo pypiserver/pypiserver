@@ -34,6 +34,7 @@ EXAMPLE:
     bumpver -t 'Mostly model changes' 1.6.2b0
 
 """
+
 import functools as fnt
 import os.path as osp
 import re
