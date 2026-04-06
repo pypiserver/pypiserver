@@ -83,7 +83,7 @@ def find_updates(
     if stable_only:
         filter_releases = filter_stable_releases
     else:
-        filter_releases = lambda x: x  # type:ignore
+        filter_releases = lambda x: x  # type: ignore
 
     def write(s: str) -> None:
         sys.stdout.write(s)
@@ -168,7 +168,7 @@ def update_package(
     cmd = tuple(
         PipCmd.update(
             PipCmd.update_root(pip.__version__),
-            destdir or os.path.dirname(pkg.replaces.fn),  # type:ignore
+            destdir or os.path.dirname(pkg.replaces.fn),  # type: ignore
             pkg.pkgname,
             pkg.version,
         )
