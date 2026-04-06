@@ -6,6 +6,7 @@ import itertools
 import json
 import os
 import sys
+from collections.abc import Generator, Iterable, Sequence, ValuesView
 from pathlib import Path
 from subprocess import call
 from urllib.error import URLError
@@ -19,7 +20,7 @@ from .core import PkgFile
 from .pkg_helpers import normalize_pkgname, parse_version
 
 
-def is_stable_version(pversion):
+def is_stable_version(pversion: Sequence[str]) -> bool:
     for x in ("*c", "*@", "*b"):
         if x in pversion:
             return False
@@ -31,13 +32,13 @@ def is_stable_version(pversion):
     return False
 
 
-def filter_stable_releases(releases):
+def filter_stable_releases(releases: Iterable[PkgFile]) -> Generator[PkgFile]:
     for pkg in releases:
         if is_stable_version(pkg.parsed_version):
             yield pkg
 
 
-def filter_latest_pkgs(pkgs):
+def filter_latest_pkgs(pkgs: Iterable[PkgFile]) -> ValuesView[PkgFile]:
     pkgname2latest = {}
 
     for x in pkgs:
@@ -51,14 +52,14 @@ def filter_latest_pkgs(pkgs):
     return pkgname2latest.values()
 
 
-def build_releases(pkg, versions):
+def build_releases(pkg: PkgFile, versions: Iterable[str]) -> Generator[PkgFile]:
     for x in versions:
         parsed_version = parse_version(x)
         if parsed_version > pkg.parsed_version:
             yield PkgFile(pkgname=pkg.pkgname, version=x, replaces=pkg)
 
 
-def get_package_releases(pkgname):
+def get_package_releases(pkgname: str) -> str | None:
     pypi_json_content_type = "application/vnd.pypi.simple.v1+json"
 
     req = Request(
@@ -75,11 +76,16 @@ def get_package_releases(pkgname):
         return None
 
 
-def find_updates(pkgset, stable_only=True):
+def find_updates(
+    pkgset: Iterable[PkgFile], stable_only: bool = True
+) -> set[PkgFile]:
     no_releases = set()
-    filter_releases = filter_stable_releases if stable_only else (lambda x: x)
+    if stable_only:
+        filter_releases = filter_stable_releases
+    else:
+        filter_releases = lambda x: x  # type: ignore
 
-    def write(s):
+    def write(s: str) -> None:
         sys.stdout.write(s)
         sys.stdout.flush()
 
@@ -124,7 +130,7 @@ class PipCmd:
     """Methods for generating pip commands."""
 
     @staticmethod
-    def update_root(pip_version):
+    def update_root(pip_version: str) -> Generator[str]:
         """Yield an appropriate root command depending on pip version.
 
         Use `pip install` for `pip` 9 or lower, and `pip download` otherwise.
@@ -136,12 +142,12 @@ class PipCmd:
 
     @staticmethod
     def update(
-        cmd_root,
-        destdir,
-        pkg_name,
-        pkg_version,
-        index="https://pypi.org/simple",
-    ):
+        cmd_root: Iterable[str] | str,
+        destdir: str,
+        pkg_name: str,
+        pkg_version: str,
+        index: str = "https://pypi.org/simple",
+    ) -> Generator[str]:
         """Yield an update command for pip."""
         for part in cmd_root:
             yield part
@@ -150,8 +156,11 @@ class PipCmd:
         yield "{}=={}".format(pkg_name, pkg_version)
 
 
-def update_package(pkg, destdir, dry_run=False):
+def update_package(
+    pkg: PkgFile, destdir: str | None, dry_run: bool = False
+) -> None:
     """Print and optionally execute a package update."""
+    assert pkg.replaces is not None
     print(
         f"# update {pkg.pkgname} from {pkg.replaces.version} to {pkg.version}"
     )
@@ -159,7 +168,7 @@ def update_package(pkg, destdir, dry_run=False):
     cmd = tuple(
         PipCmd.update(
             PipCmd.update_root(pip.__version__),
-            destdir or os.path.dirname(pkg.replaces.fn),
+            destdir or os.path.dirname(pkg.replaces.fn),  # type: ignore
             pkg.pkgname,
             pkg.version,
         )
@@ -170,7 +179,12 @@ def update_package(pkg, destdir, dry_run=False):
         call(cmd)
 
 
-def update(pkgset, destdir=None, dry_run=False, stable_only=True):
+def update(
+    pkgset: Iterable[PkgFile],
+    destdir: str | None = None,
+    dry_run: bool = False,
+    stable_only: bool = True,
+) -> None:
     """Print and optionally execute pip update commands.
 
     :param pkgset: the set of currently available packages
@@ -186,8 +200,12 @@ def update(pkgset, destdir=None, dry_run=False, stable_only=True):
 
 
 def update_all_packages(
-    roots, destdir=None, dry_run=False, stable_only=True, ignorelist=None
-):
+    roots: Sequence[str],
+    destdir: str | None = None,
+    dry_run: bool = False,
+    stable_only: bool = True,
+    ignorelist: Iterable[str] | None = None,
+) -> None:
     all_packages = itertools.chain.from_iterable(
         listdir(Path(r)) for r in roots
     )
