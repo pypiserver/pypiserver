@@ -28,6 +28,20 @@ exclude =  '''
 
 [tool.ruff]
 line-length = 80
+exclude =  [
+    '.direnv',
+    '.eggs',         # exclude a few common directories in the
+    '.git',          # root of the project
+    '.mypy_cache',
+    '.tox',
+    '.venv',
+    '.vscode',
+    '_build',
+    'build',
+    'dist',
+    'venv',
+    'pypiserver/bottle_wrapper/bottle.py'
+]
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["F401"]
 
