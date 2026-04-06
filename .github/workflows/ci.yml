@@ -66,7 +66,9 @@ jobs:
           pypiserver/config.py 
           tests/test_init.py
       - name: Check formatting
-        run: black --diff --check .
+        run: ruff format --diff --check
+      - name: Lint
+        run: ruff check
       - name: Validate README
         id: validate_readme
         run: mdformat --check README.md
