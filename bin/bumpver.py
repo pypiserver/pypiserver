@@ -34,14 +34,12 @@ EXAMPLE:
     bumpver -t 'Mostly model changes' 1.6.2b0
 
 """
-from __future__ import annotations
-
 import functools as fnt
 import os.path as osp
 import re
 import sys
+from collections.abc import Generator
 from datetime import datetime
-from typing import Generator
 
 import docopt
 
@@ -90,7 +88,7 @@ def extract_file_regexes(fpath: str, regexes: list[re.Pattern]) -> list[str]:
             "\n  matches: %s" % (regexes, matches)
         )
 
-    return [m.group(1) for m in matches]  # type:ignore[union-attr]
+    return [m.group(1) for m in matches]  # type: ignore[union-attr]
 
 
 def replace_substrings(
