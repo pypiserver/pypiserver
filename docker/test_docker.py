@@ -15,7 +15,6 @@ import httpx
 import pypiserver
 import pytest
 
-
 PYPISERVER_PROCESS_NAME = "pypi-server"
 TEST_DEMO_PIP_PACKAGE = "pypiserver-mypkg"
 TEST_DEMO_HEAVY_PIP_PACKAGE = "pypiserver-mypkg-heavy"
