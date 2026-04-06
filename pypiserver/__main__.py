@@ -5,8 +5,9 @@ import enum
 import importlib
 import logging
 import sys
-import typing as t
+from collections.abc import Sequence
 from pathlib import Path
+from typing import IO, Any
 from wsgiref.simple_server import WSGIRequestHandler
 
 import functools as ft
@@ -17,10 +18,10 @@ log = logging.getLogger("pypiserver.main")
 
 def init_logging(
     level: int = logging.NOTSET,
-    frmt: str = None,
-    filename: t.Union[str, Path] = None,
-    stream: t.Optional[t.IO] = sys.stderr,
-    logger: logging.Logger = None,
+    frmt: str | None = None,
+    filename: str | Path | None = None,
+    stream: IO | None = sys.stderr,
+    logger: logging.Logger | None = None,
 ) -> None:
     """Configure the specified logger, or the root logger otherwise."""
     logger = logger or logging.getLogger()
@@ -28,7 +29,7 @@ def init_logging(
 
     formatter = logging.Formatter(frmt)
     if len(logger.handlers) == 0 and stream is not None:
-        handler = logging.StreamHandler(stream)
+        handler: logging.Handler = logging.StreamHandler(stream)
         handler.setFormatter(formatter)
         logger.addHandler(logging.StreamHandler(stream))
 
@@ -50,8 +51,8 @@ class WsgiHandler(WSGIRequestHandler):
         # why it's important, so I'm not going to get rid of it)
         return self.client_address[0]
 
-    def log_message(
-        self, format: str, *args: t.Any  # pylint: disable=redefined-builtin
+    def log_message(  # pylint: disable=redefined-builtin
+        self, format: str, *args: Any
     ) -> None:
         """Log a message."""
         # The log_message method on the `HttpRequestHandler` base class just
@@ -114,7 +115,7 @@ def guess_auto_server() -> AutoServer:
     return server
 
 
-def main(argv: t.Sequence[str] = None) -> None:
+def main(argv: Sequence[str] | None = None) -> None:
     """Application entrypoint for pypiserver.
 
     This function drives the application (as opposed to the library)
@@ -216,7 +217,7 @@ def main(argv: t.Sequence[str] = None) -> None:
     )
 
 
-def _logwrite(logger, level, msg):
+def _logwrite(logger: logging.Logger, level: int, msg: str | None) -> None:
     if msg:
         line_endings = ["\r\n", "\n\r", "\n"]
         for le in line_endings:  # pylint: disable=invalid-name
