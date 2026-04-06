@@ -65,6 +65,7 @@ jobs:
           docker/test_docker.py
           pypiserver/config.py 
           tests/test_init.py
+          bin/bumpver.py
       - name: Check formatting
         run: black --diff --check .
       - name: Validate README

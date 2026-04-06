@@ -22,7 +22,6 @@ exclude =  '''
     | dist
     | venv
     | pypiserver/bottle_wrapper/bottle.py
-    | fixtures/mypkg_heavy/mypkg_heavy/generated_placeholder.py
   )
 )
 '''
