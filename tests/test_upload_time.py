@@ -40,6 +40,22 @@ def test_save_and_load_upload_times_round_trip(tmp_path):
     assert load_upload_times(tmp_path) == {"subdir/pkg-1.0.tar.gz": expected}
 
 
+def test_save_upload_times_removes_sidecar_when_metadata_is_empty(tmp_path):
+    package = tmp_path / "pkg-1.0.tar.gz"
+    package.touch()
+    save_upload_times(
+        tmp_path,
+        {normalize_upload_time_key(tmp_path, package): datetime(2026, 4, 3, tzinfo=UTC)},
+    )
+
+    sidecar_path = tmp_path / SIDECAR_NAME
+    assert sidecar_path.exists()
+
+    save_upload_times(tmp_path, {})
+
+    assert not sidecar_path.exists()
+
+
 def test_fallback_upload_time_uses_file_mtime_as_utc_datetime(tmp_path):
     package = tmp_path / "pkg-1.0.tar.gz"
     package.touch()

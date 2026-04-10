@@ -173,6 +173,15 @@ class SimpleFileBackend(Backend):
                 log.exception("Unexpected error removing package: %s", pkg.fn)
                 raise
 
+        if pkg.root is None or pkg.relfn is None:
+            return
+
+        upload_root = Path(pkg.root)
+        upload_times = load_upload_times(upload_root)
+        if pkg.relfn in upload_times:
+            upload_times.pop(pkg.relfn)
+            save_upload_times(upload_root, upload_times)
+
     def exists(self, filename: str) -> bool:
         return any(
             filename == existing_file.name

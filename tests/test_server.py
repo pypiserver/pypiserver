@@ -25,7 +25,7 @@ import typing as t
 from collections import namedtuple
 from pathlib import Path
 from shlex import split
-from subprocess import PIPE, STDOUT, Popen
+from subprocess import Popen, run
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -317,114 +317,10 @@ def run_twine(
     package: str | Path,
     conf: str | Path,
 ) -> None:
-    cmd = f"twine {command} --repository test --config-file {conf} {package}"
-    proc = Popen(split(cmd))
-    proc.communicate()
-    assert not proc.returncode, f"Twine {command} failed. See stdout/err"
-
-
-def run_checked(args: list[str]) -> str:
-    print("RUN:", " ".join(args))
-    proc = Popen(args, stdout=PIPE, stderr=STDOUT, text=True)
-    stdout, _ = proc.communicate()
-    assert proc.returncode == 0, stdout
-    return stdout
-
-
-def build_dummy_wheel(tmp_path: Path, name: str, version: str) -> Path:
-    project_dir = tmp_path / version
-    dist_dir = tmp_path / "dist" / version
-    project_dir.mkdir(parents=True, exist_ok=True)
-    dist_dir.mkdir(parents=True, exist_ok=True)
-    project_dir.joinpath("setup.py").write_text(
-        "\n".join(
-            (
-                "from setuptools import setup",
-                "",
-                "setup(",
-                f"    name={name!r},",
-                f"    version={version!r},",
-                "    packages=[],",
-                ")",
-                "",
-            )
-        )
+    run(
+        split(f"twine {command} --repository test --config-file {conf} {package}"),
+        check=True,
     )
-    if re.match(r"^3\.7", sys.version):
-        assert run_setup_py(project_dir, f"bdist_wheel -d {dist_dir}") == 0
-    else:
-        flags = f"--wheel --no-isolation --outdir {dist_dir}"
-        assert run_py_build(project_dir, flags) == 0
-    wheels = list(dist_dir.glob("*.whl"))
-    assert len(wheels) == 1
-    return wheels[0]
-
-
-def load_simple_project_json(port: int, project: str) -> dict[str, t.Any]:
-    request = Request(
-        f"{build_url(port)}/simple/{project}/",
-        headers={"Accept": "application/vnd.pypi.simple.v1+json"},
-    )
-    with urlopen(request) as response:
-        assert response.getcode() == 200
-        return json.load(response)
-
-
-def parse_upload_time(value: str) -> datetime:
-    return datetime.fromisoformat(value.replace("Z", "+00:00"))
-
-
-def install_with_uv(
-    venv_dir: Path,
-    package: str,
-    index_url: str,
-    allow_host: str,
-    exclude_newer: str | None = None,
-) -> None:
-    uv_dir = str(venv_dir.parent)
-    run_checked(
-        [
-            "uv",
-            "--directory",
-            uv_dir,
-            "--no-config",
-            "venv",
-            str(venv_dir),
-            "--python",
-            sys.executable,
-        ]
-    )
-    args = [
-        "uv",
-        "--directory",
-        uv_dir,
-        "--no-config",
-        "pip",
-        "install",
-        "--no-cache",
-        "--python",
-        str(venv_dir),
-        "--index-url",
-        index_url,
-        "--allow-insecure-host",
-        allow_host,
-    ]
-    if exclude_newer is not None:
-        args.extend(["--exclude-newer", exclude_newer])
-    args.append(package)
-    run_checked(args)
-
-
-def installed_version(venv_dir: Path, package: str) -> str:
-    python = venv_dir / "bin" / "python"
-    cmd = f"import importlib.metadata as md; print(md.version({package!r}))"
-    return run_checked(
-        [
-            str(python),
-            "-c",
-            cmd,
-        ]
-    ).strip()
 
 
 # ######################################################################
@@ -492,7 +388,9 @@ def test_twine_upload(
 
     run_twine("upload", wheel_file, conf=pypirc)
 
-    package_files = [path for path in server_root.iterdir() if not path.name.startswith(".")]
+    package_files = [
+        path for path in server_root.iterdir() if not path.name.startswith(".")
+    ]
     assert len(package_files) == 1
     assert server_root.joinpath(wheel_file.name).is_file(), (
         wheel_file.name,
@@ -512,8 +410,79 @@ def test_twine_upload_json_upload_times_drive_uv_exclude_newer(tmp_path):
     package = "dummy-live-upload"
     older_version = "1.0.0"
     newer_version = "2.0.0"
-    older_wheel = build_dummy_wheel(tmp_path, package, older_version)
-    newer_wheel = build_dummy_wheel(tmp_path, package, newer_version)
+
+    def build_wheel(version: str) -> Path:
+        project_dir = tmp_path / version
+        dist_dir = tmp_path / "dist" / version
+        project_dir.mkdir(parents=True, exist_ok=True)
+        dist_dir.mkdir(parents=True, exist_ok=True)
+        project_dir.joinpath("setup.py").write_text(
+            f"from setuptools import setup\n\n"
+            f"setup(name={package!r}, version={version!r}, packages=[])\n"
+        )
+        if re.match(r"^3\.7", sys.version):
+            exit_code = run_setup_py(project_dir, f"bdist_wheel -d {dist_dir}")
+        else:
+            exit_code = run_py_build(
+                project_dir,
+                f"--wheel --no-isolation --outdir {dist_dir}",
+            )
+        assert exit_code == 0
+        wheels = list(dist_dir.glob("*.whl"))
+        assert len(wheels) == 1
+        return wheels[0]
+
+    def uv_install_version(
+        env_name: str,
+        index_url: str,
+        allow_host: str,
+        exclude_newer: str | None = None,
+    ) -> str:
+        venv_dir = tmp_path / env_name
+        uv_dir = str(venv_dir.parent)
+        run(
+            [
+                "uv",
+                "--directory",
+                uv_dir,
+                "--no-config",
+                "venv",
+                str(venv_dir),
+                "--python",
+                sys.executable,
+            ],
+            check=True,
+        )
+        args = [
+            "uv",
+            "--directory",
+            uv_dir,
+            "--no-config",
+            "pip",
+            "install",
+            "--no-cache",
+            "--python",
+            str(venv_dir),
+            "--index-url",
+            index_url,
+            "--allow-insecure-host",
+            allow_host,
+        ]
+        if exclude_newer is not None:
+            args.extend(["--exclude-newer", exclude_newer])
+        args.append(package)
+        run(args, check=True)
+        python = venv_dir / "bin" / "python"
+        cmd = f"import importlib.metadata as md; print(md.version({package!r}))"
+        return run(
+            [str(python), "-c", cmd],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+
+    older_wheel = build_wheel(older_version)
+    newer_wheel = build_wheel(newer_version)
     server_root = tmp_path / "packages"
     server_root.mkdir()
 
@@ -533,18 +502,27 @@ def test_twine_upload_json_upload_times_drive_uv_exclude_newer(tmp_path):
     os.utime(newer_uploaded, (1700000100, 1700000100))
 
     with run_server(server_root, other_cli="--disable-fallback") as install_srv:
-        body = load_simple_project_json(install_srv.port, package)
+        request = Request(
+            f"{build_url(install_srv.port)}/simple/{package}/",
+            headers={"Accept": "application/vnd.pypi.simple.v1+json"},
+        )
+        with urlopen(request) as response:
+            assert response.getcode() == 200
+            body = json.load(response)
         assert body["meta"] == {"api-version": "1.4"}
         assert body["name"] == package
         assert body["versions"] == [older_version, newer_version]
-        files_by_version = {
-            older_version: next(item for item in body["files"] if item["filename"] == older_wheel.name),
-            newer_version: next(item for item in body["files"] if item["filename"] == newer_wheel.name),
-        }
-        assert files_by_version[older_version]["upload-time"] == stored_upload_times[older_wheel.name]
-        assert files_by_version[newer_version]["upload-time"] == stored_upload_times[newer_wheel.name]
-        older_time = parse_upload_time(files_by_version[older_version]["upload-time"])
-        newer_time = parse_upload_time(files_by_version[newer_version]["upload-time"])
+        files_by_name = {item["filename"]: item for item in body["files"]}
+        older_file = files_by_name[older_wheel.name]
+        newer_file = files_by_name[newer_wheel.name]
+        assert older_file["upload-time"] == stored_upload_times[older_wheel.name]
+        assert newer_file["upload-time"] == stored_upload_times[newer_wheel.name]
+        older_time = datetime.fromisoformat(
+            older_file["upload-time"].replace("Z", "+00:00")
+        )
+        newer_time = datetime.fromisoformat(
+            newer_file["upload-time"].replace("Z", "+00:00")
+        )
         assert older_time.tzinfo == UTC
         assert newer_time.tzinfo == UTC
         assert older_time < newer_time
@@ -553,16 +531,13 @@ def test_twine_upload_json_upload_times_drive_uv_exclude_newer(tmp_path):
         index_url = f"{build_url(install_srv.port)}/simple/"
         allow_host = f"localhost:{install_srv.port}"
 
-        strict_env = tmp_path / "strict-env"
-        install_with_uv(
-            strict_env,
-            package,
+        assert uv_install_version(
+            "strict-env",
             index_url,
             allow_host,
             exclude_newer=cutoff,
-        )
-        assert installed_version(strict_env, package) == older_version
+        ) == older_version
 
-        open_env = tmp_path / "open-env"
-        install_with_uv(open_env, package, index_url, allow_host)
-        assert installed_version(open_env, package) == newer_version
+        assert (
+            uv_install_version("open-env", index_url, allow_host) == newer_version
+        )
