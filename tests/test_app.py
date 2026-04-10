@@ -138,7 +138,9 @@ def test_root_count(root, testapp, add_file_to_root):
 
 def test_root_hostname(testapp):
     resp = testapp.get("/", headers={"Host": "systemexit.de"})
-    resp.mustcontain("easy_install --index-url http://systemexit.de/simple/ PACKAGE")
+    resp.mustcontain(
+        "easy_install --index-url http://systemexit.de/simple/ PACKAGE"
+    )
     # go("http://systemexit.de/")
 
 
@@ -342,18 +344,24 @@ def test_simple_index_case(root, testapp):
 
 def test_nonroot_root(testpriv):
     resp = testpriv.get("/priv/", headers={"Host": "nonroot"})
-    resp.mustcontain("easy_install --index-url http://nonroot/priv/simple/ PACKAGE")
+    resp.mustcontain(
+        "easy_install --index-url http://nonroot/priv/simple/ PACKAGE"
+    )
 
 
 def test_nonroot_root_with_x_forwarded_host(testapp):
     resp = testapp.get("/", headers={"X-Forwarded-Host": "forward.ed/priv/"})
-    resp.mustcontain("easy_install --index-url http://forward.ed/priv/simple/ PACKAGE")
+    resp.mustcontain(
+        "easy_install --index-url http://forward.ed/priv/simple/ PACKAGE"
+    )
     resp.mustcontain("""<a href="/priv/packages/">here</a>""")
 
 
 def test_nonroot_root_with_x_forwarded_host_without_trailing_slash(testapp):
     resp = testapp.get("/", headers={"X-Forwarded-Host": "forward.ed/priv"})
-    resp.mustcontain("easy_install --index-url http://forward.ed/priv/simple/ PACKAGE")
+    resp.mustcontain(
+        "easy_install --index-url http://forward.ed/priv/simple/ PACKAGE"
+    )
     resp.mustcontain("""<a href="/priv/packages/">here</a>""")
 
 
@@ -365,12 +373,13 @@ def test_nonroot_simple_index(root, testpriv, add_file_to_root):
     assert links[0]["href"].startswith("/priv/packages/foobar-1.0.zip#")
 
 
-def test_nonroot_simple_index_with_x_forwarded_host(root, testapp, add_file_to_root):
+def test_nonroot_simple_index_with_x_forwarded_host(
+    root, testapp, add_file_to_root
+):
     add_file_to_root(root, "foobar-1.0.zip", "123")
 
     resp = testapp.get(
-        "/simple/foobar/",
-        headers={"X-Forwarded-Host": "forwarded.ed/priv/"},
+        "/simple/foobar/", headers={"X-Forwarded-Host": "forwarded.ed/priv/"}
     )
     links = resp.html("a")
     assert len(links) == 1
@@ -385,12 +394,13 @@ def test_nonroot_simple_packages(root, testpriv, add_file_to_root):
     assert "/priv/packages/foobar-1.0.zip#" in links[0]["href"]
 
 
-def test_nonroot_simple_packages_with_x_forwarded_host(root, testapp, add_file_to_root):
+def test_nonroot_simple_packages_with_x_forwarded_host(
+    root, testapp, add_file_to_root
+):
     add_file_to_root(root, "foobar-1.0.zip", "123")
 
     resp = testapp.get(
-        "/packages/",
-        headers={"X-Forwarded-Host": "forwarded/priv/"},
+        "/packages/", headers={"X-Forwarded-Host": "forwarded/priv/"}
     )
     links = resp.html("a")
     assert len(links) == 1
@@ -510,7 +520,9 @@ def test_upload_badAction(testapp):
     assert "Unsupported ':action' field: BAD" in unescape(resp.text)
 
 
-@pytest.mark.parametrize("package", [f[0] for f in files if f[1] and "/" not in f[0]])
+@pytest.mark.parametrize(
+    "package", [f[0] for f in files if f[1] and "/" not in f[0]]
+)
 def test_upload(package, root, testapp):
     resp = testapp.post(
         "/",
@@ -553,7 +565,9 @@ def test_upload_conflict_on_existing_for_twine_compatibility(root, testapp):
     assert "Package 'foo_bar-1.0.tar.gz' already exists!" in unescape(resp.text)
 
 
-@pytest.mark.parametrize("package", [f[0] for f in files if f[1] and "/" not in f[0]])
+@pytest.mark.parametrize(
+    "package", [f[0] for f in files if f[1] and "/" not in f[0]]
+)
 def test_upload_with_signature(package, root, testapp):
     resp = testapp.post(
         "/",
@@ -677,13 +691,7 @@ class TestRemovePkg:
         ),
     )
     def test_remove_pkg_only_targeted(
-        self,
-        root,
-        testapp,
-        pkg,
-        name,
-        ver,
-        other,
+        self, root, testapp, pkg, name, ver, other
     ):
         """Only the targeted package is removed."""
         root.join(pkg).write("")
@@ -746,6 +754,8 @@ class TestRemovePkg:
 def test_redirect_project_encodes_newlines():
     """Ensure raw newlines are url encoded in the generated redirect."""
     project = "\nSet-Cookie:malicious=1;"
-    request = bottle_wrapper.Request({"HTTP_X_FORWARDED_PROTO": "/\nSet-Cookie:malicious=1;"})
+    request = bottle_wrapper.Request(
+        {"HTTP_X_FORWARDED_PROTO": "/\nSet-Cookie:malicious=1;"}
+    )
     newpath = _app.get_bad_url_redirect_path(request, project)
     assert "\n" not in newpath

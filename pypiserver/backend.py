@@ -127,7 +127,11 @@ class Backend(IBackend, abc.ABC):
         Backend class, either use this method as is, or override it with a
         more performant version.
         """
-        return (x for x in self.get_all_packages() if normalize_pkgname(project) == x.pkgname_norm)
+        return (
+            x
+            for x in self.get_all_packages()
+            if normalize_pkgname(project) == x.pkgname_norm
+        )
 
     def find_version(self, name: str, version: str) -> t.Iterable[PkgFile]:
         """Return all packages that match PkgFile.pkgname == name and
@@ -163,15 +167,18 @@ class SimpleFileBackend(Backend):
                 os.remove(pkg.fn)
             except FileNotFoundError:
                 log.warning(
-                    "Tried to remove %s, but it is already gone",
-                    pkg.fn,
+                    "Tried to remove %s, but it is already gone", pkg.fn
                 )
             except OSError:
                 log.exception("Unexpected error removing package: %s", pkg.fn)
                 raise
 
     def exists(self, filename: str) -> bool:
-        return any(filename == existing_file.name for root in self.roots for existing_file in all_listed_files(root))
+        return any(
+            filename == existing_file.name
+            for root in self.roots
+            for existing_file in all_listed_files(root)
+        )
 
 
 class CachingFileBackend(SimpleFileBackend):
@@ -194,15 +201,15 @@ class CachingFileBackend(SimpleFileBackend):
         self.cache_manager.invalidate_root_cache(pkg.root)
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
-        return itertools.chain.from_iterable(self.cache_manager.listdir(r, listdir) for r in self.roots)
+        return itertools.chain.from_iterable(
+            self.cache_manager.listdir(r, listdir) for r in self.roots
+        )
 
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
         if self.hash_algo is None or pkg.fn is None:
             return None
         return self.cache_manager.digest_file(
-            pkg.fn,
-            self.hash_algo,
-            digest_file,
+            pkg.fn, self.hash_algo, digest_file
         )
 
 
@@ -229,7 +236,9 @@ def listdir(root: Path) -> t.Iterator[PkgFile]:
 
 def all_listed_files(root: Path) -> t.Iterator[Path]:
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = (dirname for dirname in dirnames if is_listed_path(Path(dirname)))
+        dirnames[:] = (
+            dirname for dirname in dirnames if is_listed_path(Path(dirname))
+        )
         for filename in filenames:
             if not is_listed_path(Path(filename)):
                 continue
@@ -291,9 +300,7 @@ PkgFunc = t.TypeVar("PkgFunc", bound=t.Callable[..., t.Iterable[PkgFile]])
 def with_digester(func: PkgFunc) -> PkgFunc:
     @functools.wraps(func)
     def add_digester_method(
-        self: "BackendProxy",
-        *args: t.Any,
-        **kwargs: t.Any,
+        self: "BackendProxy", *args: t.Any, **kwargs: t.Any
     ) -> t.Iterable[PkgFile]:
         packages = func(self, *args, **kwargs)
         for package in packages:

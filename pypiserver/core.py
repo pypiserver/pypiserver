@@ -59,7 +59,12 @@ class PkgFile:
     def __repr__(self) -> str:
         return "{}({})".format(
             self.__class__.__name__,
-            ", ".join([f"{k}={getattr(self, k, 'AttributeError')!r}" for k in sorted(self.__slots__)]),
+            ", ".join(
+                [
+                    f"{k}={getattr(self, k, 'AttributeError')!r}"
+                    for k in sorted(self.__slots__)
+                ]
+            ),
         )
 
     @property

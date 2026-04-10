@@ -54,7 +54,9 @@ def run_server(
     other_cli="",
 ):
     """Run a server, optionally with partial auth enabled."""
-    htpasswd = CURRENT_PATH.joinpath("../fixtures/htpasswd.a.a").expanduser().resolve()
+    htpasswd = (
+        CURRENT_PATH.joinpath("../fixtures/htpasswd.a.a").expanduser().resolve()
+    )
     pswd_opt_choices = {
         True: f"-P {htpasswd} -a update,download",
         False: "-P. -a.",
@@ -175,7 +177,10 @@ def wheel_file(project, tmp_path_factory):
     if re.match(r"^3\.7", sys.version):
         assert run_setup_py(project, f"bdist_wheel -d {distdir}") == 0
     else:
-        assert run_py_build(project, f"--wheel --no-isolation --outdir {distdir}") == 0
+        assert (
+            run_py_build(project, f"--wheel --no-isolation --outdir {distdir}")
+            == 0
+        )
     wheels = list(distdir.glob("centodeps*.whl"))
     assert len(wheels) > 0
     return wheels[0]
@@ -249,7 +254,10 @@ def pip_download(
 
 
 def _run_pip(cmd: str) -> int:
-    ncmd = f"pip --no-cache-dir --disable-pip-version-check --retries 0 --timeout 5 --no-input {cmd}"
+    ncmd = (
+        "pip --no-cache-dir --disable-pip-version-check "
+        f"--retries 0 --timeout 5 --no-input {cmd}"
+    )
     print(f"PIP: {ncmd}")
     proc = Popen(split(ncmd))
     proc.communicate()
@@ -447,7 +455,12 @@ def test_pip_install_authed_fails(authed_server, pipdir):
 
 
 def test_pip_install_authed_succeeds(authed_server, hosted_wheel_file, pipdir):
-    assert pip_download("centodeps", authed_server.port, pipdir, user="a", pswd="a") == 0
+    assert (
+        pip_download(
+            "centodeps", authed_server.port, pipdir, user="a", pswd="a"
+        )
+        == 0
+    )
     assert pipdir.joinpath(hosted_wheel_file.name).is_file()
 
 
@@ -463,19 +476,14 @@ def test_partial_authed_open_download(partial_authed_server):
 def test_hash_algos(server_root, pipdir, hash_algo):
     """Test twine upload with no authentication"""
     with run_server(
-        server_root,
-        other_cli="--hash-algo {}".format(hash_algo),
+        server_root, other_cli="--hash-algo {}".format(hash_algo)
     ) as srv:
         assert pip_download("centodeps", srv.port, pipdir) == 0
 
 
 @pytest.mark.parametrize(["server_fixture", "pypirc_fixture"], all_servers)
 def test_twine_upload(
-    server_fixture,
-    pypirc_fixture,
-    server_root,
-    wheel_file,
-    request,
+    server_fixture, pypirc_fixture, server_root, wheel_file, request
 ):
     """Test twine upload with no authentication"""
     assert len(list(server_root.iterdir())) == 0

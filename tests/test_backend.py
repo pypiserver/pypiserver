@@ -16,9 +16,10 @@ from pypiserver.upload_time import load_upload_times
 
 def create_path(root: Path, path: Path):
     if path.is_absolute():
-        msg = "Only test using relative paths to prevent leaking outside "
-        msg += "test environment"
-        raise ValueError(msg)
+        raise ValueError(
+            "Only test using relative paths"
+            " to prevent leaking outside test environment"
+        )
     fullpath = root / path
     if not fullpath.parent.exists():
         fullpath.parent.mkdir(parents=True)

@@ -85,8 +85,7 @@ def simple_project_versions(packages):
 
 
 class auth:
-    """decorator to apply authentication if specified for the decorated
-    method & action"""
+    """decorator to apply authentication if specified for the decorated method & action"""
 
     def __init__(self, action):
         self.action = action
@@ -96,8 +95,7 @@ class auth:
             if self.action in config.authenticate:
                 if not request.auth or request.auth[1] is None:
                     raise HTTPError(
-                        401,
-                        headers={"WWW-Authenticate": 'Basic realm="pypi"'},
+                        401, headers={"WWW-Authenticate": 'Basic realm="pypi"'}
                     )
                 if not config.auther(*request.auth):
                     raise HTTPError(403)
@@ -191,14 +189,15 @@ Upload = namedtuple("Upload", "pkg sig")
 
 
 def file_upload():
-    files_get = getattr(request.files, "get")
-    package_file = files_get("content", None)
-    signature_file = files_get("gpg_signature", None)
-    ufiles = Upload(package_file, signature_file)
+    ufiles = Upload._make(
+        request.files.get(f, None) for f in ("content", "gpg_signature")
+    )
     if not ufiles.pkg:
         raise HTTPError(400, "Missing 'content' file-field!")
-    signature_name = f"{ufiles.pkg.raw_filename}.asc"
-    if ufiles.sig and signature_name != ufiles.sig.raw_filename:
+    if (
+        ufiles.sig
+        and f"{ufiles.pkg.raw_filename}.asc" != ufiles.sig.raw_filename
+    ):
         raise HTTPError(
             400,
             f"Unrelated signature {ufiles.sig!r} for package {ufiles.pkg!r}!",
@@ -207,9 +206,10 @@ def file_upload():
     for uf in ufiles:
         if not uf:
             continue
-        invalid_name = not is_valid_pkg_filename(uf.raw_filename)
-        unknown_package = guess_pkgname_and_version(uf.raw_filename) is None
-        if invalid_name or unknown_package:
+        if (
+            not is_valid_pkg_filename(uf.raw_filename)
+            or guess_pkgname_and_version(uf.raw_filename) is None
+        ):
             raise HTTPError(400, f"Bad filename: {uf.raw_filename}")
 
         if not config.overwrite and config.backend.exists(uf.raw_filename):
@@ -219,17 +219,15 @@ def file_upload():
             )
 
             http_code = 409
-            # twine 1.7.0+ expects status 400 to match compatibility
-            # with pypi.org
+            # twine 1.7.0+ expects status 400 to match compatibility with pypi.org
             # see: https://github.com/pypa/twine/issues/1265
             if "twine" in request.headers.get("User-Agent", ""):
                 http_code = 400
 
-            overwrite_msg = f"Package {uf.raw_filename!r} already exists!\n"
-            overwrite_msg += "  You may start server with `--overwrite` option."
             raise HTTPError(
                 http_code,
-                overwrite_msg,
+                f"Package {uf.raw_filename!r} already exists!\n"
+                "  You may start server with `--overwrite` option.",
             )
 
         config.backend.add_package(uf.raw_filename, uf.file)
@@ -275,12 +273,18 @@ def pep_503_redirects(project=None):
 def handle_rpc():
     """Handle pip-style RPC2 search requests"""
     parser = xml.dom.minidom.parse(request.body)
-    method_name_node = parser.getElementsByTagName("methodName")[0]
-    methodname = method_name_node.childNodes[0].wholeText.strip()
+    methodname = (
+        parser.getElementsByTagName("methodName")[0]
+        .childNodes[0]
+        .wholeText.strip()
+    )
     log.debug(f"Processing RPC2 request for '{methodname}'")
     if methodname == "search":
-        string_node = parser.getElementsByTagName("string")[0]
-        value = string_node.childNodes[0].wholeText.strip()
+        value = (
+            parser.getElementsByTagName("string")[0]
+            .childNodes[0]
+            .wholeText.strip()
+        )
         response = []
         ordering = 0
         for p in config.backend.get_all_packages():
@@ -296,9 +300,7 @@ def handle_rpc():
                 response.append(d)
             ordering += 1
         call_string = xmlrpclib.dumps(
-            (response,),
-            "search",
-            methodresponse=True,
+            (response,), "search", methodresponse=True
         )
         return call_string
 
@@ -399,9 +401,9 @@ def list_packages():
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
     )
 
-    links = []
-    for pkg in packages:
-        links.append((pkg.relfn_unix, urljoin(fp, pkg.fname_and_hash)))
+    links = (
+        (pkg.relfn_unix, urljoin(fp, pkg.fname_and_hash)) for pkg in packages
+    )
 
     tmpl = """<!DOCTYPE html>
 <html lang="en">
@@ -435,8 +437,7 @@ def server_static(filename):
             )
             if config.cache_control:
                 response.set_header(
-                    "Cache-Control",
-                    f"public, max-age={config.cache_control}",
+                    "Cache-Control", f"public, max-age={config.cache_control}"
                 )
             return response
 
@@ -464,8 +465,9 @@ def json_info(project):
     releases = defaultdict(list)
     req_url = request.url
     for x in packages:
-        package_url = urljoin(req_url, "../../packages/" + x.relfn)
-        releases[x.version].append({"url": package_url})
+        releases[x.version].append(
+            {"url": urljoin(req_url, "../../packages/" + x.relfn)}
+        )
 
     rv = {"info": {"version": latest_version}, "releases": releases}
     response.content_type = "application/json"
