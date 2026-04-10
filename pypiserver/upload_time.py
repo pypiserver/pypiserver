@@ -56,6 +56,13 @@ def load_upload_times(root: Path) -> dict[str, datetime]:
 def save_upload_times(root: Path, metadata: dict[str, datetime]) -> None:
     root = Path(root)
     path = sidecar_path(root)
+    if not metadata:
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+        return
+
     formatted = {}
     for key, value in sorted(metadata.items()):
         formatted[key] = format_upload_time(value)
