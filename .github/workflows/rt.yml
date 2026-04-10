@@ -26,7 +26,7 @@ jobs:
       CHANGE_FILE: CHANGES.rst
       EXPECTED_DIFF_COUNT: 1
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
 
       - id: get-version
         run: |
@@ -35,7 +35,7 @@ jobs:
           echo "👀 Version detected: ${LAST_VERSION}"
           echo "LAST_VERSION=${LAST_VERSION}" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
