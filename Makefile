@@ -31,9 +31,9 @@ format: pyproject.toml ./pypiserver
 	uv run black $(CHECK) $(DIFF) pypiserver
 
 .PHONY: check-types
-check-types: pyproject.toml ./pypiserver ./docker ./tests
+check-types: pyproject.toml ./pypiserver ./docker ./tests ./bin
 	@echo ">>> 📋 Checking the Python types"
-	uv run mypy pypiserver tests docker || echo "--- 🫣 Fixing type errors is still in progress"
+	uv run mypy pypiserver tests docker bin || echo "--- 🫣 Fixing type errors is still in progress"
 	uv run mypy docker/test_docker.py tests/test_init.py --follow-imports="skip"
 
 .PHONY: format-readme
