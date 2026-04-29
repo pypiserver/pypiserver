@@ -34,7 +34,7 @@ format: pyproject.toml ./pypiserver
 check-types: pyproject.toml ./pypiserver ./docker ./tests
 	@echo ">>> 📋 Checking the Python types"
 	uv run mypy pypiserver tests docker || echo "--- 🫣 Fixing type errors is still in progress"
-	uv run mypy docker/test_docker.py tests/test_init.py --follow-imports="skip"
+	uv run mypy docker/test_docker.py pypiserver/config.py tests/test_init.py bin/bumpver.py --follow-imports="skip"
 
 .PHONY: format-readme
 format-readme: pyproject.toml README.md
