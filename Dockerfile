@@ -1,4 +1,4 @@
-FROM python:3.10-alpine3.20 AS base
+FROM python:3.14-alpine3.23 AS base
 
 # Copy the requirements & code and install them
 # Do this in a separate image in a separate directory
@@ -33,7 +33,8 @@ FROM base AS builder_dependencies
 
 WORKDIR /code
 
-COPY docker/docker-requirements.txt .
+COPY LICENSE.txt .
+COPY pyproject.toml .
 
 # Install requirements
 RUN apk add --no-cache --virtual .build-deps \
@@ -43,14 +44,12 @@ RUN apk add --no-cache --virtual .build-deps \
     && python -m pip install \
         --no-warn-script-location \
         --prefix=/install \
-        --requirement docker-requirements.txt
+        --group docker
 
 # Install pypiserver
 # - do this separately from deps so that when developing, every change does not
 #   require reinstalling deps
 COPY pypiserver pypiserver
-COPY setup.cfg .
-COPY setup.py .
 COPY README.md .
 RUN python -m pip install --no-warn-script-location --prefix=/install .
 
@@ -70,9 +69,9 @@ RUN apk add bash \
     && rm -rf /var/cache/apk/* \
     && rm -rf /tmp/* \
     && addgroup -S -g 9898 pypiserver \
-    && adduser -S -u 9898 -G pypiserver pypiserver --home /data\
+    && adduser -S -u 9898 -G pypiserver pypiserver --home /data \
     && mkdir -p /data/packages \
-    && chmod +x /entrypoint.sh 
+    && chmod +x /entrypoint.sh
 
 VOLUME /data/packages
 ENV PYPISERVER_PORT=8080

@@ -2,6 +2,7 @@
 """Entrypoint for pypiserver."""
 
 import enum
+import functools as ft
 import importlib
 import logging
 import sys
@@ -10,7 +11,6 @@ from pathlib import Path
 from typing import IO, Any
 from wsgiref.simple_server import WSGIRequestHandler
 
-import functools as ft
 from pypiserver.config import Config, UpdateConfig
 
 log = logging.getLogger("pypiserver.main")

@@ -38,7 +38,7 @@ WELCOME_FILE = TEST_DIR / "sample_msg.html"
 )
 def test_paste_app_factory(conf_options: dict) -> None:
     """Test the paste_app_factory method"""
-    pypiserver.paste_app_factory({}, **conf_options)  # type: ignore
+    pypiserver.paste_app_factory({}, **conf_options)
 
 
 def test_app_factory() -> None:

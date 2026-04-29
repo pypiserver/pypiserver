@@ -27,21 +27,21 @@ jobs:
             "3.11",
             "3.12",
             "3.13",
+            "3.14",
             "3.x", # make sure to test the current stable Python version
           ]
 
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: 🏗️ Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          pip install --upgrade setuptools
-          pip install tox==3.27.*
-      - name: Run tests
-        run: tox -e py
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.10.8"
+      - name: 🧪 Run tests
+        run: make test-${{ matrix.python-version }}
 
   check:
     # These checks only need to be done once, not for every python version we
@@ -49,41 +49,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Python
+      - name: 🏗️ Set up Python ${{ env.LAST_SUPPORTED_PYTHON }}
         uses: actions/setup-python@v6
         with:
-          # Use the current version of Python
           python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
-      - name: Install dependencies
-        run: |
-          pip install -r "requirements/dev.pip"
-      - name: Check types
-        # individual mypy files for now, until we get the rest
-        # of the project typechecking
-        run: >-
-          mypy
-          docker/test_docker.py
-          pypiserver/config.py 
-          tests/test_init.py
-          bin/bumpver.py
-      - name: Check formatting
-        run: black --diff --check .
-      - name: Validate README
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.10.8"
+
+      - name: 📋 Check types
+        run: make check-types
+
+      - name: 🎗️ Check code style
+        run: make format CHECK=--check DIFF=--diff
+
+      - name: 📜 Validate README
         id: validate_readme
-        run: mdformat --check README.md
+        run: make format-readme CHECK=--check
         continue-on-error: true
-      - name: check mdformat result
+      - name: 🧐 check mdformat result
         run: |
           if [ "${{ steps.validate_readme.outcome }}" == "failure" ]; then
-              echo "copy readme to /tmp/pypiserver"
-              mkdir -p /tmp/pypiserver
-              cp README.md /tmp/pypiserver
-              echo "README.md is not formatted correctly. Please run 'mdformat README.md' and commit the result."
-              mdformat /tmp/pypiserver/README.md
-              diff -u README.md /tmp/pypiserver/README.md
-              exit 1
+              make format-readme-diff
           else
-              echo "README.md is formatted correctly."
+              echo "✅ README.md is formatted correctly."
           fi
 
   # Full-flow docker tests, again not python version dependent
@@ -96,17 +85,16 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Python
+      - name: 🏗️ Set up Python ${{ env.LAST_SUPPORTED_PYTHON }}
         uses: actions/setup-python@v6
         with:
-          # Use the current version of Python
           python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
-      - name: Install test dependencies
-        run: pip install -r "requirements/test.pip"
-      - name: Install package
-        run: pip install -r "requirements/exe.pip"
-      - name: Run tests
-        run: "pytest docker/test_docker.py"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.10.8"
+
+      - name: 🧪 Run tests
+        run: make test-docker
 
   tests:
     runs-on: "ubuntu-latest"
@@ -133,7 +121,7 @@ jobs:
           python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
 
       - name: Install dev dependencies
-        run: pip install -r "requirements/dev.pip"
+        run: pip install --group dev build
 
       - name: Build distribution _wheel_.
         run: |

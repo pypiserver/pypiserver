@@ -3,10 +3,10 @@
 # is installed
 #
 
+import threading
+import typing as t
 from os.path import dirname
 from pathlib import Path
-import typing as t
-import threading
 
 try:
     from watchdog.observers import Observer
