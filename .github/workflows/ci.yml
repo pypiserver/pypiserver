@@ -121,7 +121,7 @@ jobs:
           python-version: ${{ env.LAST_SUPPORTED_PYTHON }}
 
       - name: Install dev dependencies
-        run: pip install -r "requirements/dev.pip"
+        run: pip install --group dev build
 
       - name: Build distribution _wheel_.
         run: |
