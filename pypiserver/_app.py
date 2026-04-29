@@ -23,10 +23,17 @@ from .bottle_wrapper import (
     template,
 )
 from .pkg_helpers import guess_pkgname_and_version, normalize_pkgname_for_url
+from .upload_time import format_upload_time
 
 log = logging.getLogger(__name__)
 config: RunConfig
 app = Bottle()
+
+PEP_691_JSON_CONTENT_TYPE = "application/vnd.pypi.simple.v1+json"
+PEP_691_JSON_ACCEPT_TYPES = (
+    PEP_691_JSON_CONTENT_TYPE,
+    "application/vnd.pypi.simple.latest+json",
+)
 
 
 def request_fullpath(request):
@@ -43,6 +50,38 @@ def get_bad_url_redirect_path(request, project):
     project = quote(project)
     uri += f"/simple/{project}/"
     return uri
+
+
+def simple_project_url(current_uri, package):
+    return urljoin(current_uri, f"../../packages/{package.fname_and_hash}")
+
+
+def simple_project_hashes(package):
+    package.fname_and_hash
+    if not package.digest:
+        return {}
+
+    algo, sep, value = package.digest.partition("=")
+    if not sep or not value:
+        return {}
+    return {algo: value}
+
+
+def simple_project_file_json(current_uri, package):
+    assert package.fn is not None
+    assert package.relfn is not None
+    assert package.upload_time is not None
+
+    return {
+        "filename": os.path.basename(package.relfn),
+        "url": simple_project_url(current_uri, package),
+        "hashes": simple_project_hashes(package),
+        "upload-time": format_upload_time(package.upload_time),
+    }
+
+
+def simple_project_versions(packages):
+    return list(dict.fromkeys(package.version for package in packages))
 
 
 class auth:
@@ -307,10 +346,30 @@ def simple(project):
 
     current_uri = request_fullpath(request)
 
+    accept_header = request.headers.get("Accept", "")
+    wants_json = False
+    for media_type in PEP_691_JSON_ACCEPT_TYPES:
+        if media_type in accept_header:
+            wants_json = True
+            break
+    if wants_json:
+        files = []
+        for package in packages:
+            files.append(simple_project_file_json(current_uri, package))
+        response.content_type = PEP_691_JSON_CONTENT_TYPE
+        return dumps(
+            {
+                "meta": {"api-version": "1.4"},
+                "name": project,
+                "files": files,
+                "versions": simple_project_versions(packages),
+            }
+        )
+
     links = (
         (
             os.path.basename(pkg.relfn),
-            urljoin(current_uri, f"../../packages/{pkg.fname_and_hash}"),
+            simple_project_url(current_uri, pkg),
         )
         for pkg in packages
     )

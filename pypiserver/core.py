@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 """minimal PyPI like server for use with pip/easy_install"""
 
+from datetime import datetime
 import mimetypes
 import typing as t
 
@@ -24,11 +25,13 @@ class PkgFile:
         "relfn_unix",  # The relative file path in unix notation
         "parsed_version",  # The package version as a tuple of parts
         "digester",  # a function that calculates the digest for the package
+        "upload_time",
     ]
     digest: t.Optional[str]
     digester: t.Optional[t.Callable[["PkgFile"], t.Optional[str]]]
     parsed_version: tuple
     relfn_unix: t.Optional[str]
+    upload_time: t.Optional[datetime]
 
     def __init__(
         self,
@@ -38,6 +41,7 @@ class PkgFile:
         root: t.Optional[str] = None,
         relfn: t.Optional[str] = None,
         replaces: t.Optional["PkgFile"] = None,
+        upload_time: t.Optional[datetime] = None,
     ):
         self.pkgname = pkgname
         self.pkgname_norm = normalize_pkgname(pkgname)
@@ -50,6 +54,7 @@ class PkgFile:
         self.replaces = replaces
         self.digest = None
         self.digester = None
+        self.upload_time = upload_time
 
     def __repr__(self) -> str:
         return "{}({})".format(

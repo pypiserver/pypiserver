@@ -5,6 +5,7 @@ import itertools
 import logging
 import os
 import typing as t
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .cache import CacheManager, ENABLE_CACHING
@@ -13,6 +14,12 @@ from .pkg_helpers import (
     normalize_pkgname,
     is_listed_path,
     guess_pkgname_and_version,
+)
+from .upload_time import (
+    fallback_upload_time,
+    load_upload_times,
+    normalize_upload_time_key,
+    save_upload_times,
 )
 
 if t.TYPE_CHECKING:
@@ -147,7 +154,12 @@ class SimpleFileBackend(Backend):
         return itertools.chain.from_iterable(listdir(r) for r in self.roots)
 
     def add_package(self, filename: str, stream: t.BinaryIO) -> None:
-        write_file(stream, self.roots[0].joinpath(filename))
+        package_path = self.roots[0].joinpath(filename)
+        write_file(stream, package_path)
+        upload_times = load_upload_times(self.roots[0])
+        upload_time_key = normalize_upload_time_key(self.roots[0], package_path)
+        upload_times[upload_time_key] = datetime.now(UTC)
+        save_upload_times(self.roots[0], upload_times)
 
     def remove_package(self, pkg: PkgFile) -> None:
         if pkg.fn is not None:
@@ -160,6 +172,15 @@ class SimpleFileBackend(Backend):
             except OSError:
                 log.exception("Unexpected error removing package: %s", pkg.fn)
                 raise
+
+        if pkg.root is None or pkg.relfn is None:
+            return
+
+        upload_root = Path(pkg.root)
+        upload_times = load_upload_times(upload_root)
+        if pkg.relfn in upload_times:
+            upload_times.pop(pkg.relfn)
+            save_upload_times(upload_root, upload_times)
 
     def exists(self, filename: str) -> bool:
         return any(
@@ -185,6 +206,7 @@ class CachingFileBackend(SimpleFileBackend):
 
     def remove_package(self, pkg: PkgFile) -> None:
         super().remove_package(pkg)
+        assert pkg.root is not None
         self.cache_manager.invalidate_root_cache(pkg.root)
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
@@ -217,7 +239,8 @@ def write_file(fh: t.BinaryIO, destination: PathLike) -> None:
 def listdir(root: Path) -> t.Iterator[PkgFile]:
     root = root.resolve()
     files = all_listed_files(root)
-    yield from valid_packages(root, files)
+    upload_times = load_upload_times(root)
+    yield from valid_packages(root, files, upload_times)
 
 
 def all_listed_files(root: Path) -> t.Iterator[Path]:
@@ -233,19 +256,26 @@ def all_listed_files(root: Path) -> t.Iterator[Path]:
                 yield filepath
 
 
-def valid_packages(root: Path, files: t.Iterable[Path]) -> t.Iterator[PkgFile]:
+def valid_packages(
+    root: Path,
+    files: t.Iterable[Path],
+    upload_times: dict[str, datetime],
+) -> t.Iterator[PkgFile]:
     for file in files:
         res = guess_pkgname_and_version(str(file.name))
         if res is not None:
             pkgname, version = res
             fn = str(file)
             root_name = str(root)
+            relfn = file.relative_to(root).as_posix()
+            upload_time = upload_times.get(relfn) or fallback_upload_time(file)
             yield PkgFile(
                 pkgname=pkgname,
                 version=version,
                 fn=fn,
                 root=root_name,
-                relfn=fn[len(root_name) + 1 :],
+                relfn=relfn,
+                upload_time=upload_time,
             )
 
 

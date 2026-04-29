@@ -13,8 +13,9 @@ The tests below are using 3 ways to startup pypi-servers:
 """
 
 import contextlib
-import itertools
+import json
 import os
+from datetime import UTC, datetime
 import shutil
 import socket
 import re
@@ -24,9 +25,9 @@ import typing as t
 from collections import namedtuple
 from pathlib import Path
 from shlex import split
-from subprocess import Popen
+from subprocess import Popen, run
 from urllib.error import URLError
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 import pytest
 
@@ -36,12 +37,22 @@ import pytest
 
 
 CURRENT_PATH = Path(__file__).parent
-ports = itertools.count(10000)
 Srv = namedtuple("Srv", ("port", "root"))
 
 
+def reserve_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        sock.listen()
+        return t.cast(int, sock.getsockname()[1])
+
+
 @contextlib.contextmanager
-def run_server(root, authed=False, other_cli=""):
+def run_server(
+    root,
+    authed: bool | t.Literal["partial"] = False,
+    other_cli="",
+):
     """Run a server, optionally with partial auth enabled."""
     htpasswd = (
         CURRENT_PATH.joinpath("../fixtures/htpasswd.a.a").expanduser().resolve()
@@ -53,17 +64,34 @@ def run_server(root, authed=False, other_cli=""):
     }
     pswd_opts = pswd_opt_choices[authed]
 
-    port = next(ports)
-    cmd = (
-        f"{sys.executable} -m pypiserver.__main__ "
-        f"run -vvv --overwrite -i 127.0.0.1 "
-        f"-p {port} {pswd_opts} {other_cli} {root}"
-    )
-    proc = Popen(cmd.split(), bufsize=2**16)
-    srv = Srv(port, root)
+    proc = None
+    srv = None
+    for _ in range(5):
+        port = reserve_port()
+        cmd = (
+            f"{sys.executable} -m pypiserver.__main__ "
+            f"run -vvv --overwrite -i 127.0.0.1 "
+            f"-p {port} {pswd_opts} {other_cli} {root}"
+        )
+        proc = Popen(cmd.split(), bufsize=2**16)
+        srv = Srv(port, root)
+        try:
+            wait_until_ready(srv)
+            if proc.poll() is None:
+                break
+        except TimeoutError:
+            pass
+        finally:
+            if proc.poll() is not None:
+                proc.wait()
+                proc = None
+    else:
+        raise TimeoutError("Failed to start test pypiserver")
+
+    assert proc is not None
+    assert srv is not None
+
     try:
-        wait_until_ready(srv)
-        assert proc.poll() is None
         yield srv
     finally:
         print(f"Killing {srv}")
@@ -284,14 +312,15 @@ def authed_pypirc(authed_server):
         yield path
 
 
-def run_twine(command: str, package: str, conf: str) -> None:
-    proc = Popen(
-        split(
-            f"twine {command} --repository test --config-file {conf} {package}"
-        )
+def run_twine(
+    command: str,
+    package: str | Path,
+    conf: str | Path,
+) -> None:
+    run(
+        split(f"twine {command} --repository test --config-file {conf} {package}"),
+        check=True,
     )
-    proc.communicate()
-    assert not proc.returncode, f"Twine {command} failed. See stdout/err"
 
 
 # ######################################################################
@@ -359,10 +388,13 @@ def test_twine_upload(
 
     run_twine("upload", wheel_file, conf=pypirc)
 
-    assert len(list(server_root.iterdir())) == 1
+    package_files = [
+        path for path in server_root.iterdir() if not path.name.startswith(".")
+    ]
+    assert len(package_files) == 1
     assert server_root.joinpath(wheel_file.name).is_file(), (
         wheel_file.name,
-        list(server_root.iterdir()),
+        package_files,
     )
 
 
@@ -372,3 +404,140 @@ def test_twine_register(server_fixture, pypirc_fixture, wheel_file, request):
     request.getfixturevalue(server_fixture)
     pypirc = request.getfixturevalue(pypirc_fixture)
     run_twine("register", wheel_file, conf=pypirc)
+
+
+def test_twine_upload_json_upload_times_drive_uv_exclude_newer(tmp_path):
+    package = "dummy-live-upload"
+    older_version = "1.0.0"
+    newer_version = "2.0.0"
+
+    def build_wheel(version: str) -> Path:
+        project_dir = tmp_path / version
+        dist_dir = tmp_path / "dist" / version
+        project_dir.mkdir(parents=True, exist_ok=True)
+        dist_dir.mkdir(parents=True, exist_ok=True)
+        project_dir.joinpath("setup.py").write_text(
+            f"from setuptools import setup\n\n"
+            f"setup(name={package!r}, version={version!r}, packages=[])\n"
+        )
+        if re.match(r"^3\.7", sys.version):
+            exit_code = run_setup_py(project_dir, f"bdist_wheel -d {dist_dir}")
+        else:
+            exit_code = run_py_build(
+                project_dir,
+                f"--wheel --no-isolation --outdir {dist_dir}",
+            )
+        assert exit_code == 0
+        wheels = list(dist_dir.glob("*.whl"))
+        assert len(wheels) == 1
+        return wheels[0]
+
+    def uv_install_version(
+        env_name: str,
+        index_url: str,
+        allow_host: str,
+        exclude_newer: str | None = None,
+    ) -> str:
+        venv_dir = tmp_path / env_name
+        uv_dir = str(venv_dir.parent)
+        run(
+            [
+                "uv",
+                "--directory",
+                uv_dir,
+                "--no-config",
+                "venv",
+                str(venv_dir),
+                "--python",
+                sys.executable,
+            ],
+            check=True,
+        )
+        args = [
+            "uv",
+            "--directory",
+            uv_dir,
+            "--no-config",
+            "pip",
+            "install",
+            "--no-cache",
+            "--python",
+            str(venv_dir),
+            "--index-url",
+            index_url,
+            "--allow-insecure-host",
+            allow_host,
+        ]
+        if exclude_newer is not None:
+            args.extend(["--exclude-newer", exclude_newer])
+        args.append(package)
+        run(args, check=True)
+        python = venv_dir / "bin" / "python"
+        cmd = f"import importlib.metadata as md; print(md.version({package!r}))"
+        return run(
+            [str(python), "-c", cmd],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+
+    older_wheel = build_wheel(older_version)
+    newer_wheel = build_wheel(newer_version)
+    server_root = tmp_path / "packages"
+    server_root.mkdir()
+
+    with run_server(server_root, other_cli="--disable-fallback") as upload_srv:
+        with pypirc_file(repo=build_url(upload_srv.port)) as pypirc:
+            run_twine("upload", older_wheel, conf=pypirc)
+            run_twine("upload", newer_wheel, conf=pypirc)
+
+    sidecar_path = server_root / ".pypiserver-upload-times.json"
+    assert sidecar_path.is_file()
+    stored_upload_times = json.loads(sidecar_path.read_text())
+    assert stored_upload_times[older_wheel.name] < stored_upload_times[newer_wheel.name]
+
+    older_uploaded = server_root / older_wheel.name
+    newer_uploaded = server_root / newer_wheel.name
+    os.utime(older_uploaded, (1700000200, 1700000200))
+    os.utime(newer_uploaded, (1700000100, 1700000100))
+
+    with run_server(server_root, other_cli="--disable-fallback") as install_srv:
+        request = Request(
+            f"{build_url(install_srv.port)}/simple/{package}/",
+            headers={"Accept": "application/vnd.pypi.simple.v1+json"},
+        )
+        with urlopen(request) as response:
+            assert response.getcode() == 200
+            body = json.load(response)
+        assert body["meta"] == {"api-version": "1.4"}
+        assert body["name"] == package
+        assert body["versions"] == [older_version, newer_version]
+        files_by_name = {item["filename"]: item for item in body["files"]}
+        older_file = files_by_name[older_wheel.name]
+        newer_file = files_by_name[newer_wheel.name]
+        assert older_file["upload-time"] == stored_upload_times[older_wheel.name]
+        assert newer_file["upload-time"] == stored_upload_times[newer_wheel.name]
+        older_time = datetime.fromisoformat(
+            older_file["upload-time"].replace("Z", "+00:00")
+        )
+        newer_time = datetime.fromisoformat(
+            newer_file["upload-time"].replace("Z", "+00:00")
+        )
+        assert older_time.tzinfo == UTC
+        assert newer_time.tzinfo == UTC
+        assert older_time < newer_time
+        cutover = older_time + (newer_time - older_time) / 2
+        cutoff = cutover.isoformat().replace("+00:00", "Z")
+        index_url = f"{build_url(install_srv.port)}/simple/"
+        allow_host = f"localhost:{install_srv.port}"
+
+        assert uv_install_version(
+            "strict-env",
+            index_url,
+            allow_host,
+            exclude_newer=cutoff,
+        ) == older_version
+
+        assert (
+            uv_install_version("open-env", index_url, allow_host) == newer_version
+        )

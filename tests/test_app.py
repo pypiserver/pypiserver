@@ -115,6 +115,14 @@ def add_file_to_root(app):
     return file_adder
 
 
+def listed_root_entries(root):
+    entries = []
+    for entry in root.listdir():
+        if not entry.basename.startswith("."):
+            entries.append(entry.basename)
+    return entries
+
+
 def test_root_count(root, testapp, add_file_to_root):
     """Test that the welcome page count updates with added packages
 
@@ -522,7 +530,7 @@ def test_upload(package, root, testapp):
         upload_files=[("content", package, b"")],
     )
     assert resp.status_int == 200
-    uploaded_pkgs = [f.basename for f in root.listdir()]
+    uploaded_pkgs = listed_root_entries(root)
     assert len(uploaded_pkgs) == 1
     assert uploaded_pkgs[0].lower() == package.lower()
 
@@ -570,7 +578,7 @@ def test_upload_with_signature(package, root, testapp):
         ],
     )
     assert resp.status_int == 200
-    uploaded_pkgs = [f.basename.lower() for f in root.listdir()]
+    uploaded_pkgs = [basename.lower() for basename in listed_root_entries(root)]
     assert len(uploaded_pkgs) == 2
     assert package.lower() in uploaded_pkgs
     assert f"{package.lower()}.asc" in uploaded_pkgs
@@ -661,10 +669,10 @@ class TestRemovePkg:
     def test_remove_pkg(self, root, testapp, pkg, name, ver):
         """Packages can be removed via POST."""
         root.join(pkg).write("")
-        assert len(os.listdir(str(root))) == 1
+        assert listed_root_entries(root) == [pkg]
         params = {":action": "remove_pkg", "name": name, "version": ver}
         testapp.post("/", params=params)
-        assert len(os.listdir(str(root))) == 0
+        assert listed_root_entries(root) == []
 
     @pytest.mark.parametrize(
         "pkg, name, ver",
@@ -688,10 +696,10 @@ class TestRemovePkg:
         """Only the targeted package is removed."""
         root.join(pkg).write("")
         root.join(other).write("")
-        assert len(os.listdir(str(root))) == 2
+        assert sorted(listed_root_entries(root)) == sorted([pkg, other])
         params = {":action": "remove_pkg", "name": name, "version": ver}
         testapp.post("/", params=params)
-        assert len(os.listdir(str(root))) == 1
+        assert listed_root_entries(root) == [other]
 
     @pytest.mark.parametrize(
         "pkgs, name, ver",
@@ -707,10 +715,10 @@ class TestRemovePkg:
         """Test that all instances of the target are removed."""
         for pkg in pkgs:
             root.join(pkg).write("")
-        assert len(os.listdir(str(root))) == len(pkgs)
+        assert sorted(listed_root_entries(root)) == sorted(pkgs)
         params = {":action": "remove_pkg", "name": name, "version": ver}
         testapp.post("/", params=params)
-        assert len(os.listdir(str(root))) == 0
+        assert listed_root_entries(root) == []
 
     @pytest.mark.parametrize(
         ("name", "version"),
