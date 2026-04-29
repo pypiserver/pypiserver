@@ -23,7 +23,7 @@ jobs:
       PR_BODY_FILE: /tmp/pr-body.md
       RF_DOCS_FILE: ./docs/contents/repo-maintenance/release-work.md
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           # Flag to fetch all history.
           #   @see https://github.com/marketplace/actions/checkout#Fetch-all-history-for-all-tags-and-branches
