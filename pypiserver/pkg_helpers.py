@@ -1,7 +1,7 @@
 import os
 import re
 import typing as t
-from pathlib import Path, PurePath
+from pathlib import PurePath
 from urllib.parse import quote
 
 
