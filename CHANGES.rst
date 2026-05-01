@@ -4,6 +4,17 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.4.2rc05-01-2026 (__rc__)
+--------------------------
+
+- 92902b9 chore: remove eclipse project configs (#697)
+- 8236199 maint: support `uv` for development and project configuration management  (#687)
+- d79dfe3 chore: Bump gunicorn from 20.0.4 to 22.0.0 in /docker (#696)
+- 532b58b ci: bump up checkout/python actions to v6 (#695)
+- 9830e43 refactor: add missing type hints for bin/bumpver.py (#665)
+- 98511b5 refactor: fix mypy complaints for `pypiserver/manage.py` (#693)
+- 4c6959e refactor: improve type hints of `pypiserver/__main__.py` (#692)
+
 2.4.1 (2026-02-10)
 --------------------------
 
