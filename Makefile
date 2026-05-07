@@ -27,8 +27,8 @@ clean-build:
 .PHONY: format
 format: pyproject.toml ./pypiserver
 	@echo ">>> 🎗️ Cleaning and formatting the source code"
-	uv run isort $(CHECK) pypiserver
-	uv run black $(CHECK) $(DIFF) pypiserver
+	uv run ruff format $(CHECK) pypiserver
+	uv run ruff check $(DIFF) pypiserver $(OPTIONS)
 
 .PHONY: check-types
 check-types: pyproject.toml ./pypiserver ./docker ./tests

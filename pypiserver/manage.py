@@ -44,9 +44,10 @@ def filter_latest_pkgs(pkgs: Iterable[PkgFile]) -> ValuesView[PkgFile]:
     for x in pkgs:
         pkgname = normalize_pkgname(x.pkgname)
 
-        if pkgname not in pkgname2latest:
-            pkgname2latest[pkgname] = x
-        elif x.parsed_version > pkgname2latest[pkgname].parsed_version:
+        if (
+            pkgname not in pkgname2latest
+            or x.parsed_version > pkgname2latest[pkgname].parsed_version
+        ):
             pkgname2latest[pkgname] = x
 
     return pkgname2latest.values()

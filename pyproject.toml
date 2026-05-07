@@ -89,31 +89,29 @@ include = ["/pypiserver", "/README.md", "/LICENSE.txt"]
 [tool.pytest]
 norecursedirs = ["bin", "parts", "develop-eggs", "eggs", "venv", ".*", "_*"]
 
-[tool.black]
+[tool.ruff]
 line-length = 80
-target-version = ['py36']
-exclude = '''
-(
-  /(
-      \.direnv
-    | \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | \.vscode
-    | _build
-    | build
-    | dist
-    | venv
-    | pypiserver/bottle_wrapper/bottle.py
-  )
-)
-'''
+exclude =  [
+    '.direnv',
+    '.eggs',         # exclude a few common directories in the
+    '.git',          # root of the project
+    '.mypy_cache',
+    '.tox',
+    '.venv',
+    '.vscode',
+    '_build',
+    'build',
+    'dist',
+    'venv',
+    'pypiserver/bottle_wrapper/bottle.py'
+]
+[tool.ruff.lint]
+extend-select = [
+    "I",      # https://docs.astral.sh/ruff/rules/#isort-i
+    "FA",     # https://docs.astral.sh/ruff/rules/#flake8-future-annotations-fa
+    "RUF100", # https://docs.astral.sh/ruff/rules/#ruff-specific-rules-ruf
+]
 
-[tool.isort]
-profile = "black"
-extend_skip_glob = ["pypiserver/bottle_wrapper/*.py"]
 
 [tool.mypy]
 check_untyped_defs = true
@@ -136,9 +134,8 @@ disallow_untyped_decorators = false
 
 [dependency-groups]
 dev = [
-  "black>=26.1.0",
+  "ruff>=0.15.12",
   "docopt>=0.6.2",
-  "isort>=8.0.1",
   "mypy>=1.19.1 ; implementation_name == 'cpython'",
   "types-setuptools>=82.0.0.20260210",
   "mdformat-footnote>=0.1.3",
