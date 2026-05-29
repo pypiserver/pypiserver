@@ -2,13 +2,16 @@ import logging
 import mimetypes
 import os
 import re
-import xml.dom.minidom
 import xmlrpc.client as xmlrpclib
 import zipfile
 from collections import defaultdict, namedtuple
 from io import BytesIO
 from json import dumps
 from urllib.parse import quote, urljoin, urlparse
+from xml.parsers.expat import ExpatError
+
+import defusedxml.minidom
+from defusedxml.common import DefusedXmlException
 
 from pypiserver.config import RunConfig
 
@@ -233,7 +236,10 @@ def pep_503_redirects(project=None):
 @auth("list")
 def handle_rpc():
     """Handle pip-style RPC2 search requests"""
-    parser = xml.dom.minidom.parse(request.body)
+    try:
+        parser = defusedxml.minidom.parse(request.body)
+    except (DefusedXmlException, ExpatError):
+        raise HTTPError(400, "Invalid or unsafe XML payload")
     methodname = (
         parser.getElementsByTagName("methodName")[0]
         .childNodes[0]

@@ -4,6 +4,11 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+- FIX: security: harden ``/RPC2`` XML parser against entity-expansion DoS
+  ("billion laughs", CWE-776). Switch from ``xml.dom.minidom`` to
+  ``defusedxml.minidom`` and reject malformed/unsafe XML payloads with
+  HTTP 400 (#685).
+
 2.4.1 (2026-02-10)
 --------------------------
 

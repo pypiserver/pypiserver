@@ -43,6 +43,7 @@ license = { file = "LICENSE.txt" }
 # --- Dependencies ---
 
 dependencies = [
+  "defusedxml>=0.7.1",
   "importlib-resources>=6.5.2 ; python_full_version >= '3.10' and python_full_version < '3.12'",
   "legacy-cgi>=2.6.4 ; python_full_version >= '3.13'",
   "packaging>=26.0",
