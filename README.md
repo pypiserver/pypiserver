@@ -558,6 +558,28 @@ You can also specify **pypiserver** to run as a Docker service using a
 composefile. An example composefile is provided as
 [`docker-compose.yaml`](./docker-compose.yml)
 
+#### Passing Arguments via Dockerfile CMD or ENTRYPOINT
+
+When wrapping **pypiserver** in your own image, pass each option and its value
+as **separate elements** of the CMD or ENTRYPOINT array. Docker treats every
+array element as a single argument, so `"-P /data/.htpasswd"` is parsed as
+**one** option named `-P /data/.htpasswd`, not as `-P` followed by a path —
+which makes the file lookup fail at startup.
+
+```dockerfile
+# Correct: each token is its own array element
+CMD ["pypi-server", "run", "-p", "8080", "-P", ".htpasswd", "-a", "update", "/data/packages"]
+```
+
+```dockerfile
+# Incorrect: -p, -P, and -a values are glued to their flags
+CMD ["pypi-server", "run", "-p 8080", "-P .htpasswd", "-a update", "/data/packages"]
+```
+
+The `docker run` examples above work without quoting because the host shell
+splits the command line on whitespace before Docker ever sees it; this only
+matters inside `Dockerfile` arrays.
+
 ## Alternative Installation Methods
 
 When trying the methods below, first use the following command to check whether
