@@ -60,6 +60,16 @@ class auth:
                     )
                 if not config.auther(*request.auth):
                     raise HTTPError(403)
+                if config.authenticate[self.action] is not None:
+                    for user in config.authenticate[self.action]:
+                        if user.startswith("%"):
+                            users = config.groups.get(user[1:], [])
+                            if request.auth[0] in users:
+                                break
+                        elif request.auth[0] == user:
+                            break
+                    else:
+                        raise HTTPError(403)
             return method(*args, **kwargs)
 
         return protector
