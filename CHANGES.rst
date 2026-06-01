@@ -4,6 +4,22 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.4.2rc06-01-2026 (__rc__)
+--------------------------
+
+- 8f6f277 docs: clarify Dockerfile CMD/ENTRYPOINT arg parsing for -P and friends (#699)
+- e85d902 chore: Bump pip from 26.0.1 to 26.1 (#702)
+- b5ef664 chore: Bump urllib3 from 2.6.3 to 2.7.0 (#701)
+- 91ac3ff chore: Bump idna from 3.11 to 3.15 (#700)
+- e0db8f5 feat: migrate from isort+black to ruff (#666)
+- 92902b9 chore: remove eclipse project configs (#697)
+- 8236199 maint: support `uv` for development and project configuration management  (#687)
+- d79dfe3 chore: Bump gunicorn from 20.0.4 to 22.0.0 in /docker (#696)
+- 532b58b ci: bump up checkout/python actions to v6 (#695)
+- 9830e43 refactor: add missing type hints for bin/bumpver.py (#665)
+- 98511b5 refactor: fix mypy complaints for `pypiserver/manage.py` (#693)
+- 4c6959e refactor: improve type hints of `pypiserver/__main__.py` (#692)
+
 2.4.1 (2026-02-10)
 --------------------------
 
