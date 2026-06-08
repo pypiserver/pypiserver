@@ -648,6 +648,43 @@ def test_search(root, testapp, search_xml, pkgs, matches):
             assert returned["version"] in [match[1] for match in matches]
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [
+        # Billion-laughs / entity-expansion DoS (issue #685).
+        '<?xml version="1.0"?>'
+        "<!DOCTYPE lolz ["
+        '  <!ENTITY lol "AAAAAAAAAA">'
+        '  <!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">'
+        '  <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">'
+        "]>"
+        "<methodCall><methodName>search</methodName>"
+        "<params><param><value><string>&lol3;</string></value></param></params>"
+        "</methodCall>",
+        # External entity (XXE) attempting local file read.
+        '<?xml version="1.0"?>'
+        '<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'
+        "<methodCall><methodName>search</methodName>"
+        "<params><param><value><string>&xxe;</string></value></param></params>"
+        "</methodCall>",
+        # Plain malformed XML.
+        "<not-xml",
+    ],
+)
+def test_rpc_rejects_unsafe_or_invalid_xml(testapp, payload):
+    """Unsafe (DTD/entity) and malformed XML must be rejected with 400.
+
+    Regression test for issue #685 (CWE-776 entity expansion DoS in /RPC2).
+    """
+    resp = testapp.post(
+        "/RPC2",
+        payload,
+        headers={"Content-Type": "text/xml"},
+        expect_errors=True,
+    )
+    assert resp.status_int == 400
+
+
 class TestRemovePkg:
     """The API allows removal of packages."""
 
