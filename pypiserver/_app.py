@@ -194,10 +194,9 @@ Upload = namedtuple("Upload", "pkg sig")
 
 
 def file_upload():
-    files_get = getattr(request.files, "get")
-    package_file = files_get("content", None)
-    signature_file = files_get("gpg_signature", None)
-    ufiles = Upload(package_file, signature_file)
+    ufiles = Upload._make(
+        request.files.get(f, None) for f in ("content", "gpg_signature")
+    )
     if not ufiles.pkg:
         raise HTTPError(400, "Missing 'content' file-field!")
     signature_name = f"{ufiles.pkg.raw_filename}.asc"
@@ -210,9 +209,10 @@ def file_upload():
     for uf in ufiles:
         if not uf:
             continue
-        invalid_name = not is_valid_pkg_filename(uf.raw_filename)
-        unknown_package = guess_pkgname_and_version(uf.raw_filename) is None
-        if invalid_name or unknown_package:
+        if (
+            not is_valid_pkg_filename(uf.raw_filename)
+            or guess_pkgname_and_version(uf.raw_filename) is None
+        ):
             raise HTTPError(400, f"Bad filename: {uf.raw_filename}")
 
         if not config.overwrite and config.backend.exists(uf.raw_filename):
@@ -228,11 +228,10 @@ def file_upload():
             if "twine" in request.headers.get("User-Agent", ""):
                 http_code = 400
 
-            overwrite_msg = f"Package {uf.raw_filename!r} already exists!\n"
-            overwrite_msg += "  You may start server with `--overwrite` option."
             raise HTTPError(
                 http_code,
-                overwrite_msg,
+                f"Package {uf.raw_filename!r} already exists!\n"
+                "  You may start server with `--overwrite` option.",
             )
 
         config.backend.add_package(uf.raw_filename, uf.file)
@@ -288,8 +287,11 @@ def handle_rpc():
     )
     log.debug(f"Processing RPC2 request for '{methodname}'")
     if methodname == "search":
-        string_node = parser.getElementsByTagName("string")[0]
-        value = string_node.childNodes[0].wholeText.strip()
+        value = (
+            parser.getElementsByTagName("string")[0]
+            .childNodes[0]
+            .wholeText.strip()
+        )
         response = []
         ordering = 0
         for p in config.backend.get_all_packages():
@@ -355,22 +357,19 @@ def simple(project):
 
     current_uri = request_fullpath(request)
 
-    accept_header = request.headers.get("Accept", "")
-    wants_json = False
-    for media_type in PEP_691_JSON_ACCEPT_TYPES:
-        if media_type in accept_header:
-            wants_json = True
-            break
-    if wants_json:
-        files = []
-        for package in packages:
-            files.append(simple_project_file_json(current_uri, package))
+    if any(
+        media_type in request.headers.get("Accept", "")
+        for media_type in PEP_691_JSON_ACCEPT_TYPES
+    ):
         response.content_type = PEP_691_JSON_CONTENT_TYPE
         return dumps(
             {
                 "meta": {"api-version": "1.4"},
                 "name": project,
-                "files": files,
+                "files": [
+                    simple_project_file_json(current_uri, package)
+                    for package in packages
+                ],
                 "versions": simple_project_versions(packages),
             }
         )
@@ -410,9 +409,9 @@ def list_packages():
         key=lambda x: (os.path.dirname(x.relfn), x.pkgname, x.parsed_version),
     )
 
-    links = []
-    for pkg in packages:
-        links.append((pkg.relfn_unix, urljoin(fp, pkg.fname_and_hash)))
+    links = (
+        (pkg.relfn_unix, urljoin(fp, pkg.fname_and_hash)) for pkg in packages
+    )
 
     tmpl = """<!DOCTYPE html>
 <html lang="en">

@@ -412,14 +412,10 @@ def test_twine_upload_json_upload_times_drive_uv_exclude_newer(tmp_path):
             f"from setuptools import setup\n\n"
             f"setup(name={package!r}, version={version!r}, packages=[])\n"
         )
-        if re.match(r"^3\.7", sys.version):
-            exit_code = run_setup_py(project_dir, f"bdist_wheel -d {dist_dir}")
-        else:
-            exit_code = run_py_build(
-                project_dir,
-                f"--wheel --no-isolation --outdir {dist_dir}",
-            )
-        assert exit_code == 0
+        assert run_py_build(
+            project_dir,
+            f"--wheel --no-isolation --outdir {dist_dir}",
+        ) == 0
         wheels = list(dist_dir.glob("*.whl"))
         assert len(wheels) == 1
         return wheels[0]

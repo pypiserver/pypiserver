@@ -39,10 +39,10 @@ def load_upload_times(root: Path) -> dict[str, datetime]:
         raw = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(raw, dict):
             raise ValueError("sidecar metadata must be a JSON object")
-        parsed = {}
-        for key, value in raw.items():
-            parsed[str(key)] = parse_upload_time(str(value))
-        return parsed
+        return {
+            str(key): parse_upload_time(str(value))
+            for key, value in raw.items()
+        }
     except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
         logger.warning(
             "Failed to read upload-time metadata from %s: %s",
@@ -62,11 +62,8 @@ def save_upload_times(root: Path, metadata: dict[str, datetime]) -> None:
             pass
         return
 
-    formatted = {}
-    for key, value in sorted(metadata.items()):
-        formatted[key] = format_upload_time(value)
     serialized = json.dumps(
-        formatted,
+        {key: format_upload_time(value) for key, value in metadata.items()},
         indent=2,
         sort_keys=True,
     )
