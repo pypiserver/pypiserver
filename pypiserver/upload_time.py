@@ -7,7 +7,6 @@ import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 
-
 logger = logging.getLogger(__name__)
 
 SIDECAR_NAME = ".pypiserver-upload-times.json"

@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
 """minimal PyPI like server for use with pip/easy_install"""
 
-from datetime import datetime
 import mimetypes
 import typing as t
+from datetime import datetime
 
 from pypiserver.pkg_helpers import normalize_pkgname, parse_version
 
@@ -59,7 +59,12 @@ class PkgFile:
     def __repr__(self) -> str:
         return "{}({})".format(
             self.__class__.__name__,
-            ", ".join([f"{k}={getattr(self, k, 'AttributeError')!r}" for k in sorted(self.__slots__)]),
+            ", ".join(
+                [
+                    f"{k}={getattr(self, k, 'AttributeError')!r}"
+                    for k in sorted(self.__slots__)
+                ]
+            ),
         )
 
     @property

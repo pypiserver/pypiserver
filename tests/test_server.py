@@ -15,14 +15,14 @@ The tests below are using 3 ways to startup pypi-servers:
 import contextlib
 import json
 import os
-from datetime import UTC, datetime
+import re
 import shutil
 import socket
-import re
 import sys
 import time
 import typing as t
 from collections import namedtuple
+from datetime import UTC, datetime
 from pathlib import Path
 from shlex import split
 from subprocess import Popen, run

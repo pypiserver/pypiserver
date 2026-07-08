@@ -11,8 +11,7 @@ from pypiserver.backend import (
     listdir,
 )
 from pypiserver.config import _ConfigCommon
-from pypiserver.upload_time import load_upload_times
-from pypiserver.upload_time import SIDECAR_NAME
+from pypiserver.upload_time import SIDECAR_NAME, load_upload_times
 
 
 def create_path(root: Path, path: Path):
