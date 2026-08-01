@@ -307,6 +307,11 @@ def test_simple_normalized_name_redirect(testapp, package, normalized):
     assert resp.location.endswith("/simple/{0}/".format(normalized))
 
 
+def test_simple_normalized_name_redirect_with_prefix(testpriv):
+    resp = testpriv.get("/priv/simple/Foo.Bar/")
+    assert resp.location.endswith("/priv/simple/foo-bar/")
+
+
 def test_simple_index(root, testapp):
     root.join("foobar-1.0.zip").write("")
     root.join("foobar-1.1.zip").write("")
@@ -480,6 +485,11 @@ def test_json_info_normalized_name_redirect(testapp, package, normalized):
     assert resp.status_code >= 300
     assert resp.status_code < 400
     assert resp.location.endswith("/{0}/json".format(normalized))
+
+
+def test_json_info_normalized_name_redirect_with_prefix(testpriv):
+    resp = testpriv.get("/priv/Foo.Bar/json")
+    assert resp.location.endswith("/priv/foo-bar/json")
 
 
 def test_no_cache_control_set(root, testapp):
