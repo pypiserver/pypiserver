@@ -42,12 +42,10 @@ import sys
 from collections.abc import Generator
 from datetime import datetime
 
-import docopt
-
 my_dir = osp.dirname(__file__)
 
 VFILE = osp.join(my_dir, "..", "pypiserver", "__init__.py")
-VFILE_regex_version = re.compile(r'version *= *__version__ *= *"([^"]+)"')
+VFILE_regex_version = re.compile(r'^__version__\s*=\s*"([^"]+)"', re.MULTILINE)
 VFILE_regex_datetime = re.compile(r'__updated__ *= *"([^"]+)"')
 VFILE_regex_date = re.compile(r'__updated__ *= *"([^"\s]+)\s')
 
@@ -249,6 +247,8 @@ def bumpver(
 
 
 def main(*args: str) -> None:
+    import docopt
+
     opts = docopt.docopt(__doc__, argv=list(args))
 
     new_ver = opts["<new-ver>"]
