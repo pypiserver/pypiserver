@@ -79,6 +79,7 @@ def simple_project_file_json(current_uri, package):
         "filename": os.path.basename(package.relfn),
         "url": simple_project_url(current_uri, package),
         "hashes": simple_project_hashes(package),
+        "size": os.path.getsize(package.fn),
         "upload-time": format_upload_time(package.upload_time),
     }
 

@@ -505,6 +505,8 @@ def test_twine_upload_json_upload_times_drive_uv_exclude_newer(tmp_path):
         newer_file = files_by_name[newer_wheel.name]
         assert older_file["upload-time"] == stored_upload_times[older_wheel.name]
         assert newer_file["upload-time"] == stored_upload_times[newer_wheel.name]
+        assert older_file["size"] == older_uploaded.stat().st_size
+        assert newer_file["size"] == newer_uploaded.stat().st_size
         older_time = datetime.fromisoformat(
             older_file["upload-time"].replace("Z", "+00:00")
         )
