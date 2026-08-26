@@ -40,7 +40,7 @@ jobs:
           python-version: "3.x"
 
       - id: install-requirements
-        run: pip install -r "requirements/dev.pip"
+        run: pip install --group dev --group test -e .
 
       - name: run `bumpver`
         env:
@@ -54,4 +54,8 @@ jobs:
           git config user.email github-actions@github.com
 
           python3 bin/bumpver.py ${{ inputs.dryrun && '-n' || '' }} -t "Automated release ${LAST_VERSION}" ${LAST_VERSION}
+
+      - name: push commit and tag
+        if: ${{ !inputs.dryrun }}
+        run: |
           git push --follow-tags
