@@ -8,6 +8,9 @@ Changelog
   ("billion laughs", CWE-776). Switch from ``xml.dom.minidom`` to
   ``defusedxml.minidom`` and reject malformed/unsafe XML payloads with
   HTTP 400 (#685).
+- FIX: load optional ``passlib`` support only when built-in password-file
+  authentication is configured, so an incompatible installation does not
+  prevent unauthenticated commands from starting (#668).
 
 2.4.1 (2026-02-10)
 --------------------------
