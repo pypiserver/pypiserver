@@ -310,7 +310,15 @@ def run_twine(
     conf: str | Path,
 ) -> None:
     run(
-        split(f"twine {command} --repository test --config-file {conf} {package}"),
+        [
+            "twine",
+            command,
+            "--repository",
+            "test",
+            "--config-file",
+            str(conf),
+            str(package),
+        ],
         check=True,
     )
 
@@ -460,7 +468,7 @@ def test_twine_upload_json_upload_times_drive_uv_exclude_newer(tmp_path):
             args.extend(["--exclude-newer", exclude_newer])
         args.append(package)
         run(args, check=True)
-        python = venv_dir / "bin" / "python"
+        python = venv_dir / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
         cmd = f"import importlib.metadata as md; print(md.version({package!r}))"
         return run(
             [str(python), "-c", cmd],
