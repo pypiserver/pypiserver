@@ -413,7 +413,10 @@ def json_info(project):
     req_url = request.url
     for x in packages:
         releases[x.version].append(
-            {"url": urljoin(req_url, "../../packages/" + x.relfn)}
+            # The route is ``/:project/json``, so only one level up is needed
+            # to reach ``/packages/``; going two levels up escapes any prefix
+            # the app is mounted under (see ``--server-base-url``).
+            {"url": urljoin(req_url, "../packages/" + x.relfn)}
         )
 
     rv = {"info": {"version": latest_version}, "releases": releases}

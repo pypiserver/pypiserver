@@ -5,6 +5,7 @@ import os
 import pathlib
 import xmlrpc.client as xmlrpclib
 from html import unescape
+from urllib.parse import urlparse
 
 # Third party imports
 import pytest
@@ -463,6 +464,22 @@ def test_json_info(root, testapp):
 
 def test_json_info_package_not_existing(root, testapp):
     resp = testapp.get("/foobar/json", status=404)
+
+
+def test_json_info_url_points_to_packages(root, testapp, add_file_to_root):
+    add_file_to_root(root, "foobar-1.0.zip", "123")
+
+    resp = testapp.get("/foobar/json")
+    url = resp.json["releases"]["1.0"][0]["url"]
+    assert urlparse(url).path == "/packages/foobar-1.0.zip"
+
+
+def test_nonroot_json_info_url_stays_under_prefix(root, testpriv, add_file_to_root):
+    add_file_to_root(root, "foobar-1.0.zip", "123")
+
+    resp = testpriv.get("/priv/foobar/json")
+    url = resp.json["releases"]["1.0"][0]["url"]
+    assert urlparse(url).path == "/priv/packages/foobar-1.0.zip"
 
 
 @pytest.mark.parametrize(
