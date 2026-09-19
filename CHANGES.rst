@@ -10,6 +10,8 @@ Changelog
   ("billion laughs", CWE-776). Switch from ``xml.dom.minidom`` to
   ``defusedxml.minidom`` and reject malformed/unsafe XML payloads with
   HTTP 400 (#685).
+- FIX: ``/:project/json`` now builds download URLs that stay under the
+  server's base URL prefix instead of escaping it (#593)
 
 2.4.1 (2026-02-10)
 --------------------------
