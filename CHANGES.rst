@@ -4,6 +4,8 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+- FIX: Preserve reverse-proxy URL prefixes when redirecting non-normalized
+  project names (#703).
 - FIX: security: harden ``/RPC2`` XML parser against entity-expansion DoS
   ("billion laughs", CWE-776). Switch from ``xml.dom.minidom`` to
   ``defusedxml.minidom`` and reject malformed/unsafe XML payloads with

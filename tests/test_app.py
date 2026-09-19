@@ -308,6 +308,34 @@ def test_simple_normalized_name_redirect(testapp, package, normalized):
     assert resp.location.endswith("/simple/{0}/".format(normalized))
 
 
+@pytest.mark.parametrize(
+    ("path", "location"),
+    [
+        ("/simple/Foo.Bar/", "http://forward.ed/priv/simple/foo-bar/"),
+        ("/Foo.Bar/json", "http://forward.ed/priv/foo-bar/json"),
+    ],
+)
+def test_normalized_name_redirect_preserves_proxy_prefix(
+    testapp, path, location
+):
+    resp = testapp.get(path, headers={"X-Forwarded-Host": "forward.ed/priv/"})
+    assert resp.location == location
+
+
+@pytest.mark.parametrize(
+    ("path", "location"),
+    [
+        ("/priv/simple/Foo.Bar/", "/priv/simple/foo-bar/"),
+        ("/priv/Foo.Bar/json", "/priv/foo-bar/json"),
+    ],
+)
+def test_normalized_name_redirect_preserves_server_base_url(
+    testpriv, path, location
+):
+    resp = testpriv.get(path, headers={"Host": "pypi.example"})
+    assert resp.location == f"http://pypi.example{location}"
+
+
 def test_simple_index(root, testapp):
     root.join("foobar-1.0.zip").write("")
     root.join("foobar-1.1.zip").write("")
