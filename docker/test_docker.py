@@ -208,6 +208,37 @@ class TestCommands:
         """We can get help from the docker container."""
         res = run("docker", "run", image, "--help", capture=True)
         assert PYPISERVER_PROCESS_NAME in res.out
+        assert "PORT environment variable is deprecated" not in res.err
+
+    def test_deprecated_port_warns(self, image: str) -> None:
+        """The legacy PORT environment variable emits a warning."""
+        res = run(
+            "docker",
+            "run",
+            "--env",
+            "PORT=8081",
+            image,
+            "--help",
+            capture=True,
+        )
+        assert "PORT environment variable is deprecated" in res.err
+
+    def test_deprecated_port_warning_can_be_suppressed(
+        self, image: str
+    ) -> None:
+        """The Docker deprecation warning honors warning suppression."""
+        res = run(
+            "docker",
+            "run",
+            "--env",
+            "PORT=8081",
+            "--env",
+            "PYPISERVER_DISABLE_DEPRECATION_WARNINGS=",
+            image,
+            "--help",
+            capture=True,
+        )
+        assert "PORT environment variable is deprecated" not in res.err
 
     def test_version(self, image: str) -> None:
         """We can get the version from the docker container."""
