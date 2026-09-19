@@ -8,6 +8,8 @@ import typing as t
 from os.path import dirname
 from pathlib import Path
 
+EVENT_TYPE_OPENED = "opened"
+
 try:
     from watchdog.observers import Observer
 
@@ -124,6 +126,11 @@ class _EventHandler:
     def dispatch(self, event):
         """Called by watchdog observer"""
         cache = self.cache
+
+        # Reading a package emits an opened event on some platforms. It must
+        # not invalidate the digest that the read is about to cache.
+        if event.event_type == EVENT_TYPE_OPENED:
+            return
 
         # Don't care about directory events
         if event.is_directory:
