@@ -4,6 +4,36 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.4.2rc09-20-2026 (__rc__)
+--------------------------
+
+- 2f26861 Fix /:project/json download URLs escaping the base URL prefix (#732)
+- 8045357 fix: preserve proxy prefixes in normalization redirects (#725)
+- df744ac chore: Bump anyio from 4.12.1 to 4.14.2 (#731)
+- 6cc6b29 chore: Bump soupsieve from 2.8.3 to 2.9 (#730)
+- e5dde71 chore: Bump pip from 26.1 to 26.2 (#729)
+- e595e24 chore: Bump webob from 1.8.10 to 1.8.11 (#727)
+- a278633 chore: Bump cryptography from 48.0.1 to 50.0.0 (#721)
+- d87ef03 chore: Bump cryptography from 46.0.7 to 48.0.1 (#712)
+- 88dc4ed fix: harden /RPC2 XML parser against entity-expansion DoS [#685] (#704)
+- beb6c51 chore: Bump cryptography from 46.0.5 to 46.0.7 (#710)
+- 5e74cb4 chore: Bump webob from 1.8.9 to 1.8.10 (#706)
+- 3f03eb3 chore: Bump pygments from 2.19.2 to 2.20.0 (#707)
+- 0285270 chore: Bump requests from 2.32.5 to 2.33.0 (#708)
+- 4a58684 chore: Bump pytest from 9.0.2 to 9.0.3 (#709)
+- 8f6f277 docs: clarify Dockerfile CMD/ENTRYPOINT arg parsing for -P and friends (#699)
+- e85d902 chore: Bump pip from 26.0.1 to 26.1 (#702)
+- b5ef664 chore: Bump urllib3 from 2.6.3 to 2.7.0 (#701)
+- 91ac3ff chore: Bump idna from 3.11 to 3.15 (#700)
+- e0db8f5 feat: migrate from isort+black to ruff (#666)
+- 92902b9 chore: remove eclipse project configs (#697)
+- 8236199 maint: support `uv` for development and project configuration management  (#687)
+- d79dfe3 chore: Bump gunicorn from 20.0.4 to 22.0.0 in /docker (#696)
+- 532b58b ci: bump up checkout/python actions to v6 (#695)
+- 9830e43 refactor: add missing type hints for bin/bumpver.py (#665)
+- 98511b5 refactor: fix mypy complaints for `pypiserver/manage.py` (#693)
+- 4c6959e refactor: improve type hints of `pypiserver/__main__.py` (#692)
+
 - FIX: Preserve reverse-proxy URL prefixes when redirecting non-normalized
   project names (#703).
 - FIX: security: harden ``/RPC2`` XML parser against entity-expansion DoS
