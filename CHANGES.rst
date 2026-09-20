@@ -7,6 +7,7 @@ Changelog
 2.4.2 (2026-09-20)
 --------------------------
 
+- dcec74c FIX: fix: adjust the version match pattern in bumpver
 - 2f26861 FIX: Fix /:project/json download URLs escaping the base URL prefix (#732)
 - 8045357 FIX: fix: preserve proxy prefixes in normalization redirects (#725)
 - df744ac MAINT: chore: Bump anyio from 4.12.1 to 4.14.2 (#731)
