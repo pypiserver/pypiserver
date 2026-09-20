@@ -1099,10 +1099,15 @@ these steps:
    ```python
    # pypiserver-start.py
    from pathlib import Path
+
+   import pam
    import pypiserver
    from pypiserver import bottle_wrapper as bottle
-   import pam
-   app = pypiserver.app(roots=[Path('./packages')], auther=pam.authenticate)
+   
+   app = pypiserver.app(
+       roots=[Path('./packages').resolve()],
+       auther=pam.authenticate
+   )
    bottle.run(app=app, host='0.0.0.0', port=80, server='auto')
    ```
 
