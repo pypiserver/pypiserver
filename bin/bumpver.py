@@ -42,8 +42,6 @@ import sys
 from collections.abc import Generator
 from datetime import datetime
 
-import docopt
-
 my_dir = osp.dirname(__file__)
 
 VFILE = osp.join(my_dir, "..", "pypiserver", "__init__.py")
@@ -249,6 +247,8 @@ def bumpver(
 
 
 def main(*args: str) -> None:
+    import docopt
+
     opts = docopt.docopt(__doc__, argv=list(args))
 
     new_ver = opts["<new-ver>"]
