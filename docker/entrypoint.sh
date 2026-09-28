@@ -116,6 +116,11 @@ if ! run \
 fi
 
 
+if [[ -v PORT && ! -v PYPISERVER_DISABLE_DEPRECATION_WARNINGS ]]; then
+    echo "WARNING: The PORT environment variable is deprecated. Use PYPISERVER_PORT instead." 1>&2
+fi
+
+
 if [[ "$*" == "" ]]; then
     # Use the gunicorn server by default, since it's more performant than
     # bottle's default server

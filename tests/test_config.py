@@ -794,3 +794,19 @@ def test_argv_conf():
         assert conf.disable_fallback is True
     finally:
         sys.argv = orig_args
+
+
+def test_legacy_arg_warning_can_be_suppressed(monkeypatch, capsys):
+    """Legacy arguments warn unless warning suppression is requested."""
+    args = ["-p", "8080"]
+
+    config_with_warning = Config.from_args(args)
+    assert (
+        "WARNING: You are using deprecated arguments" in capsys.readouterr().err
+    )
+
+    monkeypatch.setenv("PYPISERVER_DISABLE_DEPRECATION_WARNINGS", "")
+    config_without_warning = Config.from_args(args)
+
+    assert capsys.readouterr().err == ""
+    assert config_without_warning == config_with_warning

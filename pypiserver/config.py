@@ -38,6 +38,7 @@ import contextlib
 import hashlib
 import io
 import logging
+import os
 import pathlib
 import re
 import sys
@@ -917,16 +918,18 @@ class Config:
             try:
                 with capture_stderr() as cap:
                     parsed = parser.parse_args(cls._adjust_old_args(args))
-                print(
-                    "WARNING: You are using deprecated arguments to pypiserver.\n\n"
-                    "Please run `pypi-server --help` and update your command "
-                    "to align with the current interface.\n\n"
-                    "In most cases, this will be as simple as just using\n\n"
-                    "  pypi-server run [args]\n\n"
-                    "instead of\n\n"
-                    "  pypi-server [args]\n",
-                    file=sys.stderr,
-                )
+                if "PYPISERVER_DISABLE_DEPRECATION_WARNINGS" not in os.environ:
+                    print(
+                        "WARNING: You are using deprecated arguments to "
+                        "pypiserver.\n\n"
+                        "Please run `pypi-server --help` and update your "
+                        "command to align with the current interface.\n\n"
+                        "In most cases, this will be as simple as just using\n\n"
+                        "  pypi-server run [args]\n\n"
+                        "instead of\n\n"
+                        "  pypi-server [args]\n",
+                        file=sys.stderr,
+                    )
             except SystemExit:
                 cap.seek(0)
                 second_txt = cap.read()
