@@ -795,6 +795,33 @@ class TestRemovePkg:
         assert len(os.listdir(str(root))) == 0
 
     @pytest.mark.parametrize(
+        "pkgs, name, ver",
+        (
+            # sdist uses dashes; wheel keeps underscores — PEP 503 equates them
+            (
+                ("aaa-bbb-1.0.tar.gz", "aaa_bbb-1.0-py3-none-any.whl"),
+                "aaa-bbb",
+                "1.0",
+            ),
+            (
+                ("aaa-bbb-1.0.tar.gz", "aaa_bbb-1.0-py3-none-any.whl"),
+                "aaa_bbb",
+                "1.0",
+            ),
+        ),
+    )
+    def test_remove_pkg_normalizes_underscore_hyphen(
+        self, root, testapp, pkgs, name, ver
+    ):
+        """remove_pkg must hit both sdist and wheel name spellings (#377)."""
+        for pkg in pkgs:
+            root.join(pkg).write("")
+        assert len(os.listdir(str(root))) == len(pkgs)
+        params = {":action": "remove_pkg", "name": name, "version": ver}
+        testapp.post("/", params=params)
+        assert len(os.listdir(str(root))) == 0
+
+    @pytest.mark.parametrize(
         ("name", "version"),
         [
             (None, None),

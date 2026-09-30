@@ -127,13 +127,10 @@ class Backend(IBackend, abc.ABC):
         )
 
     def find_version(self, name: str, version: str) -> t.Iterable[PkgFile]:
-        """Return all packages that match PkgFile.pkgname == name and
-        PkgFile.version == version` When implementing a Backend class,
-        either use this method as is, or override it with a more performant
-        version.
-        """
+        """Return packages matching name and version (PEP 503 name normalize)."""
+        normalized = normalize_pkgname(name)
         return filter(
-            lambda pkg: pkg.pkgname == name and pkg.version == version,
+            lambda pkg: pkg.pkgname_norm == normalized and pkg.version == version,
             self.get_all_packages(),
         )
 
