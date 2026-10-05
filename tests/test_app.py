@@ -821,6 +821,20 @@ class TestRemovePkg:
         testapp.post("/", params=params)
         assert len(os.listdir(str(root))) == 0
 
+    def test_remove_pkg_mixed_case_dot_preserves_other_version(
+        self, root, testapp
+    ):
+        """Mixed-case/dot spelling removes only the targeted version (#377)."""
+        # SiluPanda: pin PEP 503 normalization + deletion boundary together.
+        v1 = ("Aaa.Bbb-1.0.tar.gz", "Aaa_Bbb-1.0-py3-none-any.whl")
+        v2 = ("Aaa.Bbb-2.0.tar.gz", "Aaa_Bbb-2.0-py3-none-any.whl")
+        for pkg in v1 + v2:
+            root.join(pkg).write("")
+        assert len(os.listdir(str(root))) == 4
+        params = {":action": "remove_pkg", "name": "Aaa.Bbb", "version": "1.0"}
+        testapp.post("/", params=params)
+        assert sorted(os.listdir(str(root))) == sorted(v2)
+
     @pytest.mark.parametrize(
         ("name", "version"),
         [
