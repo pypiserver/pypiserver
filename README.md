@@ -1107,6 +1107,10 @@ these steps:
    app = pypiserver.app(
        roots=[Path('./packages').resolve()],
        auther=pam.authenticate
+
+   app = pypiserver.app(
+       roots=[Path('./packages').resolve()],
+       auther=pam.authenticate
    )
    bottle.run(app=app, host='0.0.0.0', port=80, server='auto')
    ```
