@@ -73,12 +73,6 @@ from pypiserver.backend import (
     get_file_backend,
 )
 
-# The `passlib` requirement is optional, so we need to verify its import here.
-try:
-    from passlib.apache import HtpasswdFile
-except ImportError:
-    HtpasswdFile = None
-
 
 def legacy_strtoint(val: str) -> int:
     """Convert a string representation of truth to true (1) or false (0).
@@ -807,7 +801,9 @@ class RunConfig(_ConfigCommon):
             return lambda _uname, _pw: False
         # Finally, if a password file was specified, we'll load it up with
         # Htpasswd and return a callable that checks it.
-        if HtpasswdFile is None:
+        try:
+            from passlib.apache import HtpasswdFile
+        except ImportError:
             sys.exit(
                 "apache.passlib library is not available. You must install "
                 "pypiserver with the optional 'passlib' dependency (`pip "
