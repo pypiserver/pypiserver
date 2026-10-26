@@ -1103,10 +1103,6 @@ these steps:
    import pam
    import pypiserver
    from pypiserver import bottle_wrapper as bottle
-   
-   app = pypiserver.app(
-       roots=[Path('./packages').resolve()],
-       auther=pam.authenticate
 
    app = pypiserver.app(
        roots=[Path('./packages').resolve()],
