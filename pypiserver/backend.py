@@ -130,7 +130,9 @@ class Backend(IBackend, abc.ABC):
         """Return packages matching name and version (PEP 503 name normalize)."""
         normalized = normalize_pkgname(name)
         return filter(
-            lambda pkg: pkg.pkgname_norm == normalized and pkg.version == version,
+            lambda pkg: (
+                pkg.pkgname_norm == normalized and pkg.version == version
+            ),
             self.get_all_packages(),
         )
 
