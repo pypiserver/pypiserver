@@ -4,6 +4,14 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.4.3rc11-01-2026 (__rc__)
+--------------------------
+
+- af839b9 Docs: update ad-hoc authentication example to use roots (#734)
+- 57eb6a6 chore: Bump certifi from 2026.2.25 to 2026.10.19 (#738)
+- 37dc266 chore: Bump setuptools from 80.10.2 to 84.1.0 (#739)
+- 69f750c chore: Bump urllib3 from 2.7.0 to 2.8.0 (#737)
+
 2.4.2 (2026-09-20)
 --------------------------
 
