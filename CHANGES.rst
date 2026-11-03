@@ -4,6 +4,10 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+- FIX: load optional ``passlib`` support only when built-in password-file
+  authentication is configured, so an incompatible installation does not
+  prevent unauthenticated commands from starting (#668).
+
 2.4.2 (2026-09-20)
 --------------------------
 
