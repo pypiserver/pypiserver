@@ -795,6 +795,47 @@ class TestRemovePkg:
         assert len(os.listdir(str(root))) == 0
 
     @pytest.mark.parametrize(
+        "pkgs, name, ver",
+        (
+            # sdist uses dashes; wheel keeps underscores — PEP 503 equates them
+            (
+                ("aaa-bbb-1.0.tar.gz", "aaa_bbb-1.0-py3-none-any.whl"),
+                "aaa-bbb",
+                "1.0",
+            ),
+            (
+                ("aaa-bbb-1.0.tar.gz", "aaa_bbb-1.0-py3-none-any.whl"),
+                "aaa_bbb",
+                "1.0",
+            ),
+        ),
+    )
+    def test_remove_pkg_normalizes_underscore_hyphen(
+        self, root, testapp, pkgs, name, ver
+    ):
+        """remove_pkg must hit both sdist and wheel name spellings (#377)."""
+        for pkg in pkgs:
+            root.join(pkg).write("")
+        assert len(os.listdir(str(root))) == len(pkgs)
+        params = {":action": "remove_pkg", "name": name, "version": ver}
+        testapp.post("/", params=params)
+        assert len(os.listdir(str(root))) == 0
+
+    def test_remove_pkg_mixed_case_dot_preserves_other_version(
+        self, root, testapp
+    ):
+        """Mixed-case/dot spelling removes only the targeted version (#377)."""
+        # SiluPanda: pin PEP 503 normalization + deletion boundary together.
+        v1 = ("Aaa.Bbb-1.0.tar.gz", "Aaa_Bbb-1.0-py3-none-any.whl")
+        v2 = ("Aaa.Bbb-2.0.tar.gz", "Aaa_Bbb-2.0-py3-none-any.whl")
+        for pkg in v1 + v2:
+            root.join(pkg).write("")
+        assert len(os.listdir(str(root))) == 4
+        params = {":action": "remove_pkg", "name": "Aaa.Bbb", "version": "1.0"}
+        testapp.post("/", params=params)
+        assert sorted(os.listdir(str(root))) == sorted(v2)
+
+    @pytest.mark.parametrize(
         ("name", "version"),
         [
             (None, None),
