@@ -75,8 +75,6 @@ RUN apk add bash \
 
 VOLUME /data/packages
 ENV PYPISERVER_PORT=8080
-# PORT is deprecated. Please use PYPISERVER_PORT instead
-ENV PORT=$PYPISERVER_PORT
 # Flush logs immediately to stdout
 ENV PYTHONUNBUFFERED=t
 EXPOSE $PYPISERVER_PORT

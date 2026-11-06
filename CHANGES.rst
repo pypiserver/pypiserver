@@ -4,6 +4,9 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+- ENH: Allow suppressing legacy CLI and Docker ``PORT`` deprecation warnings
+  with ``PYPISERVER_DISABLE_DEPRECATION_WARNINGS`` (#372).
+
 2.4.2 (2026-09-20)
 --------------------------
 
