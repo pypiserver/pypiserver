@@ -112,6 +112,7 @@ class DEFAULTS:
 
     AUTHENTICATE = ["update"]
     FALLBACK_URL = "https://pypi.org/simple/"
+    FOLLOW_LINKS = False
     HEALTH_ENDPOINT = "/health"
     HASH_ALGO = "sha256"
     INTERFACE = "0.0.0.0"
@@ -494,6 +495,12 @@ def get_parser() -> argparse.ArgumentParser:
         ),
     )
     run_parser.add_argument(
+        "--follow-links",
+        action="store_true",
+        default=DEFAULTS.FOLLOW_LINKS,
+        help="Follow symlinked directories when indexing packages.",
+    )
+    run_parser.add_argument(
         "--log-req-frmt",
         metavar="FORMAT",
         default=DEFAULTS.LOG_REQ_FRMT,
@@ -735,6 +742,7 @@ class RunConfig(_ConfigCommon):
         log_res_frmt: str,
         log_err_frmt: str,
         server_base_url: str,
+        follow_links: bool = DEFAULTS.FOLLOW_LINKS,
         auther: t.Optional[t.Callable[[str, str], bool]] = None,
         **kwargs: t.Any,
     ) -> None:
@@ -755,6 +763,7 @@ class RunConfig(_ConfigCommon):
         self.log_res_frmt = log_res_frmt
         self.log_err_frmt = log_err_frmt
         self.server_base_url = server_base_url
+        self.follow_links = follow_links
         # Derived properties
         self._derived_properties = self._derived_properties + ("auther",)
         self.auther = self.get_auther(auther)
@@ -781,6 +790,7 @@ class RunConfig(_ConfigCommon):
             "log_res_frmt": namespace.log_res_frmt,
             "log_err_frmt": namespace.log_err_frmt,
             "server_base_url": namespace.server_base_url,
+            "follow_links": namespace.follow_links,
         }
 
     def get_auther(
