@@ -127,7 +127,7 @@ class Backend(IBackend, abc.ABC):
         )
 
     def find_version(self, name: str, version: str) -> t.Iterable[PkgFile]:
-        """Return packages matching name and version (PEP 503 name normalize)."""
+        """Return packages matching name and version (PEP 503-normalized)."""
         normalized = normalize_pkgname(name)
         return filter(
             lambda pkg: (
