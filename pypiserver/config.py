@@ -129,6 +129,10 @@ class DEFAULTS:
     )
 
 
+def _default_authorizer(uname: str, pw: str, action: str) -> bool:
+    return True
+
+
 def auth_arg(arg: str) -> t.List[str]:
     """Parse the authentication argument."""
     # Split on commas, remove duplicates, remove whitespace, ensure lowercase.
@@ -736,6 +740,7 @@ class RunConfig(_ConfigCommon):
         log_err_frmt: str,
         server_base_url: str,
         auther: t.Optional[t.Callable[[str, str], bool]] = None,
+        authorizer: t.Optional[t.Callable[[str, str, str], bool]] = None,
         **kwargs: t.Any,
     ) -> None:
         """Construct a RuntimeConfig."""
@@ -758,6 +763,7 @@ class RunConfig(_ConfigCommon):
         # Derived properties
         self._derived_properties = self._derived_properties + ("auther",)
         self.auther = self.get_auther(auther)
+        self.authorizer = authorizer or _default_authorizer
 
     @classmethod
     def kwargs_from_namespace(
