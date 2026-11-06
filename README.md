@@ -206,7 +206,8 @@ usage: pypi-server run [-h] [-v] [--log-file FILE] [--log-stream STREAM]
                        [-P PASSWORD_FILE] [--disable-fallback]
                        [--fallback-url FALLBACK_URL]
                        [--health-endpoint HEALTH_ENDPOINT] [--server METHOD]
-                       [-o] [--welcome HTML_FILE] [--cache-control AGE]
+                       [-o] [--welcome HTML_FILE] [--follow-links]
+                       [--cache-control AGE]
                        [--log-req-frmt FORMAT] [--log-res-frmt FORMAT]
                        [--log-err-frmt FORMAT]
                        [--server-base-url SERVER_BASE_URL]
@@ -285,6 +286,7 @@ options:
                         upload.
   --welcome HTML_FILE   Use the contents of HTML_FILE as a custom welcome
                         message on the home page.
+  --follow-links        Follow symlinked directories when indexing packages.
   --cache-control AGE   Add "Cache-Control: max-age=AGE" header to package
                         downloads. Pip 6+ requires this for caching. AGE is
                         specified in seconds.
