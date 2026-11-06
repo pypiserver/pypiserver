@@ -10,11 +10,13 @@ from pathlib import Path
 
 try:
     from watchdog.observers import Observer
+    from watchdog.observers.polling import PollingObserver
 
     ENABLE_CACHING = True
 
 except ImportError:
     Observer = None
+    PollingObserver = None
 
     ENABLE_CACHING = False
 
@@ -38,12 +40,17 @@ class CacheManager:
     invalidate specific filenames.
     """
 
-    def __init__(self):
+    def __init__(self, follow_links: bool = False):
         if not ENABLE_CACHING:
             raise RuntimeError(
                 "Please install the extra cache requirements by running 'pip "
                 "install pypiserver[cache]' to use the CachingFileBackend"
             )
+
+        self.follow_links = follow_links
+        observer_cls = PollingObserver if follow_links else Observer
+        assert observer_cls is not None
+        self.observer = observer_cls()
 
         # Cache for listdir output
         self.listdir_cache = {}
@@ -54,7 +61,6 @@ class CacheManager:
         # We assume that the hash_algo value will never be erased
         self.digest_cache = {}
 
-        self.observer = Observer()
         self.observer.start()
 
         # Directories being watched

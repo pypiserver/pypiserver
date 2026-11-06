@@ -4,6 +4,8 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+- FEAT: add `--follow-links` to follow symlinked package directories when
+  indexing (#202).
 2.4.2 (2026-09-20)
 --------------------------
 
