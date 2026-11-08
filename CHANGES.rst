@@ -4,6 +4,16 @@ Changelog
 3.0.0 (tbd)
 -----------
 
+2.4.3 (2026-11-08)
+--------------------------
+
+- deedae4 FIX: fix: passing formatting flags in CI
+- 4885eea FIX: fix: normalize project names in find_version for remove_pkg (#735)
+- af839b9 MAINT: Docs: update ad-hoc authentication example to use roots (#734)
+- 57eb6a6 MAINT: chore: Bump certifi from 2026.2.25 to 2026.10.19 (#738)
+- 37dc266 MAINT: chore: Bump setuptools from 80.10.2 to 84.1.0 (#739)
+- 69f750c MAINT: chore: Bump urllib3 from 2.7.0 to 2.8.0 (#737)
+
 2.4.2 (2026-09-20)
 --------------------------
 
