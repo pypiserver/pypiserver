@@ -51,6 +51,30 @@ format-readme-diff: pyproject.toml README.md
 	diff -u README.md /tmp/pypiserver/README.md
 	@rm -rf /tmp/pypiserver/README.md
 
+# Release management
+# ------------------
+
+.PHONY: _check-tag-arg
+_check-tag-arg:
+ifndef TAG
+	@echo '>>> ❌ ERROR: Please set 'TAG="<x.y.z>"' when running this target.' && exit 1
+endif
+
+.PHONY: dry-run-tag-release
+dry-run-tag-release tag-release-dry-run tag-release-dr: _check-tag-arg pyproject.toml README.md CHANGES.rst
+	@echo ">>> 👻 (Dry Run) 🏁 BEGIN"
+	@echo ">>> 🏷️ Preparing a release tag: $(TAG)"
+	uv run --group dev --group test python3 bin/bumpver.py -n -t "DRY-RUN: Release $(TAG)" $(TAG)
+	@echo ">>> 👻 (Dry Run) ✅ END: real run will create: 'v$(TAG)'"
+
+.PHONY: tag-release
+tag-release: _check-tag-arg pyproject.toml README.md CHANGES.rst
+	@echo ">>> 🏷️ Preparing a release tag: $(TAG)"
+	uv run --group dev --group test python3 bin/bumpver.py -t "Release $(TAG)" $(TAG)
+	git tag -l "v$(TAG)" -n1 | cat 
+	@echo ">>> ✅ Tag created: 'v$(TAG)'"
+	@echo ">>> 💡 Now you can push it to the remote with 'git push --follow-tags'."
+
 # Testing
 # -------
 
