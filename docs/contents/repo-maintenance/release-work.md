@@ -1,7 +1,7 @@
 # `Pypi-server` Release Workflow Reference
 
-The official `pypi-server` releases are handled using
-[GitHub Actions workflows](../../../.github/workflows/).
+> [!IMPORTANT]
+> 🛠️ _This guide is for maintainers with permissions to commit to `main`._
 
 ## General release process
 
@@ -9,7 +9,7 @@ The official `pypi-server` releases are handled using
 flowchart LR
     rc["release-candidate ⭐️"]
     rn["release-notes 📝"]
-    rm["confirmed-tag ✅"]
+    rm["release-tag ✅"]
     ci["code-checks 🧪"]
     pk["build-and-pack 📦"]
     py["pypi-index 🗃️"]
@@ -30,12 +30,7 @@ flowchart LR
 
 ## Process walkthrough
 
-> 🗺️ _**This description approximates the real GitHub workflows and steps.**_  
-> 👀 _For a more detailed view, do check out the linked resources as you read._
-
 ### Preparation 🌱
-
-> 🛠️ _These step are applicable only for maintainers._
 
 #### Release candidate ⭐️
 
@@ -58,19 +53,21 @@ In the created rc PR, open the `CHANGES.rst` and:
 
 Commit the changes and push them to the head branch of the rc PR.
 
-#### Confirmed tag ✅
+#### Release tag ✅
 
 1. Once everything is looking good, _**approve and merge**_ the rc PR.
 
-    It will create the new _commit_ with the updated `CHANGES.rst`
-    on the default branch.
+    It will merge the updated `CHANGES.rst` to the `main` branch.
 
-2. Next, to create a release tag, _**manually run**_ the
-    [`rt.yml`](../../../.github/workflows/rt.yml) GH Workflow.
+2. Next, to create a release tag, _**manually perform**_ the release flow:
 
-    First, it executes all the [`bumpver`](../../../bin/README.md) procedures.
-
-    Next, it commits and pushes the new **version tag** to the default branch.
+    1. Checkout and `git pull` the `main` branch.
+    2. Run `make tag-release-dry-run TAG="<x.y.z>"`,
+        replacing `<x.y.z>` with the new version.
+    3. Once this script ran well, run
+        `make tag-release TAG="<x.y.z>"`.
+    4. Once that is also ran well, push the new _version tag_:
+        `git push --follow-tags`.
 
 ### Integration 🪴
 
