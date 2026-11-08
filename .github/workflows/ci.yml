@@ -61,12 +61,13 @@ jobs:
         run: make check-types
 
       - name: 🎗️ Check code style
-        run: make format CHECK=--check DIFF=--diff
+        run: make format CHECK="--check" DIFF="--diff"
 
       - name: 📜 Validate README
         id: validate_readme
-        run: make format-readme CHECK=--check
+        run: make format-readme CHECK="--check"
         continue-on-error: true
+
       - name: 🧐 check mdformat result
         run: |
           if [ "${{ steps.validate_readme.outcome }}" == "failure" ]; then
