@@ -66,6 +66,7 @@ class IBackend(abc.ABC):
 class Backend(IBackend, abc.ABC):
     def __init__(self, config: "Configuration"):
         self.hash_algo = config.hash_algo
+        self.follow_links = getattr(config, "follow_links", False)
 
     @abc.abstractmethod
     def get_all_packages(self) -> t.Iterable[PkgFile]:
@@ -143,7 +144,9 @@ class SimpleFileBackend(Backend):
         self.roots = [Path(root).resolve() for root in config.roots]
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
-        return itertools.chain.from_iterable(listdir(r) for r in self.roots)
+        return itertools.chain.from_iterable(
+            listdir(r, self.follow_links) for r in self.roots
+        )
 
     def add_package(self, filename: str, stream: t.BinaryIO) -> None:
         write_file(stream, self.roots[0].joinpath(filename))
@@ -164,7 +167,7 @@ class SimpleFileBackend(Backend):
         return any(
             filename == existing_file.name
             for root in self.roots
-            for existing_file in all_listed_files(root)
+            for existing_file in all_listed_files(root, self.follow_links)
         )
 
 
@@ -176,7 +179,12 @@ class CachingFileBackend(SimpleFileBackend):
     ):
         super().__init__(config)
 
-        self.cache_manager = cache_manager or CacheManager()  # type: ignore
+        self._listdir = functools.partial(
+            listdir, follow_links=self.follow_links
+        )
+        self.cache_manager = cache_manager or CacheManager(
+            follow_links=self.follow_links
+        )
 
     def add_package(self, filename: str, stream: t.BinaryIO) -> None:
         super().add_package(filename, stream)
@@ -188,7 +196,7 @@ class CachingFileBackend(SimpleFileBackend):
 
     def get_all_packages(self) -> t.Iterable[PkgFile]:
         return itertools.chain.from_iterable(
-            self.cache_manager.listdir(r, listdir) for r in self.roots
+            self.cache_manager.listdir(r, self._listdir) for r in self.roots
         )
 
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
@@ -213,17 +221,31 @@ def write_file(fh: t.BinaryIO, destination: PathLike) -> None:
         fh.seek(offset)
 
 
-def listdir(root: Path) -> t.Iterator[PkgFile]:
+def listdir(root: Path, follow_links: bool = False) -> t.Iterator[PkgFile]:
     root = root.resolve()
-    files = all_listed_files(root)
+    files = all_listed_files(root, follow_links)
     yield from valid_packages(root, files)
 
 
-def all_listed_files(root: Path) -> t.Iterator[Path]:
-    for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = (
-            dirname for dirname in dirnames if is_listed_path(Path(dirname))
-        )
+def all_listed_files(
+    root: Path, follow_links: bool = False
+) -> t.Iterator[Path]:
+    seen_dirs: t.Set[str] = set()
+    if follow_links:
+        seen_dirs.add(os.path.realpath(root))
+
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=follow_links):
+        kept_dirs = []
+        for dirname in dirnames:
+            if not is_listed_path(Path(dirname)):
+                continue
+            if follow_links:
+                real_dir = os.path.realpath(os.path.join(dirpath, dirname))
+                if real_dir in seen_dirs:
+                    continue
+            kept_dirs.append(dirname)
+        dirnames[:] = kept_dirs
+
         for filename in filenames:
             if not is_listed_path(Path(filename)):
                 continue
