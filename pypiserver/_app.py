@@ -26,10 +26,17 @@ from .bottle_wrapper import (
     template,
 )
 from .pkg_helpers import guess_pkgname_and_version, normalize_pkgname_for_url
+from .upload_time import format_upload_time
 
 log = logging.getLogger(__name__)
 config: RunConfig
 app = Bottle()
+
+PEP_691_JSON_CONTENT_TYPE = "application/vnd.pypi.simple.v1+json"
+PEP_691_JSON_ACCEPT_TYPES = (
+    PEP_691_JSON_CONTENT_TYPE,
+    "application/vnd.pypi.simple.latest+json",
+)
 
 
 def request_fullpath(request):
@@ -48,8 +55,42 @@ def get_bad_url_redirect_path(request, project):
     return uri
 
 
+def simple_project_url(current_uri, package):
+    return urljoin(current_uri, f"../../packages/{package.fname_and_hash}")
+
+
+def simple_project_hashes(package):
+    package.fname_and_hash
+    if not package.digest:
+        return {}
+
+    algo, sep, value = package.digest.partition("=")
+    if not sep or not value:
+        return {}
+    return {algo: value}
+
+
+def simple_project_file_json(current_uri, package):
+    assert package.fn is not None
+    assert package.relfn is not None
+    assert package.upload_time is not None
+
+    return {
+        "filename": os.path.basename(package.relfn),
+        "url": simple_project_url(current_uri, package),
+        "hashes": simple_project_hashes(package),
+        "size": os.path.getsize(package.fn),
+        "upload-time": format_upload_time(package.upload_time),
+    }
+
+
+def simple_project_versions(packages):
+    return list(dict.fromkeys(package.version for package in packages))
+
+
 class auth:
-    """decorator to apply authentication if specified for the decorated method & action"""
+    """decorator to apply authentication if specified for the decorated
+    method & action"""
 
     def __init__(self, action):
         self.action = action
@@ -59,7 +100,8 @@ class auth:
             if self.action in config.authenticate:
                 if not request.auth or request.auth[1] is None:
                     raise HTTPError(
-                        401, headers={"WWW-Authenticate": 'Basic realm="pypi"'}
+                        401,
+                        headers={"WWW-Authenticate": 'Basic realm="pypi"'},
                     )
                 if not config.auther(*request.auth):
                     raise HTTPError(403)
@@ -158,10 +200,8 @@ def file_upload():
     )
     if not ufiles.pkg:
         raise HTTPError(400, "Missing 'content' file-field!")
-    if (
-        ufiles.sig
-        and f"{ufiles.pkg.raw_filename}.asc" != ufiles.sig.raw_filename
-    ):
+    signature_name = f"{ufiles.pkg.raw_filename}.asc"
+    if ufiles.sig and signature_name != ufiles.sig.raw_filename:
         raise HTTPError(
             400,
             f"Unrelated signature {ufiles.sig!r} for package {ufiles.pkg!r}!",
@@ -183,7 +223,8 @@ def file_upload():
             )
 
             http_code = 409
-            # twine 1.7.0+ expects status 400 to match compatibility with pypi.org
+            # twine 1.7.0+ expects status 400 to match compatibility
+            # with pypi.org
             # see: https://github.com/pypa/twine/issues/1265
             if "twine" in request.headers.get("User-Agent", ""):
                 http_code = 400
@@ -267,7 +308,9 @@ def handle_rpc():
                 response.append(d)
             ordering += 1
         call_string = xmlrpclib.dumps(
-            (response,), "search", methodresponse=True
+            (response,),
+            "search",
+            methodresponse=True,
         )
         return call_string
 
@@ -315,10 +358,27 @@ def simple(project):
 
     current_uri = request_fullpath(request)
 
+    if any(
+        media_type in request.headers.get("Accept", "")
+        for media_type in PEP_691_JSON_ACCEPT_TYPES
+    ):
+        response.content_type = PEP_691_JSON_CONTENT_TYPE
+        return dumps(
+            {
+                "meta": {"api-version": "1.4"},
+                "name": project,
+                "files": [
+                    simple_project_file_json(current_uri, package)
+                    for package in packages
+                ],
+                "versions": simple_project_versions(packages),
+            }
+        )
+
     links = (
         (
             os.path.basename(pkg.relfn),
-            urljoin(current_uri, f"../../packages/{pkg.fname_and_hash}"),
+            simple_project_url(current_uri, pkg),
         )
         for pkg in packages
     )
@@ -386,7 +446,8 @@ def server_static(filename):
             )
             if config.cache_control:
                 response.set_header(
-                    "Cache-Control", f"public, max-age={config.cache_control}"
+                    "Cache-Control",
+                    f"public, max-age={config.cache_control}",
                 )
             return response
 
