@@ -508,6 +508,38 @@ To avoid storing you passwords on disk, in clear text, you may either:
   twine upload -r local --sign -identity user_name ./foo-1.zip
   ```
 
+#### Removing Packages Remotely
+
+Besides uploads, **pypiserver** accepts a **remove_pkg** action, which deletes
+every file of a given release (e.g. both the sdist and the wheels of
+**foo 1.0**) from the package directory. It is not exposed through *twine*
+or *pip*, so use any HTTP client, like **curl**:
+
+```shell
+curl -u user_name:password \
+  --form ":action=remove_pkg" \
+  --form "name=foo" \
+  --form "version=1.0" \
+  http://localhost:8080/
+```
+
+- The **name** is matched in its normalized form
+  ([PEP 503](https://peps.python.org/pep-0503/#normalized-names)),
+  so **Foo_Bar** matches **foo-bar**;
+  the **version** must match exactly.
+- The request fails with **400** if **name** or **version** is missing,
+  and with **404** if no such release exists.
+- Removal is authenticated like uploads, i.e. it is governed
+  by the **update** action of the **-a** option (see **pypi-server run -h**);
+  password-protect it as advised above.
+
+All the actions are sent as a form **POST** to the server's root URL, in
+the **:action** field. Besides **remove_pkg** and **file_upload** (used by
+*twine* and *setuptools*), **doc_upload** is accepted only to validate the
+uploaded documentation archive, which is not stored, while **verify** and
+**submit** (from the legacy *register* command) are accepted and ignored.
+Any other value is rejected with **400**.
+
 ## Using the Docker Image
 
 Starting with version 1.2.5, official Docker images will be built for each
