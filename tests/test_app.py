@@ -874,3 +874,23 @@ def test_redirect_project_encodes_newlines():
     )
     newpath = _app.get_bad_url_redirect_path(request, project)
     assert "\n" not in newpath
+
+
+def test_bad_htpasswd_hash_is_forbidden(tmpdir, caplog):
+    """A malformed htpasswd hash is a 403 like a wrong password, not a 500 (#535)."""
+    from pypiserver import app as make_app
+
+    pw_file = tmpdir.join("htpasswd")
+    pw_file.write("broken:$apr1$!0FWoV!!$ktvc1M9Jd8ino63jJiI5f1\n")
+    testapp = webtest.TestApp(
+        make_app(
+            roots=[pathlib.Path(tmpdir.strpath)],
+            authenticate=["list"],
+            password_file=pw_file.strpath,
+            backend_arg="simple-dir",
+        )
+    )
+    testapp.authorization = ("Basic", ("broken", "whatever"))
+
+    testapp.get("/simple/", status=403)
+    assert "'broken'" in caplog.text

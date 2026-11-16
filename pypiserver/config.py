@@ -821,7 +821,22 @@ class RunConfig(_ConfigCommon):
         # authentication function.
         def auther(uname: str, pw: str) -> bool:
             loaded_pw_file.load_if_changed()
-            return loaded_pw_file.check_password(uname, pw)
+            try:
+                return loaded_pw_file.check_password(uname, pw)
+            except ValueError:
+                # passlib raises ValueError (or a subclass from passlib.exc)
+                # when the stored hash is malformed or uses an unsupported
+                # format. Treat that like a failed login instead of letting
+                # it bubble up as a 500. The exception text may contain
+                # parts of the hash, so it's not logged.
+                logging.getLogger(__name__).warning(
+                    "Denying access for user %r: the password check raised "
+                    "an error. Make sure the user's entry in %s has a "
+                    "valid password hash.",
+                    uname,
+                    self.password_file,
+                )
+                return False
 
         return auther
 
