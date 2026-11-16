@@ -10,6 +10,7 @@ from pathlib import Path
 from .cache import ENABLE_CACHING, CacheManager
 from .core import PkgFile
 from .pkg_helpers import (
+    YANKED_SUFFIX,
     guess_pkgname_and_version,
     is_listed_path,
     normalize_pkgname,
@@ -233,19 +234,34 @@ def all_listed_files(root: Path) -> t.Iterator[Path]:
 
 
 def valid_packages(root: Path, files: t.Iterable[Path]) -> t.Iterator[PkgFile]:
-    for file in files:
+    all_files = list(files)
+    yank_markers = {f for f in all_files if f.name.endswith(YANKED_SUFFIX)}
+    for file in all_files:
         res = guess_pkgname_and_version(str(file.name))
         if res is not None:
             pkgname, version = res
             fn = str(file)
             root_name = str(root)
+            marker = file.with_name(file.name + YANKED_SUFFIX)
             yield PkgFile(
                 pkgname=pkgname,
                 version=version,
                 fn=fn,
                 root=root_name,
                 relfn=fn[len(root_name) + 1 :],
+                yanked=(
+                    read_yank_reason(marker) if marker in yank_markers else None
+                ),
             )
+
+
+def read_yank_reason(marker: Path) -> str:
+    """Return the PEP 592 yank reason stored in a marker file (may be empty)."""
+    try:
+        return marker.read_text(encoding="utf-8", errors="replace").strip()
+    except OSError:
+        log.warning("Could not read yank marker %s", marker, exc_info=True)
+        return ""
 
 
 def digest_file(file_path: PathLike, hash_algo: str) -> str:

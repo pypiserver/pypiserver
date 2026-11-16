@@ -96,6 +96,13 @@ def test_guess_pkgname_and_version_asc(filename, pkgname, version):
     assert guess_pkgname_and_version(filename) == exp
 
 
+@pytest.mark.parametrize(("filename", "pkgname", "version"), files)
+def test_guess_pkgname_and_version_ignores_yank_markers(
+    filename, pkgname, version
+):
+    assert guess_pkgname_and_version(f"{filename}.yanked") is None
+
+
 invalid_files = ["some_file", "some_file.ext", "some_wheel.whl"]
 
 

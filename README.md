@@ -650,6 +650,32 @@ Specifying an additional **-u** option will also allow alpha, beta and
 release candidates to be downloaded. Without this option these
 releases won't be considered.
 
+### Yanking Packages
+
+**pypiserver** supports yanking files as described in
+[PEP 592](https://peps.python.org/pep-0592/). To yank a file, create an empty
+marker file next to it, named after the file plus a `.yanked` suffix:
+
+```shell
+touch ~/packages/mypackage-1.0.0.tar.gz.yanked
+```
+
+Optionally, write the reason for yanking into the marker file. It is shown
+by **pip** when the yanked file gets installed:
+
+```shell
+echo "Broken metadata, please use 1.0.1" > ~/packages/mypackage-1.0.0.tar.gz.yanked
+```
+
+Each marker applies to exactly one file, so yanking a whole release means
+creating a marker for each of its wheels and sdists. Delete the marker
+to un-yank the file. Marker files are never listed as packages.
+
+Yanked files are still served, but they are flagged with a `data-yanked`
+attribute on the `/simple/<project>/` page. **pip** skips yanked files unless
+the requirement pins that exact version with `==` (or `===`), in which case it
+still installs it and prints a warning with the yank reason.
+
 ### Serving Thousands of Packages
 
 > [!IMPORTANT]

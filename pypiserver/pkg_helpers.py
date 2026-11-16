@@ -4,6 +4,10 @@ import typing as t
 from pathlib import PurePath
 from urllib.parse import quote
 
+# PEP 592: a file is yanked when a marker named "<filename>.yanked" sits
+# next to it. The marker's content, if any, is the yank reason.
+YANKED_SUFFIX = ".yanked"
+
 
 def normalize_pkgname(name: str) -> str:
     """Perform PEP 503 normalization"""
@@ -91,6 +95,8 @@ def _guess_pkgname_and_version_wheel(
 
 def guess_pkgname_and_version(path: str) -> t.Optional[t.Tuple[str, str]]:
     path = os.path.basename(path)
+    if path.endswith(YANKED_SUFFIX):
+        return None
     if path.endswith(".asc"):
         path = path.rstrip(".asc")
     if path.endswith(".whl"):
