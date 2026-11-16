@@ -794,3 +794,23 @@ def test_argv_conf():
         assert conf.disable_fallback is True
     finally:
         sys.argv = orig_args
+
+
+def test_auther_bad_htpasswd_hash(tmp_path: pathlib.Path, caplog) -> None:
+    """A malformed hash denies that user instead of raising (#535)."""
+    pw_file = tmp_path / "htpasswd"
+    good_line = (FILE_DIR / "../fixtures/htpasswd.a.a").read_text().strip()
+    pw_file.write_text(
+        f"{good_line}\nbroken:$apr1$!0FWoV!!$ktvc1M9Jd8ino63jJiI5f1\n"
+    )
+    conf = Config.from_args(["run", "-P", str(pw_file), "-a", "update"])
+
+    with caplog.at_level("WARNING", logger="pypiserver.config"):
+        assert conf.auther("broken", "whatever") is False
+
+    assert "'broken'" in caplog.text
+    assert "!0FWoV" not in caplog.text
+    assert "whatever" not in caplog.text
+    # Users with valid hashes keep working.
+    assert conf.auther(HTPASS_TEST_USER, HTPASS_TEST_PASS) is True
+    assert not conf.auther(HTPASS_TEST_USER, "wrong")
