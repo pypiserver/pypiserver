@@ -319,6 +319,7 @@ def simple(project):
         (
             os.path.basename(pkg.relfn),
             urljoin(current_uri, f"../../packages/{pkg.fname_and_hash}"),
+            pkg.yanked,
         )
         for pkg in packages
     )
@@ -332,8 +333,12 @@ def simple(project):
     </head>
     <body>
         <h1>Links for {{project}}</h1>
-        % for file, href in links:
+        % for file, href, yanked in links:
+            % if yanked is None:
             <a href="{{href}}">{{file}}</a><br>
+            % else:
+            <a href="{{href}}" data-yanked="{{yanked}}">{{file}}</a><br>
+            % end
         % end
     </body>
 </html>

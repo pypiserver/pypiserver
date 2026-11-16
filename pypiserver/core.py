@@ -24,11 +24,13 @@ class PkgFile:
         "relfn_unix",  # The relative file path in unix notation
         "parsed_version",  # The package version as a tuple of parts
         "digester",  # a function that calculates the digest for the package
+        "yanked",  # The PEP 592 yank reason, or None when not yanked
     ]
     digest: t.Optional[str]
     digester: t.Optional[t.Callable[["PkgFile"], t.Optional[str]]]
     parsed_version: tuple
     relfn_unix: t.Optional[str]
+    yanked: t.Optional[str]
 
     def __init__(
         self,
@@ -38,6 +40,7 @@ class PkgFile:
         root: t.Optional[str] = None,
         relfn: t.Optional[str] = None,
         replaces: t.Optional["PkgFile"] = None,
+        yanked: t.Optional[str] = None,
     ):
         self.pkgname = pkgname
         self.pkgname_norm = normalize_pkgname(pkgname)
@@ -50,6 +53,7 @@ class PkgFile:
         self.replaces = replaces
         self.digest = None
         self.digester = None
+        self.yanked = yanked
 
     def __repr__(self) -> str:
         return "{}({})".format(

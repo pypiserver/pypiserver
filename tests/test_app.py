@@ -363,6 +363,68 @@ def test_simple_index_case(root, testapp):
     assert len(resp.html("a")) == 2
 
 
+def test_simple_index_yanked_with_reason(root, testapp):
+    root.join("foobar-1.0.zip").write("")
+    root.join("foobar-1.0.zip.yanked").write("broken metadata\n")
+
+    resp = testapp.get("/simple/foobar/")
+    (link,) = resp.html("a")
+    assert link.text == "foobar-1.0.zip"
+    assert link["data-yanked"] == "broken metadata"
+
+
+def test_simple_index_yanked_without_reason(root, testapp):
+    root.join("foobar-1.0.zip").write("")
+    root.join("foobar-1.0.zip.yanked").write("")
+
+    resp = testapp.get("/simple/foobar/")
+    (link,) = resp.html("a")
+    assert link.has_attr("data-yanked")
+    assert link["data-yanked"] == ""
+    assert 'data-yanked=""' in resp.text
+
+
+def test_simple_index_not_yanked(root, testapp):
+    root.join("foobar-1.0.zip").write("")
+    root.join("foobar-1.1.zip").write("")
+    root.join("foobar-1.0.zip.yanked").write("")
+
+    resp = testapp.get("/simple/foobar/")
+    links = {link.text: link for link in resp.html("a")}
+    assert links["foobar-1.0.zip"].has_attr("data-yanked")
+    assert not links["foobar-1.1.zip"].has_attr("data-yanked")
+
+
+def test_simple_index_yanked_reason_is_escaped(root, testapp):
+    reason = """<script>alert("x")</script> & 'y'"""
+    root.join("foobar-1.0.zip").write("")
+    root.join("foobar-1.0.zip.yanked").write(reason)
+
+    resp = testapp.get("/simple/foobar/")
+    assert "<script>" not in resp.text
+    assert resp.html("a")[0]["data-yanked"] == reason
+
+
+def test_yank_markers_not_listed(root, testapp):
+    root.join("foobar-1.0.zip").write("")
+    root.join("foobar-1.0.zip.yanked").write("")
+    root.join("orphan-1.0.zip.yanked").write("")
+
+    resp = testapp.get("/simple/")
+    assert [a.text for a in resp.html("a")] == ["foobar"]
+    resp = testapp.get("/packages/")
+    assert [a.text for a in resp.html("a")] == ["foobar-1.0.zip"]
+    testapp.get("/packages/foobar-1.0.zip.yanked", status=404)
+
+
+def test_yanked_package_still_downloadable(root, testapp):
+    root.join("foobar-1.0.zip").write("123")
+    root.join("foobar-1.0.zip.yanked").write("")
+
+    resp = testapp.get("/packages/foobar-1.0.zip")
+    assert resp.body == b"123"
+
+
 def test_nonroot_root(testpriv):
     resp = testpriv.get("/priv/", headers={"Host": "nonroot"})
     resp.mustcontain(
