@@ -90,6 +90,43 @@ AUTO_SERVER_IMPORTS = (
 )
 
 
+# The bottle server name for each server that "auto" may pick.
+AUTO_SERVER_NAMES = {
+    AutoServer.Waitress: "waitress",
+    AutoServer.PasteServer: "paste",
+    AutoServer.Twisted: "twisted",
+    AutoServer.CherryPy: "cherrypy",
+    AutoServer.Cheroot: "cheroot",
+    AutoServer.WsgiRef: "wsgiref",
+}
+
+# The keyword argument each server takes for its worker thread count. Servers
+# that aren't listed here don't let us set one.
+SERVER_THREADS_KWARGS = {
+    "waitress": "threads",
+    "paste": "threadpool_workers",
+    "cherrypy": "numthreads",
+    "cheroot": "numthreads",
+    "gunicorn": "threads",
+}
+
+
+def threads_kwargs(server: str, threads: int | None) -> dict[str, int]:
+    """Get the keyword args that set the thread count for a server."""
+    if threads is None:
+        return {}
+    kwarg = SERVER_THREADS_KWARGS.get(server)
+    if kwarg is None:
+        log.warning(
+            "The '%s' server doesn't support setting a thread count, "
+            "ignoring --threads %s",
+            server,
+            threads,
+        )
+        return {}
+    return {kwarg: threads}
+
+
 def _can_import(name: str) -> bool:
     """Attempt to import a module. Return a bool indicating success."""
     try:
@@ -189,6 +226,9 @@ def main(argv: Sequence[str] | None = None) -> None:
         extra_kwargs = (
             wsgi_kwargs if expected_server is AutoServer.WsgiRef else {}
         )
+        extra_kwargs.update(
+            threads_kwargs(AUTO_SERVER_NAMES[expected_server], config.threads)
+        )
         log.debug(
             "Server 'auto' selected. Expecting bottle to run '%s'. "
             "Passing extra keyword args: %s",
@@ -197,6 +237,9 @@ def main(argv: Sequence[str] | None = None) -> None:
         )
     else:
         extra_kwargs = wsgi_kwargs if config.server_method == "wsgiref" else {}
+        extra_kwargs.update(
+            threads_kwargs(config.server_method, config.threads)
+        )
         log.debug(
             "Running bottle with selected server '%s'", config.server_method
         )

@@ -103,6 +103,71 @@ def test_wsgiserver_extra_kwargs_absent(monkeypatch, main):
     assert "handler_class" not in main([])
 
 
+def test_threads_not_passed_by_default(monkeypatch, main):
+    monkeypatch.setattr(
+        __main__,
+        "guess_auto_server",
+        lambda: __main__.AutoServer.Waitress,
+    )
+    assert "threads" not in main([])
+
+
+@pytest.mark.parametrize(
+    "auto_server, kwarg",
+    [
+        (__main__.AutoServer.Waitress, "threads"),
+        (__main__.AutoServer.PasteServer, "threadpool_workers"),
+        (__main__.AutoServer.CherryPy, "numthreads"),
+        (__main__.AutoServer.Cheroot, "numthreads"),
+    ],
+)
+def test_threads_auto_server(monkeypatch, main, auto_server, kwarg):
+    """The thread count goes to whichever server "auto" will pick."""
+    monkeypatch.setattr(__main__, "guess_auto_server", lambda: auto_server)
+    assert main(["--threads", "2"])[kwarg] == 2
+
+
+@pytest.mark.parametrize(
+    "server, kwarg",
+    [
+        ("paste", "threadpool_workers"),
+        ("cherrypy", "numthreads"),
+        ("gunicorn", "threads"),
+    ],
+)
+def test_threads_explicit_server(main, server, kwarg):
+    assert main(["--server", server, "--threads", "3"])[kwarg] == 3
+
+
+@pytest.mark.parametrize("server", ["wsgiref", "twisted"])
+def test_threads_unsupported_server_warns(main, caplog, server):
+    with caplog.at_level(logging.WARNING, logger="pypiserver.main"):
+        kwargs = main(["--server", server, "--threads", "2"])
+    assert not {"threads", "threadpool_workers", "numthreads"} & set(kwargs)
+    assert "ignoring --threads 2" in caplog.text
+
+
+def test_threads_unsupported_auto_server_warns(monkeypatch, main, caplog):
+    monkeypatch.setattr(
+        __main__,
+        "guess_auto_server",
+        lambda: __main__.AutoServer.WsgiRef,
+    )
+    with caplog.at_level(logging.WARNING, logger="pypiserver.main"):
+        kwargs = main(["--threads", "2"])
+    assert kwargs["handler_class"] is __main__.WsgiHandler
+    assert "'wsgiref' server doesn't support" in caplog.text
+
+
+def test_waitress_adapter_passes_options(monkeypatch):
+    """The waitress adapter must forward options like the thread count."""
+    waitress = pytest.importorskip("waitress")
+    calls = []
+    monkeypatch.setattr(waitress, "serve", lambda *a, **kw: calls.append(kw))
+    bottle.WaitressServer(host="127.0.0.1", port=8081, threads=2).run(None)
+    assert calls == [{"host": "127.0.0.1", "port": 8081, "threads": 2}]
+
+
 def test_root_multiple(main):
     # Remember we're already setting THIS_DIR as a root in the `main` fixture
     main([str(THIS_DIR.parent)])
