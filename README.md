@@ -206,7 +206,8 @@ usage: pypi-server run [-h] [-v] [--log-file FILE] [--log-stream STREAM]
                        [-P PASSWORD_FILE] [--disable-fallback]
                        [--fallback-url FALLBACK_URL]
                        [--health-endpoint HEALTH_ENDPOINT] [--server METHOD]
-                       [-o] [--welcome HTML_FILE] [--cache-control AGE]
+                       [--threads N] [-o] [--welcome HTML_FILE]
+                       [--cache-control AGE]
                        [--log-req-frmt FORMAT] [--log-res-frmt FORMAT]
                        [--log-err-frmt FORMAT]
                        [--server-base-url SERVER_BASE_URL]
@@ -281,6 +282,11 @@ options:
                         paste, cherrypy, twisted, gunicorn, gevent, wsgiref,
                         and auto. The default is to use "auto", which chooses
                         one of paste, cherrypy, twisted, or wsgiref.
+  --threads N           Number of worker threads for the server, if it
+                        supports setting one (waitress, paste, cherrypy,
+                        cheroot and gunicorn). It is ignored with a warning
+                        for other servers, like the single-threaded wsgiref.
+                        By default the server picks its own.
   -o, --overwrite       Allow overwriting existing package files during
                         upload.
   --welcome HTML_FILE   Use the contents of HTML_FILE as a custom welcome
@@ -827,6 +833,12 @@ nssm start pypiserver
   'rocket', 'diesel', 'twisted', 'wsgiref', 'fapws3', 'bjoern', 'gevent',
   'meinheld', 'auto', 'aiohttp', 'flup', 'gae', 'paste', 'waitress']
   ```
+
+- Use **--threads N** to set how many worker threads the server uses, e.g.
+  `pypi-server run --threads 2 ~/packages` on a small CI runner. It works
+  with waitress, paste, cherrypy, cheroot and gunicorn (including when "auto"
+  picks one of them). Servers that can't take a thread count, like the
+  single-threaded wsgiref, log a warning and ignore it.
 
 - If none of the above servers matches your needs, invoke just the
   **pypiserver:app()** method which returns the internal WSGI-app WITHOUT

@@ -187,6 +187,19 @@ def health_endpoint_arg(arg: str) -> str:
     )
 
 
+def threads_arg(arg: str) -> int:
+    """Parse the thread count for the server, which must be positive."""
+    try:
+        threads = int(arg)
+    except ValueError:
+        threads = 0
+    if threads < 1:
+        raise argparse.ArgumentTypeError(
+            f"Invalid thread count '{arg}'. It must be a positive integer."
+        )
+    return threads
+
+
 def html_file_arg(arg: t.Optional[str]) -> str:
     """Parse the provided HTML file and return its contents."""
     if arg is None or arg == "pypiserver/welcome.html":
@@ -464,6 +477,17 @@ def get_parser() -> argparse.ArgumentParser:
         ),
     )
     run_parser.add_argument(
+        "--threads",
+        metavar="N",
+        type=threads_arg,
+        help=(
+            "Number of worker threads for the server, if it supports setting "
+            "one (waitress, paste, cherrypy, cheroot and gunicorn). It is "
+            "ignored with a warning for other servers, like the "
+            "single-threaded wsgiref. By default the server picks its own."
+        ),
+    )
+    run_parser.add_argument(
         "-o",
         "--overwrite",
         action="store_true",
@@ -735,6 +759,7 @@ class RunConfig(_ConfigCommon):
         log_res_frmt: str,
         log_err_frmt: str,
         server_base_url: str,
+        threads: int | None = None,
         auther: t.Optional[t.Callable[[str, str], bool]] = None,
         **kwargs: t.Any,
     ) -> None:
@@ -755,6 +780,7 @@ class RunConfig(_ConfigCommon):
         self.log_res_frmt = log_res_frmt
         self.log_err_frmt = log_err_frmt
         self.server_base_url = server_base_url
+        self.threads = threads
         # Derived properties
         self._derived_properties = self._derived_properties + ("auther",)
         self.auther = self.get_auther(auther)
@@ -781,6 +807,7 @@ class RunConfig(_ConfigCommon):
             "log_res_frmt": namespace.log_res_frmt,
             "log_err_frmt": namespace.log_err_frmt,
             "server_base_url": namespace.server_base_url,
+            "threads": namespace.threads,
         }
 
     def get_auther(

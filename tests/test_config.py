@@ -501,6 +501,21 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         exp_config_type=RunConfig,
         exp_config_values={"cache_control": 1900},
     ),
+    # threads
+    ConfigTestCase(
+        case="Run: threads unspecified",
+        args=["run"],
+        legacy_args=[],
+        exp_config_type=RunConfig,
+        exp_config_values={"threads": None},
+    ),
+    ConfigTestCase(
+        case="Run: threads specified",
+        args=["run", "--threads", "4"],
+        legacy_args=["--threads", "4"],
+        exp_config_type=RunConfig,
+        exp_config_values={"threads": 4},
+    ),
     # log-req-frmt
     ConfigTestCase(
         case="Run: log request format unspecified",
@@ -720,6 +735,14 @@ _CONFIG_ERROR_CASES = (
             exp_txt="Invalid path for the health endpoint",
         )
         for val in ("/", "health", "/health!", "/:health", "/health?check=True")
+    ),
+    *(
+        ConfigErrorCase(
+            case=f"Invalid thread count: {val}",
+            args=["run", "--threads", val],
+            exp_txt=f"Invalid thread count '{val}'",
+        )
+        for val in ("0", "-2", "two", "1.5")
     ),
 )
 # pylint: disable=unsubscriptable-object
