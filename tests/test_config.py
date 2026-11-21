@@ -501,6 +501,21 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         exp_config_type=RunConfig,
         exp_config_values={"cache_control": 1900},
     ),
+    # follow-links
+    ConfigTestCase(
+        case="Run: follow-links unspecified",
+        args=["run"],
+        legacy_args=[],
+        exp_config_type=RunConfig,
+        exp_config_values={"follow_links": False},
+    ),
+    ConfigTestCase(
+        case="Run: follow-links specified",
+        args=["run", "--follow-links"],
+        legacy_args=["--follow-links"],
+        exp_config_type=RunConfig,
+        exp_config_values={"follow_links": True},
+    ),
     # log-req-frmt
     ConfigTestCase(
         case="Run: log request format unspecified",
