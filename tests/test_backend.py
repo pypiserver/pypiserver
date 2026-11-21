@@ -70,6 +70,22 @@ def test_listdir_follow_links_does_not_loop_on_cycles(tmp_path):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="symlink privileges")
+def test_listdir_follow_links_does_not_loop_on_subdirectory_cycle(tmp_path):
+    (tmp_path / "direct-in-root.zip").touch()
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    (sub / "package.zip").touch()
+    (sub / "loop").symlink_to(sub, target_is_directory=True)
+
+    packages = list(listdir(tmp_path, follow_links=True))
+
+    assert {pkg.fn for pkg in packages} == {
+        str(tmp_path / "direct-in-root.zip"),
+        str(sub / "package.zip"),
+    }
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="symlink privileges")
 def test_simple_backend_follow_links_option(tmp_path):
     root = tmp_path / "root"
     root.mkdir()

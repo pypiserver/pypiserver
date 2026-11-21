@@ -243,6 +243,7 @@ def all_listed_files(
                 real_dir = os.path.realpath(os.path.join(dirpath, dirname))
                 if real_dir in seen_dirs:
                     continue
+                seen_dirs.add(real_dir)
             kept_dirs.append(dirname)
         dirnames[:] = kept_dirs
 
