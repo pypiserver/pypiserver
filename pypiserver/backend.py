@@ -4,6 +4,7 @@ import hashlib
 import itertools
 import logging
 import os
+import threading
 import typing as t
 from pathlib import Path
 
@@ -26,6 +27,10 @@ PathLike = t.Union[str, os.PathLike]
 
 
 class IBackend(abc.ABC):
+    def get_by_relfn(self, relfn_unix: str) -> t.Optional[PkgFile]:
+        """Return the package whose relfn_unix matches, if known."""
+        return None
+
     @abc.abstractmethod
     def get_all_packages(self) -> t.Iterable[PkgFile]:
         pass
@@ -66,6 +71,12 @@ class IBackend(abc.ABC):
 class Backend(IBackend, abc.ABC):
     def __init__(self, config: "Configuration"):
         self.hash_algo = config.hash_algo
+
+    def get_by_relfn(self, relfn_unix: str) -> t.Optional[PkgFile]:
+        for pkg in self.get_all_packages():
+            if pkg.relfn_unix == relfn_unix:
+                return pkg
+        return None
 
     @abc.abstractmethod
     def get_all_packages(self) -> t.Iterable[PkgFile]:
@@ -137,16 +148,119 @@ class Backend(IBackend, abc.ABC):
         )
 
 
-class SimpleFileBackend(Backend):
+class _PackageIndex:
+    """Package lookup tables built together in scan order."""
+
+    __slots__ = (
+        "all_packages",
+        "by_relfn",
+        "by_basename",
+        "by_project",
+        "by_project_version",
+        "projects",
+        "count",
+    )
+
+    def __init__(self, packages: t.Iterable[PkgFile]) -> None:
+        self.all_packages: list[PkgFile] = []
+        self.by_relfn: dict[str, PkgFile] = {}
+        self.by_basename: dict[str, list[PkgFile]] = {}
+        self.by_project: dict[str, list[PkgFile]] = {}
+        self.by_project_version: dict[tuple[str, str], list[PkgFile]] = {}
+        for pkg in packages:
+            self.all_packages.append(pkg)
+            if pkg.relfn_unix is not None:
+                self.by_relfn.setdefault(pkg.relfn_unix, pkg)
+            basename = os.path.basename(pkg.relfn_unix or pkg.fn or "")
+            if basename:
+                self.by_basename.setdefault(basename, []).append(pkg)
+            self.by_project.setdefault(pkg.pkgname_norm, []).append(pkg)
+            key = (pkg.pkgname_norm, pkg.version)
+            self.by_project_version.setdefault(key, []).append(pkg)
+        self.projects = frozenset(self.by_project)
+        self.count = len(self.all_packages)
+
+
+class _IndexedBackend(Backend):
+    """Reuse a package index until the backend's change token advances."""
+
+    def __init__(self, config: "Configuration") -> None:
+        super().__init__(config)
+        self._index: t.Optional[_PackageIndex] = None
+        self._index_token: t.Any = None
+        self._index_lock = threading.RLock()
+
+    def _scan_packages(self) -> t.Iterable[PkgFile]:
+        raise NotImplementedError
+
+    def _current_index_token(self) -> t.Any:
+        raise NotImplementedError
+
+    def _ensure_index(self) -> _PackageIndex:
+        token = self._current_index_token()
+        index = self._index
+        if index is not None and token == self._index_token:
+            return index
+        with self._index_lock:
+            token = self._current_index_token()
+            index = self._index
+            if index is not None and token == self._index_token:
+                return index
+            index = _PackageIndex(self._scan_packages())
+            self._index = index
+            self._index_token = token
+            return index
+
+    def invalidate_index(self) -> None:
+        with self._index_lock:
+            self._index = None
+            self._index_token = None
+
+    def get_by_relfn(self, relfn_unix: str) -> t.Optional[PkgFile]:
+        return self._ensure_index().by_relfn.get(relfn_unix)
+
+    def get_all_packages(self) -> t.Iterable[PkgFile]:
+        return self._ensure_index().all_packages
+
+    def find_project_packages(self, project: str) -> t.Iterable[PkgFile]:
+        return self._ensure_index().by_project.get(
+            normalize_pkgname(project), []
+        )
+
+    def find_version(self, name: str, version: str) -> t.Iterable[PkgFile]:
+        key = (normalize_pkgname(name), version)
+        return self._ensure_index().by_project_version.get(key, [])
+
+    def get_projects(self) -> t.Iterable[str]:
+        return set(self._ensure_index().projects)
+
+    def package_count(self) -> int:
+        return self._ensure_index().count
+
+    def exists(self, filename: str) -> bool:
+        return bool(self._ensure_index().by_basename.get(filename))
+
+
+class SimpleFileBackend(_IndexedBackend):
     def __init__(self, config: "Configuration"):
         super().__init__(config)
         self.roots = [Path(root).resolve() for root in config.roots]
 
-    def get_all_packages(self) -> t.Iterable[PkgFile]:
+    def _scan_packages(self) -> t.Iterable[PkgFile]:
         return itertools.chain.from_iterable(listdir(r) for r in self.roots)
+
+    def _current_index_token(self) -> t.Any:
+        token: list[t.Optional[int]] = []
+        for root in self.roots:
+            try:
+                token.append(os.stat(root).st_mtime_ns)
+            except OSError:
+                token.append(None)
+        return tuple(token)
 
     def add_package(self, filename: str, stream: t.BinaryIO) -> None:
         write_file(stream, self.roots[0].joinpath(filename))
+        self.invalidate_index()
 
     def remove_package(self, pkg: PkgFile) -> None:
         if pkg.fn is not None:
@@ -160,12 +274,7 @@ class SimpleFileBackend(Backend):
                 log.exception("Unexpected error removing package: %s", pkg.fn)
                 raise
 
-    def exists(self, filename: str) -> bool:
-        return any(
-            filename == existing_file.name
-            for root in self.roots
-            for existing_file in all_listed_files(root)
-        )
+        self.invalidate_index()
 
 
 class CachingFileBackend(SimpleFileBackend):
@@ -186,10 +295,13 @@ class CachingFileBackend(SimpleFileBackend):
         super().remove_package(pkg)
         self.cache_manager.invalidate_root_cache(pkg.root)
 
-    def get_all_packages(self) -> t.Iterable[PkgFile]:
+    def _scan_packages(self) -> t.Iterable[PkgFile]:
         return itertools.chain.from_iterable(
             self.cache_manager.listdir(r, listdir) for r in self.roots
         )
+
+    def _current_index_token(self) -> t.Any:
+        return self.cache_manager.generation
 
     def digest(self, pkg: PkgFile) -> t.Optional[str]:
         if self.hash_algo is None or pkg.fn is None:
@@ -291,6 +403,9 @@ def with_digester(func: PkgFunc) -> PkgFunc:
 class BackendProxy(IBackend):
     def __init__(self, wraps: Backend):
         self.backend = wraps
+
+    def get_by_relfn(self, relfn_unix: str) -> t.Optional[PkgFile]:
+        return self.backend.get_by_relfn(relfn_unix)
 
     @with_digester
     def get_all_packages(self) -> t.Iterable[PkgFile]:

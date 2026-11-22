@@ -375,22 +375,25 @@ def list_packages():
 @app.route("/packages/:filename#.*#")
 @auth("download")
 def server_static(filename):
-    entries = config.backend.get_all_packages()
-    for x in entries:
-        f = x.relfn_unix
-        if f == filename:
-            response = static_file(
-                filename,
-                root=x.root,
-                mimetype=mimetypes.guess_type(filename)[0],
-            )
-            if config.cache_control:
-                response.set_header(
-                    "Cache-Control", f"public, max-age={config.cache_control}"
-                )
-            return response
-
-    return HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
+    backend = config.backend
+    pkg = backend.get_by_relfn(filename)
+    if pkg is None:
+        for candidate in backend.get_all_packages():
+            if candidate.relfn_unix == filename:
+                pkg = candidate
+                break
+    if pkg is None:
+        return HTTPError(404, f"Not Found ({filename} does not exist)\n\n")
+    response = static_file(
+        filename,
+        root=pkg.root,
+        mimetype=mimetypes.guess_type(filename)[0],
+    )
+    if config.cache_control:
+        response.set_header(
+            "Cache-Control", f"public, max-age={config.cache_control}"
+        )
+    return response
 
 
 @app.route("/:project/json")
