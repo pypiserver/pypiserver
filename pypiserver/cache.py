@@ -129,6 +129,12 @@ class _EventHandler:
         if event.is_directory:
             return
 
+        # Opening or closing a file does not change it. watchdog >= 2.3
+        # reports both, so invalidating on them threw the cache away on
+        # every download (see issue #502).
+        if event.event_type in ("opened", "closed"):
+            return
+
         # Lazy: just invalidate the whole cache
         cache.invalidate_root_cache(self.root)
 
