@@ -1,9 +1,11 @@
 import abc
+import errno
 import functools
 import hashlib
 import itertools
 import logging
 import os
+import threading
 import typing as t
 from pathlib import Path
 
@@ -200,17 +202,38 @@ class CachingFileBackend(SimpleFileBackend):
 
 
 def write_file(fh: t.BinaryIO, destination: PathLike) -> None:
-    """write a byte stream into a destination file. Writes are chunked to reduce
-    the memory footprint
+    """Write a byte stream into ``destination`` atomically.
+
+    Write to a hidden sibling file and replace the destination once the
+    complete upload has been flushed to disk.
     """
     chunk_size = 2**20  # 1 MB
+    destination = Path(destination)
+    tmp_path = destination.with_name(
+        f".{destination.name}.{os.getpid()}.{threading.get_ident()}.part"
+    )
     offset = fh.tell()
     try:
-        with open(destination, "wb") as dest:
+        with open(tmp_path, "wb") as dest:
             for chunk in iter(lambda: fh.read(chunk_size), b""):
                 dest.write(chunk)
+            dest.flush()
+            try:
+                os.fsync(dest.fileno())
+            except OSError as exc:
+                if exc.errno not in {
+                    errno.EINVAL,
+                    errno.ENOSYS,
+                    errno.ENOTSUP,
+                    errno.EOPNOTSUPP,
+                }:
+                    raise
+        os.replace(tmp_path, destination)
     finally:
-        fh.seek(offset)
+        try:
+            fh.seek(offset)
+        finally:
+            tmp_path.unlink(missing_ok=True)
 
 
 def listdir(root: Path) -> t.Iterator[PkgFile]:
