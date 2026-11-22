@@ -5,6 +5,7 @@
 
 import threading
 import typing as t
+from contextlib import nullcontext
 from os.path import dirname
 from pathlib import Path
 
@@ -63,6 +64,8 @@ class CacheManager:
         self.watch_lock = threading.Lock()
         self.digest_lock = threading.Lock()
         self.listdir_lock = threading.Lock()
+        self._file_locks: dict[str, threading.Lock] = {}
+        self._file_locks_lock = threading.Lock()
 
     def listdir(
         self,
@@ -83,29 +86,39 @@ class CacheManager:
                 self.listdir_cache[root] = v
                 return v
 
+    def _lock_for(self, fpath: str) -> threading.Lock:
+        with self._file_locks_lock:
+            lock = self._file_locks.get(fpath)
+            if lock is None:
+                lock = threading.Lock()
+                self._file_locks[fpath] = lock
+            return lock
+
     def digest_file(
         self, fpath: str, hash_algo: str, impl_fn: t.Callable[[str, str], str]
     ) -> str:
         with self.digest_lock:
-            try:
-                cache = self.digest_cache[hash_algo]
-            except KeyError:
-                cache = self.digest_cache.setdefault(hash_algo, {})
-
+            cache = self.digest_cache.setdefault(hash_algo, {})
             try:
                 return cache[fpath]
             except KeyError:
-                root = dirname(fpath)
-                with self.watch_lock:
-                    if root not in self.watched:
-                        self._watch(root)
+                pass
 
-            # TODO: move this outside of the lock... but there's not a good
-            #       way to do this without a race condition if the file
-            #       gets modified
-            v = impl_fn(fpath, hash_algo)
-            cache[fpath] = v
-            return v
+        root = dirname(fpath)
+        with self.watch_lock:
+            if root not in self.watched:
+                self._watch(root)
+
+        with self._lock_for(fpath):
+            with self.digest_lock:
+                try:
+                    return cache[fpath]
+                except KeyError:
+                    pass
+            value = impl_fn(fpath, hash_algo)
+            with self.digest_lock:
+                cache[fpath] = value
+            return value
 
     def _watch(self, root: str):
         self.watched.add(root)
@@ -141,7 +154,11 @@ class _EventHandler:
         else:
             paths.append(event.src_path)
 
-        with cache.digest_lock:
-            for _, subcache in cache.digest_cache.items():
-                for path in paths:
-                    subcache.pop(path, None)
+        for path in paths:
+            with cache._file_locks_lock:
+                lock = cache._file_locks.get(path)
+            # Wait for a hash already in progress before discarding its value.
+            with lock if lock is not None else nullcontext():
+                with cache.digest_lock:
+                    for subcache in cache.digest_cache.values():
+                        subcache.pop(path, None)
