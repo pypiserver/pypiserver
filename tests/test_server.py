@@ -22,7 +22,7 @@ import sys
 import time
 import typing as t
 from collections import namedtuple
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from shlex import split
 from subprocess import Popen, run
@@ -521,8 +521,8 @@ def test_twine_upload_json_upload_times_drive_uv_exclude_newer(tmp_path):
         newer_time = datetime.fromisoformat(
             newer_file["upload-time"].replace("Z", "+00:00")
         )
-        assert older_time.tzinfo == UTC
-        assert newer_time.tzinfo == UTC
+        assert older_time.tzinfo == timezone.utc
+        assert newer_time.tzinfo == timezone.utc
         assert older_time < newer_time
         cutover = older_time + (newer_time - older_time) / 2
         cutoff = cutover.isoformat().replace("+00:00", "Z")

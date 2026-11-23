@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from pypiserver.upload_time import (
     SIDECAR_NAME,
@@ -26,7 +26,7 @@ def test_save_and_load_upload_times_round_trip(tmp_path):
     package = tmp_path / "subdir" / "pkg-1.0.tar.gz"
     package.parent.mkdir()
     package.touch()
-    expected = datetime(2026, 4, 3, 10, 11, 12, 345678, tzinfo=UTC)
+    expected = datetime(2026, 4, 3, 10, 11, 12, 345678, tzinfo=timezone.utc)
 
     save_upload_times(
         tmp_path,
@@ -45,7 +45,11 @@ def test_save_upload_times_removes_sidecar_when_metadata_is_empty(tmp_path):
     package.touch()
     save_upload_times(
         tmp_path,
-        {normalize_upload_time_key(tmp_path, package): datetime(2026, 4, 3, tzinfo=UTC)},
+        {
+            normalize_upload_time_key(tmp_path, package): datetime(
+                2026, 4, 3, tzinfo=timezone.utc
+            )
+        },
     )
 
     sidecar_path = tmp_path / SIDECAR_NAME
@@ -59,7 +63,7 @@ def test_save_upload_times_removes_sidecar_when_metadata_is_empty(tmp_path):
 def test_fallback_upload_time_uses_file_mtime_as_utc_datetime(tmp_path):
     package = tmp_path / "pkg-1.0.tar.gz"
     package.touch()
-    expected = datetime(2026, 4, 3, 10, 11, 12, 345678, tzinfo=UTC)
+    expected = datetime(2026, 4, 3, 10, 11, 12, 345678, tzinfo=timezone.utc)
     timestamp = expected.timestamp()
 
     import os

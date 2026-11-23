@@ -1,6 +1,6 @@
 import io
 import typing as t
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -62,7 +62,7 @@ def test_simple_backend_add_package_persists_upload_time_metadata(tmp_path):
     assert (tmp_path / "demo-1.0.tar.gz").read_bytes() == b"payload"
     metadata = load_upload_times(tmp_path)
     assert set(metadata) == {"demo-1.0.tar.gz"}
-    delta = metadata["demo-1.0.tar.gz"] - datetime.now(UTC)
+    delta = metadata["demo-1.0.tar.gz"] - datetime.now(timezone.utc)
     age_seconds = delta.total_seconds()
     assert abs(age_seconds) < 2
 

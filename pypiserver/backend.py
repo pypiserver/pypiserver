@@ -5,7 +5,7 @@ import itertools
 import logging
 import os
 import typing as t
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .cache import ENABLE_CACHING, CacheManager
@@ -157,7 +157,7 @@ class SimpleFileBackend(Backend):
         write_file(stream, package_path)
         upload_times = load_upload_times(self.roots[0])
         upload_time_key = normalize_upload_time_key(self.roots[0], package_path)
-        upload_times[upload_time_key] = datetime.now(UTC)
+        upload_times[upload_time_key] = datetime.now(timezone.utc)
         save_upload_times(self.roots[0], upload_times)
 
     def remove_package(self, pkg: PkgFile) -> None:

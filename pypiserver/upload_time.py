@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import tempfile
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -23,11 +23,13 @@ def normalize_upload_time_key(root: Path, package_path: Path) -> str:
 
 
 def format_upload_time(value: datetime) -> str:
-    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
+    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def parse_upload_time(value: str) -> datetime:
-    return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
+    return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(
+        timezone.utc
+    )
 
 
 def load_upload_times(root: Path) -> dict[str, datetime]:
@@ -87,4 +89,6 @@ def save_upload_times(root: Path, metadata: dict[str, datetime]) -> None:
 
 
 def fallback_upload_time(package_path: Path) -> datetime:
-    return datetime.fromtimestamp(Path(package_path).stat().st_mtime, tz=UTC)
+    return datetime.fromtimestamp(
+        Path(package_path).stat().st_mtime, tz=timezone.utc
+    )
