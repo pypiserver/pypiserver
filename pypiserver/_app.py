@@ -382,7 +382,8 @@ def server_static(filename):
             response = static_file(
                 filename,
                 root=x.root,
-                mimetype=mimetypes.guess_type(filename)[0],
+                mimetype=mimetypes.guess_type(filename)[0]
+                or "application/octet-stream",
             )
             if config.cache_control:
                 response.set_header(

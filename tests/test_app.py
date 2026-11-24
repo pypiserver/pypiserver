@@ -545,6 +545,34 @@ def test_cache_control_set(root):
     assert resp.headers["Cache-Control"] == f"public, max-age={AGE}"
 
 
+@pytest.mark.parametrize(
+    "filename",
+    [
+        # accepted by the package-name regex but without a guessable extension
+        "xss-exec-1.0-py3.9-any",
+        "xss-exec-1.0-py2.7-any",
+    ],
+)
+def test_download_unguessable_filename_is_served_as_octet_stream(
+    root, testapp, add_file_to_root, filename
+):
+    add_file_to_root(root, filename, "<script>alert(1)</script>")
+
+    resp = testapp.get(f"/packages/{filename}")
+    assert resp.status_code == 200
+    assert resp.headers["Content-Type"].startswith("application/octet-stream")
+
+
+def test_download_guessable_filename_keeps_its_mimetype(
+    root, testapp, add_file_to_root
+):
+    add_file_to_root(root, "foobar-1.0.zip", "123")
+
+    resp = testapp.get("/packages/foobar-1.0.zip")
+    assert resp.status_code == 200
+    assert resp.headers["Content-Type"] == "application/zip"
+
+
 def test_upload_noAction(testapp):
     resp = testapp.post("/", expect_errors=1)
     assert resp.status == "400 Bad Request"
