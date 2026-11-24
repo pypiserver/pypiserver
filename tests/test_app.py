@@ -748,6 +748,25 @@ class TestRemovePkg:
         testapp.post("/", params=params)
         assert len(os.listdir(str(root))) == 0
 
+    def test_remove_pkg_disabled(self, root):
+        """Package removal is rejected when `disable_delete` is set."""
+        from pypiserver import app
+
+        testapp = webtest.TestApp(
+            app(
+                roots=[pathlib.Path(root.strpath)],
+                authenticate=[],
+                password_file=".",
+                backend_arg="simple-dir",
+                disable_delete=True,
+            )
+        )
+        root.join("test-1.0.tar.gz").write("")
+        params = {":action": "remove_pkg", "name": "test", "version": "1.0"}
+        resp = testapp.post("/", params=params, expect_errors=True)
+        assert resp.status_int == 403
+        assert os.listdir(str(root)) == ["test-1.0.tar.gz"]
+
     @pytest.mark.parametrize(
         "pkg, name, ver",
         (
