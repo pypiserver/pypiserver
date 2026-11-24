@@ -47,6 +47,7 @@ class CacheManager:
 
         # Cache for listdir output
         self.listdir_cache = {}
+        self.generation = 0
 
         # Cache for hashes: two-level dictionary
         # -> key: hash_algo, value: dict
@@ -114,6 +115,7 @@ class CacheManager:
     def invalidate_root_cache(self, root: t.Union[Path, str]):
         with self.listdir_lock:
             self.listdir_cache.pop(str(root), None)
+            self.generation += 1
 
 
 class _EventHandler:

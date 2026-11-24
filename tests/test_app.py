@@ -874,3 +874,47 @@ def test_redirect_project_encodes_newlines():
     )
     newpath = _app.get_bad_url_redirect_path(request, project)
     assert "\n" not in newpath
+
+
+def test_serve_package_after_upload_via_api(testapp: webtest.TestApp) -> None:
+    filename = "foo-1.0.tar.gz"
+    content = b"package contents\x00\xff"
+    testapp.get(f"/packages/{filename}", status=404)
+    testapp.post(
+        "/",
+        params={":action": "file_upload"},
+        upload_files=[("content", filename, content)],
+        status=200,
+    )
+    response = testapp.get(f"/packages/{filename}", status=200)
+    assert response.body == content
+
+
+def test_serve_nested_package(
+    tmp_path: pathlib.Path, testapp: webtest.TestApp
+) -> None:
+    nested = tmp_path / "sub"
+    nested.mkdir()
+    (nested / "foo-1.0.tar.gz").write_bytes(b"nested package")
+    response = testapp.get("/packages/sub/foo-1.0.tar.gz", status=200)
+    assert response.body == b"nested package"
+
+
+def test_serve_missing_package_404(testapp: webtest.TestApp) -> None:
+    response = testapp.get("/packages/missing-1.0.tar.gz", status=404)
+    assert "Not Found" in response.text
+
+
+def test_simple_project_reflects_new_upload(
+    tmp_path: pathlib.Path, testapp: webtest.TestApp
+) -> None:
+    (tmp_path / "foo-1.0.tar.gz").touch()
+    filename = "foo-2.0.tar.gz"
+    assert filename not in testapp.get("/simple/foo/", status=200).text
+    testapp.post(
+        "/",
+        params={":action": "file_upload"},
+        upload_files=[("content", filename, b"new release")],
+        status=200,
+    )
+    assert filename in testapp.get("/simple/foo/", status=200).text
