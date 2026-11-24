@@ -207,6 +207,7 @@ def paste_app_factory(_global_config, **local_conf):
         # redirect_to_fallback is a deprecated argument for disable_fallback
         "redirect_to_fallback": to_bool,
         "overwrite": to_bool,
+        "disable_delete": to_bool,
         "authenticate": functools.partial(to_list, sep=" "),
         # authenticated is a deprecated argument for authenticate
         "authenticated": functools.partial(to_list, sep=" "),

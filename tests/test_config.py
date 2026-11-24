@@ -439,6 +439,21 @@ _CONFIG_TEST_PARAMS: t.Tuple[ConfigTestCase, ...] = (
         exp_config_type=RunConfig,
         exp_config_values={"overwrite": True},
     ),
+    # disable-delete
+    ConfigTestCase(
+        case="Run: disable-delete unset",
+        args=["run"],
+        legacy_args=[],
+        exp_config_type=RunConfig,
+        exp_config_values={"disable_delete": False},
+    ),
+    ConfigTestCase(
+        case="Run: disable-delete set",
+        args=["run", "--disable-delete"],
+        legacy_args=["--disable-delete"],
+        exp_config_type=RunConfig,
+        exp_config_values={"disable_delete": True},
+    ),
     # hash-algo
     ConfigTestCase(
         case="Run: hash-algo unspecified",

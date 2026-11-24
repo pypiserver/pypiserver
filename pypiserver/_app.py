@@ -136,6 +136,10 @@ def doc_upload():
 
 
 def remove_pkg():
+    if config.disable_delete:
+        log.warning("'remove_pkg' rejected: package removal is disabled")
+        raise HTTPError(403, "Package removal is disabled on this server.")
+
     name = request.forms.get("name")
     version = request.forms.get("version")
     if not name or not version:
