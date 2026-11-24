@@ -181,14 +181,22 @@ class _PackageIndex:
         self.count = len(self.all_packages)
 
 
-class _IndexedBackend(Backend):
-    """Reuse a package index until the backend's change token advances."""
+class _IndexedBackend:
+    """Mixin: reuse a package index until the backend's change token advances.
 
-    def __init__(self, config: "Configuration") -> None:
-        super().__init__(config)
-        self._index: t.Optional[_PackageIndex] = None
-        self._index_token: t.Any = None
-        self._index_lock = threading.RLock()
+    Only the caching backend opts into this. ``SimpleFileBackend`` keeps
+    rescanning on every call on purpose: a root ``st_mtime_ns`` token cannot see
+    a package dropped into a subdirectory, and reusing the memoised ``PkgFile``
+    objects would keep serving a stale digest after an in-place replace. Under
+    ``CachingFileBackend`` the watchdog owns invalidation, so both of those
+    signals already exist.
+    """
+
+    # Declared here so the mixin is type-checkable; the caching backend
+    # initialises them next to its cache manager.
+    _index: t.Optional[_PackageIndex] = None
+    _index_token: t.Any = None
+    _index_lock: "threading.RLock"
 
     def _scan_packages(self) -> t.Iterable[PkgFile]:
         raise NotImplementedError
@@ -241,26 +249,16 @@ class _IndexedBackend(Backend):
         return bool(self._ensure_index().by_basename.get(filename))
 
 
-class SimpleFileBackend(_IndexedBackend):
+class SimpleFileBackend(Backend):
     def __init__(self, config: "Configuration"):
         super().__init__(config)
         self.roots = [Path(root).resolve() for root in config.roots]
 
-    def _scan_packages(self) -> t.Iterable[PkgFile]:
+    def get_all_packages(self) -> t.Iterable[PkgFile]:
         return itertools.chain.from_iterable(listdir(r) for r in self.roots)
-
-    def _current_index_token(self) -> t.Any:
-        token: list[t.Optional[int]] = []
-        for root in self.roots:
-            try:
-                token.append(os.stat(root).st_mtime_ns)
-            except OSError:
-                token.append(None)
-        return tuple(token)
 
     def add_package(self, filename: str, stream: t.BinaryIO) -> None:
         write_file(stream, self.roots[0].joinpath(filename))
-        self.invalidate_index()
 
     def remove_package(self, pkg: PkgFile) -> None:
         if pkg.fn is not None:
@@ -274,10 +272,15 @@ class SimpleFileBackend(_IndexedBackend):
                 log.exception("Unexpected error removing package: %s", pkg.fn)
                 raise
 
-        self.invalidate_index()
+    def exists(self, filename: str) -> bool:
+        return any(
+            filename == existing_file.name
+            for root in self.roots
+            for existing_file in all_listed_files(root)
+        )
 
 
-class CachingFileBackend(SimpleFileBackend):
+class CachingFileBackend(_IndexedBackend, SimpleFileBackend):
     def __init__(
         self,
         config: "Configuration",
@@ -286,6 +289,9 @@ class CachingFileBackend(SimpleFileBackend):
         super().__init__(config)
 
         self.cache_manager = cache_manager or CacheManager()  # type: ignore
+        self._index = None
+        self._index_token = None
+        self._index_lock = threading.RLock()
 
     def add_package(self, filename: str, stream: t.BinaryIO) -> None:
         super().add_package(filename, stream)

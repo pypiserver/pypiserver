@@ -1,23 +1,32 @@
 # Backend package index benchmark
 
-Run in the repository virtual environment on Windows with `python -m tools.bench_backend --counts 1000 5000`. The optional cache backend used `watchdog==6.0.0` from `.venv/t1-bench-deps` through the benchmark process's `PYTHONPATH`.
+The index is used by **`CachingFileBackend` only**. `SimpleFileBackend` keeps
+rescanning on every call, so there is nothing to measure for it any more: a root
+`st_mtime_ns` token cannot see a package dropped into a subdirectory, and reusing
+the memoised `PkgFile` objects would serve a stale digest after an in-place
+replace. Both cases are covered by regression tests instead
+(`test_simple_backend_sees_package_added_to_subdirectory`,
+`test_simple_backend_digest_reflects_in_place_replace`).
 
-Values are medians of 50 rounds in milliseconds. All measurements of `git show 70648db:pypiserver/backend.py` ran before measurements of the T1 working tree on the same package directories. Each cold call uses a fresh backend. The warm call and both lookups reuse that instance. The original relative-path lookup stops at the first matching file, as the original download route did. For each N, pkg0 is the first match, pkg{N-1} is the last match after a full scan, and missing-pkg is a no-match full scan.
+Run in the repository virtual environment on Windows with
+`python -m tools.bench_backend --counts 1000 5000`. The optional cache backend
+used `watchdog==6.0.0` from `.venv/t1-bench-deps` through the benchmark process's
+`PYTHONPATH`.
+
+Values are medians of 50 rounds in milliseconds. All measurements of
+`git show 70648db:pypiserver/backend.py` ran before measurements of the branch
+working tree on the same package directories. Each cold call uses a fresh
+backend. The warm call and both lookups reuse that instance. The original
+relative-path lookup stops at the first matching file, as the original download
+route did. For each N, pkg0 is the first match, pkg{N-1} is the last match after a
+full scan, and missing-pkg is a no-match full scan.
+
+The first warm call on a fresh backend still builds the index, which costs about
+6 % more than the single scan the baseline performed. Everything after that is a
+hash lookup.
 
 | bench | N | baseline_ms | patched_ms | speedup |
 |---|---:|---:|---:|---:|
-| SimpleFileBackend.get_all_packages (cold) | 1000 | 51.865600 | 56.163600 | 0.92x |
-| SimpleFileBackend.get_all_packages (warm) | 1000 | 51.738300 | 0.033000 | 1567.83x |
-| SimpleFileBackend.find_project_packages | 1000 | 51.859800 | 0.025300 | 2049.80x |
-| SimpleFileBackend.get_by_relfn (first) | 1000 | 0.421750 | 0.027800 | 15.17x |
-| SimpleFileBackend.get_by_relfn (last) | 1000 | 50.991850 | 0.021050 | 2422.42x |
-| SimpleFileBackend.get_by_relfn (missing) | 1000 | 51.153950 | 0.020100 | 2544.97x |
-| SimpleFileBackend.get_all_packages (cold) | 5000 | 263.815750 | 285.256400 | 0.92x |
-| SimpleFileBackend.get_all_packages (warm) | 5000 | 262.470450 | 0.038100 | 6888.99x |
-| SimpleFileBackend.find_project_packages | 5000 | 260.865000 | 0.026250 | 9937.70x |
-| SimpleFileBackend.get_by_relfn (first) | 5000 | 0.443250 | 0.036700 | 12.08x |
-| SimpleFileBackend.get_by_relfn (last) | 5000 | 258.469500 | 0.023500 | 10998.70x |
-| SimpleFileBackend.get_by_relfn (missing) | 5000 | 258.354750 | 0.021350 | 12100.90x |
 | CachingFileBackend.get_all_packages (cold) | 1000 | 52.551550 | 56.039800 | 0.94x |
 | CachingFileBackend.get_all_packages (warm) | 1000 | 0.012100 | 0.001150 | 10.52x |
 | CachingFileBackend.find_project_packages | 1000 | 0.369400 | 0.002800 | 131.93x |
