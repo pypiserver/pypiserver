@@ -372,6 +372,32 @@ def list_packages():
     return template(tmpl, links=links)
 
 
+_SERVED_DOWNLOAD_TYPES = frozenset(
+    {
+        "application/zip",
+        "application/x-zip-compressed",
+        "application/x-tar",
+        "application/octet-stream",
+        "text/plain",
+    }
+)
+
+
+def _download_mimetype(filename: str) -> str:
+    """Guess the Content-Type for a package download.
+
+    Only archive-like and known-safe types are served with their guessed
+    mimetype. Anything else a package filename can end with (the
+    ``-py[23].\\d-.*`` suffix also matches real extensions like ``.html``,
+    ``.svg`` or ``.xhtml``) falls back to ``application/octet-stream`` so
+    browser-renderable content is never executed in the origin context.
+    """
+    guessed = mimetypes.guess_type(filename)[0]
+    if guessed is not None and guessed not in _SERVED_DOWNLOAD_TYPES:
+        return "application/octet-stream"
+    return guessed or "application/octet-stream"
+
+
 @app.route("/packages/:filename#.*#")
 @auth("download")
 def server_static(filename):
@@ -382,7 +408,7 @@ def server_static(filename):
             response = static_file(
                 filename,
                 root=x.root,
-                mimetype=mimetypes.guess_type(filename)[0],
+                mimetype=_download_mimetype(filename),
             )
             if config.cache_control:
                 response.set_header(
