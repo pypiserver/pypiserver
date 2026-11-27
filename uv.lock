@@ -1125,6 +1125,7 @@ test = [
     { name = "pytest-cov" },
     { name = "setuptools" },
     { name = "twine" },
+    { name = "watchdog" },
     { name = "webtest" },
     { name = "wheel" },
 ]
@@ -1169,6 +1170,7 @@ test = [
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "setuptools", specifier = ">=40.0,<85.0.0" },
     { name = "twine", specifier = ">=6.2.0" },
+    { name = "watchdog", specifier = "==6.0.0" },
     { name = "webtest", specifier = ">=3.0.7" },
     { name = "wheel", specifier = ">=0.25.0" },
 ]
