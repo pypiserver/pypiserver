@@ -1,6 +1,7 @@
 import sys
-import time
+from collections.abc import Callable
 from pathlib import Path
+from queue import Queue
 
 import pytest
 
@@ -69,17 +70,20 @@ def test_reading_a_file_keeps_listdir_and_digest_cache(
     assert cache.digest_cache["sha256"][path] == "sha256=digest"
 
 
-def test_closed_event_invalidates_listdir_cache(
+def test_closed_event_invalidates_listdir_and_digest_cache(
     cache: CacheManager, tmp_path: Path
 ) -> None:
     # "closed" is IN_CLOSE_WRITE: the file was open for writing.
     root = str(tmp_path)
+    path = str(tmp_path / "pkg-1.0.zip")
     _prime(cache, root)
+    cache.digest_file(path, "sha256", lambda _path, _algo: "digest")
     handler = _EventHandler(cache, root)
 
-    handler.dispatch(watchdog_events.FileClosedEvent(root + "/pkg-1.0.zip"))
+    handler.dispatch(watchdog_events.FileClosedEvent(path))
 
     assert root not in cache.listdir_cache
+    assert path not in cache.digest_cache["sha256"]
 
 
 def test_modified_event_invalidates_listdir_cache(
@@ -116,20 +120,40 @@ def test_moved_event_invalidates_and_drops_digest(
     not sys.platform.startswith("linux"),
     reason="IN_OPEN / IN_CLOSE_NOWRITE are inotify-only events",
 )
-def test_download_keeps_caches_with_a_real_observer(
-    cache: CacheManager, tmp_path: Path
+def test_real_observer_keeps_caches_on_read_and_invalidates_on_write(
+    cache: CacheManager, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    from watchdog.events import FileSystemEvent
+
     root = str(tmp_path)
     pkg = tmp_path / "pkg-1.0.zip"
     pkg.write_bytes(b"payload" * 100)
+    path = str(pkg)
+    closes: Queue[str] = Queue()
+    dispatch: Callable[[_EventHandler, FileSystemEvent], None] = (
+        _EventHandler.dispatch
+    )
+
+    def record_close(handler: _EventHandler, event: FileSystemEvent) -> None:
+        dispatch(handler, event)
+        if event.src_path == path and event.event_type in {
+            "closed_no_write",
+            "closed",
+        }:
+            closes.put(event.event_type)
+
+    monkeypatch.setattr(_EventHandler, "dispatch", record_close)
 
     # Priming also schedules the watch, so the write above raises no event.
-    cache.listdir(root, lambda _path: [])
-    cache.digest_file(str(pkg), "sha256", lambda _path, _algo: "digest")
+    primed = _prime(cache, root)
+    cache.digest_file(path, "sha256", lambda _path, _algo: "digest")
 
-    # What a download does: open, read, close.
     pkg.read_bytes()
-    time.sleep(0.5)  # give inotify time to deliver opened / closed_no_write
+    assert closes.get(timeout=5) == "closed_no_write"
+    assert cache.listdir_cache[root] is primed
+    assert cache.digest_cache["sha256"][path] == "digest"
 
-    assert root in cache.listdir_cache
-    assert cache.digest_cache["sha256"][str(pkg)] == "digest"
+    pkg.write_bytes(b"updated payload")
+    assert closes.get(timeout=5) == "closed"
+    assert root not in cache.listdir_cache
+    assert path not in cache.digest_cache["sha256"]
