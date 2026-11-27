@@ -116,6 +116,13 @@ class CacheManager:
             self.listdir_cache.pop(str(root), None)
 
 
+# Events that say nothing about the content of a file. watchdog >= 2.3
+# reports IN_OPEN as "opened" and IN_CLOSE_NOWRITE as "closed_no_write", and
+# a plain download raises both (see issue #502). "closed" is deliberately not
+# in here: it is IN_CLOSE_WRITE, i.e. the file was open for writing.
+_READ_ONLY_EVENTS = frozenset({"opened", "closed_no_write"})
+
+
 class _EventHandler:
     def __init__(self, cache: CacheManager, root: str):
         self.cache = cache
@@ -127,6 +134,12 @@ class _EventHandler:
 
         # Don't care about directory events
         if event.is_directory:
+            return
+
+        # Reading a file does not change it. watchdog >= 2.3 reports both the
+        # open and the close-after-read, so invalidating on them threw the
+        # cache away on every download (see issue #502).
+        if event.event_type in _READ_ONLY_EVENTS:
             return
 
         # Lazy: just invalidate the whole cache
