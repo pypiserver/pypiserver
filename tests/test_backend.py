@@ -1,8 +1,10 @@
+import os
 from io import BytesIO
 from pathlib import Path
 
 import pytest
 
+from pypiserver import backend
 from pypiserver.backend import listdir, write_file
 
 
@@ -122,4 +124,108 @@ def test_write_file_temp_name_is_hidden(tmp_path: Path) -> None:
     assert temp_name.startswith(".")
     assert temp_name.endswith(".part")
     assert packages_during_upload == []
+    assert list(tmp_path.iterdir()) == [destination]
+
+
+# --- Windows: the destination is held open by a concurrent download ---
+
+
+def _raise_permission_error(src: Path | str, dst: Path | str) -> None:
+    raise PermissionError(13, "Access is denied")
+
+
+@pytest.fixture
+def windows_replace_blocked(monkeypatch):
+    """Make ``os.replace`` behave like Windows with the target open."""
+    monkeypatch.setattr(backend, "_IS_WINDOWS", True)
+    monkeypatch.setattr(backend, "_REPLACE_RETRY_DELAY", 0)
+    monkeypatch.setattr(backend.os, "replace", _raise_permission_error)
+
+
+def test_write_file_overwrites_in_place_when_replace_is_blocked(
+    tmp_path: Path, windows_replace_blocked
+) -> None:
+    destination = tmp_path / "pkg-1.0.zip"
+    destination.write_bytes(b"old")
+
+    write_file(BytesIO(b"new"), destination)
+
+    assert destination.read_bytes() == b"new"
+    assert list(tmp_path.iterdir()) == [destination]
+
+
+def test_write_file_retries_replace_before_overwriting_in_place(
+    tmp_path: Path, monkeypatch
+) -> None:
+    destination = tmp_path / "pkg-1.0.zip"
+    destination.write_bytes(b"old")
+    monkeypatch.setattr(backend, "_IS_WINDOWS", True)
+    monkeypatch.setattr(backend, "_REPLACE_RETRY_DELAY", 0)
+
+    attempts: list[str] = []
+    real_replace = os.replace
+
+    def flaky_replace(src, dst):
+        attempts.append(str(src))
+        if len(attempts) < 3:
+            raise PermissionError(13, "Access is denied")
+        real_replace(src, dst)
+
+    monkeypatch.setattr(backend.os, "replace", flaky_replace)
+
+    write_file(BytesIO(b"new"), destination)
+
+    assert len(attempts) == 3
+    assert destination.read_bytes() == b"new"
+    assert list(tmp_path.iterdir()) == [destination]
+
+
+def test_write_file_reports_blocked_destination_it_cannot_overwrite(
+    tmp_path: Path, monkeypatch, windows_replace_blocked
+) -> None:
+    destination = tmp_path / "pkg-1.0.zip"
+    destination.write_bytes(b"old")
+    real_open = open
+
+    def blocked_open(file, mode="rb", *args, **kwargs):
+        if Path(file) == destination and "w" in mode:
+            raise PermissionError(13, "Access is denied")
+        return real_open(file, mode, *args, **kwargs)
+
+    monkeypatch.setattr(backend, "open", blocked_open, raising=False)
+
+    with pytest.raises(OSError, match="Cannot replace"):
+        write_file(BytesIO(b"new"), destination)
+
+    assert destination.read_bytes() == b"old"
+    assert list(tmp_path.iterdir()) == [destination]
+
+
+def test_write_file_propagates_replace_errors_elsewhere(
+    tmp_path: Path, monkeypatch, windows_replace_blocked
+) -> None:
+    destination = tmp_path / "pkg-1.0.zip"
+    destination.write_bytes(b"old")
+    monkeypatch.setattr(backend, "_IS_WINDOWS", False)
+
+    with pytest.raises(PermissionError):
+        write_file(BytesIO(b"new"), destination)
+
+    assert destination.read_bytes() == b"old"
+    assert list(tmp_path.iterdir()) == [destination]
+
+
+@pytest.mark.skipif(os.name != "nt", reason="only Windows locks open files")
+def test_write_file_overwrites_while_destination_is_being_read(
+    tmp_path: Path, monkeypatch
+) -> None:
+    destination = tmp_path / "pkg-1.0.zip"
+    destination.write_bytes(b"old")
+    monkeypatch.setattr(backend, "_REPLACE_RETRY_DELAY", 0)
+
+    with open(destination, "rb") as download:
+        write_file(BytesIO(b"new"), destination)
+        assert download.read(1) == b"n"
+
+    assert destination.read_bytes() == b"new"
     assert list(tmp_path.iterdir()) == [destination]

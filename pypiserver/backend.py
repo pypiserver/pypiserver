@@ -6,6 +6,7 @@ import itertools
 import logging
 import os
 import threading
+import time
 import typing as t
 from pathlib import Path
 
@@ -201,13 +202,83 @@ class CachingFileBackend(SimpleFileBackend):
         )
 
 
+_CHUNK_SIZE = 2**20  # 1 MB
+
+# Windows refuses to replace a file that another process keeps open, which is
+# exactly what a concurrent download looks like, so the rename is retried a
+# few times (antivirus scanners and just-finished responses release quickly)
+# before falling back to overwriting the destination in place.
+_IS_WINDOWS = os.name == "nt"
+_REPLACE_RETRIES = 4
+_REPLACE_RETRY_DELAY = 0.05
+
+
+def _fsync_best_effort(fd: int) -> None:
+    """Flush ``fd`` to disk, tolerating filesystems without fsync support."""
+    try:
+        os.fsync(fd)
+    except OSError as exc:
+        if exc.errno not in {
+            errno.EINVAL,
+            errno.ENOSYS,
+            errno.ENOTSUP,
+            errno.EOPNOTSUPP,
+        }:
+            raise
+
+
+def _overwrite_in_place(source: Path, destination: Path) -> None:
+    """Copy ``source`` over ``destination`` without renaming it.
+
+    Used as the Windows fallback: a reader holding ``destination`` open blocks
+    the rename but not a write, so the complete temp file is copied over it.
+    """
+    with open(source, "rb") as src, open(destination, "wb") as dest:
+        for chunk in iter(lambda: src.read(_CHUNK_SIZE), b""):
+            dest.write(chunk)
+        dest.flush()
+        _fsync_best_effort(dest.fileno())
+
+
+def _move_into_place(tmp_path: Path, destination: Path) -> None:
+    if not _IS_WINDOWS:
+        os.replace(tmp_path, destination)
+        return
+
+    delay = _REPLACE_RETRY_DELAY
+    for attempt in range(1, _REPLACE_RETRIES + 1):
+        try:
+            os.replace(tmp_path, destination)
+            return
+        except PermissionError:
+            if attempt == _REPLACE_RETRIES:
+                break
+            if delay:
+                time.sleep(delay)
+                delay *= 2
+
+    log.warning(
+        "Could not atomically replace %r: it is held open by another process "
+        "(a concurrent download?). Overwriting it in place instead.",
+        str(destination),
+    )
+    try:
+        _overwrite_in_place(tmp_path, destination)
+    except OSError as exc:
+        raise OSError(
+            f"Cannot replace {destination}: another process keeps it open and "
+            f"it cannot be overwritten ({exc})"
+        ) from exc
+
+
 def write_file(fh: t.BinaryIO, destination: PathLike) -> None:
     """Write a byte stream into ``destination`` atomically.
 
     Write to a hidden sibling file and replace the destination once the
-    complete upload has been flushed to disk.
+    complete upload has been flushed to disk. When the destination cannot be
+    replaced because another process holds it open (Windows), overwrite it in
+    place instead, so an upload that used to succeed does not turn into a 500.
     """
-    chunk_size = 2**20  # 1 MB
     destination = Path(destination)
     tmp_path = destination.with_name(
         f".{destination.name}.{os.getpid()}.{threading.get_ident()}.part"
@@ -215,20 +286,11 @@ def write_file(fh: t.BinaryIO, destination: PathLike) -> None:
     offset = fh.tell()
     try:
         with open(tmp_path, "wb") as dest:
-            for chunk in iter(lambda: fh.read(chunk_size), b""):
+            for chunk in iter(lambda: fh.read(_CHUNK_SIZE), b""):
                 dest.write(chunk)
             dest.flush()
-            try:
-                os.fsync(dest.fileno())
-            except OSError as exc:
-                if exc.errno not in {
-                    errno.EINVAL,
-                    errno.ENOSYS,
-                    errno.ENOTSUP,
-                    errno.EOPNOTSUPP,
-                }:
-                    raise
-        os.replace(tmp_path, destination)
+            _fsync_best_effort(dest.fileno())
+        _move_into_place(tmp_path, destination)
     finally:
         try:
             fh.seek(offset)
